@@ -20,6 +20,13 @@ import SwiftUI
 @Model
 final class Subject {
 
+    /// Eine stabile Kennung, die über Geräte hinweg gleich bleibt.
+    ///
+    /// Die `persistentModelID` von SwiftData taugt dafür nicht: sie ist lokal und
+    /// wechselt, sobald ein Datensatz über CloudKit auf einem anderen Gerät
+    /// ankommt. Der Rechenkern muss Kurse aber wiedererkennen können.
+    var identifier: UUID = UUID()
+
     /// Der angezeigte Fachname, etwa „Mathematik".
     @Attribute(.allowsCloudEncryption) var name: String = ""
 
@@ -62,6 +69,7 @@ final class Subject {
     var semesters: [SemesterResult]? = []
 
     init(
+        identifier: UUID = UUID(),
         name: String,
         abbreviation: String,
         colorValue: Int,
@@ -71,6 +79,7 @@ final class Subject {
         activeSemesters: [Int] = [0, 1, 2, 3],
         sortIndex: Int = 0
     ) {
+        self.identifier = identifier
         self.name = name
         self.abbreviation = abbreviation
         self.colorValue = colorValue

@@ -5,9 +5,11 @@ import UIKit
 /// Das Typografie-Pairing der Design-Sprache: Archivo für Score, Zahlen und
 /// Headlines, Public Sans für Fliesstext, Listen und Buttons.
 ///
-/// Beide Schriften liegen als Variable Fonts im Bundle. Sie werden nicht über
-/// `UIAppFonts` geladen — dieser Schlüssel lässt sich bei einer generierten
-/// Info.plist nicht setzen — sondern beim Start über CoreText registriert.
+/// Beide Schriften liegen als Variable Fonts im Bundle und werden über
+/// `UIAppFonts` in der Info.plist geladen. Der Schlüssel steht dort in einer
+/// echten Datei und nicht in einem `INFOPLIST_KEY_`-Build-Setting: Xcode reicht
+/// über diese Settings nur eine feste Liste bekannter Schlüssel durch, und
+/// `UIAppFonts` gehört nicht dazu.
 ///
 /// Der Schnitt wird immer explizit über die `wght`-Achse aufgelöst und nie über
 /// einen geratenen PostScript-Namen. Das ist wichtig, weil Archivo als
@@ -15,31 +17,6 @@ import UIKit
 /// `Font.custom("Archivo", size:)` ohne Achsenwert liefert also SemiBold statt
 /// Regular.
 enum ScoreTypography {
-
-    // MARK: - Registrierung
-
-    /// Meldet die gebundelten Schriften bei CoreText an.
-    ///
-    /// Mehrfache Aufrufe sind unschädlich; die Registrierung läuft genau einmal.
-    /// Muss vor dem ersten Textaufbau passieren, also im `init` der App und in
-    /// jeder Preview, die die Schriften braucht.
-    static func registerFonts() {
-        _ = registrationResult
-    }
-
-    private static let registrationResult: Bool = {
-        let urls = ["Archivo", "PublicSans"].compactMap {
-            Bundle.main.url(forResource: $0, withExtension: "ttf")
-        }
-        guard urls.count == 2 else {
-            assertionFailure("Score: Archivo.ttf oder PublicSans.ttf fehlt im Bundle.")
-            return false
-        }
-        var errors: Unmanaged<CFArray>?
-        CTFontManagerRegisterFontURLs(urls as CFArray, .process, true) { _, _ in true }
-        _ = errors
-        return true
-    }()
 
     // MARK: - Familien
 
@@ -64,8 +41,6 @@ enum ScoreTypography {
         size: CGFloat,
         maximumPointSize: CGFloat
     ) -> Font {
-        registerFonts()
-
         let descriptor = UIFontDescriptor(fontAttributes: [
             .family: family,
             UIFontDescriptor.AttributeName(rawValue: kCTFontVariationAttribute as String): [

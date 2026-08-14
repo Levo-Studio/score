@@ -25,21 +25,21 @@ struct SettingsView: View {
         @Bindable var settings = settings
 
         ScrollView {
-            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
+            VStack(alignment: .leading, spacing: 18) {
                 Text("Einstellungen")
                     .font(.screenTitle)
-                    .tracking(em: -0.03, at: 26)
+                    .tracking(em: -0.035, at: 26)
                     .foregroundStyle(ScorePalette.ink)
-                    .padding(.top, ScoreMetrics.Spacing.xs)
 
                 appearanceCard(settings: $settings)
                 dataCard
 
                 studioMark
                     .frame(maxWidth: .infinity)
-                    .padding(.top, ScoreMetrics.Spacing.lg)
+                    .padding(.top, 18)
             }
             .padding(.horizontal, ScoreMetrics.screenPadding)
+            .padding(.top, 6)
             .padding(.bottom, ScoreMetrics.tabBarClearance)
         }
         .background(ScorePalette.background)
@@ -106,7 +106,7 @@ struct SettingsView: View {
     // MARK: - Studio-Zeichen
 
     private var studioMark: some View {
-        VStack(spacing: ScoreMetrics.Spacing.sm) {
+        VStack(spacing: 10) {
             OpenRingMark()
                 .frame(width: 40, height: 40)
             Text("Product by Levo Studio")
@@ -251,7 +251,7 @@ private struct LanguageSegments: View {
                     selection = language
                 } label: {
                     Text(verbatim: language.title)
-                        .font(.chipLabel)
+                        .font(ScoreTypography.publicSans(500, 11.5))
                         .foregroundStyle(isSelected ? ScorePalette.ink : ScorePalette.inkSecondary)
                         .padding(.horizontal, ScoreMetrics.Spacing.sm)
                         .padding(.vertical, ScoreMetrics.Spacing.xs)

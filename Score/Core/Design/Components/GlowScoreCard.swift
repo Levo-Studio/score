@@ -41,19 +41,20 @@ struct GlowScoreCard: View {
     var isCelebrating = false
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            glow
-            content
-        }
-        .padding(.horizontal, 24)
-        .padding(.top, 26)
-        .padding(.bottom, ScoreMetrics.Spacing.lg)
-        .background(ScorePalette.scoreBackground)
-        .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.score, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: ScoreMetrics.Radius.score, style: .continuous)
-                .strokeBorder(ScorePalette.line, lineWidth: 1)
-        )
+        // Der Schein liegt als Hintergrund hinter dem Inhalt, nicht als zweite
+        // Ebene im Stapel: mit 350 Punkten Durchmesser würde er sonst die Höhe
+        // der Karte bestimmen und unter der Fusszeile eine leere Fläche lassen.
+        content
+            .background(alignment: .topLeading) { glow }
+            .padding(.horizontal, 24)
+            .padding(.top, 26)
+            .padding(.bottom, ScoreMetrics.Spacing.lg)
+            .background(ScorePalette.scoreBackground)
+            .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.score, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: ScoreMetrics.Radius.score, style: .continuous)
+                    .strokeBorder(ScorePalette.line, lineWidth: 1)
+            )
     }
 
     /// Der radiale Schein, angeschnitten in der oberen linken Ecke.

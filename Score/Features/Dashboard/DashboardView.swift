@@ -1,0 +1,233 @@
+import SwiftUI
+import SwiftData
+
+/// Das Dashboard: der erste Bildschirm nach dem Onboarding.
+///
+/// Er beantwortet genau eine Frage — wo stehe ich gerade — und zeigt darunter,
+/// woraus sich das ergibt: der Schnitt des gewählten Halbjahres und die Kurse,
+/// die ihn tragen.
+struct DashboardView: View {
+
+    let profile: StudentProfile
+
+    /// Wird vom „Alle"-Link ausgelöst und wechselt in die Fächerliste.
+    let onShowAllSubjects: () -> Void
+
+    @Query(sort: [SortDescriptor(\Subject.sortIndex)]) private var subjects: [Subject]
+
+    @State private var model = DashboardViewModel()
+    @State private var selectedSemester: Int
+
+    init(profile: StudentProfile, onShowAllSubjects: @escaping () -> Void) {
+        self.profile = profile
+        self.onShowAllSubjects = onShowAllSubjects
+        // Das zuletzt belegte Halbjahr ist das, an dem gerade gearbeitet wird.
+        _selectedSemester = State(initialValue: profile.classLevel.availableSemesters.last ?? 0)
+    }
+
+    private var inputs: [SubjectInput] {
+        subjects.map(SubjectInput.init)
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
+                header
+
+                GlowScoreCard(
+                    title: "Erwarteter Abischnitt",
+                    trend: model.trendText(for: selectedSemester),
+                    average: model.expectedGradeText,
+                    averageValue: model.outcome.expectedGrade,
+                    stats: [
+                        ScoreStat(value: model.blockOneText, label: "Block I"),
+                        ScoreStat(value: model.courseCountText, label: "Kurse"),
+                        ScoreStat(
+                            value: model.semesterAverageText(selectedSemester),
+                            label: "Ø \(Semester.label(selectedSemester))",
+                            isAccented: true
+                        )
+                    ],
+                    isCelebrating: model.isCelebrating
+                )
+
+                SemesterPicker(selection: $selectedSemester, labels: Semester.labels)
+
+                subjectSection
+            }
+            .padding(.horizontal, ScoreMetrics.screenPadding)
+            .padding(.top, ScoreMetrics.Spacing.xs)
+            .padding(.bottom, ScoreMetrics.tabBarClearance)
+        }
+        .scrollIndicators(.hidden)
+        .background(ScorePalette.background)
+        .onChange(of: inputs, initial: true) { _, newInputs in
+            model.update(with: newInputs)
+        }
+    }
+
+    // MARK: - Kopfzeile
+
+    private var header: some View {
+        HStack(alignment: .center, spacing: ScoreMetrics.Spacing.md) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(todayText)
+                    .font(.micro)
+                    .foregroundStyle(ScorePalette.inkSecondary)
+
+                Text("Läuft bei dir, \(profile.firstName)")
+                    .font(.greeting)
+                    .tracking(em: -0.03, at: 24)
+                    .foregroundStyle(ScorePalette.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            avatar
+        }
+    }
+
+    /// Datum in der Schreibweise der Design-Datei: „Donnerstag, 14. Aug.".
+    ///
+    /// Bewusst über `FormatStyle` statt über ein festes Muster — so steht das
+    /// Datum in der Sprache des Geräts richtig da.
+    private var todayText: String {
+        Date.now.formatted(
+            Date.FormatStyle()
+                .weekday(.wide)
+                .day()
+                .month(.abbreviated)
+        )
+    }
+
+    private var avatar: some View {
+        Circle()
+            .fill(ScorePalette.accent)
+            .frame(width: 44, height: 44)
+            .overlay(
+                Text(initial)
+                    .font(.cardTitle)
+                    .foregroundStyle(ScorePalette.accentInk)
+            )
+            .accessibilityHidden(true)
+    }
+
+    private var initial: String {
+        String(profile.firstName.prefix(1)).uppercased()
+    }
+
+    // MARK: - Kurse des Halbjahres
+
+    private var subjectSection: some View {
+        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Kurse im Halbjahr \(Semester.label(selectedSemester))")
+                    .font(.cardTitle)
+                    .foregroundStyle(ScorePalette.ink)
+
+                Spacer(minLength: ScoreMetrics.Spacing.sm)
+
+                Button(action: onShowAllSubjects) {
+                    Text("Alle")
+                        .font(.chipLabel)
+                        .foregroundStyle(ScorePalette.accent)
+                }
+                .buttonStyle(.plain)
+            }
+
+            if subjects.isEmpty {
+                emptyState
+            } else {
+                VStack(spacing: ScoreMetrics.Spacing.xs) {
+                    ForEach(subjects) { subject in
+                        SubjectRow(
+                            subject: subject,
+                            semesterIndex: selectedSemester,
+                            result: model.result(for: subject, semesterIndex: selectedSemester),
+                            entryCount: model.entryCount(for: subject, semesterIndex: selectedSemester)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private var emptyState: some View {
+        ScoreCard {
+            Text("Noch keine Fächer. Leg im Reiter Neu dein erstes Fach an.")
+                .font(.bodyText)
+                .foregroundStyle(ScorePalette.inkSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+// MARK: - Fachzeile
+
+/// Eine Zeile der Fächerliste: Punkt, Name, Meta, Punktzahl.
+private struct SubjectRow: View {
+
+    let subject: Subject
+    let semesterIndex: Int
+    let result: Int?
+    let entryCount: Int
+
+    private var isActive: Bool {
+        subject.isActive(in: semesterIndex)
+    }
+
+    /// Die Meta-Zeile, aus zwei übersetzbaren Teilen zusammengesetzt statt aus
+    /// einem interpolierten String — sonst fiele der Fachtyp aus dem Katalog.
+    private var meta: Text {
+        guard isActive else { return Text("nicht belegt") }
+        return Text(kindTitle) + Text(verbatim: " · ") + Text("\(entryCount) Leistungen")
+    }
+
+    /// Der ausgeschriebene Fachtyp für die Meta-Zeile.
+    private var kindTitle: LocalizedStringKey {
+        switch subject.kind {
+        case .leistungsfach: "Leistungsfach"
+        case .kernfach: "Kernfach"
+        case .basisfach: "Basisfach"
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: ScoreMetrics.Spacing.sm) {
+            SubjectDot(color: subject.color)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(verbatim: subject.name)
+                    .font(.rowTitle)
+                    .foregroundStyle(ScorePalette.ink)
+                    .lineLimit(1)
+
+                meta
+                    .font(.meta)
+                    .foregroundStyle(ScorePalette.inkSecondary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Text(result.map(String.init) ?? ScoreNumberFormat.placeholder)
+                .font(.rowValue)
+                .monospacedDigit()
+                .tracking(em: -0.03, at: 20)
+                .foregroundStyle(ScorePalette.ink)
+        }
+        .padding(.horizontal, ScoreMetrics.Spacing.md)
+        .padding(.vertical, 14)
+        .background(ScorePalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous)
+                .strokeBorder(ScorePalette.line, lineWidth: 1)
+        )
+        .opacity(isActive ? 1 : 0.55)
+    }
+}
+
+#Preview {
+    DashboardView(profile: StudentProfile(firstName: "Julius", hasCompletedOnboarding: true)) {}
+        .modelContainer(for: [Subject.self, SemesterResult.self, GradeEntry.self, StudentProfile.self], inMemory: true)
+}

@@ -43,9 +43,9 @@ struct ScoreApp: App {
     private static func makeContainer(for schema: Schema) -> ModelContainer {
         let configuration = ModelConfiguration(
             schema: schema,
-            cloudKitDatabase: isRunningTests
-                ? .none
-                : .private("iCloud.levo-studio.Score")
+            cloudKitDatabase: CloudKitAvailability.isEntitled
+                ? .private("iCloud.levo-studio.Score")
+                : .none
         )
 
         do {
@@ -57,17 +57,6 @@ struct ScoreApp: App {
         }
     }
 
-    /// Ob die App gerade als Wirt für die Unit-Tests läuft.
-    ///
-    /// Der Test-Host wird ohne Signierung gebaut und hat damit kein
-    /// iCloud-Entitlement. Jeder Testlauf würde sonst am oben beschriebenen
-    /// CloudKit-Absturz sterben, bevor der erste Test startet.
-    ///
-    /// Die Tests brauchen den Sync ohnehin nicht — sie prüfen den Rechenkern,
-    /// nicht den Abgleich zwischen Geräten.
-    private static var isRunningTests: Bool {
-        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-    }
 
     var body: some Scene {
         WindowGroup {

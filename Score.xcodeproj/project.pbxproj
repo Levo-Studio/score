@@ -6,8 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		76C100000000000000000008 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 769B1435302EFED8009C0B43 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 769B143C302EFED8009C0B43;
+			remoteInfo = Score;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		769B143D302EFED8009C0B43 /* Score.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Score.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		76C100000000000000000001 /* ScoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ScoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +27,22 @@
 			path = Score;
 			sourceTree = "<group>";
 		};
+		76C100000000000000000002 /* ScoreTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ScoreTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		769B143A302EFED8009C0B43 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		76C100000000000000000005 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +56,7 @@
 			isa = PBXGroup;
 			children = (
 				769B143F302EFED8009C0B43 /* Score */,
+				76C100000000000000000002 /* ScoreTests */,
 				769B143E302EFED8009C0B43 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				769B143D302EFED8009C0B43 /* Score.app */,
+				76C100000000000000000001 /* ScoreTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -70,6 +95,29 @@
 			productReference = 769B143D302EFED8009C0B43 /* Score.app */;
 			productType = "com.apple.product-type.application";
 		};
+		76C100000000000000000003 /* ScoreTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 76C10000000000000000000B /* Build configuration list for PBXNativeTarget "ScoreTests" */;
+			buildPhases = (
+				76C100000000000000000004 /* Sources */,
+				76C100000000000000000005 /* Frameworks */,
+				76C100000000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				76C100000000000000000007 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				76C100000000000000000002 /* ScoreTests */,
+			);
+			name = ScoreTests;
+			packageProductDependencies = (
+			);
+			productName = ScoreTests;
+			productReference = 76C100000000000000000001 /* ScoreTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -82,6 +130,10 @@
 				TargetAttributes = {
 					769B143C302EFED8009C0B43 = {
 						CreatedOnToolsVersion = 26.2;
+					};
+					76C100000000000000000003 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 769B143C302EFED8009C0B43;
 					};
 				};
 			};
@@ -101,12 +153,20 @@
 			projectRoot = "";
 			targets = (
 				769B143C302EFED8009C0B43 /* Score */,
+				76C100000000000000000003 /* ScoreTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		769B143B302EFED8009C0B43 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		76C100000000000000000006 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -123,7 +183,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		76C100000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		76C100000000000000000007 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 769B143C302EFED8009C0B43 /* Score */;
+			targetProxy = 76C100000000000000000008 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		769B1446302EFED9009C0B43 /* Debug */ = {
@@ -315,6 +390,50 @@
 			};
 			name = Release;
 		};
+		76C100000000000000000009 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2X9HKUD25Y;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "levo-studio.ScoreTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Score.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Score";
+			};
+			name = Debug;
+		};
+		76C10000000000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2X9HKUD25Y;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "levo-studio.ScoreTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Score.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Score";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -332,6 +451,15 @@
 			buildConfigurations = (
 				769B1449302EFED9009C0B43 /* Debug */,
 				769B144A302EFED9009C0B43 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		76C10000000000000000000B /* Build configuration list for PBXNativeTarget "ScoreTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				76C100000000000000000009 /* Debug */,
+				76C10000000000000000000A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

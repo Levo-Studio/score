@@ -1,0 +1,283 @@
+import Testing
+@testable import Score
+
+/// Die Kursauswahl für Block I und der Schnitt, der daraus folgt.
+///
+/// Alle Erwartungswerte sind von Hand ausgerechnet und stehen als Literale im
+/// Test. Wo eine Rechnung nicht offensichtlich ist, steht sie als Kommentar
+/// daneben.
+@Suite("BlockOneCalculator")
+struct BlockOneCalculatorTests {
+
+    // MARK: - Vollständiger Jahrgang
+
+    /// Ein Jahrgang, wie er typischerweise aussieht: drei Leistungsfächer, drei
+    /// Kernfächer neben den Leistungsfächern und sechs Basisfächer.
+    ///
+    /// Verfügbar sind 48 Kurse, eingebracht werden 42 — sechs Basisfach-Kurse
+    /// fallen heraus.
+    static let fullYear: [SubjectInput] = [
+        subject("lf-deutsch", .leistungsfach, allPoints: 12),
+        subject("lf-mathematik", .leistungsfach, allPoints: 11),
+        subject("lf-biologie", .leistungsfach, allPoints: 13),
+
+        subject("kf-englisch", .kernfach, allPoints: 10),
+        subject("kf-geschichte", .kernfach, allPoints: 9),
+        subject("kf-gemeinschaftskunde", .kernfach, allPoints: 11),
+
+        subject("bf-physik", .basisfach, allPoints: 14),
+        subject("bf-chemie", .basisfach, allPoints: 13),
+        subject("bf-geografie", .basisfach, allPoints: 12),
+        subject("bf-sport", .basisfach, allPoints: 11),
+        subject("bf-religion", .basisfach, allPoints: 5),
+        subject("bf-musik", .basisfach, allPoints: 4)
+    ]
+
+    @Test("Ein voller Jahrgang bringt genau 42 Kurse ein")
+    func fullYearIncludesExactly42() {
+        let outcome = BlockOneCalculator.calculate(for: Self.fullYear)
+
+        #expect(outcome.recordedCount == 48)
+        #expect(outcome.includedCount == 42)
+        #expect(outcome.excludedCourses.count == 6)
+    }
+
+    @Test("Die schwächsten Basisfach-Kurse fallen heraus")
+    func fullYearDropsWeakestOptionalCourses() {
+        let outcome = BlockOneCalculator.calculate(for: Self.fullYear)
+
+        // 30 Plätze minus 12 Kernfach-Kurse lassen 18 für die Basisfächer.
+        // Nach Physik, Chemie, Geografie und Sport (16 Kurse) bleiben zwei
+        // Plätze, die an die beiden ersten Religions-Halbjahre gehen.
+        #expect(outcome.excludedCourses == [
+            course("bf-religion", 2),
+            course("bf-religion", 3),
+            course("bf-musik", 0),
+            course("bf-musik", 1),
+            course("bf-musik", 2),
+            course("bf-musik", 3)
+        ])
+    }
+
+    @Test("Leistungs- und Kernfächer fallen nie heraus")
+    func fullYearNeverDropsMandatoryCourses() {
+        let outcome = BlockOneCalculator.calculate(for: Self.fullYear)
+
+        let mandatoryIDs = Self.fullYear
+            .filter { $0.kind != .basisfach }
+            .flatMap { subject in subject.semesters.map { course(subject.id, $0.index) } }
+
+        #expect(mandatoryIDs.count == 24)
+        for identifier in mandatoryIDs {
+            #expect(outcome.includedCourses.contains(identifier))
+            #expect(!outcome.excludedCourses.contains(identifier))
+        }
+    }
+
+    @Test("Der Schnitt des vollen Jahrgangs stimmt")
+    func fullYearAverage() {
+        let outcome = BlockOneCalculator.calculate(for: Self.fullYear)
+
+        // Leistungsfächer (12+11+13)*4 = 144
+        // Kernfächer     (10+ 9+11)*4 = 120
+        // Basisfächer    (14+13+12+11)*4 + 5*2 = 210
+        // Summe 474 auf 42 Kurse
+        #expect(isClose(outcome.averagePoints, 11.2857, tolerance: 0.001))
+        #expect(outcome.blockOnePoints == 474)
+        #expect(isClose(outcome.expectedGrade, 1.9048, tolerance: 0.001))
+    }
+
+    // MARK: - Die eigentliche Regel
+
+    @Test("Ein schwaches Kernfach wird nicht von einem starken Basisfach verdrängt")
+    func weakMandatorySubjectSurvives() {
+        var subjects = Self.fullYear
+        // Geschichte steht auf 3 Punkten — schlechter als jedes Basisfach.
+        subjects[4] = subject("kf-geschichte", .kernfach, allPoints: 3)
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        for index in 0..<4 {
+            #expect(outcome.includedCourses.contains(course("kf-geschichte", index)))
+            #expect(!outcome.excludedCourses.contains(course("kf-geschichte", index)))
+        }
+
+        // Gleichzeitig fliegt Musik mit 4 Punkten heraus, obwohl es besser
+        // dasteht als Geschichte. Genau das ist der Sinn der Regel: Kernfächer
+        // sind gesetzt, Basisfächer konkurrieren.
+        #expect(outcome.excludedCourses.contains(course("bf-musik", 0)))
+        #expect(outcome.includedCourses.contains(course("bf-physik", 0)))
+        #expect(outcome.includedCount == 42)
+    }
+
+    // MARK: - Zu wenig Kurse
+
+    @Test("In Kursstufe 1 kommen weniger als 42 Kurse zusammen")
+    func firstYearHasTooFewCourses() {
+        let subjects = [
+            subject("lf-deutsch", .leistungsfach, points: [13, 13]),
+            subject("lf-mathematik", .leistungsfach, points: [12, 12]),
+            subject("lf-biologie", .leistungsfach, points: [11, 11]),
+
+            subject("kf-englisch", .kernfach, points: [10, 10]),
+            subject("kf-geschichte", .kernfach, points: [9, 9]),
+            subject("kf-gemeinschaftskunde", .kernfach, points: [14, 14]),
+
+            subject("bf-physik", .basisfach, points: [12, 12]),
+            subject("bf-chemie", .basisfach, points: [8, 8]),
+            subject("bf-geografie", .basisfach, points: [7, 7]),
+            subject("bf-sport", .basisfach, points: [15, 15]),
+            subject("bf-religion", .basisfach, points: [10, 10]),
+            subject("bf-musik", .basisfach, points: [6, 6])
+        ]
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        // 24 Kurse, davon 6 aus Kernfächern — die 24 freien Plätze reichen für
+        // alle zwölf Basisfach-Kurse. Es fällt nichts heraus.
+        #expect(outcome.includedCount == 24)
+        #expect(outcome.includedCount < BlockOneCalculator.totalCourseCount)
+        #expect(outcome.excludedCourses.isEmpty)
+
+        // (13+12+11 + 10+9+14 + 12+8+7+15+10+6) * 2 = 254 auf 24 Kurse
+        #expect(isClose(outcome.averagePoints, 10.5833, tolerance: 0.001))
+        #expect(isClose(outcome.expectedGrade, 2.1389, tolerance: 0.001))
+
+        // 254/24 * 42 = 444,5 — die halbe Punktzahl wird aufgerundet.
+        #expect(outcome.blockOnePoints == 445)
+    }
+
+    // MARK: - Mehr Kernfächer als Plätze
+
+    @Test("Belegen die Kernfächer alle 30 Plätze, bleibt für Basisfächer nichts")
+    func mandatorySubjectsFillEverySlot() {
+        let advanced = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
+        // Acht Kernfächer sind mehr, als die Prüfungsordnung vorsieht — der
+        // Rechenkern muss den Fall trotzdem sauber behandeln.
+        let mandatory = (1...8).map { subject("kf-\($0)", .kernfach, allPoints: 10) }
+        let optional = (1...2).map { subject("bf-\($0)", .basisfach, allPoints: 15) }
+
+        let outcome = BlockOneCalculator.calculate(for: advanced + mandatory + optional)
+
+        // 32 Kernfach-Kurse auf 30 Plätze: kein freier Platz, alle acht
+        // Basisfach-Kurse fallen heraus — auch die mit 15 Punkten.
+        #expect(outcome.excludedCourses.count == 8)
+        for index in 1...2 {
+            for semesterIndex in 0..<4 {
+                #expect(outcome.excludedCourses.contains(course("bf-\(index)", semesterIndex)))
+            }
+        }
+
+        // Gesetzte Kurse werden nie gekürzt, deshalb liegt die Zahl der
+        // eingebrachten Kurse hier über den nominellen 42.
+        #expect(outcome.includedCount == 44)
+
+        // (12*12 + 32*10) = 464 auf 44 Kurse
+        #expect(isClose(outcome.averagePoints, 10.5455, tolerance: 0.001))
+        #expect(outcome.blockOnePoints == 443)
+    }
+
+    // MARK: - Stabilität
+
+    @Test("Bei Gleichstand an der Auswahlgrenze bleibt die Auswahl stabil")
+    func selectionIsStableOnTies() {
+        // 29 Kernfach-Kurse lassen genau einen freien Platz.
+        let mandatory = (1...7).map { subject("kf-\($0)", .kernfach, allPoints: 10) }
+            + [subject("kf-8", .kernfach, points: [10])]
+        let optional = [
+            subject("bf-alpha", .basisfach, points: [10, 10]),
+            subject("bf-beta", .basisfach, points: [10])
+        ]
+
+        let subjects = [subject("lf-1", .leistungsfach, allPoints: 12)] + mandatory + optional
+
+        let first = BlockOneCalculator.calculate(for: subjects)
+        let second = BlockOneCalculator.calculate(for: subjects)
+
+        #expect(first == second)
+
+        // Drei gleich gute Kurse auf einen Platz: es gewinnt die kleinere
+        // Fachkennung, bei gleicher Kennung das frühere Halbjahr.
+        #expect(first.includedCourses.contains(course("bf-alpha", 0)))
+        #expect(first.excludedCourses == [course("bf-alpha", 1), course("bf-beta", 0)])
+    }
+
+    // MARK: - Punktsumme und Note
+
+    @Test("Die Block-I-Punkte sind der Schnitt auf 42 Kurse hochgerechnet")
+    func blockOnePointsFromAverage() {
+        let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 11) }
+            + (1...2).map { subject("kf-\($0)", .kernfach, allPoints: 8) }
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        // (12*11 + 8*8) = 196 auf 20 Kurse = 9,8 Punkte
+        #expect(isClose(outcome.averagePoints, 9.8))
+        // 9,8 * 42 = 411,6 -> 412
+        #expect(outcome.blockOnePoints == 412)
+        // (17 - 9,8) / 3 = 2,4
+        #expect(isClose(outcome.expectedGrade, 2.4))
+    }
+
+    @Test("Der erwartete Schnitt ist nach unten auf 4,0 gedeckelt")
+    func expectedGradeIsCappedAtFour() {
+        let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 0) }
+            + (1...3).map { subject("kf-\($0)", .kernfach, allPoints: 0) }
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        #expect(isClose(outcome.averagePoints, 0))
+        #expect(outcome.blockOnePoints == 0)
+        // 17/3 = 5,67 — gedeckelt auf 4,0
+        #expect(isClose(outcome.expectedGrade, 4.0))
+    }
+
+    @Test("Der erwartete Schnitt ist nach oben auf 1,0 gedeckelt")
+    func expectedGradeIsCappedAtOne() {
+        let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 15) }
+            + (1...3).map { subject("kf-\($0)", .kernfach, allPoints: 15) }
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        #expect(isClose(outcome.averagePoints, 15))
+        // 15 * 42 = 630
+        #expect(outcome.blockOnePoints == 630)
+        // 17/3 - 5 = 0,67 — gedeckelt auf 1,0
+        #expect(isClose(outcome.expectedGrade, 1.0))
+    }
+
+    // MARK: - Randfälle
+
+    @Test("Ohne Fächer kommt ein leeres, aber gültiges Ergebnis heraus")
+    func emptyInput() {
+        let outcome = BlockOneCalculator.calculate(for: [])
+
+        #expect(outcome.recordedCount == 0)
+        #expect(outcome.includedCount == 0)
+        #expect(outcome.excludedCourses.isEmpty)
+        #expect(isClose(outcome.averagePoints, 0))
+        #expect(outcome.blockOnePoints == 0)
+        #expect(isClose(outcome.expectedGrade, 4.0))
+    }
+
+    @Test("Fächer ohne erfasste Leistung sind keine Kurse mit null Punkten")
+    func semestersWithoutEntriesAreNoCourses() {
+        let subjects = [
+            subject("lf-deutsch", .leistungsfach, points: [12, 12]),
+            SubjectInput(
+                id: "bf-musik",
+                kind: .basisfach,
+                semesters: [
+                    SemesterInput(index: 0, entries: []),
+                    SemesterInput(index: 1, isActive: false, entries: [GradeInput(points: 3, kind: .written)])
+                ]
+            )
+        ]
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        #expect(outcome.recordedCount == 2)
+        #expect(outcome.includedCount == 2)
+        #expect(isClose(outcome.averagePoints, 12))
+    }
+}

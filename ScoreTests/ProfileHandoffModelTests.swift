@@ -94,3 +94,37 @@ struct ProfileHandoffModelTests {
         #expect(restarting.stage == .onboarding)
     }
 }
+
+/// Was „Neu einrichten" mit den gesyncten Daten macht.
+@Suite("ProfileHandoffReset")
+@MainActor
+struct ProfileHandoffResetTests {
+
+    @Test("Verwerfen löscht Profil, Fächer, Halbjahre und Leistungen")
+    func discardRemovesEverything() throws {
+        let container = try ModelContainer(
+            for: Subject.self, SemesterResult.self, GradeEntry.self, StudentProfile.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = container.mainContext
+
+        context.insert(StudentProfile(firstName: "Jonas", hasCompletedOnboarding: true))
+
+        let subject = Subject(name: "Mathematik", abbreviation: "M", colorValue: 0x1C6B6E, kind: .leistungsfach)
+        context.insert(subject)
+        let semester = SemesterResult(index: 0)
+        semester.subject = subject
+        context.insert(semester)
+        let entry = GradeEntry(category: .exam, title: "Klassenarbeit 1")
+        entry.semester = semester
+        context.insert(entry)
+        try context.save()
+
+        ProfileHandoffReset.discardSyncedData(in: context)
+
+        #expect(try context.fetch(FetchDescriptor<StudentProfile>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<Subject>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<SemesterResult>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<GradeEntry>()).isEmpty)
+    }
+}

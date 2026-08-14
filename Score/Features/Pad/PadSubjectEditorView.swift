@@ -1,43 +1,27 @@
 import SwiftUI
 import SwiftData
 
-/// Wofür der Editor geöffnet wurde.
-enum SubjectEditorTarget: Identifiable, Hashable {
-    case new
-    case existing(Subject)
-
-    var id: String {
-        switch self {
-        case .new: "new"
-        case .existing(let subject): subject.identifier.uuidString
-        }
-    }
-}
-
-/// Der Fach-Editor — derselbe Bildschirm für „neu" und „bearbeiten".
+/// Der Fach-Editor des iPad-Layouts.
 ///
-/// Er arbeitet auf einem Entwurf und schreibt erst beim Speichern ins Modell.
-/// Beim Bearbeiten wäre das Gegenteil verlockend (direkt am `@Bindable` hängen),
-/// aber dann würde ein abgebrochener Wechsel des Fachtyps den Schnitt bereits
-/// verändert haben — Block I hängt am Typ.
-struct SubjectEditorView: View {
+/// Kein Sheet, sondern ein Bildschirm: die Sidebar bleibt daneben stehen, man
+/// sieht also weiter, wo das Fach hingehört. Links steht, was das Fach *ist* —
+/// Name, Vorlage, Farbe, Kürzel —, rechts, wie es *rechnet*: Typ, belegte
+/// Halbjahre, Gewichtung.
+struct PadSubjectEditorView: View {
 
     let target: SubjectEditorTarget
 
-    /// Wird gerufen, wenn das Fach gelöscht wurde, damit eine offene
-    /// Fachansicht sich schliessen kann statt auf einen toten Datensatz zu zeigen.
-    var onDeleted: (() -> Void)?
+    @Binding var route: PadRoute
 
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
 
     @Query(sort: \Subject.sortIndex) private var subjects: [Subject]
 
     @State private var draft: SubjectDraft
 
-    init(target: SubjectEditorTarget, onDeleted: (() -> Void)? = nil) {
+    init(target: SubjectEditorTarget, route: Binding<PadRoute>) {
         self.target = target
-        self.onDeleted = onDeleted
+        _route = route
         _draft = State(initialValue: SubjectDraft(subject: target.editedSubject))
     }
 
@@ -49,42 +33,64 @@ struct SubjectEditorView: View {
     private var canDelete: Bool { target.editedSubject?.isCustom == true }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
-                    nameCard
-                    if isNew { presetCard }
-                    appearanceCard
-                    kindCard
-                    semesterCard
-                    weightCard
-                    PrimaryButton(title: isNew ? "Fach anlegen" : "Änderungen sichern", action: save)
-                        .padding(.top, ScoreMetrics.Spacing.xxs)
-                    if canDelete { deleteButton }
+        ScrollView {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: ScoreMetrics.Spacing.lg) {
+                    identityColumn.frame(width: 452)
+                    calculationColumn.frame(minWidth: 340)
                 }
-                .padding(.horizontal, ScoreMetrics.screenPadding)
-                .padding(.vertical, ScoreMetrics.Spacing.md)
+
+                VStack(spacing: ScoreMetrics.Spacing.lg) {
+                    identityColumn
+                    calculationColumn
+                }
             }
-            .background(ScorePalette.background)
-            .navigationTitle(isNew ? "Neues Fach" : "Fach bearbeiten")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { dismiss() }
-                        .font(.chipLabel)
-                        .foregroundStyle(ScorePalette.inkSecondary)
+            .padding(.horizontal, PadMetrics.contentPadding)
+            .padding(.top, 22)
+            .padding(.bottom, PadMetrics.contentPadding)
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    // MARK: - Linke Spalte
+
+    private var identityColumn: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            nameCard
+            if isNew { presetCard }
+            appearanceCard
+
+            Button(action: save) {
+                Text(isNew ? "Fach anlegen" : "Änderungen sichern")
+                    .font(.buttonLabel)
+                    .foregroundStyle(ScorePalette.accentInk)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 17)
+                    .background(ScorePalette.accent)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            }
+            .buttonStyle(.plain)
+
+            if canDelete {
+                Button(role: .destructive, action: delete) {
+                    Text("Fach löschen")
+                        .font(ScoreTypography.publicSans(500, 13))
+                        .foregroundStyle(ScorePalette.warn)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, ScoreMetrics.Spacing.xs)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
             }
         }
     }
 
-    // MARK: - Name
-
     private var nameCard: some View {
-        ScoreCard(padding: 18) {
+        PadCard(horizontalPadding: 18, verticalPadding: 18, cornerRadius: 24) {
             HStack(spacing: 14) {
                 SubjectDot(color: Color(UInt32(draft.colorValue)), size: 46, cornerRadius: 15)
                 TextField("Fachname", text: $draft.name)
+                    .textFieldStyle(.plain)
                     .font(ScoreTypography.publicSans(600, 17))
                     .foregroundStyle(ScorePalette.ink)
                     .textInputAutocapitalization(.words)
@@ -93,10 +99,8 @@ struct SubjectEditorView: View {
         }
     }
 
-    // MARK: - Standardfächer
-
     private var presetCard: some View {
-        ScoreCard(padding: 18) {
+        PadCard(horizontalPadding: 18, verticalPadding: 18, cornerRadius: 24) {
             VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
                 Text("Standardfach wählen")
                     .font(.micro)
@@ -117,10 +121,8 @@ struct SubjectEditorView: View {
         }
     }
 
-    // MARK: - Farbe und Kürzel
-
     private var appearanceCard: some View {
-        ScoreCard(padding: 18) {
+        PadCard(horizontalPadding: 18, verticalPadding: 18, cornerRadius: 24) {
             VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
                 Text("Farbe")
                     .font(.micro)
@@ -131,7 +133,7 @@ struct SubjectEditorView: View {
                         Button {
                             draft.colorValue = Int(value)
                         } label: {
-                            SubjectDot(color: Color(value), size: 42, cornerRadius: 14)
+                            SubjectDot(color: Color(value), size: 44, cornerRadius: 14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 17, style: .continuous)
                                         .strokeBorder(
@@ -163,10 +165,18 @@ struct SubjectEditorView: View {
         }
     }
 
-    // MARK: - Fachtyp
+    // MARK: - Rechte Spalte
+
+    private var calculationColumn: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            kindCard
+            semesterCard
+            weightCard
+        }
+    }
 
     private var kindCard: some View {
-        ScoreCard(padding: 18) {
+        PadCard(horizontalPadding: 18, verticalPadding: 18, cornerRadius: 24) {
             VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
                 Text("Fachtyp")
                     .font(.micro)
@@ -179,23 +189,14 @@ struct SubjectEditorView: View {
                         }
                     }
                 }
-
-                Text("Leistungs- und Kernfächer zählen immer. Basisfächer treten gegeneinander an — nur die besten füllen die freien Plätze in Block I.")
-                    .font(.meta)
-                    .foregroundStyle(ScorePalette.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
 
-    // MARK: - Belegte Halbjahre
-
     private var semesterCard: some View {
-        ScoreCard(padding: 18) {
+        PadCard(horizontalPadding: 18, verticalPadding: 18, cornerRadius: 24) {
             VStack(alignment: .leading, spacing: 14) {
-                Text("Belegte Halbjahre")
-                    .font(.cardTitle)
-                    .foregroundStyle(ScorePalette.ink)
+                PadCardTitle(title: "Belegte Halbjahre")
 
                 HStack(spacing: 9) {
                     ForEach(Semester.allIndices, id: \.self) { index in
@@ -203,19 +204,15 @@ struct SubjectEditorView: View {
                         Button {
                             draft.toggleSemester(index)
                         } label: {
-                            Text(Semester.label(index))
-                                .font(.segmentLabel)
+                            Text("HJ \(Semester.label(index))")
+                                .font(ScoreTypography.archivo(600, 12.5))
                                 .monospacedDigit()
                                 .foregroundStyle(isOn ? ScorePalette.accentInk : ScorePalette.inkSecondary)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 13)
-                                .frame(minHeight: ScoreMetrics.minimumTapTarget)
                                 .background(
-                                    RoundedRectangle(
-                                        cornerRadius: ScoreMetrics.Radius.group,
-                                        style: .continuous
-                                    )
-                                    .fill(isOn ? ScorePalette.accent : ScorePalette.fill)
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .fill(isOn ? ScorePalette.accent : ScorePalette.fill)
                                 )
                                 .contentShape(Rectangle())
                         }
@@ -224,22 +221,18 @@ struct SubjectEditorView: View {
                 }
 
                 Text("Nur belegte Halbjahre zählen für Block I. Abgewählte bleiben gespeichert, gehen aber nicht in den Schnitt ein.")
-                    .font(.meta)
+                    .font(ScoreTypography.publicSans(400, 11.5))
                     .foregroundStyle(ScorePalette.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
 
-    // MARK: - Gewichtung
-
     private var weightCard: some View {
-        ScoreCard(padding: 18) {
+        PadCard(horizontalPadding: 18, verticalPadding: 18, cornerRadius: 24) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("Gewichtung schriftlich zu mündlich")
-                        .font(.cardTitle)
-                        .foregroundStyle(ScorePalette.ink)
+                    PadCardTitle(title: "Gewichtung schriftlich zu mündlich")
                     Spacer(minLength: ScoreMetrics.Spacing.xs)
                     Text("\(draft.writtenShare) : \(100 - draft.writtenShare)")
                         .font(.chipLabel)
@@ -254,73 +247,34 @@ struct SubjectEditorView: View {
                     Spacer()
                     Text("Mündlich")
                 }
-                .font(.micro)
+                .font(ScoreTypography.publicSans(400, 10.5))
                 .foregroundStyle(ScorePalette.inkSecondary)
 
                 Text("Gilt für alle vier Halbjahre dieses Fachs. Einzelne Leistungen gewichtest du in der Fachansicht.")
-                    .font(.meta)
+                    .font(ScoreTypography.publicSans(400, 11.5))
                     .foregroundStyle(ScorePalette.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
 
-    // MARK: - Löschen
+    // MARK: - Sichern und Löschen
 
-    private var deleteButton: some View {
-        Button(role: .destructive, action: delete) {
-            Text("Fach löschen")
-                .font(ScoreTypography.publicSans(500, 13))
-                .foregroundStyle(ScorePalette.warn)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, ScoreMetrics.Spacing.sm)
-                .frame(minHeight: ScoreMetrics.minimumTapTarget)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Sichern
-
+    /// Nach dem Sichern steht das Fach da, an dem gerade gearbeitet wurde — auch
+    /// bei einem neuen. Zurück auf die Übersicht zu springen würde den Faden
+    /// verlieren, den man mit dem Anlegen gerade aufgenommen hat.
     private func save() {
-        draft.save(to: target.editedSubject, in: modelContext, existingSubjects: subjects)
-        dismiss()
+        let subject = draft.save(
+            to: target.editedSubject,
+            in: modelContext,
+            existingSubjects: subjects
+        )
+        route = .subject(subject.identifier)
     }
 
     private func delete() {
         guard let subject = target.editedSubject, subject.isCustom else { return }
         modelContext.delete(subject)
-        onDeleted?()
-        dismiss()
+        route = .dashboard
     }
-}
-
-// MARK: - Hilfen
-
-extension SubjectEditorTarget {
-
-    /// Das Fach, das bearbeitet wird, oder `nil` bei einem neuen.
-    var editedSubject: Subject? {
-        switch self {
-        case .new: nil
-        case .existing(let subject): subject
-        }
-    }
-}
-
-extension SubjectKind {
-
-    /// Der ausgeschriebene Name für den Editor. Die Liste zeigt nur das Kürzel.
-    var editorLabel: String {
-        switch self {
-        case .leistungsfach: String(localized: "Leistungsfach")
-        case .kernfach: String(localized: "Kernfach")
-        case .basisfach: String(localized: "Basisfach")
-        }
-    }
-}
-
-#Preview {
-    SubjectEditorView(target: .new)
-        .modelContainer(for: [Subject.self, SemesterResult.self, GradeEntry.self], inMemory: true)
 }

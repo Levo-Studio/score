@@ -3,31 +3,73 @@ import SwiftUI
 // MARK: - Willkommen
 
 /// Die Willkommensseite: Markenzeichen, Titel, ein Satz zum Zweck.
+///
+/// Anders als die Schritte danach steht hier alles mittig und vertikal
+/// zentriert, hinter dem Markenzeichen ein weicher Schein. Die Seite fragt
+/// nichts — sie soll einmal ruhig dastehen, bevor die Eingaben beginnen.
 struct WelcomeStep: View {
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xl) {
+        VStack(spacing: ScoreMetrics.Spacing.xl) {
+            Spacer(minLength: 0)
+
             ScoreMark()
-                .frame(width: 64, height: 64)
+                .frame(width: 96, height: 96)
+                .background {
+                    // Der Schein aus der Design-Datei: 320pt, radial, weich bis
+                    // zur Unsichtbarkeit bei 70 % des Radius.
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                stops: [
+                                    .init(color: ScorePalette.glow, location: 0),
+                                    .init(color: ScorePalette.glow.opacity(0), location: 0.7)
+                                ],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 160
+                            )
+                        )
+                        .frame(width: 320, height: 320)
+                        .allowsHitTesting(false)
+                }
                 .staggeredAppearance(index: 0)
 
-            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
+            VStack(spacing: 0) {
                 Text("Score")
-                    .font(.stepTitle)
-                    .tracking(em: -0.03, at: 27)
+                    .font(ScoreTypography.archivo(800, 34))
+                    .tracking(em: -0.04, at: 34)
                     .foregroundStyle(ScorePalette.ink)
-                    .staggeredAppearance(index: 1)
 
-                Text("Dein Abischnitt, bevor er im Zeugnis steht. Trag deine Leistungen ein, Score rechnet Block I und zeigt dir, wo du stehst.")
-                    .font(.bodyText)
-                    .lineSpacing(5)
+                Text("Abi Planer · Baden-Württemberg")
+                    .font(ScoreTypography.publicSans(400, 10.5))
                     .foregroundStyle(ScorePalette.inkSecondary)
+                    .padding(.top, ScoreMetrics.Spacing.sm)
+
+                Text("Trag deine Halbjahresergebnisse ein, Score rechnet deinen Abischnitt mit. Ab der Kursstufe 1.")
+                    .font(ScoreTypography.publicSans(400, 14))
+                    .lineSpacing(5.6)
+                    .foregroundStyle(ScorePalette.inkSecondary)
+                    .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                    .staggeredAppearance(index: 2)
+                    .frame(maxWidth: 270)
+                    .padding(.top, ScoreMetrics.Spacing.lg)
             }
+            .staggeredAppearance(index: 1)
+
+            Spacer(minLength: 0)
+
+            Text("Kein Account nötig — alles wird über iCloud gesynct.")
+                .font(ScoreTypography.publicSans(400, 13))
+                .foregroundStyle(ScorePalette.inkSecondary)
+                .multilineTextAlignment(.center)
+                .staggeredAppearance(index: 2)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 60)
+        .frame(maxWidth: .infinity)
+        // Die Seite lebt vom Weissraum um das Markenzeichen. In einer ScrollView
+        // fällt `maxHeight: .infinity` auf die Inhaltshöhe zusammen, deshalb wird
+        // die Höhe des Containers ausdrücklich angefordert.
+        .containerRelativeFrame(.vertical)
     }
 }
 

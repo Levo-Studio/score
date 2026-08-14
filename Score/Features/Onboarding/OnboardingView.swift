@@ -104,8 +104,8 @@ struct OnboardingView: View {
 
     private var primaryTitle: LocalizedStringKey {
         switch model.step {
-        case .welcome: "Los geht's"
-        case .summary: "Fertig"
+        case .welcome: "Einrichten"
+        case .summary: "Los geht’s"
         default: "Weiter"
         }
     }

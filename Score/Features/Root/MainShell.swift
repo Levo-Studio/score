@@ -14,6 +14,12 @@ struct MainShell: View {
 
     @State private var selectedTab: ScoreTab = .dashboard
 
+    /// Der Reiter „Neu" führt keinen eigenen Bildschirm, sondern öffnet den
+    /// Fach-Editor über dem zuletzt gezeigten Reiter — ein Reiter, auf dem man
+    /// stehenbleiben kann, wäre hier sinnlos.
+    @State private var isAddingSubject = false
+    @State private var tabBeforeAdding: ScoreTab = .dashboard
+
     var body: some View {
         ZStack(alignment: .bottom) {
             ScorePalette.background
@@ -26,6 +32,15 @@ struct MainShell: View {
                 .padding(.horizontal, ScoreMetrics.screenPadding)
                 .padding(.bottom, ScoreMetrics.Spacing.xs)
         }
+        .onChange(of: selectedTab) { previous, current in
+            guard current == .add else { return }
+            tabBeforeAdding = previous == .add ? .dashboard : previous
+            selectedTab = tabBeforeAdding
+            isAddingSubject = true
+        }
+        .sheet(isPresented: $isAddingSubject) {
+            SubjectEditorView(target: .new)
+        }
     }
 
     @ViewBuilder
@@ -35,12 +50,10 @@ struct MainShell: View {
             DashboardView(profile: profile) {
                 selectedTab = .subjects
             }
-        case .subjects:
-            SubjectsTabPlaceholder()
-        case .add:
-            AddTabPlaceholder()
+        case .subjects, .add:
+            SubjectListView()
         case .settings:
-            SettingsTabPlaceholder()
+            SettingsView()
         }
     }
 }

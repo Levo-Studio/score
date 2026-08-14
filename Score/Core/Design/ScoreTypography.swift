@@ -139,6 +139,12 @@ extension Font {
     /// Chip- und Segment-Beschriftung, `500 12.5px`.
     static let chipLabel = ScoreTypography.publicSans(500, 12.5)
 
+    /// Beschriftung einer Einstellungszeile, `500 14px`.
+    static let settingsRowTitle = ScoreTypography.publicSans(500, 14)
+
+    /// Wert am rechten Rand einer Einstellungszeile, `500 13.5px`.
+    static let settingsRowValue = ScoreTypography.publicSans(500, 13.5)
+
     /// Beschriftung eines primären Buttons, `600 14px`.
     static let buttonLabel = ScoreTypography.publicSans(600, 14)
 

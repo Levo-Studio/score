@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Score speichert ausschliesslich in der privaten CloudKit-Datenbank des
+	  Nutzers. Es gibt kein eigenes Backend und kein Konto: der Sync laeuft
+	  ueber die Apple-ID, die auf dem Geraet ohnehin angemeldet ist.
+	-->
+	<key>com.apple.developer.icloud-container-identifiers</key>
+	<array>
+		<string>iCloud.levo-studio.Score</string>
+	</array>
+	<key>com.apple.developer.icloud-services</key>
+	<array>
+		<string>CloudKit</string>
+	</array>
+	<!--
+	  CloudKit meldet Aenderungen anderer Geraete per stiller Push-Nachricht.
+	  Ohne remote-notification wuerde erst beim naechsten Start synchronisiert.
+	-->
+	<key>aps-environment</key>
+	<string>development</string>
+</dict>
+</plist>

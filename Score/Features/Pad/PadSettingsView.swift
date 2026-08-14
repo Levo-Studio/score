@@ -88,6 +88,12 @@ struct PadSettingsView: View {
                 }
             }
             .buttonStyle(.plain)
+
+            DeleteAllDataButton {
+                PadSettingsRow(title: "Alle Daten löschen", isFirst: false, titleColor: ScorePalette.warn) {
+                    EmptyView()
+                }
+            }
         }
         .background(ScorePalette.surface)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
@@ -157,13 +163,18 @@ private struct PadSettingsRow<Accessory: View>: View {
 
     let title: LocalizedStringKey
     let isFirst: Bool
+
+    /// Die Farbe des Titels. Zerstörerische Zeilen stehen in `ScorePalette.warn`
+    /// und sind damit schon vor dem Antippen als solche zu erkennen.
+    var titleColor: Color = ScorePalette.ink
+
     @ViewBuilder var accessory: Accessory
 
     var body: some View {
         HStack(spacing: ScoreMetrics.Spacing.sm) {
             Text(title)
                 .font(ScoreTypography.publicSans(500, 14))
-                .foregroundStyle(ScorePalette.ink)
+                .foregroundStyle(titleColor)
             Spacer(minLength: 0)
             accessory
         }

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Diese Datei trägt nur die Schlüssel nach, die sich über die
+	  INFOPLIST_KEY_-Build-Settings nicht setzen lassen. Alles andere erzeugt
+	  Xcode weiterhin selbst und mischt es hier hinein.
+	-->
+
+	<!-- CloudKit meldet Änderungen anderer Geräte per stiller Push-Nachricht. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+
+	<!-- Die beiden Variable Fonts der Design-Sprache. -->
+	<key>UIAppFonts</key>
+	<array>
+		<string>Archivo.ttf</string>
+		<string>PublicSans.ttf</string>
+	</array>
+</dict>
+</plist>

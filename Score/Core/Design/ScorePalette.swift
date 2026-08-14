@@ -109,7 +109,7 @@ enum ScorePalette {
 extension Color {
 
     /// Baut eine Farbe aus einem RGB-Hexwert, optional mit Deckkraft.
-    init(_ hex: UInt32, alpha: Double = 1) {
+    nonisolated init(_ hex: UInt32, alpha: Double = 1) {
         self.init(
             .sRGB,
             red: Double((hex >> 16) & 0xFF) / 255,
@@ -120,7 +120,7 @@ extension Color {
     }
 
     /// Baut eine Farbe, die je nach Farbschema zwischen zwei Hexwerten wechselt.
-    init(light: UInt32, lightAlpha: Double = 1, dark: UInt32, darkAlpha: Double = 1) {
+    nonisolated init(light: UInt32, lightAlpha: Double = 1, dark: UInt32, darkAlpha: Double = 1) {
         self.init(UIColor { traits in
             let hex = traits.userInterfaceStyle == .dark ? dark : light
             let alpha = traits.userInterfaceStyle == .dark ? darkAlpha : lightAlpha

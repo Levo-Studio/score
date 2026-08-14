@@ -63,19 +63,24 @@ struct SubjectEditorView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
+                VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
                     nameCard
-                    if isNew { presetCard }
-                    appearanceCard
-                    kindCard
-                    semesterCard
+                    if isNew { presetSection }
+                    colorSection
+                    abbreviationSection
+                    kindSection
+                    semesterSection
                     weightCard
-                    PrimaryButton(title: isNew ? "Fach anlegen" : "Änderungen sichern", action: save)
-                        .padding(.top, ScoreMetrics.Spacing.xxs)
+                    PrimaryButton(
+                        title: isNew ? "Fach anlegen" : "Änderungen sichern",
+                        verticalPadding: 17,
+                        action: save
+                    )
                     if canDelete { deleteButton }
                 }
                 .padding(.horizontal, ScoreMetrics.screenPadding)
-                .padding(.vertical, ScoreMetrics.Spacing.md)
+                .padding(.top, 6)
+                .padding(.bottom, ScoreMetrics.Spacing.xl)
             }
             .background(ScorePalette.background)
             .navigationTitle(isNew ? "Neues Fach" : "Fach bearbeiten")
@@ -90,14 +95,23 @@ struct SubjectEditorView: View {
         }
     }
 
+    /// Die Beschriftung über einer Gruppe. In der Design-Datei steht sie nackt
+    /// über den Chips, ohne Karte darum — die Karten sind den Eingaben mit
+    /// eigener Fläche vorbehalten.
+    private func groupLabel(_ title: LocalizedStringKey) -> some View {
+        Text(title)
+            .font(.micro)
+            .foregroundStyle(ScorePalette.inkSecondary)
+    }
+
     // MARK: - Name
 
     private var nameCard: some View {
-        ScoreCard(padding: 18) {
+        ScoreCard {
             HStack(spacing: 14) {
-                SubjectDot(color: Color(UInt32(colorValue)), size: 46, cornerRadius: 15)
+                SubjectDot(color: Color(UInt32(colorValue)), size: 44, cornerRadius: 14)
                 TextField("Fachname", text: $name)
-                    .font(ScoreTypography.publicSans(600, 17))
+                    .font(ScoreTypography.publicSans(600, 16))
                     .foregroundStyle(ScorePalette.ink)
                     .textInputAutocapitalization(.words)
                     .autocorrectionDisabled()
@@ -107,75 +121,95 @@ struct SubjectEditorView: View {
 
     // MARK: - Standardfächer
 
-    private var presetCard: some View {
-        ScoreCard(padding: 18) {
-            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
-                Text("Standardfach wählen")
-                    .font(.micro)
-                    .foregroundStyle(ScorePalette.inkSecondary)
+    private var presetSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            groupLabel("Standardfach wählen")
 
-                ChipFlow {
-                    ForEach(SubjectCatalog.all) { template in
-                        ScoreChip(title: template.name, isSelected: name == template.name) {
-                            name = template.name
-                            abbreviation = template.abbreviation
-                            colorValue = template.colorValue
-                            kind = template.defaultKind
-                        }
+            ChipFlow {
+                ForEach(SubjectCatalog.all) { template in
+                    ScoreChip(title: template.name, isSelected: name == template.name) {
+                        name = template.name
+                        abbreviation = template.abbreviation
+                        colorValue = template.colorValue
+                        kind = template.defaultKind
                     }
                 }
+            }
 
-                Text("Oder oben einen eigenen Namen eintippen.")
-                    .font(.meta)
-                    .foregroundStyle(ScorePalette.inkSecondary)
+            Text("Oder oben einfach einen eigenen Namen eintippen.")
+                .font(.meta)
+                .lineSpacing(5.5)
+                .foregroundStyle(ScorePalette.inkSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, ScoreMetrics.Spacing.xxs)
+        }
+    }
+
+    // MARK: - Farbe
+
+    private var colorSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            groupLabel("Farbe")
+
+            HStack(spacing: 10) {
+                ForEach(ScorePalette.subjectColorValues, id: \.self) { value in
+                    Button {
+                        colorValue = value.asInt
+                    } label: {
+                        SubjectDot(color: Color(value), size: 42, cornerRadius: 14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 17, style: .continuous)
+                                    .strokeBorder(
+                                        colorValue == value.asInt ? ScorePalette.ink : .clear,
+                                        lineWidth: 2
+                                    )
+                                    .padding(-3)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Fachfarbe")
+                }
+                Spacer(minLength: 0)
             }
         }
     }
 
-    // MARK: - Farbe und Kürzel
+    // MARK: - Kürzel
 
-    private var appearanceCard: some View {
-        ScoreCard(padding: 18) {
-            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
-                Text("Farbe")
-                    .font(.micro)
-                    .foregroundStyle(ScorePalette.inkSecondary)
+    private var abbreviationSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            groupLabel("Kürzel")
 
-                HStack(spacing: 10) {
-                    ForEach(ScorePalette.subjectColorValues, id: \.self) { value in
-                        Button {
-                            colorValue = value.asInt
-                        } label: {
-                            SubjectDot(color: Color(value), size: 42, cornerRadius: 14)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 17, style: .continuous)
-                                        .strokeBorder(
-                                            colorValue == value.asInt ? ScorePalette.ink : .clear,
-                                            lineWidth: 2
-                                        )
-                                        .padding(-3)
-                                )
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Fachfarbe")
-                    }
-                }
-                .padding(.bottom, ScoreMetrics.Spacing.xxs)
-
-                Text("Kürzel")
-                    .font(.micro)
-                    .foregroundStyle(ScorePalette.inkSecondary)
-                    .padding(.top, ScoreMetrics.Spacing.xxs)
-
-                ChipFlow {
-                    ForEach(abbreviationSuggestions, id: \.self) { suggestion in
-                        ScoreChip(title: suggestion, isSelected: abbreviation == suggestion) {
-                            abbreviation = suggestion
-                        }
-                    }
+            ChipFlow {
+                ForEach(abbreviationSuggestions, id: \.self) { suggestion in
+                    abbreviationChip(suggestion)
                 }
             }
         }
+    }
+
+    /// Der Kürzel-Chip ist kein Pill, sondern eine kleine Kachel in Archivo —
+    /// so steht er in der Design-Datei, weil ein Kürzel wie eine Zahl gelesen
+    /// wird und nicht wie ein Wort.
+    private func abbreviationChip(_ suggestion: String) -> some View {
+        let isSelected = abbreviation == suggestion
+        return Button {
+            abbreviation = suggestion
+        } label: {
+            Text(suggestion)
+                .font(ScoreTypography.archivo(600, 13))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 11)
+                .frame(minHeight: ScoreMetrics.minimumTapTarget)
+                .foregroundStyle(isSelected ? ScorePalette.accentInk : ScorePalette.inkSecondary)
+                .background(isSelected ? ScorePalette.accent : ScorePalette.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .strokeBorder(ScorePalette.line, lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
     }
 
     /// Vorschläge für das Kürzel, abgeleitet aus dem Namen.
@@ -205,70 +239,57 @@ struct SubjectEditorView: View {
 
     // MARK: - Fachtyp
 
-    private var kindCard: some View {
-        ScoreCard(padding: 18) {
-            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
-                Text("Fachtyp")
-                    .font(.micro)
-                    .foregroundStyle(ScorePalette.inkSecondary)
+    private var kindSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            groupLabel("Fachtyp")
 
-                ChipFlow {
-                    ForEach(SubjectKind.allCases, id: \.self) { value in
-                        ScoreChip(title: value.editorLabel, isSelected: kind == value) {
-                            kind = value
-                        }
+            ChipFlow {
+                ForEach(SubjectKind.allCases, id: \.self) { value in
+                    ScoreChip(title: value.editorLabel, isSelected: kind == value) {
+                        kind = value
                     }
                 }
-
-                Text("Leistungs- und Kernfächer zählen immer. Basisfächer treten gegeneinander an — nur die besten füllen die freien Plätze in Block I.")
-                    .font(.meta)
-                    .foregroundStyle(ScorePalette.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
 
     // MARK: - Belegte Halbjahre
 
-    private var semesterCard: some View {
-        ScoreCard(padding: 18) {
-            VStack(alignment: .leading, spacing: 14) {
-                Text("Belegte Halbjahre")
-                    .font(.cardTitle)
-                    .foregroundStyle(ScorePalette.ink)
+    private var semesterSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Belegte Halbjahre")
+                .font(.meta)
+                .foregroundStyle(ScorePalette.inkSecondary)
 
-                HStack(spacing: 9) {
-                    ForEach(Semester.allIndices, id: \.self) { index in
-                        let isOn = activeSemesters.contains(index)
-                        Button {
-                            toggleSemester(index)
-                        } label: {
-                            Text(Semester.label(index))
-                                .font(.segmentLabel)
-                                .monospacedDigit()
-                                .foregroundStyle(isOn ? ScorePalette.accentInk : ScorePalette.inkSecondary)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 13)
-                                .frame(minHeight: ScoreMetrics.minimumTapTarget)
-                                .background(
-                                    RoundedRectangle(
-                                        cornerRadius: ScoreMetrics.Radius.group,
-                                        style: .continuous
-                                    )
-                                    .fill(isOn ? ScorePalette.accent : ScorePalette.fill)
-                                )
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                    }
+            HStack(spacing: ScoreMetrics.Spacing.xs) {
+                ForEach(Semester.allIndices, id: \.self) { index in
+                    semesterToggle(index)
                 }
-
-                Text("Nur belegte Halbjahre zählen für Block I. Abgewählte bleiben gespeichert, gehen aber nicht in den Schnitt ein.")
-                    .font(.meta)
-                    .foregroundStyle(ScorePalette.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    private func semesterToggle(_ index: Int) -> some View {
+        let isOn = activeSemesters.contains(index)
+        return Button {
+            toggleSemester(index)
+        } label: {
+            Text(Semester.label(index))
+                .font(ScoreTypography.archivo(600, 12.5))
+                .monospacedDigit()
+                .foregroundStyle(isOn ? ScorePalette.accentInk : ScorePalette.inkSecondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 13)
+                .frame(minHeight: ScoreMetrics.minimumTapTarget)
+                .background(isOn ? ScorePalette.accent : ScorePalette.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(isOn ? .clear : ScorePalette.line, lineWidth: 1)
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     /// Das letzte belegte Halbjahr lässt sich nicht abwählen — ein Fach ohne
@@ -285,33 +306,30 @@ struct SubjectEditorView: View {
     // MARK: - Gewichtung
 
     private var weightCard: some View {
-        ScoreCard(padding: 18) {
-            VStack(alignment: .leading, spacing: 14) {
+        ScoreCard {
+            VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("Gewichtung schriftlich zu mündlich")
+                    Text("Gewichtung")
                         .font(.cardTitle)
                         .foregroundStyle(ScorePalette.ink)
                     Spacer(minLength: ScoreMetrics.Spacing.xs)
                     Text("\(writtenShare) : \(100 - writtenShare)")
-                        .font(.chipLabel)
+                        .font(ScoreTypography.publicSans(500, 12))
                         .monospacedDigit()
                         .foregroundStyle(ScorePalette.accent)
                 }
 
                 WeightSlider(writtenShare: $writtenShare)
+                    .padding(.top, ScoreMetrics.Spacing.sm)
 
                 HStack {
                     Text("Schriftlich")
                     Spacer()
                     Text("Mündlich")
                 }
-                .font(.micro)
+                .font(ScoreTypography.publicSans(400, 10.5))
                 .foregroundStyle(ScorePalette.inkSecondary)
-
-                Text("Gilt für alle vier Halbjahre dieses Fachs. Einzelne Leistungen gewichtest du in der Fachansicht.")
-                    .font(.meta)
-                    .foregroundStyle(ScorePalette.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 6)
             }
         }
     }
@@ -324,7 +342,7 @@ struct SubjectEditorView: View {
                 .font(ScoreTypography.publicSans(500, 13))
                 .foregroundStyle(ScorePalette.warn)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, ScoreMetrics.Spacing.sm)
+                .padding(.vertical, ScoreMetrics.Spacing.xxs)
                 .frame(minHeight: ScoreMetrics.minimumTapTarget)
                 .contentShape(Rectangle())
         }

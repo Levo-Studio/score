@@ -256,6 +256,11 @@ struct SemesterPicker: View {
 struct PrimaryButton: View {
 
     let title: LocalizedStringKey
+
+    /// 18 Punkt im Onboarding, 17 unter dem Fach-Editor — beides steht so in der
+    /// Design-Datei.
+    var verticalPadding: CGFloat = 18
+
     let action: () -> Void
 
     var body: some View {
@@ -263,7 +268,7 @@ struct PrimaryButton: View {
             Text(title)
                 .font(.buttonLabel)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 18)
+                .padding(.vertical, verticalPadding)
                 .foregroundStyle(ScorePalette.accentInk)
                 .background(ScorePalette.accent)
                 .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous))

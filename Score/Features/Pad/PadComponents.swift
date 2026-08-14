@@ -104,39 +104,6 @@ struct PadSemesterSegments: View {
     }
 }
 
-// MARK: - Gestrichelter Knopf
-
-/// Der gestrichelte „hier entsteht etwas"-Knopf in den Massen, die die jeweilige
-/// Stelle im iPad-Layout verlangt.
-struct PadDashedButton: View {
-
-    let title: LocalizedStringKey
-    var cornerRadius: CGFloat = ScoreMetrics.Radius.group
-    var verticalPadding: CGFloat = 13
-    var font: Font = .chipLabel
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(font)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(ScorePalette.inkSecondary)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, verticalPadding)
-                .background(
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .strokeBorder(
-                            ScorePalette.lineStrong,
-                            style: StrokeStyle(lineWidth: 1, dash: [5, 4])
-                        )
-                )
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-}
-
 // MARK: - Balkenzeile
 
 /// Eine Zeile „Label — Balken — Wert", wie sie in den Karten „Halbjahre" und

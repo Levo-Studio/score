@@ -106,7 +106,7 @@ struct PadSubjectEditorView: View {
                     .font(.micro)
                     .foregroundStyle(ScorePalette.inkSecondary)
 
-                SubjectChipFlow {
+                ChipFlow {
                     ForEach(SubjectCatalog.all) { template in
                         ScoreChip(verbatimTitle: template.name, isSelected: draft.name == template.name) {
                             draft.apply(template)
@@ -154,7 +154,7 @@ struct PadSubjectEditorView: View {
                     .foregroundStyle(ScorePalette.inkSecondary)
                     .padding(.top, ScoreMetrics.Spacing.xxs)
 
-                SubjectChipFlow {
+                ChipFlow {
                     ForEach(draft.abbreviationSuggestions, id: \.self) { suggestion in
                         ScoreChip(verbatimTitle: suggestion, isSelected: draft.abbreviation == suggestion) {
                             draft.abbreviation = suggestion
@@ -182,7 +182,7 @@ struct PadSubjectEditorView: View {
                     .font(.micro)
                     .foregroundStyle(ScorePalette.inkSecondary)
 
-                SubjectChipFlow {
+                ChipFlow {
                     ForEach(SubjectKind.allCases, id: \.self) { value in
                         ScoreChip(title: value.editorLabel, isSelected: draft.kind == value) {
                             draft.kind = value

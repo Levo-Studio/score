@@ -21,6 +21,8 @@ enum ScoreMetrics {
         static let score: CGFloat = 34
         /// Die schwebende Tab-Bar.
         static let tabBar: CGFloat = 26
+        /// Die Glow-Karte der Fachansicht und die Oberkante des Eingabe-Sheets.
+        static let sheet: CGFloat = 28
         /// Vollrund, für Pillen und Schalter.
         static let pill: CGFloat = 99
     }

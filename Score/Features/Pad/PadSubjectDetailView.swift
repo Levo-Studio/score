@@ -384,7 +384,12 @@ struct PadSubjectDetailView: View {
                 .buttonStyle(.plain)
             }
 
-            PadDashedButton(title: addTitle) {
+            DashedButton(
+                title: addTitle,
+                cornerRadius: ScoreMetrics.Radius.group,
+                verticalPadding: 13,
+                font: .chipLabel
+            ) {
                 addEntry(category: addCategory, kind: kind)
             }
         }

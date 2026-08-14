@@ -227,7 +227,7 @@ struct PadDashboardView: View {
                             .buttonStyle(.plain)
                         }
 
-                        PadDashedButton(
+                        DashedButton(
                             title: "＋ Fach\nhinzufügen",
                             cornerRadius: 20,
                             verticalPadding: 14,

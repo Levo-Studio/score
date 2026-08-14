@@ -18,7 +18,7 @@ struct PadSidebar: View {
             brand
             navigation
             subjectSections
-            PadDashedButton(
+            DashedButton(
                 title: "＋ Neues Fach",
                 cornerRadius: 14,
                 verticalPadding: 11,

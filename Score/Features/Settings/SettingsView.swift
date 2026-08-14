@@ -10,6 +10,10 @@ import UniformTypeIdentifiers
 struct SettingsView: View {
 
     @Environment(AppSettings.self) private var settings
+
+    /// Zeigt, ob der iCloud-Abgleich tatsächlich läuft. Ohne Konto und ohne
+    /// Anmeldung gäbe es sonst keine Rückmeldung, wenn der Sync klemmt.
+    @State private var syncStatus = CloudSyncStatus()
     @Environment(\.modelContext) private var modelContext
 
     /// Es gibt genau ein Profil. Die Abfrage liefert trotzdem eine Liste, weil ein
@@ -44,6 +48,11 @@ struct SettingsView: View {
         }
         .background(ScorePalette.background)
         .scrollBounceBehavior(.basedOnSize)
+        .task {
+            // Der Kontostatus kann sich ändern, während die App läuft, deshalb
+            // bei jedem Öffnen der Einstellungen neu abfragen.
+            await syncStatus.refresh()
+        }
     }
 
     // MARK: - Karte 1 — Sprache, Erscheinungsbild, Jahrgang
@@ -67,7 +76,7 @@ struct SettingsView: View {
                     }
                     .labelsHidden()
                 } label: {
-                    SettingsValue(text: String(profile?.graduationYear ?? 0))
+                    SettingsValue(text: profile.map { String($0.graduationYear) } ?? ScoreNumberFormat.placeholder)
                 }
                 .disabled(profile == nil)
             }
@@ -90,6 +99,23 @@ struct SettingsView: View {
                     SettingsValue(text: profile?.federalState ?? "—")
                 }
                 .disabled(profile == nil)
+            }
+
+            SettingsRow(title: "iCloud") {
+                SettingsValue(
+                    key: syncStatus.state.title,
+                    isWarning: syncStatus.state.needsAttention
+                )
+            }
+
+            if let explanation = syncStatus.state.explanation {
+                explanation
+                    .font(.meta)
+                    .foregroundStyle(ScorePalette.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, ScoreMetrics.Spacing.md)
+                    .padding(.bottom, ScoreMetrics.Spacing.md)
             }
 
             ShareLink(item: export, preview: SharePreview("Score-Export")) {
@@ -208,12 +234,24 @@ private struct SettingsRowLabel<Accessory: View>: View {
 /// Der Wert am rechten Rand einer Zeile.
 private struct SettingsValue: View {
 
-    let text: String
+    private let content: Text
+    private var isWarning = false
+
+    /// Für Werte, die nicht übersetzt werden — Bundesland, Jahrgang.
+    init(text: String) {
+        content = Text(verbatim: text)
+    }
+
+    /// Für Werte, die aus dem String-Katalog kommen, etwa der Sync-Zustand.
+    init(key: LocalizedStringKey, isWarning: Bool = false) {
+        content = Text(key)
+        self.isWarning = isWarning
+    }
 
     var body: some View {
-        Text(verbatim: text)
+        content
             .font(.settingsRowValue)
-            .foregroundStyle(ScorePalette.inkSecondary)
+            .foregroundStyle(isWarning ? ScorePalette.warn : ScorePalette.inkSecondary)
     }
 }
 

@@ -108,7 +108,7 @@ struct SettingsView: View {
     private var studioMark: some View {
         VStack(spacing: ScoreMetrics.Spacing.sm) {
             OpenRingMark()
-                .frame(width: 34, height: 34)
+                .frame(width: 40, height: 40)
             Text("Product by Levo Studio")
                 .font(.meta)
                 .foregroundStyle(ScorePalette.inkSecondary)
@@ -195,8 +195,8 @@ private struct SettingsRowLabel<Accessory: View>: View {
             Spacer(minLength: 0)
             accessory
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 14)
+        .padding(.horizontal, ScoreMetrics.Spacing.md)
+        .padding(.vertical, ScoreMetrics.Spacing.md)
         .frame(minHeight: 56)
         .contentShape(Rectangle())
         .overlay(alignment: .top) {
@@ -253,8 +253,8 @@ private struct LanguageSegments: View {
                     Text(verbatim: language.title)
                         .font(.chipLabel)
                         .foregroundStyle(isSelected ? ScorePalette.ink : ScorePalette.inkSecondary)
-                        .padding(.horizontal, 13)
-                        .padding(.vertical, 9)
+                        .padding(.horizontal, ScoreMetrics.Spacing.sm)
+                        .padding(.vertical, ScoreMetrics.Spacing.xs)
                         .background {
                             if isSelected {
                                 Capsule()

@@ -29,31 +29,6 @@ enum OnboardingStep: Int, CaseIterable {
     }
 }
 
-/// Die Sprache der Oberfläche, wie sie im Onboarding gewählt wird.
-///
-/// Deutsch ist die Basissprache: Score rechnet nach baden-württembergischem
-/// Recht, und die Begriffe dieser Verordnung sind deutsch.
-enum OnboardingLanguage: String, CaseIterable, Identifiable {
-    case german = "de"
-    case english = "en"
-
-    var id: String { rawValue }
-
-    var title: LocalizedStringKey {
-        switch self {
-        case .german: "Deutsch"
-        case .english: "English"
-        }
-    }
-
-    var subtitle: LocalizedStringKey {
-        switch self {
-        case .german: "Alle Begriffe wie im Zeugnis"
-        case .english: "Same calculation, English wording"
-        }
-    }
-}
-
 /// Der Zustand des Onboardings und alles, was daraus entsteht.
 ///
 /// Das Onboarding schreibt bis zum letzten Schritt nichts in die Datenbank. Erst
@@ -72,7 +47,7 @@ final class OnboardingViewModel {
     var classLevel: ClassLevel = .kursstufe1
     var federalState = FederalState.all[0]
     var graduationYear = Calendar.current.component(.year, from: .now) + 2
-    var language: OnboardingLanguage = .german
+    var language: AppSettings.Language = .german
 
     /// Die drei Leistungsfächer, in der Reihenfolge der Auswahl.
     var advancedSubjects: [String] = []
@@ -249,7 +224,10 @@ final class OnboardingViewModel {
         }
     }
 
-    var summaryLanguage: LocalizedStringKey {
+    /// Der Sprachname bleibt bewusst unübersetzt: „Deutsch" heisst auch in der
+    /// englischen Oberfläche „Deutsch", sonst wäre die Auswahl für jemanden, der
+    /// die aktive Sprache nicht liest, nicht wiederzufinden.
+    var summaryLanguage: String {
         language.title
     }
 
@@ -284,7 +262,7 @@ final class OnboardingViewModel {
         )
         context.insert(profile)
 
-        UserDefaults.standard.set(language.rawValue, forKey: Self.languageDefaultsKey)
+        AppSettings.shared.language = language
 
         var sortIndex = 0
         for name in advancedSubjects {
@@ -297,9 +275,6 @@ final class OnboardingViewModel {
             insertSubject(named: name, kind: .basisfach, sortIndex: &sortIndex, in: context)
         }
     }
-
-    /// Der Schlüssel, unter dem die gewählte Sprache abgelegt wird.
-    static let languageDefaultsKey = "preferredLanguage"
 
     private func insertSubject(
         named name: String,

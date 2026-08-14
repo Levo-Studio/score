@@ -315,9 +315,9 @@ struct LanguageStep: View {
             )
 
             VStack(spacing: ScoreMetrics.Spacing.sm) {
-                ForEach(OnboardingLanguage.allCases) { language in
+                ForEach(AppSettings.Language.allCases) { language in
                     OnboardingOptionCard(
-                        title: language.title,
+                        verbatimTitle: language.title,
                         subtitle: language.subtitle,
                         isSelected: model.language == language
                     ) {

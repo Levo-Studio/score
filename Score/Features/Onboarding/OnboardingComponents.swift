@@ -111,16 +111,48 @@ private struct StaggeredAppearance: ViewModifier {
 /// genutzt wird.
 struct OnboardingOptionCard: View {
 
-    let title: LocalizedStringKey
+    let title: Text
     let subtitle: LocalizedStringKey
     let isSelected: Bool
     let action: () -> Void
+
+    init(
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) {
+        self.init(title: Text(title), subtitle: subtitle, isSelected: isSelected, action: action)
+    }
+
+    /// Für Titel, die nicht übersetzt werden dürfen — etwa Sprachnamen, die in
+    /// ihrer eigenen Sprache stehen bleiben.
+    init(
+        verbatimTitle: String,
+        subtitle: LocalizedStringKey,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) {
+        self.init(title: Text(verbatim: verbatimTitle), subtitle: subtitle, isSelected: isSelected, action: action)
+    }
+
+    private init(
+        title: Text,
+        subtitle: LocalizedStringKey,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.isSelected = isSelected
+        self.action = action
+    }
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: ScoreMetrics.Spacing.md) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(title)
+                    title
                         .font(.rowTitle)
                         .foregroundStyle(ScorePalette.ink)
                     Text(subtitle)

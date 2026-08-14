@@ -71,7 +71,11 @@ struct ScoreApp: App {
 
     var body: some Scene {
         WindowGroup {
+            // Erscheinungsbild und Sprache hängen an der Wurzel, damit ein
+            // Umschalten in den Einstellungen sofort die ganze App erfasst und
+            // nicht nur den Bildschirm, auf dem der Schalter steht.
             ContentView()
+                .scoreAppSettings()
         }
         .modelContainer(modelContainer)
     }

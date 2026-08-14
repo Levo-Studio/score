@@ -161,5 +161,14 @@ extension AppSettings {
             case .english: "English"
             }
         }
+
+        /// Erläuterung unter dem Titel, wenn die Sprache im Onboarding als Karte
+        /// zur Wahl steht.
+        var subtitle: LocalizedStringKey {
+            switch self {
+            case .german: "Alle Begriffe wie im Zeugnis"
+            case .english: "Same calculation, English wording"
+            }
+        }
     }
 }

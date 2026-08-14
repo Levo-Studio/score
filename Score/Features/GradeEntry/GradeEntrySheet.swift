@@ -62,7 +62,7 @@ struct GradeEntrySheet: View {
     // MARK: - Art und Teilnote
 
     private var categoryChips: some View {
-        SubjectChipFlow {
+        ChipFlow {
             ForEach(GradeCategory.allCases, id: \.self) { category in
                 ScoreChip(title: category.label, isSelected: entry.category == category) {
                     apply(category)

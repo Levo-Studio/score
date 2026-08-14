@@ -311,8 +311,10 @@ struct BasicSubjectsStep: View {
     }
 }
 
-/// Chip-Wolke, Zähler und Eingabefeld — der gemeinsame Unterbau der drei
-/// Fächerschritte.
+/// Chip-Wolke mit Zähler — der gemeinsame Unterbau der drei Fächerschritte.
+///
+/// Das eigene Fach hängt als gestrichelter Tag hinten in der Wolke und nicht als
+/// eigene Zeile darunter: es ist eine weitere Wahlmöglichkeit, kein Formular.
 private struct SubjectSelectionSection: View {
 
     let counter: LocalizedStringKey
@@ -332,11 +334,11 @@ private struct SubjectSelectionSection: View {
                 items: options,
                 title: { $0 },
                 isSelected: isSelected,
-                toggle: toggle
-            )
-
-            CustomSubjectField(text: $draft, onSubmit: onCommitCustom)
-                .padding(.top, ScoreMetrics.Spacing.xs)
+                toggle: toggle,
+                spacing: 9
+            ) {
+                DashedChip(title: "Eigenes Fach", text: $draft, onCommit: onCommitCustom)
+            }
         }
         .staggeredAppearance(index: 3)
     }

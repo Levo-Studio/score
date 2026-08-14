@@ -32,7 +32,7 @@ struct SubjectListView: View {
                     header
                     SemesterPicker(selection: $semesterIndex, labels: Semester.labels)
                     subjectRows
-                    SubjectDashedButton(title: "＋ Eigenes Fach hinzufügen") {
+                    DashedButton(title: "＋ Eigenes Fach hinzufügen") {
                         editorTarget = .new
                     }
                 }

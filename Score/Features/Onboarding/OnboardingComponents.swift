@@ -203,134 +203,49 @@ struct OnboardingOptionCard: View {
 // MARK: - Chip-Wolke
 
 /// Eine umbrechende Reihe von Auswahl-Chips.
-struct ChipCloud<Item: Hashable>: View {
+///
+/// Der Abstand kommt von aussen, weil die Design-Datei zwei Werte kennt: 8 Punkt
+/// bei Bundesland und Abi-Jahr, 9 Punkt in der Fächerwolke.
+///
+/// `trailing` hängt ein Element hinter den letzten Chip — in derselben Zeile,
+/// mit demselben Umbruch. Dort sitzt der gestrichelte „Eigenes Fach"-Tag.
+struct ChipCloud<Item: Hashable, Trailing: View>: View {
 
     let items: [Item]
     let title: (Item) -> String
     let isSelected: (Item) -> Bool
     let toggle: (Item) -> Void
+    var spacing: CGFloat = ScoreMetrics.Spacing.xs
+    @ViewBuilder var trailing: Trailing
 
     var body: some View {
-        ChipFlowLayout(spacing: ScoreMetrics.Spacing.xs) {
+        ChipFlowLayout(spacing: spacing) {
             ForEach(items, id: \.self) { item in
                 ScoreChip(title: title(item), isSelected: isSelected(item)) {
                     toggle(item)
                 }
             }
+            trailing
         }
     }
 }
 
-/// Ein Layout, das seine Kinder wie Text umbricht.
-///
-/// SwiftUI bringt dafür nichts mit: ein `HStack` bricht nicht um, ein `Grid`
-/// erzwingt gleiche Spaltenbreiten. Chips sind aber unterschiedlich breit und
-/// sollen genau dann in die nächste Zeile rutschen, wenn sie nicht mehr passen.
-struct ChipFlowLayout: Layout {
+extension ChipCloud where Trailing == EmptyView {
 
-    // Kein Vorgabewert: `Layout` ist nicht an den Main-Actor gebunden, die
-    // Abstandsleiter dagegen schon. Der Abstand kommt deshalb von aussen.
-    var spacing: CGFloat
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? .infinity
-        let rows = arrange(subviews: subviews, availableWidth: width)
-        let height = rows.reduce(0) { $0 + $1.height } + spacing * CGFloat(max(0, rows.count - 1))
-        return CGSize(width: proposal.width ?? rows.map(\.width).max() ?? 0, height: height)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let rows = arrange(subviews: subviews, availableWidth: bounds.width)
-        var y = bounds.minY
-
-        for row in rows {
-            var x = bounds.minX
-            for index in row.indices {
-                let size = subviews[index].sizeThatFits(.unspecified)
-                subviews[index].place(
-                    at: CGPoint(x: x, y: y + (row.height - size.height) / 2),
-                    proposal: ProposedViewSize(size)
-                )
-                x += size.width + spacing
-            }
-            y += row.height + spacing
-        }
-    }
-
-    private struct Row {
-        var indices: [Int] = []
-        var width: CGFloat = 0
-        var height: CGFloat = 0
-    }
-
-    private func arrange(subviews: Subviews, availableWidth: CGFloat) -> [Row] {
-        var rows: [Row] = []
-        var current = Row()
-
-        for index in subviews.indices {
-            let size = subviews[index].sizeThatFits(.unspecified)
-            let widthWithItem = current.indices.isEmpty
-                ? size.width
-                : current.width + spacing + size.width
-
-            if !current.indices.isEmpty, widthWithItem > availableWidth {
-                rows.append(current)
-                current = Row()
-                current.indices = [index]
-                current.width = size.width
-                current.height = size.height
-            } else {
-                current.indices.append(index)
-                current.width = widthWithItem
-                current.height = max(current.height, size.height)
-            }
-        }
-
-        if !current.indices.isEmpty { rows.append(current) }
-        return rows
-    }
-}
-
-// MARK: - Eigenes Fach
-
-/// Das Eingabefeld, mit dem ein Fach angelegt wird, das nicht im Katalog steht.
-struct CustomSubjectField: View {
-
-    @Binding var text: String
-    let onSubmit: () -> Void
-
-    private var canSubmit: Bool {
-        !text.trimmingCharacters(in: .whitespaces).isEmpty
-    }
-
-    var body: some View {
-        HStack(spacing: ScoreMetrics.Spacing.sm) {
-            TextField("Eigenes Fach", text: $text)
-                .font(.bodyText)
-                .foregroundStyle(ScorePalette.ink)
-                .textInputAutocapitalization(.words)
-                .autocorrectionDisabled()
-                .submitLabel(.done)
-                .onSubmit(onSubmit)
-
-            Button(action: onSubmit) {
-                Text("OK")
-                    .font(.chipLabel)
-                    .foregroundStyle(canSubmit ? ScorePalette.accent : ScorePalette.inkSecondary)
-                    .padding(.horizontal, ScoreMetrics.Spacing.sm)
-                    .frame(minHeight: ScoreMetrics.minimumTapTarget)
-            }
-            .buttonStyle(.plain)
-            .disabled(!canSubmit)
-        }
-        .padding(.leading, ScoreMetrics.Spacing.md)
-        .padding(.trailing, ScoreMetrics.Spacing.xxs)
-        .padding(.vertical, ScoreMetrics.Spacing.xxs)
-        .background(ScorePalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous)
-                .strokeBorder(ScorePalette.line, lineWidth: 1)
+    init(
+        items: [Item],
+        title: @escaping (Item) -> String,
+        isSelected: @escaping (Item) -> Bool,
+        toggle: @escaping (Item) -> Void,
+        spacing: CGFloat = ScoreMetrics.Spacing.xs
+    ) {
+        self.init(
+            items: items,
+            title: title,
+            isSelected: isSelected,
+            toggle: toggle,
+            spacing: spacing,
+            trailing: { EmptyView() }
         )
     }
 }

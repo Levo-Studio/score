@@ -387,7 +387,12 @@ struct SubjectDetailView: View {
                 .buttonStyle(.plain)
             }
 
-            SubjectDashedButton(title: addTitle) {
+            DashedButton(
+                title: addTitle,
+                cornerRadius: ScoreMetrics.Radius.group,
+                verticalPadding: 12,
+                font: .chipLabel
+            ) {
                 addEntry(category: addCategory, kind: kind)
             }
         }

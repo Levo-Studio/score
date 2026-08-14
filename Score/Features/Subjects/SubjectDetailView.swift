@@ -238,7 +238,7 @@ struct SubjectDetailView: View {
 
     private func glowRow(
         _ label: LocalizedStringKey,
-        value: String,
+        value: Text,
         isAccented: Bool = false
     ) -> some View {
         HStack(alignment: .firstTextBaseline) {
@@ -246,37 +246,37 @@ struct SubjectDetailView: View {
                 .font(ScoreTypography.publicSans(400, 11.5))
                 .foregroundStyle(ScorePalette.scoreInkSecondary)
             Spacer(minLength: ScoreMetrics.Spacing.xs)
-            Text(value)
+            value
                 .font(ScoreTypography.archivo(600, 13))
                 .monospacedDigit()
                 .foregroundStyle(isAccented ? ScorePalette.accent : ScorePalette.scoreInk)
         }
     }
 
-    private var bestSemesterText: String {
+    private var bestSemesterText: Text {
         let results = semesterResults
         var best: (points: Int, index: Int)?
         for (index, value) in results.enumerated() {
             guard let value else { continue }
             if best == nil || value > best!.points { best = (value, index) }
         }
-        guard let best else { return ScoreNumberFormat.placeholder }
-        return "\(best.points) Punkte · \(Semester.label(best.index))"
+        guard let best else { return Text(verbatim: ScoreNumberFormat.placeholder) }
+        return Text("\(best.points) Punkte · \(Semester.label(best.index))")
     }
 
-    private var recordedEntriesText: String {
+    private var recordedEntriesText: Text {
         let total = subject.orderedSemesters.reduce(0) { $0 + ($1.entries?.count ?? 0) }
-        return "\(total) insgesamt"
+        return Text("\(total) insgesamt")
     }
 
-    private var trendText: String {
+    private var trendText: Text {
         let results = semesterResults
         guard let first = results.first ?? nil, let last = results.last ?? nil else {
-            return ScoreNumberFormat.placeholder
+            return Text(verbatim: ScoreNumberFormat.placeholder)
         }
         let difference = last - first
         let arrow = difference > 0 ? "↑ +" : difference < 0 ? "↓ " : "→ "
-        return "\(arrow)\(difference == 0 ? 0 : difference) Punkte"
+        return Text(verbatim: arrow) + Text("\(difference == 0 ? 0 : difference) Punkte")
     }
 
     // MARK: - Halbjahres-Karte
@@ -297,19 +297,19 @@ struct SubjectDetailView: View {
                 HStack(spacing: 0) {
                     semesterTile(
                         label: "Schriftlich",
-                        detail: "\(subject.writtenShare) %",
+                        detail: Text(verbatim: "\(subject.writtenShare) %"),
                         value: ScoreNumberFormat.points(partialGrade(.written)),
                         index: 0
                     )
                     semesterTile(
                         label: "Mündlich",
-                        detail: "\(subject.oralShare) %",
+                        detail: Text(verbatim: "\(subject.oralShare) %"),
                         value: ScoreNumberFormat.points(partialGrade(.oral)),
                         index: 1
                     )
                     semesterTile(
                         label: "Ergebnis",
-                        detail: "Note \(ScoreNumberFormat.grade(summary.result.map { SubjectMath.grade(fromPoints: Double($0)) }))",
+                        detail: Text("Note \(ScoreNumberFormat.grade(summary.result.map { SubjectMath.grade(fromPoints: Double($0)) }))"),
                         value: ScoreNumberFormat.points(summary.result),
                         index: 2,
                         isAccented: true
@@ -323,15 +323,15 @@ struct SubjectDetailView: View {
     ///
     /// Bewusst ein Badge und kein eigener Bildschirm: es ist eine Randnotiz, kein
     /// Problem, das gelöst werden müsste.
-    private var semesterStateText: String? {
-        if !summary.isActive { return String(localized: "nicht belegt") }
-        if summary.isExcluded { return String(localized: "wird nicht gewertet") }
+    private var semesterStateText: LocalizedStringKey? {
+        if !summary.isActive { return "nicht belegt" }
+        if summary.isExcluded { return "wird nicht gewertet" }
         return nil
     }
 
     private func semesterTile(
         label: LocalizedStringKey,
-        detail: String,
+        detail: Text,
         value: String,
         index: Int,
         isAccented: Bool = false
@@ -345,7 +345,7 @@ struct SubjectDetailView: View {
             Text(label)
                 .font(.micro)
                 .foregroundStyle(ScorePalette.ink)
-            Text(detail)
+            detail
                 .font(.micro)
                 .foregroundStyle(ScorePalette.inkSecondary)
                 .lineLimit(1)
@@ -396,17 +396,17 @@ struct SubjectDetailView: View {
     private func entryRow(_ entry: GradeEntry, share: Double) -> some View {
         HStack(spacing: ScoreMetrics.Spacing.sm) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(entry.title)
+                Text(verbatim: entry.title)
                     .font(.rowTitle)
                     .foregroundStyle(ScorePalette.ink)
                     .lineLimit(1)
-                Text(entry.metaDescription(share: share))
+                entry.metaDescription(share: share)
                     .font(.meta)
                     .foregroundStyle(ScorePalette.inkSecondary)
                     .lineLimit(1)
             }
             Spacer(minLength: ScoreMetrics.Spacing.xs)
-            Text("\(entry.points)")
+            Text(verbatim: "\(entry.points)")
                 .font(.rowValue)
                 .monospacedDigit()
                 .tracking(em: -0.03, at: 20)
@@ -471,10 +471,15 @@ extension GradeEntry {
 
     /// Die Zeile unter dem Titel: Art, effektiver Anteil und ob er automatisch
     /// entstanden ist — „Klassenarbeit · 40 % automatisch".
-    func metaDescription(share: Double) -> String {
+    ///
+    /// Zusammengesetzt aus einzelnen `Text`-Stücken statt aus einem interpolierten
+    /// String: der Prozentwert steht in beiden Sprachen gleich, die Art und der
+    /// Zusatz kommen dagegen aus dem Katalog.
+    func metaDescription(share: Double) -> Text {
         let percent = Int(share.rounded())
-        let suffix = usesAutomaticShare ? String(localized: " automatisch") : ""
-        return "\(category.label) · \(percent) %\(suffix)"
+        let base = Text(category.label)
+            + Text(verbatim: " · \(percent) %")
+        return usesAutomaticShare ? base + Text(verbatim: " ") + Text("automatisch") : base
     }
 }
 

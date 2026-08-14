@@ -116,7 +116,7 @@ struct SubjectEditorView: View {
 
                 SubjectChipFlow {
                     ForEach(SubjectCatalog.all) { template in
-                        ScoreChip(title: template.name, isSelected: name == template.name) {
+                        ScoreChip(verbatimTitle: template.name, isSelected: name == template.name) {
                             name = template.name
                             abbreviation = template.abbreviation
                             colorValue = template.colorValue
@@ -169,7 +169,7 @@ struct SubjectEditorView: View {
 
                 SubjectChipFlow {
                     ForEach(abbreviationSuggestions, id: \.self) { suggestion in
-                        ScoreChip(title: suggestion, isSelected: abbreviation == suggestion) {
+                        ScoreChip(verbatimTitle: suggestion, isSelected: abbreviation == suggestion) {
                             abbreviation = suggestion
                         }
                     }
@@ -243,7 +243,7 @@ struct SubjectEditorView: View {
                         Button {
                             toggleSemester(index)
                         } label: {
-                            Text(Semester.label(index))
+                            Text(verbatim: Semester.label(index))
                                 .font(.segmentLabel)
                                 .monospacedDigit()
                                 .foregroundStyle(isOn ? ScorePalette.accentInk : ScorePalette.inkSecondary)
@@ -292,7 +292,7 @@ struct SubjectEditorView: View {
                         .font(.cardTitle)
                         .foregroundStyle(ScorePalette.ink)
                     Spacer(minLength: ScoreMetrics.Spacing.xs)
-                    Text("\(writtenShare) : \(100 - writtenShare)")
+                    Text(verbatim: "\(writtenShare) : \(100 - writtenShare)")
                         .font(.chipLabel)
                         .monospacedDigit()
                         .foregroundStyle(ScorePalette.accent)
@@ -395,11 +395,11 @@ private extension SubjectEditorTarget {
 extension SubjectKind {
 
     /// Der ausgeschriebene Name für den Editor. Die Liste zeigt nur das Kürzel.
-    var editorLabel: String {
+    var editorLabel: LocalizedStringKey {
         switch self {
-        case .leistungsfach: String(localized: "Leistungsfach")
-        case .kernfach: String(localized: "Kernfach")
-        case .basisfach: String(localized: "Basisfach")
+        case .leistungsfach: "Leistungsfach"
+        case .kernfach: "Kernfach"
+        case .basisfach: "Basisfach"
         }
     }
 }

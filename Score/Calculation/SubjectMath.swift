@@ -116,9 +116,28 @@ enum SubjectMath {
 
     /// Rechnet Punkte in eine Note um.
     ///
-    /// Die amtliche Umrechnung lautet `Note = 17/3 − Punkte/3`: 15 Punkte ergeben
-    /// 0,67 und werden auf 1,0 gedeckelt, 0 Punkte ergeben 5,67 und werden auf
-    /// 6,0 gedeckelt.
+    /// Verwendet die lineare Umrechnung `Note = 17/3 − Punkte/3`. Sie trifft die
+    /// amtliche Notentabelle über den ganzen mittleren Bereich exakt: 14 Punkte
+    /// ergeben 1,0, 11 Punkte 2,0, 8 Punkte 3,0, 5 Punkte 4,0, 2 Punkte 5,0.
+    ///
+    /// An den beiden Rändern weicht die Tabelle von der Geraden ab:
+    ///
+    /// - Bei **15 Punkten** liefert die Formel 0,67. Das `max(1, …)` hebt das auf
+    ///   1,0 an, wie in der Tabelle.
+    /// - Bei **0 Punkten** liefert die Formel 5,67, die Tabelle nennt 6,0. Diese
+    ///   Abweichung bleibt bewusst stehen.
+    ///
+    /// Der Grund: die Eingabe ist hier fast nie eine ganze Zahl. Umgerechnet wird
+    /// ein *Schnitt* — über die Halbjahre eines Fachs oder über alle eingebrachten
+    /// Kurse. Für einen stetigen Wert ist die Gerade die richtige Abbildung; die
+    /// Tabelle ist eine Treppe und nur für einzelne, ganzzahlige Punktwerte
+    /// definiert. Ein Sonderfall, der ausgerechnet bei exakt 0,0 auf 6,0 springt,
+    /// wäre an dieser Stelle ein Bruch in einer sonst glatten Kurve.
+    ///
+    /// Das `min(6, …)` ist deshalb kein Aufrunden, sondern nur eine Schranke: es
+    /// kann einen Wert unter 6 nicht anheben und ist bei nicht-negativen Punkten
+    /// ohnehin nie wirksam. Es steht da, damit die Funktion auch bei fehlerhafter
+    /// Eingabe innerhalb der gültigen Notenspanne bleibt.
     static func grade(fromPoints points: Double) -> Double {
         min(6, max(1, 17.0 / 3.0 - points / 3.0))
     }

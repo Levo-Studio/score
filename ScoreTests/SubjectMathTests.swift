@@ -250,17 +250,10 @@ struct SubjectMathTests {
 
         @Test("0 Punkte ergeben 6,0")
         func worst() {
-            // Bekannte Abweichung: die Doku von `grade(fromPoints:)` verspricht für
-            // 0 Punkte die Note 6,0, die Formel liefert aber 17/3 = 5,67. Ein
-            // `min(6, …)` kann eine Zahl unter 6 nicht auf 6 heben — der Deckel
-            // greift nur nach oben. Der Test steht bewusst auf dem versprochenen
-            // Wert, damit die Lücke sichtbar bleibt, bis entschieden ist, ob die
-            // Formel oder die Doku angepasst wird.
-            withKnownIssue("Formel liefert 5,67 statt der dokumentierten 6,0") {
-                #expect(isClose(SubjectMath.grade(fromPoints: 0), 6.0))
-            }
-
-            // Was die Formel heute tatsächlich tut:
+            // Bei 0 Punkten weicht die lineare Umrechnung bewusst von der
+            // amtlichen Notentabelle ab: die Tabelle nennt 6,0, die Gerade
+            // liefert 17/3. Umgerechnet wird hier ein stetiger Schnitt, keine
+            // einzelne Zeugnisnote — die Begründung steht an `grade(fromPoints:)`.
             #expect(isClose(SubjectMath.grade(fromPoints: 0), 17.0 / 3.0))
         }
     }

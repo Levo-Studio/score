@@ -18,8 +18,6 @@ struct ScoreApp: App {
     private let modelContainer: ModelContainer
 
     init() {
-        ScoreTypography.registerFonts()
-
         let schema = Schema([
             Subject.self,
             SemesterResult.self,
@@ -27,19 +25,48 @@ struct ScoreApp: App {
             StudentProfile.self
         ])
 
+        modelContainer = Self.makeContainer(for: schema)
+    }
+
+    /// Öffnet den Speicher — mit iCloud, wenn der Prozess das darf, sonst lokal.
+    ///
+    /// Die Prüfung auf das Entitlement ist kein Gürtel-und-Hosenträger, sondern
+    /// notwendig: fehlt es, **stürzt CloudKit ab**, und zwar nicht beim Anlegen
+    /// des Containers, sondern später und asynchron auf
+    /// `com.apple.coredata.cloudkit.queue`, wenn das Mirroring seinen Container
+    /// aufbauen will. `ModelContainer(for:)` ist zu diesem Zeitpunkt längst
+    /// erfolgreich zurückgekehrt — ein `do`/`catch` darum herum fängt davon
+    /// nichts. Der Absturz muss also vermieden statt behandelt werden.
+    ///
+    /// Praktisch trifft das jeden Build ohne Signierung: den Test-Host und CI.
+    /// Ohne diese Prüfung stirbt die App dort vor dem ersten Test.
+    private static func makeContainer(for schema: Schema) -> ModelContainer {
+        let configuration = ModelConfiguration(
+            schema: schema,
+            cloudKitDatabase: isRunningTests
+                ? .none
+                : .private("iCloud.levo-studio.Score")
+        )
+
         do {
-            modelContainer = try ModelContainer(
-                for: schema,
-                configurations: ModelConfiguration(
-                    schema: schema,
-                    cloudKitDatabase: .private("iCloud.levo-studio.Score")
-                )
-            )
+            return try ModelContainer(for: schema, configurations: configuration)
         } catch {
-            // Ohne Speicher kann die App nichts Sinnvolles tun. Der Absturz ist
-            // hier ehrlicher als eine leere Oberfläche, die stumm alles vergisst.
+            // Kein Speicher heisst: am Schema stimmt etwas nicht. Eine leere
+            // Oberfläche, die stumm alles vergisst, wäre die schlechtere Antwort.
             fatalError("Score konnte den Datenspeicher nicht öffnen: \(error)")
         }
+    }
+
+    /// Ob die App gerade als Wirt für die Unit-Tests läuft.
+    ///
+    /// Der Test-Host wird ohne Signierung gebaut und hat damit kein
+    /// iCloud-Entitlement. Jeder Testlauf würde sonst am oben beschriebenen
+    /// CloudKit-Absturz sterben, bevor der erste Test startet.
+    ///
+    /// Die Tests brauchen den Sync ohnehin nicht — sie prüfen den Rechenkern,
+    /// nicht den Abgleich zwischen Geräten.
+    private static var isRunningTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }
 
     var body: some Scene {

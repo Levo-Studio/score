@@ -62,7 +62,7 @@ final class AppSettings {
         self.appearance = defaults.string(forKey: Key.appearance)
             .flatMap(Appearance.init(rawValue:)) ?? .system
         self.language = defaults.string(forKey: Key.language)
-            .flatMap(Language.init(rawValue:)) ?? .german
+            .flatMap(Language.init(rawValue:)) ?? Language.matchingSystem()
     }
 
     private enum Key {
@@ -160,6 +160,23 @@ extension AppSettings {
             case .german: "Deutsch"
             case .english: "English"
             }
+        }
+
+        /// Die Sprache, die zur Systemeinstellung des Geräts passt.
+        ///
+        /// Wird nur beim allerersten Start gebraucht, solange der Nutzer noch
+        /// nichts gewählt hat. Die App setzt `\.locale` an der Wurzel und
+        /// übersteuert damit die Systemsprache — ohne diese Vorbelegung bekäme
+        /// jemand mit englischem iPhone eine deutsche App und müsste erst die
+        /// Einstellungen finden, um das zu ändern.
+        ///
+        /// Deutsch ist die Rückfalloption, weil Score nach baden-württem-
+        /// bergischem Recht rechnet: wer weder Deutsch noch Englisch eingestellt
+        /// hat, ist mit den Begriffen aus dem Zeugnis besser bedient.
+        static func matchingSystem() -> Language {
+            let preferred = Locale.preferredLanguages.first ?? "de"
+            let code = Locale(identifier: preferred).language.languageCode?.identifier
+            return code == "en" ? .english : .german
         }
 
         /// Erläuterung unter dem Titel, wenn die Sprache im Onboarding als Karte

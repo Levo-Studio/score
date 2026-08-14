@@ -32,13 +32,30 @@ struct ScoreCard<Content: View>: View {
 /// Wird für Fächerauswahl, Bundesland, Abi-Jahr, Fachtyp und Leistungsart genutzt.
 struct ScoreChip: View {
 
-    let title: String
+    let title: Text
     let isSelected: Bool
     let action: () -> Void
 
+    /// Für Beschriftungen aus dem String-Katalog — Fachtyp, Art einer Leistung.
+    init(title: LocalizedStringKey, isSelected: Bool, action: @escaping () -> Void) {
+        self.init(title: Text(title), isSelected: isSelected, action: action)
+    }
+
+    /// Für rohe Eingaben, die nie übersetzt werden dürfen — Fachnamen, Kürzel,
+    /// Bundesländer, Jahreszahlen.
+    init(verbatimTitle: String, isSelected: Bool, action: @escaping () -> Void) {
+        self.init(title: Text(verbatim: verbatimTitle), isSelected: isSelected, action: action)
+    }
+
+    private init(title: Text, isSelected: Bool, action: @escaping () -> Void) {
+        self.title = title
+        self.isSelected = isSelected
+        self.action = action
+    }
+
     var body: some View {
         Button(action: action) {
-            Text(title)
+            title
                 .font(.chipLabel)
                 .padding(.horizontal, 15)
                 .padding(.vertical, 11)
@@ -64,7 +81,7 @@ struct ScoreChip: View {
 /// gedämpft für alles andere.
 struct ScoreBadge: View {
 
-    let title: String
+    let title: LocalizedStringKey
     var isHighlighted: Bool = false
 
     var body: some View {
@@ -221,7 +238,7 @@ struct SemesterPicker: View {
                 Button {
                     selection = index
                 } label: {
-                    Text(label)
+                    Text(verbatim: label)
                         .font(.segmentLabel)
                         .monospacedDigit()
                         .frame(maxWidth: .infinity)

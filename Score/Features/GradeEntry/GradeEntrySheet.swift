@@ -88,10 +88,10 @@ struct GradeEntrySheet: View {
 
     private var kindChips: some View {
         HStack(spacing: 6) {
-            ScoreChip(title: String(localized: "Schriftlich"), isSelected: entry.kind == .written) {
+            ScoreChip(title: "Schriftlich", isSelected: entry.kind == .written) {
                 entry.kind = .written
             }
-            ScoreChip(title: String(localized: "Mündlich"), isSelected: entry.kind == .oral) {
+            ScoreChip(title: "Mündlich", isSelected: entry.kind == .oral) {
                 entry.kind = .oral
             }
             Spacer(minLength: 0)
@@ -112,7 +112,7 @@ struct GradeEntrySheet: View {
                 Button {
                     entry.points = value
                 } label: {
-                    Text("\(value)")
+                    Text(verbatim: "\(value)")
                         .font(ScoreTypography.archivo(600, 15))
                         .monospacedDigit()
                         .foregroundStyle(
@@ -144,7 +144,7 @@ struct GradeEntrySheet: View {
                 Text("Anteil automatisch")
                     .font(.cardTitle)
                     .foregroundStyle(ScorePalette.ink)
-                Text(automaticShareHint)
+                automaticShareHint
                     .font(.meta)
                     .foregroundStyle(ScorePalette.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -162,7 +162,7 @@ struct GradeEntrySheet: View {
                     .font(.cardTitle)
                     .foregroundStyle(ScorePalette.ink)
                 Spacer(minLength: ScoreMetrics.Spacing.xs)
-                Text("\(entry.share) %")
+                Text(verbatim: "\(entry.share) %")
                     .font(.chipLabel)
                     .monospacedDigit()
                     .foregroundStyle(ScorePalette.accent)
@@ -174,7 +174,7 @@ struct GradeEntrySheet: View {
 
     private var footer: some View {
         HStack(alignment: .firstTextBaseline, spacing: ScoreMetrics.Spacing.sm) {
-            Text(kindHint)
+            kindHint
                 .font(.meta)
                 .foregroundStyle(ScorePalette.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -216,29 +216,34 @@ struct GradeEntrySheet: View {
     /// Erklärt, was „automatisch" für genau diese Leistung bedeutet — mit dem
     /// Prozentwert, der gerade dabei herauskommt. Ohne die Zahl bliebe der
     /// Schalter eine Behauptung.
-    private var automaticShareHint: String {
+    /// Der Satz steht als zwei Sätze im Katalog statt als ein zusammengesetzter:
+    /// „schriftlich" und „mündlich" hängen im Deutschen an der Endung, im
+    /// Englischen an der Wortstellung — ein eingesetzter Baustein würde in
+    /// mindestens einer der beiden Sprachen falsch stehen.
+    private var automaticShareHint: Text {
         guard entry.usesAutomaticShare else {
-            return String(localized: "Fester Anteil, den du selbst setzt.")
+            return Text("Fester Anteil, den du selbst setzt.")
         }
 
         let automaticCount = siblings.count { $0.usesAutomaticShare }
-        let lead: String = switch automaticCount {
-        case 0, 1: String(localized: "Bekommt den ganzen Rest")
-        case 2: String(localized: "Teilt sich den Rest mit einer weiteren Leistung")
-        default: String(localized: "Teilt sich den Rest mit \(automaticCount - 1) weiteren Leistungen")
+        let lead: Text = switch automaticCount {
+        case 0, 1: Text("Bekommt den ganzen Rest")
+        case 2: Text("Teilt sich den Rest mit einer weiteren Leistung")
+        default: Text("Teilt sich den Rest mit \(automaticCount - 1) weiteren Leistungen")
         }
 
-        let part = entry.kind == .written
-            ? String(localized: "schriftlichen")
-            : String(localized: "mündlichen")
+        let share = "\(effectiveShare) %"
+        let tail = entry.kind == .written
+            ? Text("aktuell \(share) der schriftlichen Teilnote.")
+            : Text("aktuell \(share) der mündlichen Teilnote.")
 
-        return "\(lead) — aktuell \(effectiveShare) % der \(part) Teilnote."
+        return lead + Text(verbatim: " — ") + tail
     }
 
-    private var kindHint: String {
+    private var kindHint: Text {
         entry.kind == .written
-            ? String(localized: "Zählt in die schriftliche Teilnote von \(subject.name).")
-            : String(localized: "Zählt in die mündliche Teilnote von \(subject.name).")
+            ? Text("Zählt in die schriftliche Teilnote von \(subject.name).")
+            : Text("Zählt in die mündliche Teilnote von \(subject.name).")
     }
 }
 
@@ -247,11 +252,11 @@ struct GradeEntrySheet: View {
 extension GradeCategory {
 
     /// Die Beschriftung des Arten-Chips.
-    nonisolated var label: String {
+    nonisolated var label: LocalizedStringKey {
         switch self {
-        case .exam: String(localized: "Klassenarbeit")
-        case .test: String(localized: "Test")
-        case .other: String(localized: "Sonstiges")
+        case .exam: "Klassenarbeit"
+        case .test: "Test"
+        case .other: "Sonstiges"
         }
     }
 }

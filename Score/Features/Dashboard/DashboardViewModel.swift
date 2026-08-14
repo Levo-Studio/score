@@ -94,13 +94,13 @@ final class DashboardViewModel {
     /// Bei Punkten ist mehr besser, das Vorzeichen kann also unverändert bleiben.
     /// Während der Feier steht statt der Zahl ein Wort — in dem Moment zählt
     /// nicht, um wie viel es besser wurde, sondern dass es besser wurde.
-    func trendText(for semesterIndex: Int) -> String {
-        if isCelebrating { return "↑ besser" }
+    func trendText(for semesterIndex: Int) -> Text {
+        if isCelebrating { return Text("↑ besser") }
         guard semesterIndex > 0,
               let current = semesterAverage(semesterIndex),
               let previous = semesterAverage(semesterIndex - 1)
-        else { return ScoreNumberFormat.placeholder }
-        return ScoreNumberFormat.trend(current - previous)
+        else { return Text(verbatim: ScoreNumberFormat.placeholder) }
+        return Text(verbatim: ScoreNumberFormat.trend(current - previous))
     }
 
     /// Das Halbjahresergebnis eines Fachs, oder `nil`, wenn es keines gibt.

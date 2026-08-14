@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// Die drei Fachtypen der Kursstufe.
 ///
@@ -27,7 +28,10 @@ enum SubjectKind: String, Codable, CaseIterable, Sendable {
     }
 
     /// Das Kürzel neben dem Fachnamen in Listen.
-    nonisolated var badge: String {
+    ///
+    /// Steht im Katalog, weil die Abkürzung an der Sprache hängt: „LF" ist die
+    /// Kurzform von Leistungsfach, im Englischen steht dort „AC".
+    nonisolated var badge: LocalizedStringKey {
         switch self {
         case .leistungsfach: "LF"
         case .kernfach: "KF"

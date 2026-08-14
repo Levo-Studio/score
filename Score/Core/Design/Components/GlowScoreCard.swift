@@ -4,7 +4,9 @@ import SwiftUI
 struct ScoreStat: Identifiable {
     let id = UUID()
     let value: String
-    let label: String
+    /// Die Beschriftung kommt aus dem String-Katalog — sie steht ausgeschrieben
+    /// da und muss in beiden Sprachen lesbar sein.
+    let label: LocalizedStringKey
     /// Die dritte Kennzahl (Halbjahresschnitt) steht in Petrol statt in Ink.
     var isAccented = false
 }
@@ -22,8 +24,9 @@ struct GlowScoreCard: View {
     /// Überschrift links oben, etwa „Erwarteter Abischnitt".
     let title: LocalizedStringKey
 
-    /// Trendangabe rechts oben, etwa „↑ 0,2".
-    let trend: String
+    /// Trendangabe rechts oben, etwa „↑ 0,2". Kommt als fertiger `Text`, weil
+    /// hier je nach Zustand eine reine Zahl oder ein übersetztes Wort steht.
+    let trend: Text
 
     /// Der Schnitt, formatiert mit Komma — etwa „1,8".
     let average: String
@@ -84,7 +87,7 @@ struct GlowScoreCard: View {
                 Text(title)
                     .foregroundStyle(ScorePalette.scoreInkSecondary)
                 Spacer()
-                Text(trend)
+                trend
                     .foregroundStyle(ScorePalette.accent)
             }
             .font(.cardLabel)
@@ -115,7 +118,7 @@ struct GlowScoreCard: View {
         HStack(spacing: 0) {
             ForEach(Array(stats.enumerated()), id: \.element.id) { index, stat in
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(stat.value)
+                    Text(verbatim: stat.value)
                         .font(.statValue)
                         .monospacedDigit()
                         .foregroundStyle(stat.isAccented ? ScorePalette.accent : ScorePalette.scoreInk)
@@ -141,13 +144,13 @@ struct GlowScoreCard: View {
 #Preview {
     GlowScoreCard(
         title: "Erwarteter Abischnitt",
-        trend: "↑ 0,2",
+        trend: Text(verbatim: "↑ 0,2"),
         average: "1,8",
         averageValue: 1.8,
         stats: [
             ScoreStat(value: "534", label: "Block I"),
             ScoreStat(value: "30/42", label: "Kurse"),
-            ScoreStat(value: "12,4", label: "Ø 4/4", isAccented: true)
+            ScoreStat(value: "12,4", label: "Ø \(Semester.label(3))", isAccented: true)
         ]
     )
     .padding(ScoreMetrics.screenPadding)

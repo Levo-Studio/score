@@ -15,6 +15,11 @@ struct DashboardView: View {
 
     @Query(sort: [SortDescriptor(\Subject.sortIndex)]) private var subjects: [Subject]
 
+    /// Die in den Einstellungen gewählte Sprache. Das Datum in der Kopfzeile ist
+    /// die einzige Stelle, an der Foundation formatiert statt der String-Katalog
+    /// zu greifen — ohne diese Locale stünde dort die Systemsprache.
+    @Environment(\.locale) private var locale
+
     @State private var model = DashboardViewModel()
     @State private var selectedSemester: Int
 
@@ -93,7 +98,7 @@ struct DashboardView: View {
     /// Datum in der Sprache des Geräts richtig da.
     private var todayText: String {
         Date.now.formatted(
-            Date.FormatStyle()
+            Date.FormatStyle(locale: locale)
                 .weekday(.wide)
                 .day()
                 .month(.abbreviated)

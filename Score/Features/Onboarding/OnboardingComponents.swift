@@ -203,6 +203,9 @@ struct OnboardingOptionCard: View {
 // MARK: - Chip-Wolke
 
 /// Eine umbrechende Reihe von Auswahl-Chips.
+///
+/// Die Beschriftungen sind durchweg Daten — Fachnamen, Bundesländer, Jahreszahlen
+/// — und laufen deshalb nie durch den String-Katalog.
 struct ChipCloud<Item: Hashable>: View {
 
     let items: [Item]
@@ -213,7 +216,7 @@ struct ChipCloud<Item: Hashable>: View {
     var body: some View {
         ChipFlowLayout(spacing: ScoreMetrics.Spacing.xs) {
             ForEach(items, id: \.self) { item in
-                ScoreChip(title: title(item), isSelected: isSelected(item)) {
+                ScoreChip(verbatimTitle: title(item), isSelected: isSelected(item)) {
                     toggle(item)
                 }
             }

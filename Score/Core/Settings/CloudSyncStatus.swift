@@ -37,6 +37,9 @@ final class CloudSyncStatus {
         case restricted
         /// Der Abgleich ist mit einem Fehler stehengeblieben.
         case failed(String)
+        /// Dieser Build darf CloudKit gar nicht benutzen — er ist nicht signiert.
+        /// Kommt beim Nutzer nie vor, nur in Entwicklungs- und CI-Builds.
+        case unavailable
     }
 
     private(set) var state: State = .unknown
@@ -66,6 +69,14 @@ final class CloudSyncStatus {
     /// jederzeit ändern — jemand meldet sich ab, während die App läuft — deshalb
     /// wird er nicht einmalig gecacht.
     func refresh() async {
+        // Ohne Entitlement ist schon der Aufruf tödlich: `CKContainer` trapt beim
+        // Anlegen, statt einen Fehler zu werfen. Genau derselbe Grund wie beim
+        // Datenspeicher — der Absturz muss vermieden, nicht behandelt werden.
+        guard CloudKitAvailability.isEntitled else {
+            state = .unavailable
+            return
+        }
+
         do {
             let status = try await CKContainer(identifier: containerIdentifier).accountStatus()
             switch status {
@@ -165,6 +176,7 @@ extension CloudSyncStatus.State {
         case .syncing: "Wird abgeglichen …"
         case .synced: "Aktuell"
         case .noAccount: "Kein iCloud-Konto"
+        case .unavailable: "In diesem Build nicht verfügbar"
         case .restricted: "iCloud eingeschränkt"
         case .failed: "Abgleich gestört"
         }
@@ -179,6 +191,8 @@ extension CloudSyncStatus.State {
         switch self {
         case .unknown, .ready, .syncing, .synced:
             nil
+        case .unavailable:
+            Text("Dieser Build ist nicht signiert und kann iCloud nicht nutzen. Deine Daten bleiben auf diesem Gerät.")
         case .noAccount:
             Text("Melde dich in den Systemeinstellungen bei iCloud an, damit deine Kurse auf deine anderen Geräte kommen. Ohne Konto bleibt alles nur auf diesem Gerät.")
         case .restricted:
@@ -191,7 +205,7 @@ extension CloudSyncStatus.State {
     /// Ob der Zustand Aufmerksamkeit braucht.
     var needsAttention: Bool {
         switch self {
-        case .noAccount, .restricted, .failed: true
+        case .noAccount, .restricted, .failed, .unavailable: true
         case .unknown, .ready, .syncing, .synced: false
         }
     }

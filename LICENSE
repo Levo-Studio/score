@@ -1,0 +1,202 @@
+Score Source-Available License
+Version 1.0
+
+Copyright (c) 2026 Levo Studio. All rights reserved.
+
+This license lets you read this software, and run it for yourself. It does
+not let you sell it, build on it, or ship a changed version of it. If you
+want to do any of those things, you need a separate written agreement with
+Levo Studio.
+
+This is not an open source licence. It does not meet the Open Source
+Definition, because it restricts both commercial use and modification.
+
+## 1. Acceptance
+
+By exercising any permission granted below, you accept this license and
+agree to its terms. If you do not accept them, you have no permissions
+under this license.
+
+## 2. Grant of Copyright License
+
+Subject to every condition and limitation in this license, the licensor
+grants you a worldwide, royalty-free, non-exclusive, non-transferable,
+non-sublicensable license to:
+
+  (a) access, read, view and study the source code of the software;
+
+  (b) reproduce the software on machines you own or control, and compile,
+      build and execute it, in each case solely for a permitted purpose as
+      defined in section 3; and
+
+  (c) distribute exact, unmodified copies of the software, complete and
+      unaltered, provided you comply with section 6.
+
+No other rights are granted. Sections 4 and 5 limit this grant, and they
+prevail over anything in this section that could be read otherwise.
+
+## 3. Permitted Purposes
+
+You may exercise the permissions in section 2 only for:
+
+  (a) your own personal, private use;
+
+  (b) study of the software, including for education, teaching and
+      independent research; and
+
+  (c) evaluating the software in order to decide whether to seek a
+      commercial license from the licensor.
+
+Use by a natural person acting outside any trade, business, craft or
+profession is a permitted purpose. Use by or on behalf of an organisation,
+in the course of employment, or in support of an activity that generates or
+is intended to generate revenue, is not.
+
+## 4. No Commercial Use
+
+You may not use the software, in whole or in part, for any commercial
+purpose. Commercial purpose includes, without limitation:
+
+  (a) selling, licensing, renting, leasing, lending or otherwise supplying
+      the software or access to it in exchange for consideration;
+
+  (b) using the software to provide a product or service to a third party,
+      whether or not for a fee, including as part of any hosted, managed or
+      software-as-a-service offering;
+
+  (c) using the software in the internal operations of any business,
+      commercial enterprise, governmental body, or other organisation; and
+
+  (d) incorporating the software into any product or service that is
+      offered commercially.
+
+Use by a registered charity or comparable not-for-profit body in furtherance
+of its charitable purposes, and not in competition with the licensor, is not
+treated as commercial use for the purposes of this section.
+
+## 5. No Derivative Works
+
+You may not modify, adapt, alter, translate, port, refactor, decompile,
+disassemble, reverse engineer, or otherwise create any derivative work based
+on the software, and you may not distribute, publish, communicate to the
+public or otherwise make available any such derivative work.
+
+For the avoidance of doubt:
+
+  (a) local, temporary modification of the source code solely for the
+      purpose of study, or in order to compile and run the software on your
+      own machine under section 2(b), is permitted, provided the result is
+      never distributed, published or made available to any third party;
+
+  (b) combining or linking the software, in whole or in part, with other
+      software so as to produce a combined work is not permitted; and
+
+  (c) reverse engineering that may not lawfully be restricted under
+      applicable mandatory law, including where permitted by Article 6 of
+      Directive 2009/24/EC, is permitted to the extent of that law and no
+      further.
+
+## 6. Redistribution
+
+If you distribute copies of the software under section 2(c), you must:
+
+  (a) distribute the software complete and unmodified, including all source
+      code as received;
+
+  (b) include this license file, unaltered, with every copy;
+
+  (c) retain all copyright, attribution and licence notices contained in the
+      software; and
+
+  (d) not charge any fee or other consideration for the copy, and not impose
+      any additional or different terms on any recipient.
+
+## 7. Notices
+
+You must not remove, obscure or alter any copyright notice, licence notice,
+attribution or other identifying mark contained in the software.
+
+## 8. Patents
+
+The licensor grants you no patent rights under this license, whether express
+or implied. If you initiate or knowingly assist in any patent claim alleging
+that the software infringes a patent, every license granted to you under
+this license terminates immediately.
+
+## 9. Trademarks
+
+This license grants you no rights in the trade marks, service marks, trade
+names, logos or product names of Levo Studio, including the names "Levo
+Studio" and "Score". You must not use them to endorse or promote anything,
+or in a way that suggests any association with or endorsement by Levo
+Studio.
+
+## 10. Termination
+
+Your rights under this license terminate automatically if you breach any of
+its terms.
+
+If your breach is capable of being cured, your rights are reinstated
+retroactively provided you cure the breach within 30 days of becoming aware
+of it, and you have not previously had rights reinstated under this section.
+
+Sections 7, 9, 11 and 12 survive termination.
+
+## 11. Disclaimer of Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. TO THE EXTENT
+THIS DISCLAIMER IS UNENFORCEABLE UNDER APPLICABLE LAW, IT SHALL BE CONSTRUED
+AS THE BROADEST DISCLAIMER THAT IS ENFORCEABLE.
+
+The software calculates an indicative school grade average. It is not an
+official statement of any examination result, and it carries no guarantee of
+correctness or of conformity with any current examination regulation.
+
+## 12. Limitation of Liability
+
+TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL THE
+LICENSOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY
+OR CONSEQUENTIAL DAMAGES, OR FOR ANY LOSS OF PROFITS, REVENUE, DATA OR
+OPPORTUNITY, ARISING OUT OF OR IN CONNECTION WITH THIS LICENSE OR THE USE OF
+OR INABILITY TO USE THE SOFTWARE, HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY.
+
+Nothing in this license excludes or limits liability that cannot lawfully be
+excluded or limited, including liability for death or personal injury caused
+by negligence, or for fraud.
+
+## 13. Definitions
+
+**Licensor** means Levo Studio, the rights holder in the software.
+
+**Software** means the work made available under this license, including its
+source code, build configuration, assets and accompanying files, in each
+version made available by the licensor.
+
+**You** means the individual or entity exercising permissions under this
+license. **Your** has a corresponding meaning.
+
+**Derivative work** means any work based upon the software, including any
+modification, adaptation, translation, extension, or any other form in which
+the software may be recast, transformed or built upon.
+
+## 14. Third-Party Components
+
+The typefaces bundled with the software, Archivo and Public Sans, are
+licensed separately under the SIL Open Font License 1.1. Their licence texts
+are included alongside the font files. This license does not restrict your
+rights in those typefaces, and the SIL Open Font License does not grant you
+any rights in the remainder of the software.
+
+## 15. Other Terms
+
+Rights beyond those granted here — including commercial use, modification,
+and distribution of derivative works — are available by separate written
+agreement.
+
+---
+
+Rights holder: **Levo Studio**
+Contact: me@juliusgrimm.dev

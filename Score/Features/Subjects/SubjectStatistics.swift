@@ -2,10 +2,12 @@ import SwiftUI
 
 /// Die Kennzahlen eines Fachs über alle vier Halbjahre.
 ///
-/// iPhone und iPad zeigen dieselben drei Zeilen in der Glow-Karte eines Fachs —
-/// bestes Halbjahr, erfasste Leistungen, Trend — und das iPad zusätzlich den
-/// Verlauf als Balken. Die Ableitung liegt deshalb hier und nicht in einer der
-/// beiden Ansichten.
+/// Die iPad-Fachansicht zeigt sie als drei Zeilen in der Glow-Karte — bestes
+/// Halbjahr, erfasste Leistungen, Trend — und darunter den Verlauf als Balken.
+/// Die Ableitung liegt hier und nicht in der Ansicht, weil sie nichts mit der
+/// Darstellung zu tun hat. Auf dem iPhone steht an dieser Stelle laut
+/// Design-Datei nur das gewählte Halbjahr, dort werden sie deshalb nicht
+/// gebraucht.
 struct SubjectStatistics {
 
     /// Das Halbjahresergebnis je Halbjahr, `nil` wo keines vorliegt.

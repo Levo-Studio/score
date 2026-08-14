@@ -109,40 +109,50 @@ struct FirstNameStep: View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
             OnboardingHeader(
                 kicker: model.stepKicker,
-                title: "Wie heisst du?",
-                text: "Nur dein Vorname, und nur für die Begrüssung. Score legt kein Konto an und schickt nichts an einen Server."
+                title: "Wie sollen wir dich nennen?",
+                text: "Steht nur auf deinem Dashboard, sonst nirgends."
             )
 
-            OnboardingTextField(
-                placeholder: "Vorname",
-                text: $model.firstName
-            )
-            .staggeredAppearance(index: 3)
+            OnboardingNameField(text: $model.firstName)
+                .staggeredAppearance(index: 3)
         }
     }
 }
 
-/// Ein einzeiliges Eingabefeld im Kartenstil.
-struct OnboardingTextField: View {
+/// Die Karte, in die der Vorname eingetragen wird.
+///
+/// Der Name steht gross in Archivo und nicht in einer gewöhnlichen Feldzeile:
+/// er ist die einzige Angabe dieses Schritts und soll sich beim Tippen auch so
+/// anfühlen. Das kleine Label darüber sagt, was gemeint ist, ohne dass ein
+/// Platzhalter dafür herhalten muss.
+struct OnboardingNameField: View {
 
-    let placeholder: LocalizedStringKey
     @Binding var text: String
 
     var body: some View {
-        TextField(placeholder, text: $text)
-            .font(.rowTitle)
+        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
+            Text("Vorname")
+                .font(.fieldLabel)
+                .foregroundStyle(ScorePalette.inkSecondary)
+
+            TextField(text: $text) {
+                Text(verbatim: "Jonas")
+            }
+            .font(.nameInput)
+            .tracking(em: -0.03, at: 26)
             .foregroundStyle(ScorePalette.ink)
             .textInputAutocapitalization(.words)
             .autocorrectionDisabled()
             .submitLabel(.done)
-            .padding(.horizontal, ScoreMetrics.Spacing.md)
-            .frame(height: 54)
-            .background(ScorePalette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous)
-                    .strokeBorder(ScorePalette.line, lineWidth: 1)
-            )
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(ScorePalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(ScorePalette.line, lineWidth: 1)
+        )
     }
 }
 
@@ -157,12 +167,12 @@ struct ClassLevelStep: View {
             OnboardingHeader(
                 kicker: model.stepKicker,
                 title: "In welcher Klasse bist du?",
-                text: "Danach richtet sich, welche Halbjahre schon zählen. Ändern kannst du das später in den Einstellungen."
+                text: "Danach richtet sich, welche Halbjahre du eintragen kannst."
             )
 
-            VStack(spacing: ScoreMetrics.Spacing.sm) {
+            VStack(spacing: 9) {
                 OnboardingOptionCard(
-                    title: "Kursstufe 1",
+                    title: "Klasse 11 · Kursstufe 1",
                     subtitle: "Halbjahre 1/4 und 2/4 stehen an",
                     isSelected: model.classLevel == .kursstufe1
                 ) {
@@ -170,14 +180,21 @@ struct ClassLevelStep: View {
                 }
 
                 OnboardingOptionCard(
-                    title: "Kursstufe 2",
-                    subtitle: "Alle vier Halbjahre sind belegt",
+                    title: "Klasse 12 · Kursstufe 2",
+                    subtitle: "1/4 bis 4/4, Prüfungen im Frühjahr",
                     isSelected: model.classLevel == .kursstufe2
                 ) {
                     model.classLevel = .kursstufe2
                 }
             }
             .staggeredAppearance(index: 3)
+
+            Text("Score beginnt mit der Kursstufe — erst ab 11/1 zählen Halbjahresergebnisse für Block I.")
+                .font(.optionMeta)
+                .lineSpacing(5.5)
+                .foregroundStyle(ScorePalette.inkSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .staggeredAppearance(index: 4)
         }
     }
 }
@@ -198,13 +215,13 @@ struct RegionStep: View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
             OnboardingHeader(
                 kicker: model.stepKicker,
-                title: "Wo und wann machst du Abi?",
-                text: "Score rechnet nach Baden-Württemberg. Andere Länder kannst du eintragen, die Rechnung bleibt dieselbe."
+                title: "Bundesland und Abi-Jahr",
+                text: "Die Abiregel unterscheidet sich je Land. Score rechnet nach BW."
             )
 
-            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
+            VStack(alignment: .leading, spacing: 10) {
                 Text("Bundesland")
-                    .font(.micro)
+                    .font(.fieldLabel)
                     .foregroundStyle(ScorePalette.inkSecondary)
 
                 ChipCloud(
@@ -216,9 +233,9 @@ struct RegionStep: View {
             }
             .staggeredAppearance(index: 3)
 
-            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
-                Text("Abi-Jahr")
-                    .font(.micro)
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Abitur im Jahr")
+                    .font(.fieldLabel)
                     .foregroundStyle(ScorePalette.inkSecondary)
 
                 ChipCloud(
@@ -244,7 +261,7 @@ struct AdvancedSubjectsStep: View {
             OnboardingHeader(
                 kicker: model.stepKicker,
                 title: "Deine drei Leistungsfächer",
-                text: "Sie bringen alle vier Halbjahre in Block I ein und lassen sich nicht abwählen. Genau drei müssen es sein."
+                text: "Fünfstündig, zwölf Halbjahresergebnisse, größtes Gewicht im Schnitt."
             )
 
             SubjectSelectionSection(
@@ -311,8 +328,10 @@ struct BasicSubjectsStep: View {
     }
 }
 
-/// Chip-Wolke, Zähler und Eingabefeld — der gemeinsame Unterbau der drei
-/// Fächerschritte.
+/// Chip-Wolke mit Zähler — der gemeinsame Unterbau der drei Fächerschritte.
+///
+/// Das eigene Fach hängt als gestrichelter Tag hinten in der Wolke und nicht als
+/// eigene Zeile darunter: es ist eine weitere Wahlmöglichkeit, kein Formular.
 private struct SubjectSelectionSection: View {
 
     let counter: LocalizedStringKey
@@ -323,20 +342,20 @@ private struct SubjectSelectionSection: View {
     let onCommitCustom: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(counter)
-                .font(.micro)
+                .font(.fieldLabel)
                 .foregroundStyle(ScorePalette.inkSecondary)
 
             ChipCloud(
                 items: options,
                 title: { $0 },
                 isSelected: isSelected,
-                toggle: toggle
-            )
-
-            CustomSubjectField(text: $draft, onSubmit: onCommitCustom)
-                .padding(.top, ScoreMetrics.Spacing.xs)
+                toggle: toggle,
+                spacing: 9
+            ) {
+                DashedChip(title: "Eigenes Fach", text: $draft, onCommit: onCommitCustom)
+            }
         }
         .staggeredAppearance(index: 3)
     }
@@ -356,7 +375,7 @@ struct LanguageStep: View {
                 text: "Deutsch ist die Basissprache — die Begriffe der Kursstufe stehen so auch im Zeugnis."
             )
 
-            VStack(spacing: ScoreMetrics.Spacing.sm) {
+            VStack(spacing: 9) {
                 ForEach(AppSettings.Language.allCases) { language in
                     OnboardingOptionCard(
                         verbatimTitle: language.title,
@@ -382,16 +401,16 @@ struct SummaryStep: View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
             OnboardingHeader(
                 kicker: model.stepKicker,
-                title: "Passt das so?",
-                text: "Alles lässt sich später ändern — Fächer, Typ, Halbjahre und Gewichtung."
+                title: model.summaryTitle,
+                text: "Du kannst jede Angabe später in den Einstellungen ändern."
             )
 
-            ScoreCard {
+            ScoreCard(padding: 0) {
                 VStack(spacing: 0) {
-                    SummaryRow(label: "Vorname", value: Text(verbatim: model.firstName), isFirst: true)
+                    SummaryRow(label: "Name", value: Text(verbatim: model.firstName), isFirst: true)
                     SummaryRow(label: "Klasse", value: Text(model.summaryClassLevel))
                     SummaryRow(label: "Bundesland", value: Text(verbatim: model.federalState))
-                    SummaryRow(label: "Abi-Jahr", value: Text(verbatim: String(model.graduationYear)))
+                    SummaryRow(label: "Abitur", value: Text(verbatim: String(model.graduationYear)))
                     SummaryRow(label: "Leistungsfächer", value: Text(verbatim: model.summaryList(model.advancedSubjects)))
                     SummaryRow(label: "Kernfächer", value: Text(verbatim: model.summaryList(model.sortedCoreSubjects)))
                     SummaryRow(label: "Basisfächer", value: Text(verbatim: model.summaryList(model.sortedBasicSubjects)))
@@ -399,6 +418,13 @@ struct SummaryStep: View {
                 }
             }
             .staggeredAppearance(index: 3)
+
+            Text("Keine Anmeldung, kein Konto. Deine Kurse liegen in iCloud und sind auf iPhone und iPad synchron.")
+                .font(.summaryLabel)
+                .lineSpacing(7.5)
+                .foregroundStyle(ScorePalette.inkSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .staggeredAppearance(index: 4)
         }
     }
 }

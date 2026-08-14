@@ -22,14 +22,14 @@ struct OnboardingView: View {
                         currentStep: model.progressStepNumber,
                         totalStepCount: model.totalStepCount
                     )
-                    .padding(.horizontal, ScoreMetrics.screenPadding)
-                    .padding(.top, ScoreMetrics.Spacing.sm)
-                    .padding(.bottom, ScoreMetrics.Spacing.xl)
+                    .padding(.horizontal, ScoreMetrics.Spacing.xl)
+                    .padding(.top, 10)
+                    .padding(.bottom, 22)
                 }
 
                 ScrollView {
                     stepContent
-                        .padding(.horizontal, ScoreMetrics.screenPadding)
+                        .padding(.horizontal, ScoreMetrics.Spacing.xl)
                         .padding(.bottom, ScoreMetrics.Spacing.xl)
                         .id(model.step)
                 }
@@ -70,16 +70,22 @@ struct OnboardingView: View {
     // MARK: - Fusszeile
 
     private var footer: some View {
-        HStack(spacing: ScoreMetrics.Spacing.sm) {
+        HStack(spacing: 10) {
             if model.canGoBack {
                 Button {
                     withAnimation(.easeInOut(duration: 0.28)) { model.goBack() }
                 } label: {
                     Text("Zurück")
-                        .font(.chipLabel)
+                        .font(ScoreTypography.publicSans(500, 14))
                         .foregroundStyle(ScorePalette.inkSecondary)
-                        .padding(.horizontal, ScoreMetrics.Spacing.md)
+                        .padding(.horizontal, ScoreMetrics.Spacing.lg)
+                        .padding(.vertical, 18)
                         .frame(minHeight: ScoreMetrics.minimumTapTarget)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous)
+                                .strokeBorder(ScorePalette.line, lineWidth: 1)
+                        )
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .transition(.opacity)
@@ -97,7 +103,7 @@ struct OnboardingView: View {
             .disabled(!model.canAdvance)
             .animation(.easeOut(duration: 0.2), value: model.canAdvance)
         }
-        .padding(.horizontal, ScoreMetrics.screenPadding)
+        .padding(.horizontal, ScoreMetrics.Spacing.xl)
         .padding(.top, ScoreMetrics.Spacing.sm)
         .padding(.bottom, ScoreMetrics.Spacing.xs)
     }

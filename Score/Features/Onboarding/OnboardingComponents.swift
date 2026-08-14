@@ -19,7 +19,7 @@ struct OnboardingProgressBar: View {
         HStack(spacing: 6) {
             ForEach(0..<totalStepCount, id: \.self) { index in
                 Capsule()
-                    .fill(index < currentStep ? ScorePalette.accent : ScorePalette.track)
+                    .fill(index < currentStep ? ScorePalette.accent : ScorePalette.line)
                     .frame(height: 4)
             }
         }
@@ -42,25 +42,28 @@ struct OnboardingHeader: View {
     var text: LocalizedStringKey?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(kicker)
-                .font(.micro)
-                .foregroundStyle(ScorePalette.inkSecondary)
+                .font(.stepKicker)
+                .foregroundStyle(ScorePalette.accent)
                 .staggeredAppearance(index: 0)
 
             Text(title)
                 .font(.stepTitle)
-                .tracking(em: -0.03, at: 27)
+                .tracking(em: -0.035, at: 27)
                 .foregroundStyle(ScorePalette.ink)
                 .fixedSize(horizontal: false, vertical: true)
                 .staggeredAppearance(index: 1)
 
             if let text {
                 Text(text)
-                    .font(.bodyText)
-                    .lineSpacing(5)
+                    .font(.stepText)
+                    .lineSpacing(6.5)
                     .foregroundStyle(ScorePalette.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
+                    // Die Design-Datei deckelt den Erklärtext bei 300 Punkten,
+                    // damit er nicht über die ganze Breite läuft.
+                    .frame(maxWidth: 300, alignment: .leading)
                     .staggeredAppearance(index: 2)
             }
         }
@@ -150,30 +153,29 @@ struct OnboardingOptionCard: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: ScoreMetrics.Spacing.md) {
+            HStack(spacing: ScoreMetrics.Spacing.sm) {
                 VStack(alignment: .leading, spacing: 6) {
                     title
-                        .font(.rowTitle)
-                        .foregroundStyle(ScorePalette.ink)
+                        .font(.sectionTitle)
+                        .foregroundStyle(foreground)
                     Text(subtitle)
-                        .font(.meta)
-                        .foregroundStyle(ScorePalette.inkSecondary)
+                        .font(.optionMeta)
+                        .foregroundStyle(foreground.opacity(0.7))
                         .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 radioMark
             }
-            .padding(ScoreMetrics.Spacing.md)
+            .padding(.horizontal, 18)
+            .padding(.vertical, ScoreMetrics.Spacing.md)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(ScorePalette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.card, style: .continuous))
+            .background(isSelected ? ScorePalette.accent : ScorePalette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: ScoreMetrics.Radius.card, style: .continuous)
-                    .strokeBorder(
-                        isSelected ? ScorePalette.accent : ScorePalette.line,
-                        lineWidth: isSelected ? 1.5 : 1
-                    )
+                RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous)
+                    .strokeBorder(isSelected ? .clear : ScorePalette.line, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -181,22 +183,21 @@ struct OnboardingOptionCard: View {
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
     }
 
-    private var radioMark: some View {
-        ZStack {
-            Circle()
-                .strokeBorder(
-                    isSelected ? ScorePalette.accent : ScorePalette.lineStrong,
-                    lineWidth: 1.5
-                )
-                .frame(width: 22, height: 22)
+    /// Die gewählte Karte kehrt sich um: Petrol als Fläche, helle Schrift darauf.
+    private var foreground: Color {
+        isSelected ? ScorePalette.accentInk : ScorePalette.ink
+    }
 
-            if isSelected {
-                Circle()
-                    .fill(ScorePalette.accent)
-                    .frame(width: 11, height: 11)
-                    .transition(.scale.combined(with: .opacity))
-            }
-        }
+    private var radioMark: some View {
+        Circle()
+            .fill(isSelected ? ScorePalette.accentInk : .clear)
+            .overlay(
+                Circle().strokeBorder(
+                    isSelected ? ScorePalette.accentInk : ScorePalette.lineStrong,
+                    lineWidth: 2
+                )
+            )
+            .frame(width: 22, height: 22)
     }
 }
 
@@ -206,134 +207,49 @@ struct OnboardingOptionCard: View {
 ///
 /// Die Beschriftungen sind durchweg Daten — Fachnamen, Bundesländer, Jahreszahlen
 /// — und laufen deshalb nie durch den String-Katalog.
-struct ChipCloud<Item: Hashable>: View {
+///
+/// Der Abstand kommt von aussen, weil die Design-Datei zwei Werte kennt: 8 Punkt
+/// bei Bundesland und Abi-Jahr, 9 Punkt in der Fächerwolke.
+///
+/// `trailing` hängt ein Element hinter den letzten Chip — in derselben Zeile,
+/// mit demselben Umbruch. Dort sitzt der gestrichelte „Eigenes Fach"-Tag.
+struct ChipCloud<Item: Hashable, Trailing: View>: View {
 
     let items: [Item]
     let title: (Item) -> String
     let isSelected: (Item) -> Bool
     let toggle: (Item) -> Void
+    var spacing: CGFloat = ScoreMetrics.Spacing.xs
+    @ViewBuilder var trailing: Trailing
 
     var body: some View {
-        ChipFlowLayout(spacing: ScoreMetrics.Spacing.xs) {
+        ChipFlowLayout(spacing: spacing) {
             ForEach(items, id: \.self) { item in
                 ScoreChip(verbatimTitle: title(item), isSelected: isSelected(item)) {
                     toggle(item)
                 }
             }
+            trailing
         }
     }
 }
 
-/// Ein Layout, das seine Kinder wie Text umbricht.
-///
-/// SwiftUI bringt dafür nichts mit: ein `HStack` bricht nicht um, ein `Grid`
-/// erzwingt gleiche Spaltenbreiten. Chips sind aber unterschiedlich breit und
-/// sollen genau dann in die nächste Zeile rutschen, wenn sie nicht mehr passen.
-struct ChipFlowLayout: Layout {
+extension ChipCloud where Trailing == EmptyView {
 
-    // Kein Vorgabewert: `Layout` ist nicht an den Main-Actor gebunden, die
-    // Abstandsleiter dagegen schon. Der Abstand kommt deshalb von aussen.
-    var spacing: CGFloat
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? .infinity
-        let rows = arrange(subviews: subviews, availableWidth: width)
-        let height = rows.reduce(0) { $0 + $1.height } + spacing * CGFloat(max(0, rows.count - 1))
-        return CGSize(width: proposal.width ?? rows.map(\.width).max() ?? 0, height: height)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let rows = arrange(subviews: subviews, availableWidth: bounds.width)
-        var y = bounds.minY
-
-        for row in rows {
-            var x = bounds.minX
-            for index in row.indices {
-                let size = subviews[index].sizeThatFits(.unspecified)
-                subviews[index].place(
-                    at: CGPoint(x: x, y: y + (row.height - size.height) / 2),
-                    proposal: ProposedViewSize(size)
-                )
-                x += size.width + spacing
-            }
-            y += row.height + spacing
-        }
-    }
-
-    private struct Row {
-        var indices: [Int] = []
-        var width: CGFloat = 0
-        var height: CGFloat = 0
-    }
-
-    private func arrange(subviews: Subviews, availableWidth: CGFloat) -> [Row] {
-        var rows: [Row] = []
-        var current = Row()
-
-        for index in subviews.indices {
-            let size = subviews[index].sizeThatFits(.unspecified)
-            let widthWithItem = current.indices.isEmpty
-                ? size.width
-                : current.width + spacing + size.width
-
-            if !current.indices.isEmpty, widthWithItem > availableWidth {
-                rows.append(current)
-                current = Row()
-                current.indices = [index]
-                current.width = size.width
-                current.height = size.height
-            } else {
-                current.indices.append(index)
-                current.width = widthWithItem
-                current.height = max(current.height, size.height)
-            }
-        }
-
-        if !current.indices.isEmpty { rows.append(current) }
-        return rows
-    }
-}
-
-// MARK: - Eigenes Fach
-
-/// Das Eingabefeld, mit dem ein Fach angelegt wird, das nicht im Katalog steht.
-struct CustomSubjectField: View {
-
-    @Binding var text: String
-    let onSubmit: () -> Void
-
-    private var canSubmit: Bool {
-        !text.trimmingCharacters(in: .whitespaces).isEmpty
-    }
-
-    var body: some View {
-        HStack(spacing: ScoreMetrics.Spacing.sm) {
-            TextField("Eigenes Fach", text: $text)
-                .font(.bodyText)
-                .foregroundStyle(ScorePalette.ink)
-                .textInputAutocapitalization(.words)
-                .autocorrectionDisabled()
-                .submitLabel(.done)
-                .onSubmit(onSubmit)
-
-            Button(action: onSubmit) {
-                Text("OK")
-                    .font(.chipLabel)
-                    .foregroundStyle(canSubmit ? ScorePalette.accent : ScorePalette.inkSecondary)
-                    .padding(.horizontal, ScoreMetrics.Spacing.sm)
-                    .frame(minHeight: ScoreMetrics.minimumTapTarget)
-            }
-            .buttonStyle(.plain)
-            .disabled(!canSubmit)
-        }
-        .padding(.leading, ScoreMetrics.Spacing.md)
-        .padding(.trailing, ScoreMetrics.Spacing.xxs)
-        .padding(.vertical, ScoreMetrics.Spacing.xxs)
-        .background(ScorePalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous)
-                .strokeBorder(ScorePalette.line, lineWidth: 1)
+    init(
+        items: [Item],
+        title: @escaping (Item) -> String,
+        isSelected: @escaping (Item) -> Bool,
+        toggle: @escaping (Item) -> Void,
+        spacing: CGFloat = ScoreMetrics.Spacing.xs
+    ) {
+        self.init(
+            items: items,
+            title: title,
+            isSelected: isSelected,
+            toggle: toggle,
+            spacing: spacing,
+            trailing: { EmptyView() }
         )
     }
 }
@@ -354,15 +270,16 @@ struct SummaryRow: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: ScoreMetrics.Spacing.md) {
             Text(label)
-                .font(.bodyText)
+                .font(.summaryLabel)
                 .foregroundStyle(ScorePalette.inkSecondary)
             Spacer(minLength: 0)
             value
-                .font(.rowTitle)
+                .font(.summaryValue)
                 .foregroundStyle(ScorePalette.ink)
                 .multilineTextAlignment(.trailing)
         }
-        .padding(.vertical, 10)
+        .padding(.horizontal, ScoreMetrics.Spacing.md)
+        .padding(.vertical, 14)
         .overlay(alignment: .top) {
             if !isFirst {
                 Rectangle()

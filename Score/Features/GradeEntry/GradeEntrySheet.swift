@@ -33,8 +33,8 @@ struct GradeEntrySheet: View {
                 footer
             }
             .padding(.horizontal, ScoreMetrics.Spacing.lg)
-            .padding(.top, ScoreMetrics.Spacing.lg)
-            .padding(.bottom, ScoreMetrics.Spacing.xl)
+            .padding(.top, 18)
+            .padding(.bottom, 28)
         }
         .background(ScorePalette.surface)
         // Der Inhalt ist kurz — auf halber Höhe bleibt die Fachansicht sichtbar
@@ -42,6 +42,7 @@ struct GradeEntrySheet: View {
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
         .presentationBackground(ScorePalette.surface)
+        .presentationCornerRadius(ScoreMetrics.Radius.sheet)
     }
 
     // MARK: - Kopf
@@ -49,7 +50,7 @@ struct GradeEntrySheet: View {
     private var titleRow: some View {
         HStack(spacing: ScoreMetrics.Spacing.sm) {
             TextField("Titel der Leistung", text: $entry.title)
-                .font(ScoreTypography.publicSans(600, 17))
+                .font(ScoreTypography.publicSans(600, 16))
                 .foregroundStyle(ScorePalette.ink)
                 .textInputAutocapitalization(.sentences)
 
@@ -62,14 +63,14 @@ struct GradeEntrySheet: View {
     // MARK: - Art und Teilnote
 
     private var categoryChips: some View {
-        SubjectChipFlow {
+        ChipFlow(spacing: 6) {
             ForEach(GradeCategory.allCases, id: \.self) { category in
                 ScoreChip(title: category.label, isSelected: entry.category == category) {
                     apply(category)
                 }
             }
         }
-        .padding(.top, ScoreMetrics.Spacing.md)
+        .padding(.top, 14)
     }
 
     /// Die Art setzt die Voreinstellungen neu — sie ist die Entscheidung, aus der
@@ -105,15 +106,15 @@ struct GradeEntrySheet: View {
     /// wird hier mit dem Daumen getroffen, nicht gezielt.
     private var pointsPad: some View {
         LazyVGrid(
-            columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 8),
-            spacing: 6
+            columns: Array(repeating: GridItem(.flexible(), spacing: 7), count: 8),
+            spacing: 7
         ) {
             ForEach(GradeEntry.pointsRange, id: \.self) { value in
                 Button {
                     entry.points = value
                 } label: {
                     Text(verbatim: "\(value)")
-                        .font(ScoreTypography.archivo(600, 15))
+                        .font(ScoreTypography.archivo(600, 14))
                         .monospacedDigit()
                         .foregroundStyle(
                             entry.points == value ? ScorePalette.accentInk : ScorePalette.ink
@@ -132,7 +133,7 @@ struct GradeEntrySheet: View {
                 .buttonStyle(.plain)
             }
         }
-        .padding(.top, ScoreMetrics.Spacing.md)
+        .padding(.top, 14)
         .animation(.easeOut(duration: 0.18), value: entry.points)
     }
 
@@ -145,39 +146,43 @@ struct GradeEntrySheet: View {
                     .font(.cardTitle)
                     .foregroundStyle(ScorePalette.ink)
                 automaticShareHint
-                    .font(.meta)
+                    .font(ScoreTypography.publicSans(400, 10.5))
+                    .lineSpacing(4)
                     .foregroundStyle(ScorePalette.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 230, alignment: .leading)
             }
             Spacer(minLength: ScoreMetrics.Spacing.xs)
             ScoreSwitch(isOn: $entry.usesAutomaticShare)
         }
-        .padding(.top, ScoreMetrics.Spacing.lg)
+        .padding(.top, 18)
     }
 
     private var manualShare: some View {
-        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Anteil an der Teilnote")
                     .font(.cardTitle)
                     .foregroundStyle(ScorePalette.ink)
                 Spacer(minLength: ScoreMetrics.Spacing.xs)
                 Text(verbatim: "\(entry.share) %")
-                    .font(.chipLabel)
+                    .font(ScoreTypography.publicSans(500, 12))
                     .monospacedDigit()
                     .foregroundStyle(ScorePalette.accent)
             }
             WeightSlider(writtenShare: $entry.share, range: 5...100, step: 5)
         }
-        .padding(.top, ScoreMetrics.Spacing.md)
+        .padding(.top, 14)
     }
 
     private var footer: some View {
         HStack(alignment: .firstTextBaseline, spacing: ScoreMetrics.Spacing.sm) {
             kindHint
                 .font(.meta)
+                .lineSpacing(4)
                 .foregroundStyle(ScorePalette.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 250, alignment: .leading)
 
             Spacer(minLength: ScoreMetrics.Spacing.xs)
 
@@ -193,7 +198,7 @@ struct GradeEntrySheet: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(.top, ScoreMetrics.Spacing.md)
+        .padding(.top, 14)
     }
 
     // MARK: - Hinweistexte

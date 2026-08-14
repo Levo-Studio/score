@@ -19,7 +19,7 @@ struct OnboardingProgressBar: View {
         HStack(spacing: 6) {
             ForEach(0..<totalStepCount, id: \.self) { index in
                 Capsule()
-                    .fill(index < currentStep ? ScorePalette.accent : ScorePalette.track)
+                    .fill(index < currentStep ? ScorePalette.accent : ScorePalette.line)
                     .frame(height: 4)
             }
         }
@@ -42,25 +42,28 @@ struct OnboardingHeader: View {
     var text: LocalizedStringKey?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(kicker)
-                .font(.micro)
-                .foregroundStyle(ScorePalette.inkSecondary)
+                .font(.stepKicker)
+                .foregroundStyle(ScorePalette.accent)
                 .staggeredAppearance(index: 0)
 
             Text(title)
                 .font(.stepTitle)
-                .tracking(em: -0.03, at: 27)
+                .tracking(em: -0.035, at: 27)
                 .foregroundStyle(ScorePalette.ink)
                 .fixedSize(horizontal: false, vertical: true)
                 .staggeredAppearance(index: 1)
 
             if let text {
                 Text(text)
-                    .font(.bodyText)
-                    .lineSpacing(5)
+                    .font(.stepText)
+                    .lineSpacing(6.5)
                     .foregroundStyle(ScorePalette.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
+                    // Die Design-Datei deckelt den Erklärtext bei 300 Punkten,
+                    // damit er nicht über die ganze Breite läuft.
+                    .frame(maxWidth: 300, alignment: .leading)
                     .staggeredAppearance(index: 2)
             }
         }
@@ -150,30 +153,29 @@ struct OnboardingOptionCard: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: ScoreMetrics.Spacing.md) {
+            HStack(spacing: ScoreMetrics.Spacing.sm) {
                 VStack(alignment: .leading, spacing: 6) {
                     title
-                        .font(.rowTitle)
-                        .foregroundStyle(ScorePalette.ink)
+                        .font(.sectionTitle)
+                        .foregroundStyle(foreground)
                     Text(subtitle)
-                        .font(.meta)
-                        .foregroundStyle(ScorePalette.inkSecondary)
+                        .font(.optionMeta)
+                        .foregroundStyle(foreground.opacity(0.7))
                         .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 radioMark
             }
-            .padding(ScoreMetrics.Spacing.md)
+            .padding(.horizontal, 18)
+            .padding(.vertical, ScoreMetrics.Spacing.md)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(ScorePalette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.card, style: .continuous))
+            .background(isSelected ? ScorePalette.accent : ScorePalette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: ScoreMetrics.Radius.card, style: .continuous)
-                    .strokeBorder(
-                        isSelected ? ScorePalette.accent : ScorePalette.line,
-                        lineWidth: isSelected ? 1.5 : 1
-                    )
+                RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous)
+                    .strokeBorder(isSelected ? .clear : ScorePalette.line, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -181,22 +183,21 @@ struct OnboardingOptionCard: View {
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
     }
 
-    private var radioMark: some View {
-        ZStack {
-            Circle()
-                .strokeBorder(
-                    isSelected ? ScorePalette.accent : ScorePalette.lineStrong,
-                    lineWidth: 1.5
-                )
-                .frame(width: 22, height: 22)
+    /// Die gewählte Karte kehrt sich um: Petrol als Fläche, helle Schrift darauf.
+    private var foreground: Color {
+        isSelected ? ScorePalette.accentInk : ScorePalette.ink
+    }
 
-            if isSelected {
-                Circle()
-                    .fill(ScorePalette.accent)
-                    .frame(width: 11, height: 11)
-                    .transition(.scale.combined(with: .opacity))
-            }
-        }
+    private var radioMark: some View {
+        Circle()
+            .fill(isSelected ? ScorePalette.accentInk : .clear)
+            .overlay(
+                Circle().strokeBorder(
+                    isSelected ? ScorePalette.accentInk : ScorePalette.lineStrong,
+                    lineWidth: 2
+                )
+            )
+            .frame(width: 22, height: 22)
     }
 }
 
@@ -266,15 +267,16 @@ struct SummaryRow: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: ScoreMetrics.Spacing.md) {
             Text(label)
-                .font(.bodyText)
+                .font(.summaryLabel)
                 .foregroundStyle(ScorePalette.inkSecondary)
             Spacer(minLength: 0)
             value
-                .font(.rowTitle)
+                .font(.summaryValue)
                 .foregroundStyle(ScorePalette.ink)
                 .multilineTextAlignment(.trailing)
         }
-        .padding(.vertical, 10)
+        .padding(.horizontal, ScoreMetrics.Spacing.md)
+        .padding(.vertical, 14)
         .overlay(alignment: .top) {
             if !isFirst {
                 Rectangle()

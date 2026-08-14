@@ -85,6 +85,13 @@ extension Font {
     /// Kartenüberschrift, `600 13px`.
     static let cardTitle = ScoreTypography.archivo(600, 13)
 
+    /// Überschrift einer Gruppe im Bildschirm, `600 15px` — „Kurse im Halbjahr 4/4"
+    /// auf dem Dashboard, der Titel einer Auswahlkarte im Onboarding.
+    static let sectionTitle = ScoreTypography.archivo(600, 15)
+
+    /// Das Eingabefeld für den Vornamen im Onboarding, `800 26px`.
+    static let nameInput = ScoreTypography.archivo(800, 26)
+
     /// Kennzahl in der Statistik-Zeile der Score-Karte, `600 17px`.
     static let statValue = ScoreTypography.archivo(600, 17)
 
@@ -107,6 +114,27 @@ extension Font {
 
     /// Kleinstes Label über einer Gruppe, `400 10px`.
     static let micro = ScoreTypography.publicSans(400, 10)
+
+    /// Label über einem Eingabefeld oder einer Chip-Gruppe im Onboarding, `400 9.5px`.
+    static let fieldLabel = ScoreTypography.publicSans(400, 9.5)
+
+    /// Der Kicker über einer Schritt-Überschrift, `400 10.5px`.
+    static let stepKicker = ScoreTypography.publicSans(400, 10.5)
+
+    /// Der Erklärtext unter einer Schritt-Überschrift, `400 13px`.
+    static let stepText = ScoreTypography.publicSans(400, 13)
+
+    /// Die Meta-Zeile einer Auswahlkarte, `400 11.5px`.
+    static let optionMeta = ScoreTypography.publicSans(400, 11.5)
+
+    /// Bezeichnung in der Zusammenfassungskarte, `400 12.5px`.
+    static let summaryLabel = ScoreTypography.publicSans(400, 12.5)
+
+    /// Wert in der Zusammenfassungskarte, `600 13px`.
+    static let summaryValue = ScoreTypography.publicSans(600, 13)
+
+    /// Die kleine Halbjahres-Beschriftung rechts in einer Fachzeile, `400 9px`.
+    static let rowValueCaption = ScoreTypography.publicSans(400, 9)
 
     /// Label in der Score-Karte, `500 9.5px`.
     static let cardLabel = ScoreTypography.publicSans(500, 9.5)

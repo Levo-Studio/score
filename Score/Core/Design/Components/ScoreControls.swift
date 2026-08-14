@@ -263,7 +263,7 @@ struct PrimaryButton: View {
             Text(title)
                 .font(.buttonLabel)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 17)
+                .padding(.vertical, 18)
                 .foregroundStyle(ScorePalette.accentInk)
                 .background(ScorePalette.accent)
                 .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous))

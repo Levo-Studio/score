@@ -217,10 +217,17 @@ final class OnboardingViewModel {
 
     // MARK: - Zusammenfassung
 
+    /// Die Überschrift des letzten Schritts spricht den Nutzer mit Namen an —
+    /// „Alles bereit, Jonas." Ohne Namen bleibt sie trotzdem ein ganzer Satz.
+    var summaryTitle: LocalizedStringKey {
+        let name = firstName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty ? "Alles bereit." : "Alles bereit, \(name)."
+    }
+
     var summaryClassLevel: LocalizedStringKey {
         switch classLevel {
-        case .kursstufe1: "Kursstufe 1"
-        case .kursstufe2: "Kursstufe 2"
+        case .kursstufe1: "Klasse 11 · KS1"
+        case .kursstufe2: "Klasse 12 · KS2"
         }
     }
 

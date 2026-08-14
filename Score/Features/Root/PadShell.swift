@@ -9,6 +9,9 @@ import SwiftData
 /// Auswahl sonst ins Leere.
 enum PadRoute: Hashable {
     case dashboard
+    /// Die Aufschlüsselung von Block I. Kein Eintrag der Sidebar, sondern ein
+    /// Abstecher aus der Übersicht heraus — erreichbar über die Score-Karte.
+    case breakdown
     case settings
     case subject(UUID)
     case newSubject
@@ -19,7 +22,7 @@ enum PadRoute: Hashable {
     var subjectIdentifier: UUID? {
         switch self {
         case .subject(let identifier), .editSubject(let identifier): identifier
-        case .dashboard, .settings, .newSubject: nil
+        case .dashboard, .breakdown, .settings, .newSubject: nil
         }
     }
 }
@@ -89,6 +92,10 @@ struct PadShell: View {
                 semesterIndex: $semesterIndex,
                 route: $route
             )
+        case .breakdown:
+            BlockOneBreakdownView(subjects: subjects, layout: .pad) {
+                route = .dashboard
+            }
         case .settings:
             PadSettingsView()
         case .subject:
@@ -154,6 +161,7 @@ struct PadShell: View {
     private var title: String {
         switch route {
         case .dashboard: String(localized: "Übersicht")
+        case .breakdown: String(localized: "So kommt dein Schnitt zustande")
         case .settings: String(localized: "Einstellungen")
         case .newSubject: String(localized: "Neues Fach")
         case .editSubject: String(localized: "Fach bearbeiten")

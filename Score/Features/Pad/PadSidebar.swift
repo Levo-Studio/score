@@ -74,7 +74,9 @@ struct PadSidebar: View {
     }
 
     private func navigationRow(title: LocalizedStringKey, route target: PadRoute) -> some View {
-        let isSelected = route == target
+        // Die Aufschlüsselung ist ein Abstecher aus der Übersicht und hat keine
+        // eigene Zeile — die Übersicht bleibt deshalb hervorgehoben.
+        let isSelected = route == target || (target == .dashboard && route == .breakdown)
 
         return Button {
             route = target

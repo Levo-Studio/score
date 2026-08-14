@@ -80,7 +80,8 @@ struct PadDashboardView: View {
                 )
             ],
             scoreSize: 112,
-            isCelebrating: model.isCelebrating
+            isCelebrating: model.isCelebrating,
+            onSelect: { route = .breakdown }
         )
     }
 

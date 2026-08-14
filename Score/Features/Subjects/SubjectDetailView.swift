@@ -23,16 +23,16 @@ struct SubjectDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
-                backButton
-                headerCard
+            VStack(alignment: .leading, spacing: 14) {
+                navigationRow
+                header
                 SemesterPicker(selection: $semesterIndex, labels: Semester.labels)
                 subjectGlowCard
                 semesterCard
                 entrySection(
                     title: "Schriftliche Leistungen",
                     kind: .written,
-                    addTitle: "＋ Klassenarbeit, Test oder Projekt",
+                    addTitle: "＋ Klassenarbeit oder Projekt",
                     addCategory: .exam
                 )
                 entrySection(
@@ -44,8 +44,8 @@ struct SubjectDetailView: View {
                 blockOneNote
             }
             .padding(.horizontal, ScoreMetrics.screenPadding)
-            .padding(.top, ScoreMetrics.Spacing.xs)
-            .padding(.bottom, ScoreMetrics.tabBarClearance)
+            .padding(.top, 6)
+            .padding(.bottom, 170)
         }
         .background(ScorePalette.background)
         .toolbar(.hidden, for: .navigationBar)
@@ -77,90 +77,70 @@ struct SubjectDetailView: View {
         SubjectMath.partialGrade(for: entries(kind).map(GradeInput.init))
     }
 
-    /// Der Punktestand des ganzen Fachs über alle Halbjahre.
-    private var semesterResults: [Int?] {
-        Semester.allIndices.map { index in
-            guard let semester = subject.semester(at: index) else { return nil }
-            return SubjectMath.result(
-                for: SemesterInput(
-                    semester,
-                    writtenShare: subject.writtenShare,
-                    isActive: subject.isActive(in: index)
-                )
-            )
-        }
-    }
+    // MARK: - Navigation
 
-    // MARK: - Zurück
-
-    private var backButton: some View {
-        Button {
-            dismiss()
-        } label: {
-            HStack(spacing: 5) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 12, weight: .semibold))
-                Text("Fächer")
-                    .font(.chipLabel)
-            }
-            .foregroundStyle(ScorePalette.accent)
-            .padding(.vertical, ScoreMetrics.Spacing.xs)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Kopf
-
-    private var headerCard: some View {
-        HStack(spacing: 14) {
-            SubjectDot(color: subject.color, size: 46, cornerRadius: 15)
-
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: ScoreMetrics.Spacing.xs) {
-                    Text(subject.name)
-                        .font(ScoreTypography.archivo(800, 18))
-                        .tracking(em: -0.03, at: 18)
-                        .foregroundStyle(ScorePalette.ink)
-                        .lineLimit(1)
-                    ScoreBadge(
-                        title: subject.kind.badge,
-                        isHighlighted: subject.kind == .leistungsfach
-                    )
+    /// Zurück links, Bearbeiten rechts — zwei schlichte Textlinks über dem Kopf.
+    /// Beides sind Wege aus diesem Bildschirm heraus und stehen deshalb ausserhalb
+    /// des Inhalts, nicht als Knopf mitten darin.
+    private var navigationRow: some View {
+        HStack {
+            Button {
+                dismiss()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 11, weight: .semibold))
+                    Text("Fächer")
+                        .font(.chipLabel)
                 }
-                Text("Ø \(ScoreNumberFormat.points(summary.average)) Punkte")
-                    .font(.meta)
-                    .foregroundStyle(ScorePalette.inkSecondary)
+                .foregroundStyle(ScorePalette.accent)
+                .padding(.vertical, ScoreMetrics.Spacing.xs)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
 
-            Spacer(minLength: ScoreMetrics.Spacing.xs)
+            Spacer(minLength: ScoreMetrics.Spacing.sm)
 
             Button {
                 isEditorPresented = true
             } label: {
-                Text("Bearbeiten")
+                Text("Fach bearbeiten")
                     .font(.chipLabel)
                     .foregroundStyle(ScorePalette.accent)
-                    .padding(.horizontal, ScoreMetrics.Spacing.md)
-                    .padding(.vertical, 10)
-                    .frame(minHeight: ScoreMetrics.minimumTapTarget)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 13, style: .continuous)
-                            .strokeBorder(ScorePalette.line, lineWidth: 1)
-                    )
+                    .padding(.vertical, ScoreMetrics.Spacing.xs)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(ScorePalette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.card, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: ScoreMetrics.Radius.card, style: .continuous)
-                .strokeBorder(ScorePalette.line, lineWidth: 1)
-        )
+    }
+
+    // MARK: - Kopf
+
+    private var header: some View {
+        HStack(spacing: 13) {
+            SubjectDot(color: subject.color, size: 46, cornerRadius: 15)
+
+            VStack(alignment: .leading, spacing: 7) {
+                Text(subject.name)
+                    .font(.greeting)
+                    .tracking(em: -0.035, at: 24)
+                    .foregroundStyle(ScorePalette.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+
+                HStack(spacing: 7) {
+                    ScoreBadge(
+                        title: subject.kind.editorLabel,
+                        isHighlighted: subject.kind == .leistungsfach
+                    )
+                    Text("Ø \(ScoreNumberFormat.points(summary.average)) Punkte")
+                        .font(.optionMeta)
+                        .foregroundStyle(ScorePalette.inkSecondary)
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
     }
 
     // MARK: - Glow-Karte des Fachs
@@ -178,10 +158,10 @@ struct SubjectDetailView: View {
                     Text(ScoreNumberFormat.points(summary.average))
                         .font(.scoreDisplay(54))
                         .monospacedDigit()
-                        .tracking(em: -0.05, at: 54)
+                        .tracking(em: -0.045, at: 54)
                         .foregroundStyle(ScorePalette.scoreInk)
 
-                    VStack(alignment: .leading, spacing: 7) {
+                    VStack(alignment: .leading, spacing: 6) {
                         Text("Punkte")
                             .font(ScoreTypography.publicSans(400, 9))
                             .foregroundStyle(ScorePalette.scoreInkSecondary)
@@ -192,22 +172,33 @@ struct SubjectDetailView: View {
                     }
                     .padding(.bottom, ScoreMetrics.Spacing.xs)
                 }
-                .padding(.top, 14)
+                .padding(.top, ScoreMetrics.Spacing.sm)
 
-                VStack(spacing: 9) {
-                    glowRow("Bestes Halbjahr", value: bestSemesterText)
-                    glowRow("Erfasste Leistungen", value: recordedEntriesText)
-                    glowRow("Trend", value: trendText, isAccented: true)
+                // Die Fusszeile nennt das gewählte Halbjahr — die Karte darüber
+                // steht für alle vier. So beantwortet die Karte beide Fragen.
+                HStack(alignment: .firstTextBaseline) {
+                    Text("Halbjahr \(Semester.label(semesterIndex))")
+                        .font(.optionMeta)
+                        .foregroundStyle(ScorePalette.scoreInkSecondary)
+
+                    Spacer(minLength: ScoreMetrics.Spacing.xs)
+
+                    Text(semesterResultText)
+                        .font(ScoreTypography.archivo(600, 13))
+                        .monospacedDigit()
+                        .foregroundStyle(ScorePalette.scoreInk)
                 }
-                .padding(.top, 15)
+                .padding(.top, 13)
                 .overlay(alignment: .top) {
                     Rectangle()
                         .fill(ScorePalette.scoreLine)
                         .frame(height: 1)
                 }
-                .padding(.top, ScoreMetrics.Spacing.lg)
+                .padding(.top, ScoreMetrics.Spacing.md)
         }
-        .padding(22)
+        .padding(.horizontal, 22)
+        .padding(.top, ScoreMetrics.Spacing.lg)
+        .padding(.bottom, 18)
         .frame(maxWidth: .infinity, alignment: .leading)
         // Der Schein liegt als Hintergrund und nicht im Stapel: als Stapelebene
         // würde sein 340-Punkt-Kreis die Höhe der Karte bestimmen.
@@ -216,73 +207,37 @@ struct SubjectDetailView: View {
                 .fill(
                     RadialGradient(
                         stops: [
-                            .init(color: subject.color.opacity(0.24), location: 0),
+                            .init(color: subject.color.opacity(0.22), location: 0),
                             .init(color: subject.color.opacity(0), location: 0.68)
                         ],
                         center: .center,
                         startRadius: 0,
-                        endRadius: 170
+                        endRadius: 150
                     )
                 )
-                .frame(width: 340, height: 340)
-                .offset(x: -92, y: -100)
+                .frame(width: 300, height: 300)
+                .offset(x: -60, y: -70)
                 .allowsHitTesting(false)
         }
         .background(ScorePalette.scoreBackground)
-        .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.tabBar, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.sheet, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: ScoreMetrics.Radius.tabBar, style: .continuous)
+            RoundedRectangle(cornerRadius: ScoreMetrics.Radius.sheet, style: .continuous)
                 .strokeBorder(ScorePalette.line, lineWidth: 1)
         )
     }
 
-    private func glowRow(
-        _ label: LocalizedStringKey,
-        value: String,
-        isAccented: Bool = false
-    ) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(label)
-                .font(ScoreTypography.publicSans(400, 11.5))
-                .foregroundStyle(ScorePalette.scoreInkSecondary)
-            Spacer(minLength: ScoreMetrics.Spacing.xs)
-            Text(value)
-                .font(ScoreTypography.archivo(600, 13))
-                .monospacedDigit()
-                .foregroundStyle(isAccented ? ScorePalette.accent : ScorePalette.scoreInk)
-        }
-    }
-
-    private var bestSemesterText: String {
-        let results = semesterResults
-        var best: (points: Int, index: Int)?
-        for (index, value) in results.enumerated() {
-            guard let value else { continue }
-            if best == nil || value > best!.points { best = (value, index) }
-        }
-        guard let best else { return ScoreNumberFormat.placeholder }
-        return "\(best.points) Punkte · \(Semester.label(best.index))"
-    }
-
-    private var recordedEntriesText: String {
-        let total = subject.orderedSemesters.reduce(0) { $0 + ($1.entries?.count ?? 0) }
-        return "\(total) insgesamt"
-    }
-
-    private var trendText: String {
-        let results = semesterResults
-        guard let first = results.first ?? nil, let last = results.last ?? nil else {
-            return ScoreNumberFormat.placeholder
-        }
-        let difference = last - first
-        let arrow = difference > 0 ? "↑ +" : difference < 0 ? "↓ " : "→ "
-        return "\(arrow)\(difference == 0 ? 0 : difference) Punkte"
+    /// „12 Punkte · Note 1,7" — die Fusszeile der Glow-Karte.
+    private var semesterResultText: String {
+        let points = ScoreNumberFormat.points(summary.result)
+        let grade = ScoreNumberFormat.grade(summary.result.map { SubjectMath.grade(fromPoints: Double($0)) })
+        return "\(points) Punkte · Note \(grade)"
     }
 
     // MARK: - Halbjahres-Karte
 
     private var semesterCard: some View {
-        ScoreCard(padding: 18) {
+        ScoreCard {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
                     Text("Halbjahr \(Semester.label(semesterIndex))")
@@ -294,24 +249,18 @@ struct SubjectDetailView: View {
                     }
                 }
 
-                HStack(spacing: 0) {
+                HStack(spacing: 10) {
                     semesterTile(
-                        label: "Schriftlich",
-                        detail: "\(subject.writtenShare) %",
-                        value: ScoreNumberFormat.points(partialGrade(.written)),
-                        index: 0
+                        label: "Schriftlich · \(subject.writtenShare) %",
+                        value: ScoreNumberFormat.points(partialGrade(.written))
                     )
                     semesterTile(
-                        label: "Mündlich",
-                        detail: "\(subject.oralShare) %",
-                        value: ScoreNumberFormat.points(partialGrade(.oral)),
-                        index: 1
+                        label: "Mündlich · \(subject.oralShare) %",
+                        value: ScoreNumberFormat.points(partialGrade(.oral))
                     )
                     semesterTile(
                         label: "Ergebnis",
-                        detail: "Note \(ScoreNumberFormat.grade(summary.result.map { SubjectMath.grade(fromPoints: Double($0)) }))",
                         value: ScoreNumberFormat.points(summary.result),
-                        index: 2,
                         isAccented: true
                     )
                 }
@@ -329,37 +278,33 @@ struct SubjectDetailView: View {
         return nil
     }
 
+    /// Eine der drei Kacheln: Beschriftung oben, Wert darunter.
+    ///
+    /// Die Ergebnis-Kachel steht in Petrol und schliesst die Reihe ab — sie ist
+    /// das, was aus den beiden anderen folgt.
     private func semesterTile(
         label: LocalizedStringKey,
-        detail: String,
         value: String,
-        index: Int,
         isAccented: Bool = false
     ) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(value)
-                .font(ScoreTypography.archivo(800, 20))
-                .monospacedDigit()
-                .tracking(em: -0.03, at: 20)
-                .foregroundStyle(isAccented ? ScorePalette.accent : ScorePalette.ink)
+        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
             Text(label)
-                .font(.micro)
-                .foregroundStyle(ScorePalette.ink)
-            Text(detail)
-                .font(.micro)
-                .foregroundStyle(ScorePalette.inkSecondary)
+                .font(.fieldLabel)
+                .foregroundStyle(
+                    isAccented ? ScorePalette.accentInk.opacity(0.75) : ScorePalette.inkSecondary
+                )
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .minimumScaleFactor(0.75)
+
+            Text(value)
+                .font(ScoreTypography.archivo(600, 18))
+                .monospacedDigit()
+                .foregroundStyle(isAccented ? ScorePalette.accentInk : ScorePalette.ink)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.leading, index == 0 ? 0 : 14)
-        .overlay(alignment: .leading) {
-            if index > 0 {
-                Rectangle()
-                    .fill(ScorePalette.line)
-                    .frame(width: 1)
-            }
-        }
+        .padding(ScoreMetrics.Spacing.sm)
+        .background(isAccented ? ScorePalette.accent : ScorePalette.fill)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     // MARK: - Leistungen
@@ -373,7 +318,7 @@ struct SubjectDetailView: View {
         let list = entries(kind)
         let shares = SubjectMath.effectiveShares(for: list.map(GradeInput.init))
 
-        return VStack(alignment: .leading, spacing: 9) {
+        return VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
             Text(title)
                 .font(.micro)
                 .foregroundStyle(ScorePalette.inkSecondary)
@@ -400,7 +345,7 @@ struct SubjectDetailView: View {
 
     private func entryRow(_ entry: GradeEntry, share: Double) -> some View {
         HStack(spacing: ScoreMetrics.Spacing.sm) {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(entry.title)
                     .font(.rowTitle)
                     .foregroundStyle(ScorePalette.ink)
@@ -417,8 +362,8 @@ struct SubjectDetailView: View {
                 .tracking(em: -0.03, at: 20)
                 .foregroundStyle(ScorePalette.ink)
         }
-        .padding(.horizontal, 17)
-        .padding(.vertical, 14)
+        .padding(.horizontal, 15)
+        .padding(.vertical, 13)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(ScorePalette.surface)
         .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous))
@@ -432,8 +377,9 @@ struct SubjectDetailView: View {
     // MARK: - Erklärung
 
     private var blockOneNote: some View {
-        Text("Nicht gewertete Kurse rechnet Score automatisch raus, Kernfächer bleiben immer drin.")
-            .font(.meta)
+        Text("Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. Nicht gewertete Kurse rechnet Score automatisch raus, Kernfächer bleiben immer drin.")
+            .font(.optionMeta)
+            .lineSpacing(5.5)
             .foregroundStyle(ScorePalette.inkSecondary)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, ScoreMetrics.Spacing.xxs)

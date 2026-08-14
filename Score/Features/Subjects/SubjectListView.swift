@@ -28,7 +28,7 @@ struct SubjectListView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
+                VStack(alignment: .leading, spacing: 14) {
                     header
                     SemesterPicker(selection: $semesterIndex, labels: Semester.labels)
                     subjectRows
@@ -37,7 +37,7 @@ struct SubjectListView: View {
                     }
                 }
                 .padding(.horizontal, ScoreMetrics.screenPadding)
-                .padding(.top, ScoreMetrics.Spacing.xs)
+                .padding(.top, 6)
                 .padding(.bottom, ScoreMetrics.tabBarClearance)
             }
             .background(ScorePalette.background)
@@ -57,7 +57,7 @@ struct SubjectListView: View {
         HStack(alignment: .firstTextBaseline) {
             Text("Fächer")
                 .font(.screenTitle)
-                .tracking(em: -0.03, at: 26)
+                .tracking(em: -0.035, at: 26)
                 .foregroundStyle(ScorePalette.ink)
             Spacer()
             Text("\(subjects.count) Fächer")
@@ -69,7 +69,7 @@ struct SubjectListView: View {
     // MARK: - Liste
 
     private var subjectRows: some View {
-        VStack(spacing: 9) {
+        VStack(spacing: ScoreMetrics.Spacing.xs) {
             ForEach(summaries) { summary in
                 NavigationLink(value: summary.subject) {
                     SubjectListRow(summary: summary)
@@ -103,8 +103,8 @@ private struct SubjectListRow: View {
         HStack(spacing: ScoreMetrics.Spacing.sm) {
             SubjectDot(color: subject.color, size: 34, cornerRadius: 12)
 
-            VStack(alignment: .leading, spacing: 5) {
-                HStack(spacing: 6) {
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 7) {
                     Text(subject.name)
                         .font(.rowTitle)
                         .foregroundStyle(ScorePalette.ink)
@@ -131,12 +131,12 @@ private struct SubjectListRow: View {
                         summary.isExcluded ? ScorePalette.inkSecondary : ScorePalette.ink
                     )
                 Text(Semester.label(summary.semesterIndex))
-                    .font(.meta)
+                    .font(.rowValueCaption)
                     .foregroundStyle(ScorePalette.inkSecondary)
             }
         }
-        .padding(.horizontal, 17)
-        .padding(.vertical, 14)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(ScorePalette.surface)
         .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous))

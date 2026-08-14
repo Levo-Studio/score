@@ -29,9 +29,16 @@ struct DashboardView: View {
         subjects.map(SubjectInput.init)
     }
 
+    /// Das Dashboard zeigt einen Ausschnitt, keine Liste: vier Fächer, dahinter
+    /// führt „Alle" in die Fächerliste. Sonst wäre der Bildschirm zweimal
+    /// dasselbe.
+    private var recentSubjects: [Subject] {
+        Array(subjects.prefix(4))
+    }
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
+            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
                 header
 
                 GlowScoreCard(
@@ -56,7 +63,7 @@ struct DashboardView: View {
                 subjectSection
             }
             .padding(.horizontal, ScoreMetrics.screenPadding)
-            .padding(.top, ScoreMetrics.Spacing.xs)
+            .padding(.top, 6)
             .padding(.bottom, ScoreMetrics.tabBarClearance)
         }
         .scrollIndicators(.hidden)
@@ -70,9 +77,9 @@ struct DashboardView: View {
 
     private var header: some View {
         HStack(alignment: .center, spacing: ScoreMetrics.Spacing.md) {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 7) {
                 Text(todayText)
-                    .font(.micro)
+                    .font(ScoreTypography.publicSans(400, 12))
                     .foregroundStyle(ScorePalette.inkSecondary)
 
                 Text("Läuft bei dir, \(profile.firstName)")
@@ -100,14 +107,18 @@ struct DashboardView: View {
         )
     }
 
+    /// Der Kreis mit dem Anfangsbuchstaben. Er steht auf Surface mit feiner
+    /// Kante und nicht in Petrol — die einzige Petrol-Fläche auf diesem
+    /// Bildschirm ist der Score, und das soll so bleiben.
     private var avatar: some View {
         Circle()
-            .fill(ScorePalette.accent)
-            .frame(width: 44, height: 44)
+            .fill(ScorePalette.surface)
+            .overlay(Circle().strokeBorder(ScorePalette.line, lineWidth: 1))
+            .frame(width: 42, height: 42)
             .overlay(
                 Text(initial)
-                    .font(.cardTitle)
-                    .foregroundStyle(ScorePalette.accentInk)
+                    .font(ScoreTypography.archivo(600, 14))
+                    .foregroundStyle(ScorePalette.ink)
             )
             .accessibilityHidden(true)
     }
@@ -122,14 +133,16 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Kurse im Halbjahr \(Semester.label(selectedSemester))")
-                    .font(.cardTitle)
+                    .font(.sectionTitle)
+                    .tracking(em: -0.02, at: 15)
                     .foregroundStyle(ScorePalette.ink)
+                    .lineLimit(1)
 
                 Spacer(minLength: ScoreMetrics.Spacing.sm)
 
                 Button(action: onShowAllSubjects) {
                     Text("Alle")
-                        .font(.chipLabel)
+                        .font(ScoreTypography.publicSans(500, 12))
                         .foregroundStyle(ScorePalette.accent)
                 }
                 .buttonStyle(.plain)
@@ -139,7 +152,7 @@ struct DashboardView: View {
                 emptyState
             } else {
                 VStack(spacing: ScoreMetrics.Spacing.xs) {
-                    ForEach(subjects) { subject in
+                    ForEach(recentSubjects) { subject in
                         SubjectRow(
                             subject: subject,
                             semesterIndex: selectedSemester,
@@ -196,7 +209,7 @@ private struct SubjectRow: View {
         HStack(spacing: ScoreMetrics.Spacing.sm) {
             SubjectDot(color: subject.color)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(verbatim: subject.name)
                     .font(.rowTitle)
                     .foregroundStyle(ScorePalette.ink)
@@ -215,8 +228,8 @@ private struct SubjectRow: View {
                 .tracking(em: -0.03, at: 20)
                 .foregroundStyle(ScorePalette.ink)
         }
-        .padding(.horizontal, ScoreMetrics.Spacing.md)
-        .padding(.vertical, 14)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 13)
         .background(ScorePalette.surface)
         .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous))
         .overlay(

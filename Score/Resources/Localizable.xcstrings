@@ -315,6 +315,23 @@
         }
       }
     },
+    "Abi %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abi %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Class of %@"
+          }
+        }
+      }
+    },
     "↑ besser": {
       "extractionState": "manual",
       "localizations": {
@@ -1046,6 +1063,74 @@
         }
       }
     },
+    "Bild ändern": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild ändern"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change picture"
+          }
+        }
+      }
+    },
+    "Bild entfernen": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild entfernen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove picture"
+          }
+        }
+      }
+    },
+    "Bild konnte nicht geladen werden": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild konnte nicht geladen werden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn’t load that picture"
+          }
+        }
+      }
+    },
+    "Bild wählen": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild wählen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose picture"
+          }
+        }
+      }
+    },
     "Block I": {
       "extractionState": "manual",
       "localizations": {
@@ -1296,6 +1381,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Export data"
+          }
+        }
+      }
+    },
+    "Dein Profil": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein Profil"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your profile"
           }
         }
       }
@@ -2997,6 +3099,40 @@
         }
       }
     },
+    "Profil": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profil"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profile"
+          }
+        }
+      }
+    },
+    "Profil bearbeiten": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profil bearbeiten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit profile"
+          }
+        }
+      }
+    },
     "Ø %@": {
       "extractionState": "manual",
       "localizations": {
@@ -3734,6 +3870,23 @@
         }
       },
       "extractionState": "manual"
+    },
+    "Versuch es mit einem anderen Bild aus deiner Mediathek.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versuch es mit einem anderen Bild aus deiner Mediathek."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try another picture from your library."
+          }
+        }
+      }
     },
     "Vorname": {
       "extractionState": "manual",

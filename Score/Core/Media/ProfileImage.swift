@@ -17,17 +17,22 @@ import UIKit
 /// gebracht und als JPEG mit Qualität 0.8 abgelegt. Das ergibt typischerweise
 /// einige Dutzend Kilobyte — genug für den Retina-Kreis in dreifacher Auflösung
 /// und klein genug, um ohne `.externalStorage` verschlüsselt zu synchronisieren.
+///
+/// Alles hier ist `nonisolated`: UIKit-Typen liegen standardmässig auf dem
+/// Hauptaktor, das Verkleinern soll aber gerade nicht dort laufen, sondern in
+/// einer eigenen Aufgabe — sonst hakt die Oberfläche für den Moment, in dem ein
+/// grosses Foto dekodiert wird.
 enum ProfileImage {
 
     /// Die längere Kante des gespeicherten Bildes.
     ///
     /// 512 deckt den 64-Punkt-Kreis auch auf einem @3x-Display mit Reserve ab.
     /// Grösser wird das Bild nirgends angezeigt.
-    static let maximumDimension: CGFloat = 512
+    nonisolated static let maximumDimension: CGFloat = 512
 
     /// JPEG-Qualität. 0.8 ist der Punkt, an dem ein Foto in dieser Grösse noch
     /// sauber aussieht und die Datei nicht mehr nennenswert kleiner wird.
-    static let compressionQuality: CGFloat = 0.8
+    nonisolated static let compressionQuality: CGFloat = 0.8
 
     /// Verkleinert und komprimiert ein Bild aus der Mediathek.
     ///
@@ -37,13 +42,13 @@ enum ProfileImage {
     ///
     /// - Returns: Die JPEG-Daten, oder `nil`, wenn sich aus den Rohdaten kein
     ///   Bild lesen lässt.
-    static func prepared(from data: Data) -> Data? {
+    nonisolated static func prepared(from data: Data) -> Data? {
         guard let image = UIImage(data: data) else { return nil }
         return prepared(from: image)
     }
 
     /// Der eigentliche Weg: Zielgrösse bestimmen, neu zeichnen, kodieren.
-    static func prepared(from image: UIImage) -> Data? {
+    nonisolated static func prepared(from image: UIImage) -> Data? {
         let size = image.size
         guard size.width > 0, size.height > 0 else { return nil }
 

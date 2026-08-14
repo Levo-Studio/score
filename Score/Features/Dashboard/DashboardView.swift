@@ -109,7 +109,7 @@ struct DashboardView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            avatar
+            ProfileAvatar(profile: profile)
         }
     }
 
@@ -124,26 +124,6 @@ struct DashboardView: View {
                 .day()
                 .month(.abbreviated)
         )
-    }
-
-    /// Der Kreis mit dem Anfangsbuchstaben. Er steht auf Surface mit feiner
-    /// Kante und nicht in Petrol — die einzige Petrol-Fläche auf diesem
-    /// Bildschirm ist der Score, und das soll so bleiben.
-    private var avatar: some View {
-        Circle()
-            .fill(ScorePalette.surface)
-            .overlay(Circle().strokeBorder(ScorePalette.line, lineWidth: 1))
-            .frame(width: 42, height: 42)
-            .overlay(
-                Text(initial)
-                    .font(ScoreTypography.archivo(600, 14))
-                    .foregroundStyle(ScorePalette.ink)
-            )
-            .accessibilityHidden(true)
-    }
-
-    private var initial: String {
-        String(profile.firstName.prefix(1)).uppercased()
     }
 
     // MARK: - Kurse des Halbjahres

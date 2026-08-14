@@ -35,6 +35,10 @@ struct SettingsView: View {
                     .tracking(em: -0.035, at: 26)
                     .foregroundStyle(ScorePalette.ink)
 
+                if let profile {
+                    ProfileCard(profile: profile)
+                }
+
                 appearanceCard(settings: $settings)
                 dataCard
 

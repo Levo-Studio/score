@@ -25,11 +25,20 @@ struct PadSettingsView: View {
         ScrollView {
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .top, spacing: ScoreMetrics.Spacing.lg) {
-                    settingsCard(settings: $settings).frame(width: 452)
+                    // Die Profilkarte gehört über die Schalter, nicht neben sie:
+                    // sie sagt, wessen Einstellungen das sind, und das steht vor
+                    // dem, was eingestellt wird.
+                    VStack(spacing: ScoreMetrics.Spacing.md) {
+                        profileCard
+                        settingsCard(settings: $settings)
+                    }
+                    .frame(width: 452)
+
                     explanationColumn.frame(minWidth: 320)
                 }
 
                 VStack(spacing: ScoreMetrics.Spacing.lg) {
+                    profileCard
                     settingsCard(settings: $settings)
                     explanationColumn
                 }
@@ -39,6 +48,15 @@ struct PadSettingsView: View {
             .padding(.bottom, PadMetrics.contentPadding)
         }
         .scrollIndicators(.hidden)
+    }
+
+    // MARK: - Profil
+
+    @ViewBuilder
+    private var profileCard: some View {
+        if let profile {
+            ProfileCard(profile: profile)
+        }
     }
 
     // MARK: - Schalter

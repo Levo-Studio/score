@@ -43,7 +43,25 @@ struct GlowScoreCard: View {
     /// Wird kurz auf `true` gesetzt, wenn sich der Schnitt verbessert hat.
     var isCelebrating = false
 
+    /// Öffnet die Aufschlüsselung, falls gesetzt.
+    ///
+    /// Optional, weil die Karte auch ohne Ziel vollständig ist: ohne Aktion
+    /// bleibt sie exakt das, was sie vorher war — eine Anzeige, kein Knopf.
+    var onSelect: (() -> Void)?
+
     var body: some View {
+        if let onSelect {
+            Button(action: onSelect) {
+                card.contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(Text("Zeigt, wie der Schnitt zustande kommt"))
+        } else {
+            card
+        }
+    }
+
+    private var card: some View {
         // Der Schein liegt als Hintergrund hinter dem Inhalt, nicht als zweite
         // Ebene im Stapel: mit 350 Punkten Durchmesser würde er sonst die Höhe
         // der Karte bestimmen und unter der Fusszeile eine leere Fläche lassen.
@@ -86,6 +104,17 @@ struct GlowScoreCard: View {
             HStack {
                 Text(title)
                     .foregroundStyle(ScorePalette.scoreInkSecondary)
+
+                // Der Hinweis, dass die Karte irgendwohin führt, steht in der
+                // Kopfzeile und nicht als Knopf mitten im Inhalt: er soll die
+                // Karte andeuten, nicht sie zerschneiden.
+                if onSelect != nil {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(ScorePalette.scoreInkSecondary)
+                        .accessibilityHidden(true)
+                }
+
                 Spacer()
                 trend
                     .foregroundStyle(ScorePalette.accent)

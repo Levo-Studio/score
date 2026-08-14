@@ -23,6 +23,14 @@ struct DashboardView: View {
     @State private var model = DashboardViewModel()
     @State private var selectedSemester: Int
 
+    /// Die Aufschlüsselung steht als Sheet über dem Dashboard und nicht als
+    /// Ziel eines `NavigationStack`: dieser Reiter hat keinen, und die Tab-Bar
+    /// schwebt im selben `ZStack` über dem Inhalt — ein geschobener Bildschirm
+    /// läge weiterhin unter ihr. Ausserdem ist die Aufschlüsselung ein Abstecher
+    /// und kein Ort, an dem man bleibt; sie schliesst sich wieder auf dasselbe
+    /// Dashboard, so wie der Fach-Editor und das Eingabe-Sheet auch.
+    @State private var isBreakdownPresented = false
+
     init(profile: StudentProfile, onShowAllSubjects: @escaping () -> Void) {
         self.profile = profile
         self.onShowAllSubjects = onShowAllSubjects
@@ -60,7 +68,8 @@ struct DashboardView: View {
                             isAccented: true
                         )
                     ],
-                    isCelebrating: model.isCelebrating
+                    isCelebrating: model.isCelebrating,
+                    onSelect: { isBreakdownPresented = true }
                 )
 
                 SemesterPicker(selection: $selectedSemester, labels: Semester.labels)
@@ -75,6 +84,11 @@ struct DashboardView: View {
         .background(ScorePalette.background)
         .onChange(of: inputs, initial: true) { _, newInputs in
             model.update(with: newInputs)
+        }
+        .sheet(isPresented: $isBreakdownPresented) {
+            BlockOneBreakdownView(subjects: subjects) {
+                isBreakdownPresented = false
+            }
         }
     }
 

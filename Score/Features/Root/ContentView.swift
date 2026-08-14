@@ -20,6 +20,7 @@ import SwiftData
 struct ContentView: View {
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.modelContext) private var modelContext
 
     @Query private var profiles: [StudentProfile]
 
@@ -62,6 +63,10 @@ struct ContentView: View {
         }
         .animation(.easeInOut(duration: 0.35), value: handoff.stage)
         .task {
+            // Vor der ersten Entscheidung aufräumen: standen hier zwei Profile,
+            // hinge die ganze App gleich am falschen.
+            mergeDuplicateProfiles()
+
             handoff.start(
                 hasCompletedProfile: completedProfile != nil,
                 isProfileAcknowledged: hasAcknowledgedProfile,
@@ -75,6 +80,13 @@ struct ContentView: View {
             try? await Task.sleep(for: ProfileHandoffModel.syncGracePeriod)
             handoff.syncGraceDidElapse()
         }
+        .onChange(of: profiles.count) { _, newValue in
+            // Der Zwilling taucht typischerweise erst Sekunden nach dem Start
+            // auf, wenn CloudKit den Erstabgleich durchhat. Nur beim Start zu
+            // räumen liesse ihn bis zum nächsten Öffnen stehen.
+            guard newValue > 1 else { return }
+            mergeDuplicateProfiles()
+        }
         .onChange(of: completedProfile?.persistentModelID) { _, newValue in
             guard newValue != nil else { return }
             handoff.profileDidAppear()
@@ -84,6 +96,16 @@ struct ContentView: View {
                 hasAcknowledgedProfile = true
             }
         }
+    }
+
+    /// Räumt ein doppeltes Profil weg, falls eines da ist.
+    ///
+    /// Scheitert das Speichern, bleibt es bei zwei Profilen — unschön, aber
+    /// harmlos: die App nimmt weiterhin das erste, und der nächste Start
+    /// versucht es erneut. Ein Fehlerdialog wäre hier nur Lärm über etwas, das
+    /// der Nutzer nicht verursacht hat und nicht beheben kann.
+    private func mergeDuplicateProfiles() {
+        try? ProfileMerge.mergeDuplicates(in: modelContext)
     }
 
     @ViewBuilder

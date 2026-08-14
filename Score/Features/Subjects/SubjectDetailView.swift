@@ -78,17 +78,8 @@ struct SubjectDetailView: View {
     }
 
     /// Der Punktestand des ganzen Fachs über alle Halbjahre.
-    private var semesterResults: [Int?] {
-        Semester.allIndices.map { index in
-            guard let semester = subject.semester(at: index) else { return nil }
-            return SubjectMath.result(
-                for: SemesterInput(
-                    semester,
-                    writtenShare: subject.writtenShare,
-                    isActive: subject.isActive(in: index)
-                )
-            )
-        }
+    private var statistics: SubjectStatistics {
+        SubjectStatistics(subject: subject)
     }
 
     // MARK: - Zurück
@@ -195,9 +186,9 @@ struct SubjectDetailView: View {
                 .padding(.top, 14)
 
                 VStack(spacing: 9) {
-                    glowRow("Bestes Halbjahr", value: bestSemesterText)
-                    glowRow("Erfasste Leistungen", value: recordedEntriesText)
-                    glowRow("Trend", value: trendText, isAccented: true)
+                    glowRow("Bestes Halbjahr", value: statistics.bestSemesterText)
+                    glowRow("Erfasste Leistungen", value: statistics.recordedEntriesText)
+                    glowRow("Trend", value: statistics.trendText, isAccented: true)
                 }
                 .padding(.top, 15)
                 .overlay(alignment: .top) {
@@ -251,32 +242,6 @@ struct SubjectDetailView: View {
                 .monospacedDigit()
                 .foregroundStyle(isAccented ? ScorePalette.accent : ScorePalette.scoreInk)
         }
-    }
-
-    private var bestSemesterText: Text {
-        let results = semesterResults
-        var best: (points: Int, index: Int)?
-        for (index, value) in results.enumerated() {
-            guard let value else { continue }
-            if best == nil || value > best!.points { best = (value, index) }
-        }
-        guard let best else { return Text(verbatim: ScoreNumberFormat.placeholder) }
-        return Text("\(best.points) Punkte · \(Semester.label(best.index))")
-    }
-
-    private var recordedEntriesText: Text {
-        let total = subject.orderedSemesters.reduce(0) { $0 + ($1.entries?.count ?? 0) }
-        return Text("\(total) insgesamt")
-    }
-
-    private var trendText: Text {
-        let results = semesterResults
-        guard let first = results.first ?? nil, let last = results.last ?? nil else {
-            return Text(verbatim: ScoreNumberFormat.placeholder)
-        }
-        let difference = last - first
-        let arrow = difference > 0 ? "↑ +" : difference < 0 ? "↓ " : "→ "
-        return Text(verbatim: arrow) + Text("\(difference == 0 ? 0 : difference) Punkte")
     }
 
     // MARK: - Halbjahres-Karte

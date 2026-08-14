@@ -409,7 +409,7 @@ struct PadSubjectDetailView: View {
                     .lineLimit(1)
             }
             Spacer(minLength: ScoreMetrics.Spacing.xs)
-            Text("\(entry.points)")
+            Text(verbatim: "\(entry.points)")
                 .font(ScoreTypography.archivo(800, 21))
                 .monospacedDigit()
                 .tracking(em: -0.03, at: 21)

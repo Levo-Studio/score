@@ -1,40 +1,6 @@
 {
   "sourceLanguage": "de",
   "strings": {
-    "%lld": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld"
-          }
-        }
-      },
-      "extractionState": "manual"
-    },
-    "%lld : %lld": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$lld : %2$lld"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld : %lld"
-          }
-        }
-      },
-      "extractionState": "manual"
-    },
     "%lld Fächer": {
       "extractionState": "manual",
       "localizations": {

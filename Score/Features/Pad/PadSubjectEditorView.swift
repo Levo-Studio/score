@@ -234,7 +234,7 @@ struct PadSubjectEditorView: View {
                 HStack(alignment: .firstTextBaseline) {
                     PadCardTitle(title: "Gewichtung schriftlich zu mündlich")
                     Spacer(minLength: ScoreMetrics.Spacing.xs)
-                    Text("\(draft.writtenShare) : \(100 - draft.writtenShare)")
+                    Text(verbatim: "\(draft.writtenShare) : \(100 - draft.writtenShare)")
                         .font(.chipLabel)
                         .monospacedDigit()
                         .foregroundStyle(ScorePalette.accent)

@@ -126,6 +126,12 @@ struct SettingsView: View {
                 }
             }
             .buttonStyle(.plain)
+
+            DeleteAllDataButton {
+                SettingsRowLabel(title: "Alle Daten löschen", titleColor: ScorePalette.warn) {
+                    EmptyView()
+                }
+            }
         }
     }
 
@@ -211,13 +217,18 @@ private struct SettingsRow<Accessory: View>: View {
 private struct SettingsRowLabel<Accessory: View>: View {
 
     let title: LocalizedStringKey
+
+    /// Die Farbe des Titels. Zerstörerische Zeilen stehen in `ScorePalette.warn`
+    /// und sind damit schon vor dem Antippen als solche zu erkennen.
+    var titleColor: Color = ScorePalette.ink
+
     @ViewBuilder var accessory: Accessory
 
     var body: some View {
         HStack(spacing: ScoreMetrics.Spacing.sm) {
             Text(title)
                 .font(.settingsRowTitle)
-                .foregroundStyle(ScorePalette.ink)
+                .foregroundStyle(titleColor)
             Spacer(minLength: 0)
             accessory
         }

@@ -706,6 +706,23 @@
         }
       }
     },
+    "Alle Daten löschen": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle Daten löschen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete all data"
+          }
+        }
+      }
+    },
     "Alle vier Halbjahre sind belegt": {
       "extractionState": "manual",
       "localizations": {
@@ -1114,6 +1131,107 @@
       },
       "extractionState": "manual"
     },
+    "Damit verschwinden dein Profil, %lld Fächer und %lld Leistungen — von diesem Gerät und aus deiner iCloud, also auch von deinen anderen Geräten. Einen Server von uns gibt es nicht, dort bleibt nichts zurück. Rückgängig machen lässt sich das nicht.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Damit verschwinden dein Profil, %1$#@subjects@ und %2$#@entries@ — von diesem Gerät und aus deiner iCloud, also auch von deinen anderen Geräten. Einen Server von uns gibt es nicht, dort bleibt nichts zurück. Rückgängig machen lässt sich das nicht."
+          },
+          "substitutions": {
+            "subjects": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Fach"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Fächer"
+                    }
+                  }
+                }
+              }
+            },
+            "entries": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Leistung"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg Leistungen"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This removes your profile, %1$#@subjects@ and %2$#@entries@ — from this device and from your iCloud, and therefore from your other devices too. We run no server of our own, so nothing is left behind there. This cannot be undone."
+          },
+          "substitutions": {
+            "subjects": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg subject"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg subjects"
+                    }
+                  }
+                }
+              }
+            },
+            "entries": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg grade"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg grades"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Danach richtet sich, welche Halbjahre du eintragen kannst.": {
       "localizations": {
         "en": {
@@ -1365,6 +1483,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Settings"
+          }
+        }
+      }
+    },
+    "Endgültig löschen": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Endgültig löschen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete permanently"
           }
         }
       }
@@ -2573,6 +2708,23 @@
         }
       }
     },
+    "Löschen fehlgeschlagen": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Löschen fehlgeschlagen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deletion failed"
+          }
+        }
+      }
+    },
     "Mehr": {
       "extractionState": "manual",
       "localizations": {
@@ -3715,6 +3867,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "does not count"
+          }
+        }
+      }
+    },
+    "Wirklich alles löschen?": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wirklich alles löschen?"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete everything?"
           }
         }
       }

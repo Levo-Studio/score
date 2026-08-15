@@ -127,16 +127,18 @@ struct PadSubjectDetailView: View {
     /// Wie auf der Übersicht: nebeneinander, solange der Platz reicht, sonst
     /// wandert der Verlauf unter die beiden schmalen Karten.
     ///
-    /// Die Halbjahres-Karte trägt vier kurze Zeilen und bekommt darum die
-    /// schmalste Spalte; die Breite, die sie abgibt, geht an den Verlauf, dessen
-    /// Balken davon wirklich profitieren. Alle drei Karten sind gleich hoch und
-    /// verteilen ihre Zeilen über diese Höhe.
+    /// Alle drei Karten haben eine feste Breite und der Rest bleibt leer, statt
+    /// dass eine von ihnen ihn aufsaugt. Ein Balken, der 0 bis 15 Punkte zeigt,
+    /// wird durch mehr Breite nicht aussagekräftiger — auf einem 13-Zoll-iPad zog
+    /// sich der Verlauf sonst über 700 Punkt, und die Karte wirkte leer.
+    /// Alle drei sind gleich hoch und verteilen ihre Zeilen über diese Höhe.
     private var cardRow: some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .top, spacing: 14) {
                 glowCard.frame(width: 272)
                 semesterCard.frame(width: 200)
-                historyCard.frame(minWidth: 320)
+                historyCard.frame(width: 380)
+                Spacer(minLength: 0)
             }
 
             VStack(spacing: 14) {

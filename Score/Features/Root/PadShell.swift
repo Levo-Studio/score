@@ -63,6 +63,12 @@ struct PadShell: View {
     /// kennt und der Startwert dann hängen bliebe.
     @State private var sidebarChoice: Bool?
 
+    /// Die zuletzt gemessene Ausrichtung.
+    ///
+    /// Die Bindung unten braucht sie, läuft aber ausserhalb des `GeometryReader`
+    /// und käme sonst nicht an den dortigen Messwert.
+    @State private var isLandscapeLayout = true
+
     /// Die Aufteilung ist von Hand gebaut und nicht mit `NavigationSplitView`.
     ///
     /// Score blendet die Navigationsleiste aus, weil die eigene Kopfleiste die
@@ -104,14 +110,11 @@ struct PadShell: View {
                     breakdownOverlay(in: proxy.size)
                 }
             }
-            .onChange(of: isLandscape) { _, _ in
+            .onAppear { isLandscapeLayout = isLandscape }
+            .onChange(of: isLandscape) { _, newValue in
                 // Nach dem Drehen gilt wieder, was zur neuen Ausrichtung passt.
+                isLandscapeLayout = newValue
                 sidebarChoice = nil
-            }
-            .onChange(of: route) { _, _ in
-                // Im Hochformat verdeckt die Sidebar den Inhalt. Wer ein Ziel
-                // gewählt hat, will es sehen.
-                if !isLandscape { setSidebar(visible: false) }
             }
         }
         // Bis an die Gerätekanten. Ohne `ignoresSafeArea` endet die Fläche an der
@@ -137,7 +140,17 @@ struct PadShell: View {
             get: { route },
             set: { newRoute in
                 guard newRoute == .breakdown else {
-                    route = newRoute
+                    // Beides in einer Transaktion. Vorher setzte die Bindung die
+                    // Route ohne Animation und ein eigenes `onChange` schloss die
+                    // Sidebar danach — der Detailbereich tauschte seinen Inhalt
+                    // also sofort aus, während die Sidebar erst hinterher
+                    // wegblendete. Genau dieser Versatz sah nach Sprung aus.
+                    withAnimation(ScoreMotion.resolve(ScoreMotion.screenEnter, reduceMotion: reduceMotion)) {
+                        route = newRoute
+                        // Im Hochformat verdeckt die Sidebar den Inhalt. Wer ein
+                        // Ziel gewählt hat, will es sehen.
+                        if !isLandscapeLayout { sidebarChoice = false }
+                    }
                     return
                 }
                 withAnimation(ScoreMotion.resolve(ScoreMotion.sheetRise, reduceMotion: reduceMotion)) {
@@ -148,7 +161,7 @@ struct PadShell: View {
     }
 
     private func setSidebar(visible: Bool) {
-        withAnimation(.easeOut(duration: 0.28)) {
+        withAnimation(ScoreMotion.resolve(ScoreMotion.screenEnter, reduceMotion: reduceMotion)) {
             sidebarChoice = visible
         }
     }

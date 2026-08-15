@@ -103,7 +103,9 @@ struct PadShell: View {
                 if !isLandscape { setSidebar(visible: false) }
             }
         }
-        .background(ScorePalette.background)
+        // Bis an die Gerätekanten. Ohne `ignoresSafeArea` endet die Fläche an der
+        // Safe Area, und unten sowie rechts bleibt ein schwarzes Band stehen.
+        .background(ScorePalette.background.ignoresSafeArea())
         .tint(ScorePalette.accent)
     }
 

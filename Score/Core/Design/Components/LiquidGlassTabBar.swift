@@ -68,14 +68,26 @@ struct LiquidGlassTabBar: View {
             RoundedRectangle(cornerRadius: ScoreMetrics.Radius.tabBar, style: .continuous)
                 .strokeBorder(ScorePalette.glassLine, lineWidth: 1)
         )
-        .overlay(alignment: .top) {
+        .overlay(
             // Der Lichtsaum aus `inset 0 1px 0 rgba(255,255,255,.35)`.
-            Rectangle()
-                .fill(Color.white.opacity(0.35))
-                .frame(height: 1)
-                .padding(.horizontal, ScoreMetrics.Spacing.md)
+            //
+            // Das ist im Original ein *innerer* Schatten, der der Rundung folgt
+            // und nach unten ausläuft — kein Strich. Als waagerechtes Rechteck
+            // umgesetzt stand hier vorher eine harte helle Linie quer über der
+            // Leiste, die an den Ecken abriss und im Dunkelmodus leuchtete.
+            // Als Randverlauf auf derselben Form sitzt sie richtig.
+            RoundedRectangle(cornerRadius: ScoreMetrics.Radius.tabBar, style: .continuous)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [.white.opacity(0.35), .white.opacity(0)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ),
+                    lineWidth: 1
+                )
                 .blendMode(.plusLighter)
-        }
+                .allowsHitTesting(false)
+        )
         .shadow(color: Color(0x060E0D, alpha: 0.18), radius: 17, x: 0, y: 10)
     }
 

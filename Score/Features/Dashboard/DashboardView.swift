@@ -190,13 +190,21 @@ private struct SubjectRow: View {
 
     /// Die Meta-Zeile, aus zwei übersetzbaren Teilen zusammengesetzt statt aus
     /// einem interpolierten String — sonst fiele der Fachtyp aus dem Katalog.
+    ///
+    /// Zusammengesetzt wird als `AttributedString`: Der Fachtyp und der Plural
+    /// der Leistungen sind zwei Schlüssel, und die Verkettung zweier `Text` ist
+    /// abgekündigt.
     private var meta: Text {
         guard isActive else { return Text("nicht belegt") }
-        return Text(kindTitle) + Text(verbatim: " · ") + Text("\(entryCount) Leistungen")
+        return Text(
+            AttributedString(localized: kindTitle)
+                + AttributedString(" · ")
+                + AttributedString(localized: "\(entryCount) Leistungen")
+        )
     }
 
     /// Der ausgeschriebene Fachtyp für die Meta-Zeile.
-    private var kindTitle: LocalizedStringKey {
+    private var kindTitle: String.LocalizationValue {
         switch subject.kind {
         case .leistungsfach: "Leistungsfach"
         case .kernfach: "Kernfach"

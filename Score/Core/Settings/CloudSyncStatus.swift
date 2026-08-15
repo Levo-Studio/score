@@ -46,19 +46,17 @@ final class CloudSyncStatus {
 
     private let containerIdentifier: String
 
-    /// Wird nur einmal im `init` gesetzt und im `deinit` wieder abgemeldet.
-    /// `nonisolated(unsafe)`, weil `deinit` nicht auf den MainActor darf.
-    private nonisolated(unsafe) var observer: (any NSObjectProtocol)?
+    /// Hält die Anmeldung beim NotificationCenter am Leben.
+    ///
+    /// Die Abmeldung hängt an der Lebensdauer dieses Werts und nicht an einem
+    /// `deinit` dieser Klasse: `deinit` läuft nicht auf dem MainActor, käme an
+    /// eine isolierte Eigenschaft also gar nicht heran, ohne die Isolation mit
+    /// `nonisolated(unsafe)` zu umgehen.
+    private var observation: NotificationObservation?
 
     init(containerIdentifier: String = "iCloud.levo-studio.Score") {
         self.containerIdentifier = containerIdentifier
         observeMirroringEvents()
-    }
-
-    deinit {
-        if let observer {
-            NotificationCenter.default.removeObserver(observer)
-        }
     }
 
     // MARK: - Kontostatus
@@ -104,7 +102,7 @@ final class CloudSyncStatus {
 
     /// Hört auf die Import- und Exportläufe des CloudKit-Mirrorings.
     private func observeMirroringEvents() {
-        observer = NotificationCenter.default.addObserver(
+        let observer = NotificationCenter.default.addObserver(
             forName: NSPersistentCloudKitContainer.eventChangedNotification,
             object: nil,
             queue: .main
@@ -129,6 +127,8 @@ final class CloudSyncStatus {
                 self?.apply(outcome)
             }
         }
+
+        observation = NotificationObservation(observer)
     }
 
     /// Ein Mirroring-Ereignis, reduziert auf sendbare Werte.
@@ -161,6 +161,28 @@ final class CloudSyncStatus {
         if nsError.domain == NSCocoaErrorDomain && nsError.code == 134400 { return true }
         if let ckError = error as? CKError { return ckError.code == .notAuthenticated }
         return false
+    }
+}
+
+// MARK: - Anmeldung beim NotificationCenter
+
+/// Eine Anmeldung beim NotificationCenter, die sich selbst wieder abmeldet.
+///
+/// Blockbasierte Beobachter bleiben angemeldet, bis sie ausdrücklich entfernt
+/// werden — der Block überlebte sonst den Beobachteten. Diese Hülle bindet die
+/// Abmeldung an ihre eigene Lebensdauer: Wer sie hält, ist angemeldet, wer sie
+/// freigibt, ist es nicht mehr. Sie trägt keine Isolation, ihr `deinit` darf
+/// also von jedem Kontext aus laufen.
+private nonisolated final class NotificationObservation {
+
+    private let token: any NSObjectProtocol
+
+    init(_ token: any NSObjectProtocol) {
+        self.token = token
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(token)
     }
 }
 

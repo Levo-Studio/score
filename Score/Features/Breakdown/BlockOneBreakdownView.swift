@@ -143,7 +143,7 @@ struct BlockOneBreakdownView: View {
                     isAccented: true
                 )
                 calculationRow(
-                    label: Text("Block I") + Text(verbatim: " · ") + Text("Schnitt × 42"),
+                    label: Text("Block I · Schnitt × 42"),
                     value: String(breakdown.outcome.blockOnePoints)
                 )
             }
@@ -302,10 +302,13 @@ struct BlockOneBreakdownView: View {
         case .basisfach:
             // Zwei Sätze, zwei Schlüssel: beide Zahlen haben eine Einzahlform, und
             // ein einziger Schlüssel mit zwei Pluralen wäre im Katalog nicht mehr
-            // sauber zu übersetzen.
-            Text("Für die \(breakdown.optionalSlotCount) freien Plätze nimmt Score die besten Basisfach-Ergebnisse.")
-                + Text(verbatim: " ")
-                + Text("\(group.excludedCount) fallen heraus.")
+            // sauber zu übersetzen. Zusammengesetzt wird deshalb als
+            // `AttributedString` — die Verkettung zweier `Text` ist abgekündigt.
+            Text(
+                AttributedString(localized: "Für die \(breakdown.optionalSlotCount) freien Plätze nimmt Score die besten Basisfach-Ergebnisse.")
+                    + AttributedString(" ")
+                    + AttributedString(localized: "\(group.excludedCount) fallen heraus.")
+            )
         }
     }
 

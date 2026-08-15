@@ -175,11 +175,14 @@ struct ProfileHandoffView: View {
     }
 
     /// „4 Fächer · 12 Leistungen" — beide Zahlen laufen als eigener Plural durch
-    /// den Katalog und werden erst danach zusammengesetzt.
+    /// den Katalog und werden erst danach als `AttributedString` zusammengesetzt;
+    /// die Verkettung zweier `Text` ist abgekündigt.
     private var foundSummary: Text {
-        Text("\(subjects.count) Fächer")
-            + Text(verbatim: " · ")
-            + Text("\(gradeEntries.count) Leistungen")
+        Text(
+            AttributedString(localized: "\(subjects.count) Fächer")
+                + AttributedString(" · ")
+                + AttributedString(localized: "\(gradeEntries.count) Leistungen")
+        )
     }
 
 }

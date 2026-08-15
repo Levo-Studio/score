@@ -63,23 +63,27 @@ struct PadDashboardView: View {
     /// enger — iPad im Hochformat —, rutscht „Auf einen Blick" unter die beiden
     /// anderen, statt dass alle drei zusammengequetscht werden.
     ///
-    /// Jede Karte ist so hoch, wie ihr Inhalt es verlangt. Gleiche Höhe wäre
-    /// hübsch, aber „Halbjahre" hat nur vier kurze Zeilen — auf die Höhe der
-    /// Score-Karte gestreckt bekäme die Karte ein Loch, und das sieht schlechter
-    /// aus als eine kürzere Karte. Die Fläche darunter füllt das Kursraster.
+    /// Die Score-Karte gibt die Höhe der Reihe vor; die beiden Listenkarten
+    /// wachsen auf dieselbe Höhe mit und verteilen dabei ihre Zeilen über die
+    /// gewonnene Fläche. Gleiche Höhe ohne Loch — die Zeilen atmen, statt oben
+    /// zu kleben.
+    ///
+    /// Die Breiten folgen dem Inhalt: „Halbjahre" hat vier kurze Zeilen aus
+    /// Kürzel, Balken und Zahl und braucht wenig, „Auf einen Blick" sechs Zeilen
+    /// mit ausgeschriebenen Werten und bekommt darum den Rest.
     private var topRow: some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .top, spacing: ScoreMetrics.Spacing.md) {
-                scoreCard.frame(width: 330)
-                semesterCard.frame(width: 186)
-                glanceCard.frame(minWidth: 260)
+                scoreCard.frame(width: 356)
+                semesterCard.frame(width: 212)
+                glanceCard.frame(minWidth: 340)
             }
             .fixedSize(horizontal: false, vertical: true)
 
             VStack(spacing: ScoreMetrics.Spacing.md) {
                 HStack(alignment: .top, spacing: ScoreMetrics.Spacing.md) {
-                    scoreCard.frame(maxWidth: 330)
-                    semesterCard.frame(minWidth: 186)
+                    scoreCard.frame(maxWidth: 356)
+                    semesterCard.frame(minWidth: 212)
                 }
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -112,7 +116,7 @@ struct PadDashboardView: View {
     // MARK: - Halbjahre
 
     private var semesterCard: some View {
-        PadCard(horizontalPadding: ScoreMetrics.Spacing.md) {
+        PadCard(horizontalPadding: ScoreMetrics.Spacing.md, fillsHeight: true) {
             VStack(alignment: .leading, spacing: 0) {
                 PadCardTitle(title: "Halbjahre")
                     .padding(.bottom, 10)
@@ -126,12 +130,15 @@ struct PadDashboardView: View {
                             label: "HJ \(Semester.label(index))",
                             value: ScoreNumberFormat.decimal(average),
                             points: average.map { Int($0.rounded()) },
-                            isSelected: index == semesterIndex
+                            isSelected: index == semesterIndex,
+                            valueWidth: 42
                         )
                         .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .frame(maxHeight: .infinity)
                     .overlay(alignment: .top) {
                         if index > 0 {
                             Rectangle()
@@ -141,13 +148,14 @@ struct PadDashboardView: View {
                     }
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
     }
 
     // MARK: - Auf einen Blick
 
     private var glanceCard: some View {
-        PadCard {
+        PadCard(fillsHeight: true) {
             VStack(alignment: .leading, spacing: 0) {
                 PadCardTitle(title: "Auf einen Blick")
                     .padding(.bottom, ScoreMetrics.Spacing.xs)
@@ -160,6 +168,7 @@ struct PadDashboardView: View {
                     )
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
     }
 

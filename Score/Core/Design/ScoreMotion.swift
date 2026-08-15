@@ -139,6 +139,17 @@ extension View {
         modifier(ScreenEnterModifier())
     }
 
+    /// Tauscht einen Bildschirm gegen einen anderen (`scEnter`).
+    ///
+    /// `value` benennt, welcher Bildschirm gerade steht — der Reiter, die Route,
+    /// der Zustand. Wechselt er, geht der neue Inhalt auf, statt hart
+    /// umzuspringen. Die Identität wird bewusst innerhalb dieses Modifiers
+    /// gesetzt: so bleiben `task` und `onChange` der Aufrufstelle davon
+    /// unberührt und laufen beim Wechsel nicht erneut an.
+    func screenSwitch<Value: Hashable>(_ value: Value) -> some View {
+        modifier(ScreenSwitchModifier(value: value))
+    }
+
     /// Fährt eine Listenzeile herein (`scRowIn`), gestaffelt nach Position.
     ///
     /// - Parameters:
@@ -212,6 +223,24 @@ private struct ScreenEnterModifier: ViewModifier {
                     hasAppeared = true
                 }
             }
+    }
+}
+
+/// Der Wechsel von einem Bildschirm zum nächsten.
+private struct ScreenSwitchModifier<Value: Hashable>: ViewModifier {
+
+    let value: Value
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .id(value)
+            .transition(ScoreMotion.screenTransition(reduceMotion: reduceMotion))
+            .animation(
+                ScoreMotion.resolve(ScoreMotion.screenEnter, reduceMotion: reduceMotion),
+                value: value
+            )
     }
 }
 

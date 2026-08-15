@@ -61,7 +61,7 @@ struct ContentView: View {
                 OnboardingView(onWillFinish: { handoff.onboardingDidComplete() })
             }
         }
-        .animation(.easeInOut(duration: 0.35), value: handoff.stage)
+        .screenSwitch(handoff.stage)
         .task {
             // Vor der ersten Entscheidung aufräumen: standen hier zwei Profile,
             // hinge die ganze App gleich am falschen.

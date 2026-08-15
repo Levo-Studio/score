@@ -8,11 +8,25 @@ import SwiftData
 /// automatisch richtig, wenn eine Note nachgetragen oder eine Gewichtung
 /// geändert wird, und es kann beim Sync nicht von den Leistungen abweichen,
 /// aus denen es entstanden ist.
+///
+/// ## Verschlüsselung
+///
+/// **Jedes gespeicherte Attribut trägt `.allowsCloudEncryption`** und landet beim
+/// Sync in `CKRecord.encryptedValues`. Hier ist das nur `index`.
+///
+/// Ausgenommen sind **nur Beziehungen** — `subject` und `entries` werden beim
+/// Mirroring als `CKReference` gespiegelt, und eine Referenz lässt sich nicht
+/// verschlüsselt ablegen: CloudKit muss den Zielsatz auflösen können.
+///
+/// > Wichtig: `allowsCloudEncryption` lässt sich nach dem ersten Deploy des
+/// > CloudKit-Schemas in die Production-Datenbank nicht mehr umschalten.
+/// > Verschlüsselt und unverschlüsselt sind für CloudKit zwei verschiedene
+/// > Feldtypen, und ein Feldtyp ist unveränderlich.
 @Model
 final class SemesterResult {
 
     /// Das Halbjahr als Index 0 bis 3, entsprechend 1/4 bis 4/4.
-    var index: Int = 0
+    @Attribute(.allowsCloudEncryption) var index: Int = 0
 
     /// Das Fach, zu dem dieses Halbjahr gehört.
     var subject: Subject?

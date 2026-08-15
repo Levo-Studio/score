@@ -6,17 +6,23 @@ import SwiftUI
 ///
 /// ## Verschlüsselung
 ///
-/// Der Fachname trägt `.allowsCloudEncryption`, weil eigene Fächer freier Text
-/// sind. SwiftData legt solche Attribute beim Sync in `CKRecord.encryptedValues`
-/// ab: der Schlüssel dafür hängt am iCloud-Schlüsselbund des Nutzers, Apple kann
-/// den Inhalt also nicht lesen.
+/// **Jedes gespeicherte Attribut trägt `.allowsCloudEncryption`.** SwiftData legt
+/// solche Attribute beim Sync in `CKRecord.encryptedValues` ab: der Schlüssel
+/// dafür hängt am iCloud-Schlüsselbund des Nutzers, Apple kann den Inhalt also
+/// nicht lesen.
 ///
-/// Struktur bleibt bewusst im Klartext — Farbe, Kürzel, Fachtyp und Gewichtung
-/// verraten nichts über den Nutzer, lassen sich aber sortieren und filtern.
+/// Ausgenommen sind **nur Beziehungen** — `semesters` wird beim Mirroring als
+/// `CKReference` gespiegelt, und eine Referenz lässt sich nicht in
+/// `encryptedValues` ablegen. CloudKit muss den Zielsatz auflösen können.
+///
+/// Auf den lokalen Store wirkt sich das nicht aus: `#Predicate` und
+/// `SortDescriptor` arbeiten weiter auf Klartext, `@Query(sort: \Subject.sortIndex)`
+/// sortiert unverändert.
 ///
 /// > Wichtig: `allowsCloudEncryption` lässt sich nach dem ersten Deploy des
-/// > CloudKit-Schemas nicht mehr umschalten. Verschlüsselt und unverschlüsselt
-/// > sind für CloudKit zwei verschiedene Feldtypen.
+/// > CloudKit-Schemas in die Production-Datenbank nicht mehr umschalten.
+/// > Verschlüsselt und unverschlüsselt sind für CloudKit zwei verschiedene
+/// > Feldtypen, und ein Feldtyp ist unveränderlich.
 @Model
 final class Subject {
 
@@ -25,44 +31,44 @@ final class Subject {
     /// Die `persistentModelID` von SwiftData taugt dafür nicht: sie ist lokal und
     /// wechselt, sobald ein Datensatz über CloudKit auf einem anderen Gerät
     /// ankommt. Der Rechenkern muss Kurse aber wiedererkennen können.
-    var identifier: UUID = UUID()
+    @Attribute(.allowsCloudEncryption) var identifier: UUID = UUID()
 
     /// Der angezeigte Fachname, etwa „Mathematik".
     @Attribute(.allowsCloudEncryption) var name: String = ""
 
     /// Das Kürzel für enge Darstellungen, etwa „GK" für Gemeinschaftskunde.
-    var abbreviation: String = ""
+    @Attribute(.allowsCloudEncryption) var abbreviation: String = ""
 
     /// Die Fachfarbe als RGB-Hexwert.
-    var colorValue: Int = 0x1C6B6E
+    @Attribute(.allowsCloudEncryption) var colorValue: Int = 0x1C6B6E
 
     /// Der Fachtyp als Rohwert.
     ///
     /// SwiftData kann Enums direkt ablegen; hier steht bewusst der Rohwert, damit
     /// das CloudKit-Feld ein schlichter String bleibt und ein späteres Umbenennen
     /// eines Falls den Sync nicht bricht.
-    var kindRawValue: String = SubjectKind.basisfach.rawValue
+    @Attribute(.allowsCloudEncryption) var kindRawValue: String = SubjectKind.basisfach.rawValue
 
     /// Ob der Nutzer das Fach selbst angelegt hat.
     ///
     /// Standardfächer kommen aus dem Katalog und lassen sich nur bearbeiten,
     /// eigene Fächer auch löschen.
-    var isCustom: Bool = false
+    @Attribute(.allowsCloudEncryption) var isCustom: Bool = false
 
     /// Anteil der schriftlichen Note an diesem Fach, in Prozent.
     ///
     /// Der mündliche Anteil ist immer `100 - writtenShare`. Voreinstellung ist
     /// 50:50, pro Fach überschreibbar.
-    var writtenShare: Int = 50
+    @Attribute(.allowsCloudEncryption) var writtenShare: Int = 50
 
     /// Die belegten Halbjahre als Indizes 0 bis 3.
     ///
     /// Nicht belegte Halbjahre bleiben gespeichert, zählen aber nicht für Block I —
     /// so geht nichts verloren, wenn ein Fach abgewählt und später wieder belegt wird.
-    var activeSemesters: [Int] = [0, 1, 2, 3]
+    @Attribute(.allowsCloudEncryption) var activeSemesters: [Int] = [0, 1, 2, 3]
 
     /// Position in der Fächerliste.
-    var sortIndex: Int = 0
+    @Attribute(.allowsCloudEncryption) var sortIndex: Int = 0
 
     /// Die vier Halbjahre dieses Fachs.
     @Relationship(deleteRule: .cascade, inverse: \SemesterResult.subject)

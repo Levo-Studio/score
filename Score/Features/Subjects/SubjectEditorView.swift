@@ -242,6 +242,13 @@ struct SubjectEditorView: View {
                     semesterToggle(index)
                 }
             }
+
+            CourseLimitPicker(
+                limit: $draft.maximumContributedCourses,
+                options: draft.courseLimitOptions,
+                isAvailable: draft.allowsCourseLimit
+            )
+            .padding(.top, ScoreMetrics.Spacing.xs)
         }
     }
 

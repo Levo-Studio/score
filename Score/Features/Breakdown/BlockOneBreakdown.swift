@@ -23,13 +23,18 @@ struct BlockOneBreakdown {
     /// läuft, hat aber noch keine Note.
     enum CourseState: Equatable {
         case included(points: Int)
+        /// Von besseren Basisfach-Ergebnissen aus den freien Plätzen verdrängt.
         case excluded(points: Int)
+        /// Über der Kursgrenze, die für dieses Fach gesetzt ist. Dieser Kurs ist
+        /// nie in den Wettbewerb gegangen — der Grund ist ein anderer, und der
+        /// Bildschirm muss ihn anders benennen.
+        case beyondLimit(points: Int)
         case notTaken
         case notRecorded
 
         var points: Int? {
             switch self {
-            case .included(let points), .excluded(let points): points
+            case .included(let points), .excluded(let points), .beyondLimit(let points): points
             case .notTaken, .notRecorded: nil
             }
         }
@@ -39,10 +44,30 @@ struct BlockOneBreakdown {
             return false
         }
 
+        /// Erfasst, aber nicht gezählt — gleich aus welchem Grund.
         var isExcluded: Bool {
-            if case .excluded = self { return true }
-            return false
+            switch self {
+            case .excluded, .beyondLimit: true
+            case .included, .notTaken, .notRecorded: false
+            }
         }
+
+        /// Warum dieser Kurs nicht zählt, sofern er erfasst ist und nicht zählt.
+        var exclusionReason: ExclusionReason? {
+            switch self {
+            case .excluded: .outranked
+            case .beyondLimit: .beyondSubjectLimit
+            case .included, .notTaken, .notRecorded: nil
+            }
+        }
+    }
+
+    /// Warum ein erfasster Kurs nicht in Block I eingeht.
+    enum ExclusionReason: Equatable, Hashable {
+        /// Es gab bessere Basisfach-Ergebnisse für die freien Plätze.
+        case outranked
+        /// Das Fach bringt nur eine bestimmte Zahl seiner Ergebnisse ein.
+        case beyondSubjectLimit
     }
 
     /// Ein Halbjahr eines Fachs, so wie es auf dem Bildschirm steht.
@@ -82,15 +107,37 @@ struct BlockOneBreakdown {
         let kind: SubjectKind
         let courses: [Course]
 
+        /// Die gesetzte Kursgrenze dieses Fachs, sofern sie greift.
+        let courseLimit: Int?
+
         var includedCount: Int { courses.count { $0.state.isIncluded } }
         var excludedCount: Int { courses.count { $0.state.isExcluded } }
+
+        /// Wie viele Halbjahre dieses Fachs überhaupt ein Ergebnis haben.
+        var recordedCount: Int { courses.count { $0.state.points != nil } }
 
         /// Der Schnitt über die Halbjahre mit Ergebnis.
         ///
         /// Nach ihm sind die Basisfächer sortiert — er ist die beste Antwort auf
         /// „warum steht dieses Fach weiter unten als jenes".
         var recordedAverage: Double? {
-            let points = courses.compactMap { $0.state.points }
+            Self.average(of: courses.compactMap { $0.state.points })
+        }
+
+        /// Der Schnitt der Kurse, die tatsächlich um einen Platz antreten.
+        ///
+        /// Bringt ein Fach nur seine besten zwei ein, ist es mit diesen zwei
+        /// stärker, als sein Gesamtschnitt vermuten lässt — und genau so tritt es
+        /// gegen die anderen an. Nach diesem Wert ist die Liste sortiert.
+        var competingAverage: Double? {
+            Self.average(
+                of: courses.compactMap { course in
+                    course.state.exclusionReason == .beyondSubjectLimit ? nil : course.state.points
+                }
+            )
+        }
+
+        private static func average(of points: [Int]) -> Double? {
             guard !points.isEmpty else { return nil }
             return Double(points.reduce(0, +)) / Double(points.count)
         }
@@ -103,9 +150,34 @@ struct BlockOneBreakdown {
         let includedCount: Int
         /// Wie viele Kurse dieser Gruppe überhaupt ein Ergebnis haben.
         let recordedCount: Int
+        /// Wie viele Fächer diese Gruppe stellt — die zweite Zahl in „12 aus drei
+        /// Leistungsfächern".
+        let subjectCount: Int
 
         var excludedCount: Int { recordedCount - includedCount }
         var id: SubjectKind { kind }
+    }
+
+    /// Ein Fach mit den Kursen, die aus demselben Grund herausfallen.
+    ///
+    /// Ein Fach kann in beiden Gründen auftauchen: zwei Kurse über der eigenen
+    /// Grenze, ein dritter zu schwach für die letzten freien Plätze. Deshalb ist
+    /// der Grund Teil der Identität und nicht nur ein Merkmal.
+    struct DroppedGroup: Identifiable {
+        let subjectID: String
+        let name: String
+        let color: Color
+        let reason: ExclusionReason
+        let courses: [Course]
+
+        /// Die Kursgrenze des Fachs — die Zahl, die im Grund genannt wird.
+        let courseLimit: Int?
+
+        var id: String { "\(subjectID)-\(reason)" }
+
+        /// Die höchste Punktzahl, die hier herausfällt — die Zahl, an der man
+        /// den Abstand zur Grenze abliest.
+        var bestPoints: Int? { courses.compactMap { $0.state.points }.max() }
     }
 
     // MARK: - Werte
@@ -141,6 +213,18 @@ struct BlockOneBreakdown {
     /// Wie viele Plätze nach den Leistungs- und Kernfächern übrig bleiben.
     let optionalSlotCount: Int
 
+    /// Alles, was herausfällt — nach Fach und Grund gebündelt.
+    ///
+    /// Die Reihenfolge ist die des Bildschirms: erst die Kurse, die eine gesetzte
+    /// Kursgrenze ausklammert (die Entscheidung des Nutzers), danach die, denen
+    /// bessere Ergebnisse den Platz genommen haben.
+    let droppedGroups: [DroppedGroup]
+
+    /// Ob überhaupt ein Fach eine Kursgrenze gesetzt hat.
+    var hasSubjectLimits: Bool {
+        droppedGroups.contains { $0.reason == .beyondSubjectLimit }
+    }
+
     // MARK: - Aufbau
 
     init(subjects: [Subject]) {
@@ -151,6 +235,7 @@ struct BlockOneBreakdown {
         let inputs = presentations.map(\.input)
         let outcome = BlockOneCalculator.calculate(for: inputs)
         let included = Set(outcome.includedCourses)
+        let beyondLimit = outcome.coursesBeyondSubjectLimit
         let pointsByCourse = Dictionary(
             uniqueKeysWithValues: BlockOneCalculator.availableCourses(in: inputs).map { ($0.id, $0.points) }
         )
@@ -175,10 +260,12 @@ struct BlockOneBreakdown {
                         state: Self.state(
                             points: pointsByCourse[identifier],
                             isIncluded: included.contains(identifier),
+                            isBeyondLimit: beyondLimit.contains(identifier),
                             isActive: input.semesters.first { $0.index == index }?.isActive ?? false
                         )
                     )
-                }
+                },
+                courseLimit: input.effectiveCourseLimit
             )
         }
 
@@ -191,8 +278,8 @@ struct BlockOneBreakdown {
         optionalSubjects = entries
             .filter { $0.kind == .basisfach }
             .sorted { left, right in
-                let leftAverage = left.recordedAverage ?? -1
-                let rightAverage = right.recordedAverage ?? -1
+                let leftAverage = left.competingAverage ?? -1
+                let rightAverage = right.competingAverage ?? -1
                 if leftAverage != rightAverage { return leftAverage > rightAverage }
                 return left.name.localizedStandardCompare(right.name) == .orderedAscending
             }
@@ -217,12 +304,23 @@ struct BlockOneBreakdown {
             .compactMap { $0.state.isIncluded ? $0.state.points : nil }
             .min()
 
+        // Kurse über einer gesetzten Kursgrenze treten gar nicht erst an — sie
+        // zählen deshalb auch nicht als Bewerber um die freien Plätze.
         optionalCandidateCount = optionalSubjects.reduce(0) { total, entry in
-            total + entry.courses.count { $0.state.points != nil }
+            total + entry.courses.count {
+                $0.state.points != nil && $0.state.exclusionReason != .beyondSubjectLimit
+            }
         }
 
         let mandatoryIncluded = mandatorySubjects.reduce(0) { $0 + $1.includedCount }
         optionalSlotCount = max(0, BlockOneCalculator.nonAdvancedCourseCount - mandatoryIncluded)
+
+        // Erst die Kurse, die eine gesetzte Grenze ausklammert, dann die
+        // verdrängten: Der Nutzer soll seine eigene Entscheidung zuerst
+        // wiederfinden und danach lesen, was die Rechnung von sich aus streicht.
+        droppedGroups = Self.droppedGroups(
+            in: advancedSubjects + mandatorySubjects + optionalSubjects
+        )
     }
 
     // MARK: - Hilfen
@@ -230,19 +328,40 @@ struct BlockOneBreakdown {
     private static func state(
         points: Int?,
         isIncluded: Bool,
+        isBeyondLimit: Bool,
         isActive: Bool
     ) -> CourseState {
         guard let points else { return isActive ? .notRecorded : .notTaken }
-        return isIncluded ? .included(points: points) : .excluded(points: points)
+        if isIncluded { return .included(points: points) }
+        return isBeyondLimit ? .beyondLimit(points: points) : .excluded(points: points)
     }
 
     private static func group(_ kind: SubjectKind, in entries: [SubjectEntry]) -> Group {
         Group(
             kind: kind,
             includedCount: entries.reduce(0) { $0 + $1.includedCount },
-            recordedCount: entries.reduce(0) { total, entry in
-                total + entry.courses.count { $0.state.points != nil }
-            }
+            recordedCount: entries.reduce(0) { $0 + $1.recordedCount },
+            subjectCount: entries.count
         )
+    }
+
+    /// Bündelt alle nicht gezählten Kurse nach Fach und Grund.
+    private static func droppedGroups(in entries: [SubjectEntry]) -> [DroppedGroup] {
+        let reasons: [ExclusionReason] = [.beyondSubjectLimit, .outranked]
+
+        return reasons.flatMap { reason in
+            entries.compactMap { entry -> DroppedGroup? in
+                let courses = entry.courses.filter { $0.state.exclusionReason == reason }
+                guard !courses.isEmpty else { return nil }
+                return DroppedGroup(
+                    subjectID: entry.id,
+                    name: entry.name,
+                    color: entry.color,
+                    reason: reason,
+                    courses: courses,
+                    courseLimit: entry.courseLimit
+                )
+            }
+        }
     }
 }

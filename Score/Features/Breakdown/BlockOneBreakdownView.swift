@@ -1,18 +1,27 @@
 import SwiftUI
 
-/// Die Aufschlüsselung des Schnitts: welche Kurse Score einbringt, welche
-/// herausfallen und was daraus gerechnet wird.
+/// Die Aufschlüsselung des Schnitts.
 ///
-/// Der Bildschirm beantwortet die Frage, die die Score-Karte offenlässt. Er
-/// schreibt die Rechnung offen hin — Punktsumme, Anzahl, Schnitt, Umrechnung —
-/// und zeigt darunter jeden einzelnen Kurs mit seinem Zustand. Nichts davon
-/// rechnet er selbst: alles kommt aus `BlockOneBreakdown` und damit aus
-/// `BlockOneCalculator`.
+/// Der Bildschirm beantwortet die Frage, die die Score-Karte offenlässt, und er
+/// beantwortet sie als Erzählung statt als Liste:
+///
+/// 1. **Die Rechnung** — Punktsumme, Kurszahl, Schnitt, Umrechnung in die Note.
+/// 2. **Woher die Kurse kommen** — wie viele aus Leistungs-, Kern- und
+///    Basisfächern, als Balken und in Worten.
+/// 3. **Was gesetzt ist** — Leistungs- und Kernfächer, mit ihren Kursen.
+/// 4. **Wer die freien Plätze bekommt** — die Basisfächer in der Reihenfolge, in
+///    der sie antreten, und die Grenze, ab der es nicht mehr reicht.
+/// 5. **Was herausfällt und warum** — mit dem Grund ausgeschrieben, getrennt
+///    nach „von besseren verdrängt" und „über der eigenen Kursgrenze".
+///
+/// Nichts davon rechnet er selbst: alles kommt aus `BlockOneBreakdown` und damit
+/// aus `BlockOneCalculator`. Weichen Anzeige und Rechnung auseinander, ist das
+/// ein Fehler im Kern und nicht hier zu beheben.
 ///
 /// Dieselbe Ansicht trägt beide Geräte. Auf dem iPhone steht sie in einem Sheet
-/// über dem Dashboard, auf dem iPad im Detailbereich neben der Sidebar —
-/// unterschiedlich sind nur Ränder, Radien und die Kopfzeile, und die stehen in
-/// `Layout`.
+/// über dem Dashboard, auf dem iPad in einer mittigen Karte über dem
+/// abgedunkelten Inhalt — unterschiedlich sind nur Ränder und Radien, und die
+/// stehen in ``Layout``.
 struct BlockOneBreakdownView: View {
 
     /// Die Masse, in denen der Bildschirm steht.
@@ -21,24 +30,29 @@ struct BlockOneBreakdownView: View {
         var cardRadius: CGFloat
         var topPadding: CGFloat
         var bottomPadding: CGFloat
-        /// Auf dem iPhone trägt der Bildschirm seine Überschrift selbst, auf dem
-        /// iPad steht sie schon in der Kopfleiste der Detailseite.
+        /// Ob der Bildschirm seine Überschrift selbst trägt.
         var showsTitle: Bool
+        /// Wohin der Knopf oben links führt.
+        var closesUpward: Bool
 
         static let phone = Layout(
             contentPadding: ScoreMetrics.screenPadding,
             cardRadius: ScoreMetrics.Radius.card,
             topPadding: ScoreMetrics.Spacing.sm,
             bottomPadding: ScoreMetrics.Spacing.xl,
-            showsTitle: true
+            showsTitle: true,
+            closesUpward: false
         )
 
-        static let pad = Layout(
+        /// Die Überlagerung auf dem iPad. Sie trägt ihre Überschrift selbst — es
+        /// gibt keine Kopfleiste darüber, die sie schon nennen würde.
+        static let padSheet = Layout(
             contentPadding: PadMetrics.contentPadding,
             cardRadius: PadMetrics.cardRadius,
-            topPadding: 22,
+            topPadding: ScoreMetrics.Spacing.lg,
             bottomPadding: PadMetrics.contentPadding,
-            showsTitle: false
+            showsTitle: true,
+            closesUpward: true
         )
     }
 
@@ -46,7 +60,7 @@ struct BlockOneBreakdownView: View {
     var layout: Layout = .phone
 
     /// Der Weg zurück auf die Übersicht. Auf dem iPhone schliesst er das Sheet,
-    /// auf dem iPad setzt er die Route zurück.
+    /// auf dem iPad die Überlagerung.
     let onClose: () -> Void
 
     private var breakdown: BlockOneBreakdown {
@@ -57,7 +71,7 @@ struct BlockOneBreakdownView: View {
         let breakdown = breakdown
 
         return ScrollView {
-            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
+            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
                 closeRow
 
                 if layout.showsTitle {
@@ -66,12 +80,16 @@ struct BlockOneBreakdownView: View {
 
                 resultCard(breakdown)
                     .staggeredAppearance(index: 0)
-                groupSection(breakdown)
+                originSection(breakdown)
                     .staggeredAppearance(index: 1)
-                courseSection(breakdown)
+                fixedSection(breakdown)
                     .staggeredAppearance(index: 2)
-                explanation
+                competitionSection(breakdown)
                     .staggeredAppearance(index: 3)
+                droppedSection(breakdown)
+                    .staggeredAppearance(index: 4)
+                explanation
+                    .staggeredAppearance(index: 5)
             }
             .padding(.horizontal, layout.contentPadding)
             .padding(.top, layout.topPadding)
@@ -86,13 +104,14 @@ struct BlockOneBreakdownView: View {
     private var closeRow: some View {
         Button(action: onClose) {
             HStack(spacing: 4) {
-                Image(systemName: "chevron.left")
+                Image(systemName: layout.closesUpward ? "xmark" : "chevron.left")
                     .font(.system(size: 11, weight: .semibold))
-                Text("Übersicht")
+                Text(layout.closesUpward ? "Schliessen" : "Übersicht")
                     .font(.chipLabel)
             }
             .foregroundStyle(ScorePalette.accent)
             .padding(.vertical, ScoreMetrics.Spacing.xs)
+            .frame(minHeight: ScoreMetrics.minimumTapTarget, alignment: .leading)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -112,7 +131,7 @@ struct BlockOneBreakdownView: View {
         }
     }
 
-    // MARK: - Das Ergebnis
+    // MARK: - 1. Die Rechnung
 
     /// Die Rechnung, offen hingeschrieben: Summe, Anzahl, Schnitt, Umrechnung.
     ///
@@ -135,12 +154,12 @@ struct BlockOneBreakdownView: View {
             VStack(spacing: 0) {
                 calculationRow(
                     label: Text("Punktsumme der eingebrachten Kurse"),
-                    value: String(breakdown.includedPointsTotal),
+                    value: ScoreNumberFormat.points(breakdown.includedPointsTotal),
                     isFirst: true
                 )
                 calculationRow(
                     label: Text("Geteilt durch die Zahl der Kurse"),
-                    value: String(breakdown.outcome.includedCount)
+                    value: ScoreNumberFormat.points(breakdown.outcome.includedCount)
                 )
                 calculationRow(
                     label: Text("Punkteschnitt"),
@@ -149,7 +168,7 @@ struct BlockOneBreakdownView: View {
                 )
                 calculationRow(
                     label: Text("Block I · Schnitt × 42"),
-                    value: String(breakdown.outcome.blockOnePoints)
+                    value: ScoreNumberFormat.points(breakdown.outcome.blockOnePoints)
                 )
             }
             .padding(.top, ScoreMetrics.Spacing.md)
@@ -234,176 +253,177 @@ struct BlockOneBreakdownView: View {
         return "17/3 − \(average)/3 = \(grade)"
     }
 
-    // MARK: - Die drei Gruppen
+    // MARK: - 2. Woher die Kurse kommen
 
-    private func groupSection(_ breakdown: BlockOneBreakdown) -> some View {
-        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
-            Text("Woraus sich die 42 Kurse ergeben")
-                .font(.sectionTitle)
-                .tracking(em: -0.02, at: 15)
-                .foregroundStyle(ScorePalette.ink)
-                .fixedSize(horizontal: false, vertical: true)
+    private func originSection(_ breakdown: BlockOneBreakdown) -> some View {
+        section("Woher die Kurse kommen") {
+            ScoreCard(cornerRadius: layout.cardRadius) {
+                VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
+                    originBar(breakdown)
 
-            ForEach(breakdown.groups) { group in
-                groupCard(group, in: breakdown)
+                    VStack(spacing: ScoreMetrics.Spacing.sm) {
+                        ForEach(breakdown.groups) { group in
+                            originRow(group, in: breakdown)
+                        }
+                    }
+                }
             }
         }
     }
 
-    private func groupCard(_ group: BlockOneBreakdown.Group, in breakdown: BlockOneBreakdown) -> some View {
-        ScoreCard(cornerRadius: layout.cardRadius) {
-            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
-                HStack(alignment: .firstTextBaseline, spacing: ScoreMetrics.Spacing.sm) {
-                    Text(groupTitle(group.kind))
-                        .font(.rowTitle)
-                        .foregroundStyle(ScorePalette.ink)
+    /// Ein Balken aus drei Abschnitten, breit im Verhältnis der eingebrachten
+    /// Kurse. Er beantwortet „wie viel kommt woher" vor jedem gelesenen Wort.
+    ///
+    /// Die drei Abschnitte sind derselbe Petrolton in abnehmender Deckkraft und
+    /// keine drei Farben: sie gehören zu einer Grösse, nicht zu drei.
+    private func originBar(_ breakdown: BlockOneBreakdown) -> some View {
+        let total = max(1, breakdown.groups.reduce(0) { $0 + $1.includedCount })
 
-                    Spacer(minLength: 0)
-
-                    Text(verbatim: groupValue(group))
-                        .font(.rowValue)
-                        .monospacedDigit()
-                        .tracking(em: -0.03, at: 20)
-                        .foregroundStyle(ScorePalette.ink)
+        return GeometryReader { proxy in
+            HStack(spacing: 3) {
+                ForEach(breakdown.groups) { group in
+                    Capsule()
+                        .fill(ScorePalette.accent.opacity(barOpacity(group.kind)))
+                        .frame(width: proxy.size.width * CGFloat(group.includedCount) / CGFloat(total))
                 }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(height: 10)
+        .background(ScorePalette.track)
+        .clipShape(Capsule())
+        .scoreAnimation(ScoreMotion.bar, value: breakdown.outcome.includedCount)
+    }
 
-                groupNote(group, in: breakdown)
+    private func barOpacity(_ kind: SubjectKind) -> Double {
+        switch kind {
+        case .leistungsfach: 1
+        case .kernfach: 0.6
+        case .basisfach: 0.32
+        }
+    }
+
+    private func originRow(
+        _ group: BlockOneBreakdown.Group,
+        in breakdown: BlockOneBreakdown
+    ) -> some View {
+        HStack(alignment: .top, spacing: ScoreMetrics.Spacing.sm) {
+            Circle()
+                .fill(ScorePalette.accent.opacity(barOpacity(group.kind)))
+                .frame(width: 9, height: 9)
+                .padding(.top, 4)
+
+            VStack(alignment: .leading, spacing: 3) {
+                originHeadline(group)
+                    .font(.rowTitle)
+                    .foregroundStyle(ScorePalette.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                originNote(group, in: breakdown)
                     .font(.optionMeta)
                     .lineSpacing(4)
                     .foregroundStyle(ScorePalette.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+
+            Spacer(minLength: 0)
         }
     }
 
-    private func groupTitle(_ kind: SubjectKind) -> LocalizedStringKey {
-        switch kind {
-        case .leistungsfach: "Leistungsfächer"
-        case .kernfach: "Kernfächer"
-        case .basisfach: "Basisfächer"
-        }
-    }
-
-    /// Bei den gesetzten Gruppen steht nur die Zahl der Kurse, bei den
-    /// Basisfächern das Verhältnis — dort ist die Auswahl der ganze Punkt.
-    private func groupValue(_ group: BlockOneBreakdown.Group) -> String {
+    /// „18 Kurse aus 6 Kernfächern" — die Zahl, um die es geht, steht vorn.
+    private func originHeadline(_ group: BlockOneBreakdown.Group) -> Text {
         switch group.kind {
-        case .leistungsfach, .kernfach:
-            String(group.includedCount)
+        case .leistungsfach:
+            Text("\(group.includedCount) Kurse aus \(group.subjectCount) Leistungsfächern")
+        case .kernfach:
+            Text("\(group.includedCount) Kurse aus \(group.subjectCount) Kernfächern")
         case .basisfach:
-            "\(group.includedCount)/\(group.recordedCount)"
+            Text("\(group.includedCount) Kurse aus \(group.subjectCount) Basisfächern")
         }
     }
 
-    private func groupNote(
+    private func originNote(
         _ group: BlockOneBreakdown.Group,
         in breakdown: BlockOneBreakdown
     ) -> Text {
         switch group.kind {
         case .leistungsfach:
-            Text("Zwölf Kurse: alle vier Halbjahre der drei Leistungsfächer. Sie sind gesetzt und lassen sich nicht abwählen.")
+            Text("Alle vier Halbjahre jedes Leistungsfachs. Gesetzt, nicht abwählbar.")
         case .kernfach:
-            Text("Kernfächer zählen, wie sie stehen. Auch ein schwaches Ergebnis bleibt drin — abwählen geht hier nicht.")
+            Text("Gesetzt wie die Leistungsfächer, aber gegen die 30 Plätze der Nicht-Leistungsfächer gerechnet.")
         case .basisfach:
-            // Zwei Sätze, zwei Schlüssel: beide Zahlen haben eine Einzahlform, und
-            // ein einziger Schlüssel mit zwei Pluralen wäre im Katalog nicht mehr
-            // sauber zu übersetzen. Zusammengesetzt wird deshalb als
-            // `AttributedString` — die Verkettung zweier `Text` ist abgekündigt.
-            Text(
-                AttributedString(localized: "Für die \(breakdown.optionalSlotCount) freien Plätze nimmt Score die besten Basisfach-Ergebnisse.")
-                    + AttributedString(" ")
-                    + AttributedString(localized: "\(group.excludedCount) fallen heraus.")
-            )
+            Text("\(breakdown.optionalCandidateCount) Ergebnisse treten um \(breakdown.optionalSlotCount) freie Plätze an. Die besten bekommen sie.")
         }
     }
 
-    // MARK: - Alle Kurse
-
-    private func courseSection(_ breakdown: BlockOneBreakdown) -> some View {
-        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
-            Text("Kurs für Kurs")
-                .font(.sectionTitle)
-                .tracking(em: -0.02, at: 15)
-                .foregroundStyle(ScorePalette.ink)
-
-            subjectGroup(title: "Leistungsfächer", entries: breakdown.advancedSubjects)
-            subjectGroup(title: "Kernfächer", entries: breakdown.mandatorySubjects)
-            optionalGroup(breakdown)
-        }
-    }
+    // MARK: - 3. Was gesetzt ist
 
     @ViewBuilder
-    private func subjectGroup(
-        title: LocalizedStringKey,
-        entries: [BlockOneBreakdown.SubjectEntry],
-        note: Text? = nil
-    ) -> some View {
+    private func fixedSection(_ breakdown: BlockOneBreakdown) -> some View {
+        let entries = breakdown.advancedSubjects + breakdown.mandatorySubjects
+
         if !entries.isEmpty {
-            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
-                HStack(alignment: .firstTextBaseline, spacing: ScoreMetrics.Spacing.xs) {
-                    Text(title)
-                        .font(.micro)
-                        .foregroundStyle(ScorePalette.inkSecondary)
-
-                    Spacer(minLength: 0)
-
-                    if let note {
-                        note
-                            .font(.micro)
-                            .foregroundStyle(ScorePalette.inkSecondary)
-                            .lineLimit(1)
-                    }
-                }
+            section("Gesetzt") {
+                Text("Leistungs- und Kernfächer stehen fest. Auch ein schwaches Ergebnis bleibt drin — hier wird nichts gestrichen und nichts verdrängt.")
+                    .font(.optionMeta)
+                    .lineSpacing(4.5)
+                    .foregroundStyle(ScorePalette.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 ForEach(entries) { entry in
-                    subjectCard(entry)
+                    subjectCard(entry, rank: nil)
                 }
             }
         }
     }
 
-    /// Die Basisfächer stehen absteigend nach ihrem Schnitt — und dort, wo die
-    /// Plätze aufgebraucht sind, liegt die Trennlinie.
+    // MARK: - 4. Wer die freien Plätze bekommt
+
     @ViewBuilder
-    private func optionalGroup(_ breakdown: BlockOneBreakdown) -> some View {
+    private func competitionSection(_ breakdown: BlockOneBreakdown) -> some View {
         let entries = breakdown.optionalSubjects
 
         if !entries.isEmpty {
-            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
-                HStack(alignment: .firstTextBaseline, spacing: ScoreMetrics.Spacing.xs) {
-                    Text("Basisfächer")
-                        .font(.micro)
-                        .foregroundStyle(ScorePalette.inkSecondary)
-
-                    Spacer(minLength: 0)
-
-                    if let threshold = breakdown.optionalThreshold,
-                       breakdown.optionalCandidateCount > breakdown.optionalSlotCount {
-                        Text("Grenze bei \(threshold) Punkten")
-                            .font(.micro)
-                            .foregroundStyle(ScorePalette.inkSecondary)
-                            .lineLimit(1)
-                    }
-                }
+            section("Die freien Plätze") {
+                competitionIntro(breakdown)
 
                 ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
-                    subjectCard(entry)
+                    subjectCard(entry, rank: index + 1)
 
                     if index == breakdown.optionalCutIndex {
-                        cutLine
+                        cutLine(breakdown)
                     }
                 }
+            }
+        }
+    }
+
+    private func competitionIntro(_ breakdown: BlockOneBreakdown) -> some View {
+        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
+            Text("Nach den gesetzten Kursen bleiben \(breakdown.optionalSlotCount) Plätze. Sie gehen nach Punktzahl an die Basisfächer — hier stehen sie in genau der Reihenfolge, in der Score sie vergibt.")
+                .font(.optionMeta)
+                .lineSpacing(4.5)
+                .foregroundStyle(ScorePalette.inkSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let threshold = breakdown.optionalThreshold,
+               breakdown.optionalCandidateCount > breakdown.optionalSlotCount {
+                Text("Der letzte vergebene Platz steht bei \(threshold) Punkten.")
+                    .font(.optionMeta)
+                    .lineSpacing(4.5)
+                    .foregroundStyle(ScorePalette.accent)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
 
     /// Die Linie, ab der es nicht mehr reicht.
-    private var cutLine: some View {
+    private func cutLine(_ breakdown: BlockOneBreakdown) -> some View {
         HStack(spacing: ScoreMetrics.Spacing.xs) {
-            Text("Ab hier reicht es nicht mehr")
+            cutLabel(breakdown)
                 .font(.micro)
                 .foregroundStyle(ScorePalette.inkSecondary)
-                .lineLimit(1)
+                .fixedSize(horizontal: false, vertical: true)
 
             Rectangle()
                 .fill(ScorePalette.lineStrong)
@@ -412,12 +432,98 @@ struct BlockOneBreakdownView: View {
         .padding(.vertical, ScoreMetrics.Spacing.xxs)
     }
 
+    private func cutLabel(_ breakdown: BlockOneBreakdown) -> Text {
+        guard let threshold = breakdown.optionalThreshold else {
+            return Text("Ab hier reicht es nicht mehr")
+        }
+        return Text("Ab hier reicht es nicht mehr · Grenze \(threshold) Punkte")
+    }
+
+    // MARK: - 5. Was herausfällt
+
+    @ViewBuilder
+    private func droppedSection(_ breakdown: BlockOneBreakdown) -> some View {
+        if !breakdown.droppedGroups.isEmpty {
+            section("Was herausfällt") {
+                ForEach(breakdown.droppedGroups) { group in
+                    droppedCard(group, in: breakdown)
+                }
+            }
+        }
+    }
+
+    private func droppedCard(
+        _ group: BlockOneBreakdown.DroppedGroup,
+        in breakdown: BlockOneBreakdown
+    ) -> some View {
+        ScoreCard(padding: 14, cornerRadius: layout.cardRadius) {
+            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
+                HStack(spacing: 10) {
+                    SubjectDot(color: group.color, size: 22, cornerRadius: 8)
+
+                    Text(verbatim: group.name)
+                        .font(.rowTitle)
+                        .foregroundStyle(ScorePalette.ink)
+                        .lineLimit(1)
+
+                    Spacer(minLength: ScoreMetrics.Spacing.xs)
+
+                    Text(verbatim: droppedSemesterList(group))
+                        .font(.meta)
+                        .monospacedDigit()
+                        .foregroundStyle(ScorePalette.inkSecondary)
+                        .lineLimit(1)
+                }
+
+                droppedReason(group, in: breakdown)
+                    .font(.optionMeta)
+                    .lineSpacing(4)
+                    .foregroundStyle(ScorePalette.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    /// „HJ 2 · 7 · HJ 4 · 3" — welche Halbjahre mit welcher Punktzahl.
+    private func droppedSemesterList(_ group: BlockOneBreakdown.DroppedGroup) -> String {
+        group.courses
+            .map { "\(Semester.label($0.semesterIndex)) · \(ScoreNumberFormat.points($0.state.points))" }
+            .joined(separator: "   ")
+    }
+
+    /// Der Grund, ausgeschrieben. „Fällt raus" allein erklärt nichts.
+    private func droppedReason(
+        _ group: BlockOneBreakdown.DroppedGroup,
+        in breakdown: BlockOneBreakdown
+    ) -> Text {
+        switch group.reason {
+        case .beyondSubjectLimit:
+            let limit = group.courseLimit ?? group.courses.count
+            return Text("Dieses Fach bringt nur \(limit) Ergebnisse ein. Score behält die besten und klammert diese hier aus.")
+        case .outranked:
+            let occupied = breakdown.groups
+                .first { $0.kind == .basisfach }?
+                .includedCount ?? breakdown.optionalSlotCount
+            return Text("Schlechter als die \(occupied) besseren Basisfach-Ergebnisse, die die freien Plätze belegen.")
+        }
+    }
+
     // MARK: - Ein Fach mit seinen vier Halbjahren
 
-    private func subjectCard(_ entry: BlockOneBreakdown.SubjectEntry) -> some View {
+    /// - Parameter rank: Der Platz in der Rangfolge der Basisfächer, oder `nil`
+    ///   bei den gesetzten Fächern — dort gibt es keine Rangfolge.
+    private func subjectCard(_ entry: BlockOneBreakdown.SubjectEntry, rank: Int?) -> some View {
         ScoreCard(padding: 14, cornerRadius: layout.cardRadius) {
             VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
                 HStack(spacing: 10) {
+                    if let rank {
+                        Text(verbatim: ScoreNumberFormat.points(rank))
+                            .font(.micro)
+                            .monospacedDigit()
+                            .foregroundStyle(ScorePalette.inkSecondary)
+                            .frame(minWidth: 14, alignment: .trailing)
+                    }
+
                     SubjectDot(color: entry.color, size: 26, cornerRadius: 9)
 
                     Text(verbatim: entry.name)
@@ -427,7 +533,7 @@ struct BlockOneBreakdownView: View {
 
                     Spacer(minLength: ScoreMetrics.Spacing.xs)
 
-                    Text("Ø \(ScoreNumberFormat.points(entry.recordedAverage))")
+                    Text("Ø \(ScoreNumberFormat.points(entry.competingAverage))")
                         .font(.meta)
                         .monospacedDigit()
                         .foregroundStyle(ScorePalette.inkSecondary)
@@ -443,8 +549,21 @@ struct BlockOneBreakdownView: View {
                         courseTile(course)
                     }
                 }
+
+                subjectBalance(entry)
+                    .font(.micro)
+                    .foregroundStyle(ScorePalette.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    /// Die Bilanz eines Fachs in einer Zeile: wie viele seiner Ergebnisse zählen.
+    private func subjectBalance(_ entry: BlockOneBreakdown.SubjectEntry) -> Text {
+        if let limit = entry.courseLimit, limit < entry.recordedCount {
+            return Text("Bringt \(entry.includedCount) von \(entry.recordedCount) Ergebnissen ein · eigene Grenze \(limit)")
+        }
+        return Text("Bringt \(entry.includedCount) von \(entry.recordedCount) Ergebnissen ein")
     }
 
     /// Ein Halbjahr als Kachel: Beschriftung, Punktzahl, Zustand.
@@ -487,6 +606,10 @@ struct BlockOneBreakdownView: View {
             ScoreBadge(title: "fällt raus")
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
+        case .beyondLimit:
+            ScoreBadge(title: "über Grenze")
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         case .notTaken:
             markerLabel("nicht belegt")
         case .notRecorded:
@@ -502,11 +625,31 @@ struct BlockOneBreakdownView: View {
             .minimumScaleFactor(0.7)
     }
 
+    // MARK: - Abschnitt
+
+    /// Eine Überschrift mit ihrem Inhalt. Alle Abschnitte sitzen gleich.
+    private func section<Content: View>(
+        _ title: LocalizedStringKey,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
+            Text(title)
+                .font(.sectionTitle)
+                .tracking(em: -0.02, at: 15)
+                .foregroundStyle(ScorePalette.ink)
+                .fixedSize(horizontal: false, vertical: true)
+
+            content()
+        }
+    }
+
     // MARK: - Erklärung
 
     private var explanation: some View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
             Text("Block I fasst 42 Halbjahresergebnisse. Die zwölf Kurse der Leistungsfächer und alle Kernfächer sind gesetzt, die restlichen Plätze gehen an die besten Basisfach-Ergebnisse. Aus dem Punkteschnitt dieser Kurse folgt beides: Block I als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben.")
+
+            Text("Wie viele Ergebnisse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift vor der Auswahl: Was ein Fach nicht einbringt, nimmt auch keinem anderen Kurs den Platz weg. Leistungsfächer bringen immer alle vier Halbjahre ein.")
 
             Text("Haben zwei Basisfach-Ergebnisse dieselbe Punktzahl und ist nur noch ein Platz frei, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten.")
         }
@@ -515,7 +658,6 @@ struct BlockOneBreakdownView: View {
         .foregroundStyle(ScorePalette.inkSecondary)
         .fixedSize(horizontal: false, vertical: true)
         .padding(.horizontal, ScoreMetrics.Spacing.xxs)
-        .padding(.top, ScoreMetrics.Spacing.xxs)
     }
 }
 

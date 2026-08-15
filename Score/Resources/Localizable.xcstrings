@@ -4369,6 +4369,1016 @@
           }
         }
       }
+    },
+    "Schliessen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schliessen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        }
+      }
+    },
+    "Woher die Kurse kommen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Woher die Kurse kommen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where the courses come from"
+          }
+        }
+      }
+    },
+    "Gesetzt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesetzt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fixed"
+          }
+        }
+      }
+    },
+    "Die freien Plätze" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die freien Plätze"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The open slots"
+          }
+        }
+      }
+    },
+    "Was herausfällt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was herausfällt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What drops out"
+          }
+        }
+      }
+    },
+    "Kurse in Block I" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurse in Block I"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Courses in block I"
+          }
+        }
+      }
+    },
+    "über Grenze" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "über Grenze"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "over limit"
+          }
+        }
+      }
+    },
+    "Alle vier Halbjahre jedes Leistungsfachs. Gesetzt, nicht abwählbar." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle vier Halbjahre jedes Leistungsfachs. Gesetzt, nicht abwählbar."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All four semesters of every advanced subject. Fixed, no way to opt out."
+          }
+        }
+      }
+    },
+    "Gesetzt wie die Leistungsfächer, aber gegen die 30 Plätze der Nicht-Leistungsfächer gerechnet." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesetzt wie die Leistungsfächer, aber gegen die 30 Plätze der Nicht-Leistungsfächer gerechnet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fixed like the advanced subjects, but counted against the 30 slots of the non-advanced ones."
+          }
+        }
+      }
+    },
+    "Leistungs- und Kernfächer stehen fest. Auch ein schwaches Ergebnis bleibt drin — hier wird nichts gestrichen und nichts verdrängt." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leistungs- und Kernfächer stehen fest. Auch ein schwaches Ergebnis bleibt drin — hier wird nichts gestrichen und nichts verdrängt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Advanced and core subjects are settled. Even a weak result stays in — nothing is dropped and nothing is displaced here."
+          }
+        }
+      }
+    },
+    "Leistungsfächer bringen immer alle vier Halbjahre ein." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leistungsfächer bringen immer alle vier Halbjahre ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Advanced subjects always contribute all four semesters."
+          }
+        }
+      }
+    },
+    "Mit einem belegten Halbjahr gibt es nichts auszuwählen." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit einem belegten Halbjahr gibt es nichts auszuwählen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With a single semester taken there is nothing to choose."
+          }
+        }
+      }
+    },
+    "Alle belegten Halbjahre gehen in Block I ein." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle belegten Halbjahre gehen in Block I ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every semester you took counts towards block I."
+          }
+        }
+      }
+    },
+    "Wie viele Ergebnisse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift vor der Auswahl: Was ein Fach nicht einbringt, nimmt auch keinem anderen Kurs den Platz weg. Leistungsfächer bringen immer alle vier Halbjahre ein." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie viele Ergebnisse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift vor der Auswahl: Was ein Fach nicht einbringt, nimmt auch keinem anderen Kurs den Platz weg. Leistungsfächer bringen immer alle vier Halbjahre ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How many results a subject contributes at most is set in the subject editor. That limit applies before the selection: what a subject does not contribute takes no slot from another course either. Advanced subjects always contribute all four semesters."
+          }
+        }
+      }
+    },
+    "Nach den gesetzten Kursen bleiben %lld Plätze. Sie gehen nach Punktzahl an die Basisfächer — hier stehen sie in genau der Reihenfolge, in der Score sie vergibt." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Nach den gesetzten Kursen bleibt %lld Platz. Er geht nach Punktzahl an die Basisfächer — hier stehen sie in genau der Reihenfolge, in der Score sie vergibt."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Nach den gesetzten Kursen bleiben %lld Plätze. Sie gehen nach Punktzahl an die Basisfächer — hier stehen sie in genau der Reihenfolge, in der Score sie vergibt."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "After the fixed courses %lld slot is left. It goes to the basic subjects by points — they are listed in exactly the order Score fills them."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "After the fixed courses %lld slots are left. They go to the basic subjects by points — they are listed in exactly the order Score fills them."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Der letzte vergebene Platz steht bei %lld Punkten." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Der letzte vergebene Platz steht bei %lld Punkt."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Der letzte vergebene Platz steht bei %lld Punkten."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "The last slot filled sits at %lld point."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "The last slot filled sits at %lld points."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Ab hier reicht es nicht mehr · Grenze %lld Punkte" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ab hier reicht es nicht mehr · Grenze %lld Punkt"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ab hier reicht es nicht mehr · Grenze %lld Punkte"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "From here on it is not enough · limit %lld point"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "From here on it is not enough · limit %lld points"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Dieses Fach bringt nur %lld Ergebnisse ein. Score behält die besten und klammert diese hier aus." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Dieses Fach bringt nur %lld Ergebnis ein. Score behält das beste und klammert diese hier aus."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Dieses Fach bringt nur %lld Ergebnisse ein. Score behält die besten und klammert diese hier aus."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This subject contributes only %lld result. Score keeps the best one and leaves these out."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This subject contributes only %lld results. Score keeps the best ones and leaves these out."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Schlechter als die %lld besseren Basisfach-Ergebnisse, die die freien Plätze belegen." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Schlechter als das %lld bessere Basisfach-Ergebnis, das den freien Platz belegt."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Schlechter als die %lld besseren Basisfach-Ergebnisse, die die freien Plätze belegen."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Worse than the %lld better basic-subject result taking the open slot."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Worse than the %lld better basic-subject results taking the open slots."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Score nimmt die besten %lld Ergebnisse dieses Fachs, die übrigen bleiben aussen vor." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Score nimmt %lld Ergebnis dieses Fachs — das beste. Die übrigen bleiben aussen vor."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Score nimmt die besten %lld Ergebnisse dieses Fachs, die übrigen bleiben aussen vor."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Score takes %lld result from this subject — the best one. The rest stay out."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Score takes the best %lld results from this subject, the rest stay out."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Kurse aus %lld Leistungsfächern" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@courses@ aus %2$#@subjects@"
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurs"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurse"
+                    }
+                  }
+                }
+              }
+            },
+            "subjects" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Leistungsfach"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Leistungsfächern"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@courses@ from %2$#@subjects@"
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg course"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg courses"
+                    }
+                  }
+                }
+              }
+            },
+            "subjects" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg advanced subject"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg advanced subjects"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Kurse aus %lld Kernfächern" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@courses@ aus %2$#@subjects@"
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurs"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurse"
+                    }
+                  }
+                }
+              }
+            },
+            "subjects" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kernfach"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kernfächern"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@courses@ from %2$#@subjects@"
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg course"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg courses"
+                    }
+                  }
+                }
+              }
+            },
+            "subjects" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg core subject"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg core subjects"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Kurse aus %lld Basisfächern" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@courses@ aus %2$#@subjects@"
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurs"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurse"
+                    }
+                  }
+                }
+              }
+            },
+            "subjects" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Basisfach"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Basisfächern"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@courses@ from %2$#@subjects@"
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg course"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg courses"
+                    }
+                  }
+                }
+              }
+            },
+            "subjects" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg basic subject"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg basic subjects"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Ergebnisse treten um %lld freie Plätze an. Die besten bekommen sie." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@results@ um %2$#@slots@ an. Die besten bekommen sie."
+          },
+          "substitutions" : {
+            "results" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Ergebnis tritt"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Ergebnisse treten"
+                    }
+                  }
+                }
+              }
+            },
+            "slots" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg freien Platz"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg freie Plätze"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@results@ for %2$#@slots@. The best ones get them."
+          },
+          "substitutions" : {
+            "results" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg result competes"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg results compete"
+                    }
+                  }
+                }
+              }
+            },
+            "slots" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg open slot"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg open slots"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Bringt %lld von %lld Ergebnissen ein" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bringt %1$lld von %2$#@results@ ein"
+          },
+          "substitutions" : {
+            "results" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Ergebnis"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Ergebnissen"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contributes %1$lld of %2$#@results@"
+          },
+          "substitutions" : {
+            "results" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg result"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg results"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Bringt %lld von %lld Ergebnissen ein · eigene Grenze %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bringt %1$lld von %2$#@results@ ein · eigene Grenze %3$lld"
+          },
+          "substitutions" : {
+            "results" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Ergebnis"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Ergebnissen"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contributes %1$lld of %2$#@results@ · own limit %3$lld"
+          },
+          "substitutions" : {
+            "results" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg result"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg results"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

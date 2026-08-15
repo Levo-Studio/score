@@ -67,6 +67,22 @@ final class Subject {
     /// so geht nichts verloren, wenn ein Fach abgewählt und später wieder belegt wird.
     @Attribute(.allowsCloudEncryption) var activeSemesters: [Int] = [0, 1, 2, 3]
 
+    /// Wie viele Halbjahresergebnisse dieses Fach höchstens in Block I einbringt.
+    ///
+    /// `nil` heisst „alle belegten Halbjahre" und ist die Voreinstellung. Setzt der
+    /// Nutzer eine Grenze, zählen nur die **besten** so vielen Ergebnisse; die
+    /// übrigen sind ausgeschlossen und tauchen in der Aufschlüsselung als solche auf.
+    ///
+    /// Das Attribut ist bewusst optional. CloudKit-Spiegelung verlangt für jedes
+    /// Attribut entweder einen Standardwert oder Optionalität — sonst wirft der
+    /// `ModelContainer` schon beim Start. „Keine Grenze" ist ausserdem etwas
+    /// anderes als „Grenze 4": ein Fach mit nur drei belegten Halbjahren behält
+    /// ohne Grenze auch dann alle drei, wenn später ein viertes dazukommt.
+    ///
+    /// Für Leistungsfächer wird der Wert ignoriert — sie bringen immer alle vier
+    /// Halbjahre ein, das ist die Regel und keine Einstellung.
+    @Attribute(.allowsCloudEncryption) var maximumContributedCourses: Int?
+
     /// Position in der Fächerliste.
     @Attribute(.allowsCloudEncryption) var sortIndex: Int = 0
 
@@ -83,6 +99,7 @@ final class Subject {
         isCustom: Bool = false,
         writtenShare: Int = 50,
         activeSemesters: [Int] = [0, 1, 2, 3],
+        maximumContributedCourses: Int? = nil,
         sortIndex: Int = 0
     ) {
         self.identifier = identifier
@@ -93,6 +110,7 @@ final class Subject {
         self.isCustom = isCustom
         self.writtenShare = writtenShare
         self.activeSemesters = activeSemesters
+        self.maximumContributedCourses = maximumContributedCourses
         self.sortIndex = sortIndex
         self.semesters = []
     }
@@ -122,6 +140,16 @@ extension Subject {
     /// Die Halbjahre in fester Reihenfolge, unabhängig davon, wie SwiftData sie liefert.
     var orderedSemesters: [SemesterResult] {
         (semesters ?? []).sorted { $0.index < $1.index }
+    }
+
+    /// Die Kursgrenze, wie der Rechenkern sie sieht.
+    ///
+    /// Leistungsfächer haben nie eine: sie bringen alle vier Halbjahre ein. Ein
+    /// gespeicherter Wert bleibt trotzdem stehen — wer ein Fach vorübergehend zum
+    /// Leistungsfach macht, findet seine Einstellung danach wieder vor.
+    var effectiveCourseLimit: Int? {
+        guard kind != .leistungsfach, let limit = maximumContributedCourses else { return nil }
+        return max(1, limit)
     }
 
     /// Ob das Fach im angegebenen Halbjahr belegt ist.

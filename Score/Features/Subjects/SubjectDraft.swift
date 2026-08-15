@@ -19,6 +19,10 @@ struct SubjectDraft {
     var activeSemesters: Set<Int>
     var writtenShare: Int
 
+    /// Wie viele Halbjahre dieses Fach höchstens in Block I einbringt.
+    /// `nil` heisst „alle belegten".
+    var maximumContributedCourses: Int?
+
     init(subject: Subject?) {
         name = subject?.name ?? ""
         abbreviation = subject?.abbreviation ?? ""
@@ -26,6 +30,35 @@ struct SubjectDraft {
         kind = subject?.kind ?? .basisfach
         activeSemesters = Set(subject?.activeSemesters ?? Semester.allIndices)
         writtenShare = subject?.writtenShare ?? 50
+        maximumContributedCourses = subject?.maximumContributedCourses
+    }
+
+    // MARK: - Kursgrenze
+
+    /// Ob sich für dieses Fach überhaupt eine Kursgrenze setzen lässt.
+    ///
+    /// Leistungsfächer bringen immer alle vier Halbjahre ein — dort ist die
+    /// Eingabe kein Wahlrecht, das gesperrt wäre, sondern schlicht keine Frage.
+    var allowsCourseLimit: Bool { kind != .leistungsfach }
+
+    /// Die wählbaren Grenzen: von einem Kurs bis „alle".
+    ///
+    /// „Alle" ist kein eigener Zahlenwert, sondern `nil` — sonst würde ein Fach,
+    /// bei dem später ein Halbjahr dazukommt, stillschweigend bei der alten Zahl
+    /// hängen bleiben.
+    var courseLimitOptions: [Int] {
+        guard activeSemesters.count > 1 else { return [] }
+        return Array(1..<activeSemesters.count)
+    }
+
+    /// Die Grenze so, wie sie zu den belegten Halbjahren passt.
+    ///
+    /// Wer ein Halbjahr abwählt, kann eine Grenze zurücklassen, die alle
+    /// verbliebenen Kurse umfasst — das ist dasselbe wie „alle" und wird auch so
+    /// angezeigt, statt eine Zahl zu zeigen, die nichts mehr bewirkt.
+    var resolvedCourseLimit: Int? {
+        guard allowsCourseLimit, let limit = maximumContributedCourses else { return nil }
+        return limit < activeSemesters.count ? max(1, limit) : nil
     }
 
     // MARK: - Ändern
@@ -102,6 +135,7 @@ struct SubjectDraft {
             subject.kind = kind
             subject.activeSemesters = semesters
             subject.writtenShare = writtenShare
+            subject.maximumContributedCourses = resolvedCourseLimit
             return subject
         }
 
@@ -113,6 +147,7 @@ struct SubjectDraft {
             isCustom: SubjectCatalog.template(named: finalName) == nil,
             writtenShare: writtenShare,
             activeSemesters: semesters,
+            maximumContributedCourses: resolvedCourseLimit,
             sortIndex: (existingSubjects.map(\.sortIndex).max() ?? -1) + 1
         )
         context.insert(subject)

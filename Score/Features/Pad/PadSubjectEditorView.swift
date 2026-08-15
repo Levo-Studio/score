@@ -224,6 +224,16 @@ struct PadSubjectEditorView: View {
                     .font(ScoreTypography.publicSans(400, 11.5))
                     .foregroundStyle(ScorePalette.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
+
+                Rectangle()
+                    .fill(ScorePalette.line)
+                    .frame(height: 1)
+
+                CourseLimitPicker(
+                    limit: $draft.maximumContributedCourses,
+                    options: draft.courseLimitOptions,
+                    isAvailable: draft.allowsCourseLimit
+                )
             }
         }
     }

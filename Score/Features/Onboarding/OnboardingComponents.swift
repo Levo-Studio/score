@@ -71,43 +71,6 @@ struct OnboardingHeader: View {
     }
 }
 
-// MARK: - Gestaffelte Einblendung
-
-extension View {
-
-    /// Blendet ein Element leicht versetzt ein.
-    ///
-    /// - Parameter index: Die Position in der Staffel. Jeder Schritt verzögert um
-    ///   70 ms — genug, damit die Bewegung als Reihenfolge lesbar wird, ohne dass
-    ///   auf den Inhalt gewartet werden muss.
-    func staggeredAppearance(index: Int) -> some View {
-        modifier(StaggeredAppearance(index: index))
-    }
-}
-
-private struct StaggeredAppearance: ViewModifier {
-
-    let index: Int
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var hasAppeared = false
-
-    func body(content: Content) -> some View {
-        content
-            .opacity(hasAppeared ? 1 : 0)
-            .offset(y: hasAppeared ? 0 : 10)
-            .onAppear {
-                guard !reduceMotion else {
-                    hasAppeared = true
-                    return
-                }
-                withAnimation(.easeOut(duration: 0.42).delay(Double(index) * 0.07)) {
-                    hasAppeared = true
-                }
-            }
-    }
-}
-
 // MARK: - Auswahlkarte
 
 /// Eine der grossen Karten mit Radio-Mark, wie sie für Klassenstufe und Sprache

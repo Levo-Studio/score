@@ -24,17 +24,34 @@ struct PadDashboardView: View {
         subjects.map(SubjectInput.init)
     }
 
+    /// Höhe der oberen Kartenreihe, gemessen statt geschätzt.
+    ///
+    /// Sie entscheidet, wie viel Platz für das Kursraster übrig bleibt und damit,
+    /// in wie vielen Zeilen es steht. Die Höhe hängt am Schriftgrad des Nutzers,
+    /// lässt sich also nicht als Konstante hinschreiben.
+    @State private var topRowHeight: CGFloat = 0
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
-                topRow
-                courseCard
+        // Der Bildschirm wird gefüllt, nicht nur beschrieben: der Inhalt ist
+        // mindestens so hoch wie die Fläche, das Kursraster nimmt sich, was die
+        // obere Reihe übrig lässt. Erst wenn beides zusammen nicht mehr passt —
+        // Hochformat, grosse Schrift — wird gescrollt.
+        GeometryReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
+                    topRow
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
+                            topRowHeight = $0
+                        }
+                    courseCard(availableSize: proxy.size)
+                }
+                .padding(.horizontal, PadMetrics.contentPadding)
+                .padding(.top, 22)
+                .padding(.bottom, PadMetrics.contentPadding)
+                .frame(minHeight: proxy.size.height, alignment: .top)
             }
-            .padding(.horizontal, PadMetrics.contentPadding)
-            .padding(.top, 22)
-            .padding(.bottom, PadMetrics.contentPadding)
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
         .onChange(of: inputs, initial: true) { _, newInputs in
             model.update(with: newInputs)
         }
@@ -45,23 +62,30 @@ struct PadDashboardView: View {
     /// Die drei Karten stehen nebeneinander, solange sie das können. Wird es
     /// enger — iPad im Hochformat —, rutscht „Auf einen Blick" unter die beiden
     /// anderen, statt dass alle drei zusammengequetscht werden.
+    ///
+    /// Jede Karte ist so hoch, wie ihr Inhalt es verlangt. Gleiche Höhe wäre
+    /// hübsch, aber „Halbjahre" hat nur vier kurze Zeilen — auf die Höhe der
+    /// Score-Karte gestreckt bekäme die Karte ein Loch, und das sieht schlechter
+    /// aus als eine kürzere Karte. Die Fläche darunter füllt das Kursraster.
     private var topRow: some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .top, spacing: ScoreMetrics.Spacing.md) {
                 scoreCard.frame(width: 330)
-                semesterCard.frame(width: 212)
+                semesterCard.frame(width: 186)
                 glanceCard.frame(minWidth: 260)
             }
+            .fixedSize(horizontal: false, vertical: true)
 
             VStack(spacing: ScoreMetrics.Spacing.md) {
                 HStack(alignment: .top, spacing: ScoreMetrics.Spacing.md) {
                     scoreCard.frame(maxWidth: 330)
-                    semesterCard.frame(minWidth: 200)
+                    semesterCard.frame(minWidth: 186)
                 }
+                .fixedSize(horizontal: false, vertical: true)
+
                 glanceCard
             }
         }
-        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var scoreCard: some View {
@@ -205,44 +229,144 @@ struct PadDashboardView: View {
 
     // MARK: - Kurse im Halbjahr
 
-    private var courseCard: some View {
-        PadCard(horizontalPadding: ScoreMetrics.Spacing.lg, verticalPadding: 18) {
+    /// Abstand zwischen den Kacheln des Rasters, waagerecht wie senkrecht.
+    private static let tileGap: CGFloat = 10
+
+    /// Schmalste Kachel, die noch lesbar ist. Sie begrenzt, wie viele Spalten in
+    /// eine Breite passen.
+    private static let minimumTileWidth: CGFloat = 156
+
+    /// Angestrebte Kachelhöhe. Aus ihr ergibt sich, in wie viele Zeilen das
+    /// Raster die verfügbare Höhe teilt — eine Zeile weniger liesse die Kacheln
+    /// in die Länge wachsen, eine mehr würde sie stauchen.
+    private static let preferredTileHeight: CGFloat = 155
+
+    /// Die Kurse des Halbjahres als umbrechendes Raster.
+    ///
+    /// Die Design-Datei ist für ein 11-Zoll-iPad gezeichnet und schiebt die
+    /// Kurse dort seitlich scrollend durch eine Zeile. Auf grösseren Geräten
+    /// bliebe darunter die halbe Fläche leer, also brechen die Kacheln hier um
+    /// und füllen die Resthöhe. Farben, Radien und Schriftgrade der Kacheln
+    /// bleiben unverändert.
+    private func courseCard(availableSize: CGSize) -> some View {
+        let layout = gridLayout(availableSize: availableSize)
+
+        return PadCard(
+            horizontalPadding: ScoreMetrics.Spacing.lg,
+            verticalPadding: 18,
+            fillsHeight: true
+        ) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .firstTextBaseline, spacing: 14) {
                     PadCardTitle(title: "Kurse im Halbjahr \(Semester.label(semesterIndex))")
                     Spacer(minLength: 0)
-                    Text("\(subjects.count) Fächer · seitlich scrollen")
+                    Text("\(subjects.count) Fächer")
                         .font(ScoreTypography.publicSans(400, 11))
                         .foregroundStyle(ScorePalette.inkSecondary)
                         .lineLimit(1)
                 }
 
-                ScrollView(.horizontal) {
-                    HStack(spacing: 10) {
-                        ForEach(summaries) { summary in
-                            Button {
-                                route = .subject(summary.subject.identifier)
-                            } label: {
-                                PadCourseTile(summary: summary)
-                            }
-                            .buttonStyle(.plain)
-                        }
-
-                        DashedButton(
-                            title: "＋ Fach\nhinzufügen",
-                            cornerRadius: 20,
-                            verticalPadding: 14,
-                            font: ScoreTypography.publicSans(500, 12.5)
-                        ) {
-                            route = .newSubject
-                        }
-                        .frame(width: 156)
-                    }
-                    .padding(.bottom, 2)
-                }
-                .scrollIndicators(.hidden)
+                courseGrid(columns: layout.columns)
             }
         }
+    }
+
+    /// Ein Platz im Raster: entweder ein Fach oder der Knopf für ein neues.
+    private enum CourseSlot: Identifiable {
+        case subject(SubjectSummary)
+        case add
+
+        var id: String {
+            switch self {
+            case .subject(let summary): summary.subject.identifier.uuidString
+            case .add: "add"
+            }
+        }
+    }
+
+    private var courseSlots: [CourseSlot] {
+        summaries.map(CourseSlot.subject) + [.add]
+    }
+
+    private func courseGrid(columns: Int) -> some View {
+        let slots = courseSlots
+        let rows = stride(from: 0, to: slots.count, by: columns).map { start in
+            Array(slots[start..<min(start + columns, slots.count)])
+        }
+
+        return VStack(spacing: Self.tileGap) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                HStack(spacing: Self.tileGap) {
+                    ForEach(row) { slot in
+                        courseSlotView(slot)
+                    }
+                    // Die letzte Zeile ist selten voll. Die leeren Plätze bleiben
+                    // als unsichtbare Kacheln stehen, damit die vorhandenen ihre
+                    // Breite behalten und nicht auseinandergezogen werden.
+                    if row.count < columns {
+                        ForEach(0..<(columns - row.count), id: \.self) { _ in
+                            Color.clear.frame(maxWidth: .infinity)
+                        }
+                    }
+                }
+                .frame(maxHeight: .infinity)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private func courseSlotView(_ slot: CourseSlot) -> some View {
+        switch slot {
+        case .subject(let summary):
+            Button {
+                route = .subject(summary.subject.identifier)
+            } label: {
+                PadCourseTile(summary: summary)
+            }
+            .buttonStyle(.plain)
+        case .add:
+            DashedButton(
+                title: "＋ Fach\nhinzufügen",
+                cornerRadius: 20,
+                verticalPadding: 14,
+                font: ScoreTypography.publicSans(500, 12.5)
+            ) {
+                route = .newSubject
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    /// Wie viele Spalten das Raster bekommt.
+    ///
+    /// Zuerst zählt die Breite: mehr Spalten als Kacheln mit lesbarer Mindest-
+    /// breite hineinpassen, gibt es nicht. Danach zählt die Höhe: aus dem Rest,
+    /// den die obere Reihe übrig lässt, ergibt sich die Zahl der Zeilen, und die
+    /// Kacheln verteilen sich gleichmässig darauf. So bleibt weder unten eine
+    /// leere Fläche noch in der letzten Zeile ein grosses Loch.
+    private func gridLayout(availableSize: CGSize) -> (columns: Int, rows: Int) {
+        let count = max(1, courseSlots.count)
+
+        let innerWidth = availableSize.width
+            - PadMetrics.contentPadding * 2
+            - ScoreMetrics.Spacing.lg * 2
+        let widthLimit = max(
+            1,
+            Int((innerWidth + Self.tileGap) / (Self.minimumTileWidth + Self.tileGap))
+        )
+
+        // Alles, was nicht Raster ist: Ränder der Seite, obere Reihe, Abstand
+        // dazwischen sowie Rand und Überschrift der Kurskarte.
+        let chrome: CGFloat = 22 + PadMetrics.contentPadding + ScoreMetrics.Spacing.md + 18 * 2 + 32
+        let gridHeight = availableSize.height - topRowHeight - chrome
+        let heightRows = max(1, Int((gridHeight / Self.preferredTileHeight).rounded()))
+
+        let minimumRows = Int(ceil(Double(count) / Double(widthLimit)))
+        let rows = min(max(minimumRows, heightRows), count)
+        let columns = min(widthLimit, Int(ceil(Double(count) / Double(rows))))
+
+        return (max(1, columns), rows)
     }
 
     private var summaries: [SubjectSummary] {
@@ -280,6 +404,10 @@ private struct PadCourseTile: View {
                 .truncationMode(.tail)
                 .padding(.top, ScoreMetrics.Spacing.sm)
 
+            // Der Punktwert sitzt am unteren Rand, egal wie hoch die Kachel im
+            // Raster ausfällt — die Zahlen aller Kacheln stehen so in einer Linie.
+            Spacer(minLength: ScoreMetrics.Spacing.xs)
+
             HStack(alignment: .bottom, spacing: ScoreMetrics.Spacing.xs) {
                 subtitle
                     .font(ScoreTypography.publicSans(400, 10.5))
@@ -294,11 +422,10 @@ private struct PadCourseTile: View {
                         summary.isExcluded ? ScorePalette.inkSecondary : ScorePalette.ink
                     )
             }
-            .padding(.top, ScoreMetrics.Spacing.xs)
         }
         .padding(.horizontal, ScoreMetrics.Spacing.md)
         .padding(.vertical, 14)
-        .frame(width: 156, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(ScorePalette.fill)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(

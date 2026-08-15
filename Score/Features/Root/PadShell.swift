@@ -134,7 +134,13 @@ struct PadShell: View {
     private func detail(isSidebarVisible: Bool) -> some View {
         VStack(spacing: 0) {
             header(isSidebarVisible: isSidebarVisible)
+
+            // Derselbe Aufgang wie beim Reiterwechsel auf dem iPhone: Der
+            // Detailbereich wechselt seinen Inhalt, ohne dass sich die Kopfleiste
+            // bewegt — ein harter Umbruch wirkt hier besonders abrupt, weil der
+            // Rahmen drumherum stehen bleibt.
             content
+                .screenSwitch(route)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(ScorePalette.background)

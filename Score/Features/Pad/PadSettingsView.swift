@@ -254,6 +254,6 @@ private struct PadLanguageSegments: View {
         .padding(3)
         .background(ScorePalette.fill)
         .clipShape(Capsule())
-        .animation(.spring(response: 0.3, dampingFraction: 0.85), value: selection)
+        .scoreAnimation(ScoreMotion.segment, value: selection)
     }
 }

@@ -112,7 +112,7 @@ struct PadSemesterSegments: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(ScorePalette.line, lineWidth: 1)
         )
-        .animation(.easeOut(duration: 0.26), value: selection)
+        .scoreAnimation(ScoreMotion.segment, value: selection)
     }
 }
 
@@ -164,7 +164,7 @@ struct PadBarRow: View {
                 .minimumScaleFactor(0.8)
                 .frame(width: 36, alignment: .trailing)
         }
-        .animation(.easeOut(duration: 0.4), value: points)
+        .scoreAnimation(ScoreMotion.bar, value: points)
     }
 }
 

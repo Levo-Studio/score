@@ -135,7 +135,7 @@ struct PadSidebar: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .animation(.easeOut(duration: 0.24), value: isSelected)
+        .scoreAnimation(ScoreMotion.backdrop, value: isSelected)
     }
 
     // MARK: - Fächer
@@ -207,7 +207,7 @@ struct PadSidebar: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .animation(.easeOut(duration: 0.22), value: isSelected)
+        .scoreAnimation(ScoreMotion.selection, value: isSelected)
     }
 }
 

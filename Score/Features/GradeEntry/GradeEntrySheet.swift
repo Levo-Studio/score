@@ -231,18 +231,25 @@ struct GradeEntrySheet: View {
         }
 
         let automaticCount = siblings.count { $0.usesAutomaticShare }
-        let lead: Text = switch automaticCount {
-        case 0, 1: Text("Bekommt den ganzen Rest")
-        case 2: Text("Teilt sich den Rest mit einer weiteren Leistung")
-        default: Text("Teilt sich den Rest mit \(automaticCount - 1) weiteren Leistungen")
+        let lead: String.LocalizationValue = switch automaticCount {
+        case 0, 1: "Bekommt den ganzen Rest"
+        case 2: "Teilt sich den Rest mit einer weiteren Leistung"
+        default: "Teilt sich den Rest mit \(automaticCount - 1) weiteren Leistungen"
         }
 
         let share = "\(effectiveShare) %"
-        let tail = entry.kind == .written
-            ? Text("aktuell \(share) der schriftlichen Teilnote.")
-            : Text("aktuell \(share) der mündlichen Teilnote.")
+        let tail: String.LocalizationValue = entry.kind == .written
+            ? "aktuell \(share) der schriftlichen Teilnote."
+            : "aktuell \(share) der mündlichen Teilnote."
 
-        return lead + Text(verbatim: " — ") + tail
+        // Als `AttributedString` und nicht als Verkettung zweier `Text` — die
+        // ist abgekündigt, und ein gemeinsamer Schlüssel für beide Hälften
+        // wären sechs Sätze statt fünf.
+        return Text(
+            AttributedString(localized: lead)
+                + AttributedString(" — ")
+                + AttributedString(localized: tail)
+        )
     }
 
     private var kindHint: Text {
@@ -258,6 +265,20 @@ extension GradeCategory {
 
     /// Die Beschriftung des Arten-Chips.
     nonisolated var label: LocalizedStringKey {
+        switch self {
+        case .exam: "Klassenarbeit"
+        case .test: "Test"
+        case .other: "Sonstiges"
+        }
+    }
+
+    /// Dieselbe Beschriftung als Katalogwert.
+    ///
+    /// `LocalizedStringKey` lässt sich nur von `Text` auflösen; wo die
+    /// Beschriftung in einen `AttributedString` eingesetzt wird, braucht es den
+    /// Wert. Die Schlüssel sind dieselben, die Übersetzung steht also weiterhin
+    /// nur einmal im Katalog.
+    nonisolated var localizedLabel: String.LocalizationValue {
         switch self {
         case .exam: "Klassenarbeit"
         case .test: "Test"

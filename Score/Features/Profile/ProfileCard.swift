@@ -73,14 +73,14 @@ struct ProfileCard: View {
     }
 
     /// „Abi 2027 · Baden-Württemberg". Das Bundesland ist ein Datenwert und wird
-    /// nicht übersetzt; nur das „Abi" davor geht durch den Katalog.
+    /// nicht übersetzt — es steht als Platzhalter im Schlüssel, damit die
+    /// Zeile ein einziger Satz bleibt und die Übersetzung auch das Trennzeichen
+    /// in der Hand hat.
     ///
     /// Der Jahrgang geht als Zeichenkette in den Platzhalter und nicht als
     /// Zahl: `%lld` wird gruppiert formatiert, und dann stünde dort „Abi 2.027".
     private var meta: Text {
-        Text("Abi \(String(profile.graduationYear))")
-            + Text(verbatim: " · ")
-            + Text(verbatim: profile.federalState)
+        Text("Abi \(String(profile.graduationYear)) · \(profile.federalState)")
     }
 }
 

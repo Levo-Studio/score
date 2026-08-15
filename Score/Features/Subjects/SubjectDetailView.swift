@@ -230,13 +230,18 @@ struct SubjectDetailView: View {
     /// „12 Punkte · Note 1,7" — die Fusszeile der Glow-Karte.
     ///
     /// Liefert `Text`, damit der Plural von „Punkte" aus dem String-Katalog
-    /// kommt; die Zahlen selbst bleiben unverändert.
+    /// kommt; die Zahlen selbst bleiben unverändert. Zusammengesetzt wird als
+    /// `AttributedString`, weil die Verkettung zweier `Text` abgekündigt ist.
     private var semesterResultText: Text {
         let grade = ScoreNumberFormat.grade(summary.result.map { SubjectMath.grade(fromPoints: Double($0)) })
         guard let result = summary.result else {
             return Text(verbatim: ScoreNumberFormat.placeholder)
         }
-        return Text("\(result) Punkte") + Text(verbatim: " · ") + Text("Note \(grade)")
+        return Text(
+            AttributedString(localized: "\(result) Punkte")
+                + AttributedString(" · ")
+                + AttributedString(localized: "Note \(grade)")
+        )
     }
 
     // MARK: - Halbjahres-Karte
@@ -256,11 +261,11 @@ struct SubjectDetailView: View {
 
                 HStack(spacing: 10) {
                     semesterTile(
-                        label: Text("Schriftlich") + Text(verbatim: " · \(subject.writtenShare) %"),
+                        label: shareLabel("Schriftlich", percent: subject.writtenShare),
                         value: ScoreNumberFormat.points(partialGrade(.written))
                     )
                     semesterTile(
-                        label: Text("Mündlich") + Text(verbatim: " · \(subject.oralShare) %"),
+                        label: shareLabel("Mündlich", percent: subject.oralShare),
                         value: ScoreNumberFormat.points(partialGrade(.oral))
                     )
                     semesterTile(
@@ -271,6 +276,16 @@ struct SubjectDetailView: View {
                 }
             }
         }
+    }
+
+    /// Die Beschriftung einer Anteils-Kachel: „Schriftlich · 60 %".
+    ///
+    /// Der Prozentwert steht in beiden Sprachen gleich und gehört deshalb nicht
+    /// in den Katalog. Angehängt wird er als `AttributedString` — so bleibt das
+    /// Prozentzeichen ein Zeichen und wird nicht als Formatangabe gelesen, und
+    /// die abgekündigte Verkettung zweier `Text` entfällt.
+    private func shareLabel(_ title: String.LocalizationValue, percent: Int) -> Text {
+        Text(AttributedString(localized: title) + AttributedString(" · \(percent) %"))
     }
 
     /// Der Hinweis, dass dieses Halbjahr nicht in den Score einfliesst.
@@ -428,14 +443,18 @@ extension GradeEntry {
     /// Die Zeile unter dem Titel: Art, effektiver Anteil und ob er automatisch
     /// entstanden ist — „Klassenarbeit · 40 % automatisch".
     ///
-    /// Zusammengesetzt aus einzelnen `Text`-Stücken statt aus einem interpolierten
+    /// Zusammengesetzt aus einzelnen Stücken statt aus einem interpolierten
     /// String: der Prozentwert steht in beiden Sprachen gleich, die Art und der
-    /// Zusatz kommen dagegen aus dem Katalog.
+    /// Zusatz kommen dagegen aus dem Katalog. Als `AttributedString`, weil die
+    /// Verkettung zweier `Text` abgekündigt ist.
     func metaDescription(share: Double) -> Text {
         let percent = Int(share.rounded())
-        let base = Text(category.label)
-            + Text(verbatim: " · \(percent) %")
-        return usesAutomaticShare ? base + Text(verbatim: " ") + Text("automatisch") : base
+        var meta = AttributedString(localized: category.localizedLabel)
+        meta += AttributedString(" · \(percent) %")
+        if usesAutomaticShare {
+            meta += AttributedString(" ") + AttributedString(localized: "automatisch")
+        }
+        return Text(meta)
     }
 }
 

@@ -332,6 +332,23 @@
         }
       }
     },
+    "Abi %@ · %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abi %@ · %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Class of %@ · %@"
+          }
+        }
+      }
+    },
     "↑ besser": {
       "extractionState": "manual",
       "localizations": {
@@ -1178,6 +1195,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Block I holds 42 semester results. The twelve advanced courses and all core subjects are fixed; the remaining slots go to the best basic course results. The average points of those courses give you both: Block I as the average times 42, and the expected final grade through the conversion above."
+          }
+        }
+      }
+    },
+    "Block I · Schnitt × 42": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Block I · Schnitt × 42"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Block I · average × 42"
           }
         }
       }
@@ -3367,23 +3401,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Same calculation, English wording"
-          }
-        }
-      }
-    },
-    "Schnitt × 42": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schnitt × 42"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "average × 42"
           }
         }
       }

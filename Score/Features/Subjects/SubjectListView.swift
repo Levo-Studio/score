@@ -63,6 +63,7 @@ struct SubjectListView: View {
             Text("\(subjects.count) Fächer")
                 .font(.meta)
                 .foregroundStyle(ScorePalette.inkSecondary)
+                .animatedValue(subjects.count)
         }
     }
 
@@ -70,11 +71,14 @@ struct SubjectListView: View {
 
     private var subjectRows: some View {
         VStack(spacing: ScoreMetrics.Spacing.xs) {
-            ForEach(summaries) { summary in
+            ForEach(Array(summaries.enumerated()), id: \.element.id) { index, summary in
                 NavigationLink(value: summary.subject) {
                     SubjectListRow(summary: summary)
                 }
                 .buttonStyle(.plain)
+                // Die Zeilen fahren nacheinander ein; antippbar sind sie dabei
+                // die ganze Zeit, die Einblendung ändert nur Deckkraft und Lage.
+                .rowAppearance(index: index, base: 0.06)
             }
         }
     }
@@ -130,9 +134,11 @@ private struct SubjectListRow: View {
                     .foregroundStyle(
                         summary.isExcluded ? ScorePalette.inkSecondary : ScorePalette.ink
                     )
+                    .animatedValue(summary.result)
                 Text(Semester.label(summary.semesterIndex))
                     .font(.rowValueCaption)
                     .foregroundStyle(ScorePalette.inkSecondary)
+                    .animatedValue(summary.semesterIndex)
             }
         }
         .padding(.horizontal, 14)
@@ -145,6 +151,7 @@ private struct SubjectListRow: View {
                 .strokeBorder(ScorePalette.line, lineWidth: 1)
         )
         .opacity(summary.isActive ? 1 : 0.55)
+        .scoreAnimation(ScoreMotion.valueChange, value: summary.isActive)
         .contentShape(Rectangle())
     }
 }

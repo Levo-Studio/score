@@ -160,6 +160,7 @@ struct SubjectDetailView: View {
                         .monospacedDigit()
                         .tracking(em: -0.045, at: 54)
                         .foregroundStyle(ScorePalette.scoreInk)
+                        .animatedValue(summary.average)
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Punkte")
@@ -187,6 +188,7 @@ struct SubjectDetailView: View {
                         .font(ScoreTypography.archivo(600, 13))
                         .monospacedDigit()
                         .foregroundStyle(ScorePalette.scoreInk)
+                        .animatedValue(summary.result)
                 }
                 .padding(.top, 13)
                 .overlay(alignment: .top) {
@@ -320,6 +322,7 @@ struct SubjectDetailView: View {
                 .font(ScoreTypography.archivo(600, 18))
                 .monospacedDigit()
                 .foregroundStyle(isAccented ? ScorePalette.accentInk : ScorePalette.ink)
+                .animatedValue(value)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(ScoreMetrics.Spacing.sm)
@@ -343,13 +346,15 @@ struct SubjectDetailView: View {
                 .font(.micro)
                 .foregroundStyle(ScorePalette.inkSecondary)
 
-            ForEach(Array(zip(list, shares)), id: \.0.persistentModelID) { entry, share in
+            ForEach(Array(zip(list, shares).enumerated()), id: \.element.0.persistentModelID) { index, pair in
+                let (entry, share) = pair
                 Button {
                     editedEntry = entry
                 } label: {
                     entryRow(entry, share: share)
                 }
                 .buttonStyle(.plain)
+                .rowAppearance(index: index, base: 0.1)
             }
 
             DashedButton(
@@ -381,6 +386,7 @@ struct SubjectDetailView: View {
                 .monospacedDigit()
                 .tracking(em: -0.03, at: 20)
                 .foregroundStyle(ScorePalette.ink)
+                .animatedValue(entry.points)
         }
         .padding(.horizontal, 15)
         .padding(.vertical, 13)

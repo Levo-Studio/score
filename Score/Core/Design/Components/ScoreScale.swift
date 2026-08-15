@@ -46,7 +46,7 @@ struct ScoreScale: View {
                         .fill(ScorePalette.scoreInk)
                         .frame(width: 4, height: markerHeight)
                         .offset(x: geometry.size.width * markerPosition - 2)
-                        .animation(.spring(response: 0.55, dampingFraction: 0.8), value: average)
+                        .scoreAnimation(ScoreMotion.scaleMarker, value: average)
                 }
             }
             .frame(height: markerHeight)

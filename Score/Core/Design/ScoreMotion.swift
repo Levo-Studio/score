@@ -56,9 +56,21 @@ enum ScoreMotion {
     /// Ziffern schneller stehen dürfen als eine wandernde Marke.
     static let valueChange = Animation.timingCurve(0.2, 0.8, 0.3, 1, duration: 0.40)
 
-    /// Auswahl innerhalb eines Bildschirms — Chip, Segment, Schalter.
-    /// In der Vorlage durchgehend `.22s ease`.
+    /// Die Marke der Skala wandert zu ihrer neuen Stelle
+    /// (`left .55s cubic-bezier(.2,.8,.3,1)`).
+    static let scaleMarker = Animation.timingCurve(0.2, 0.8, 0.3, 1, duration: 0.55)
+
+    /// Ein Balken wächst auf seinen Wert (`width .4s ease`).
+    static let bar = Animation.easeInOut(duration: 0.40)
+
+    /// Auswahl eines Chips (`background .22s ease`).
     static let selection = Animation.easeOut(duration: 0.22)
+
+    /// Wechsel innerhalb einer Segmentleiste (`background .26s ease`).
+    static let segment = Animation.easeOut(duration: 0.26)
+
+    /// Ein Schalter kippt (`background .2s`).
+    static let toggle = Animation.easeOut(duration: 0.20)
 
     /// Was bei eingeschalteter Bewegungsreduktion übrig bleibt: eine kurze
     /// Überblendung ohne Versatz, ohne Federung.
@@ -190,6 +202,14 @@ extension View {
         )
     }
 
+    /// Animiert eine Änderung mit einer Kurve der Bewegungssprache.
+    ///
+    /// Der Ersatz für `animation(_:value:)`: Bei „Bewegung reduzieren" fällt die
+    /// Kurve automatisch auf eine kurze Überblendung zurück.
+    func scoreAnimation<Value: Equatable>(_ animation: Animation, value: Value) -> some View {
+        modifier(ResolvedAnimationModifier(animation: animation, value: value))
+    }
+
     /// Lässt eine Zahl einmal aufpoppen (`scPop`), sobald `isActive` wahr wird.
     func scorePop(isActive: Bool, anchor: UnitPoint = .leading) -> some View {
         modifier(PopModifier(isActive: isActive, anchor: anchor))
@@ -268,6 +288,19 @@ private struct AppearanceModifier: ViewModifier {
                     hasAppeared = true
                 }
             }
+    }
+}
+
+/// Eine Kurve der Bewegungssprache, an einen Wert gebunden.
+private struct ResolvedAnimationModifier<Value: Equatable>: ViewModifier {
+
+    let animation: Animation
+    let value: Value
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content.animation(ScoreMotion.resolve(animation, reduceMotion: reduceMotion), value: value)
     }
 }
 

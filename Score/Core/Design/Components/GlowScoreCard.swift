@@ -94,8 +94,13 @@ struct GlowScoreCard: View {
             )
             .frame(width: 350, height: 350)
             .offset(x: -70 - 24, y: -80 - 26)
-            .opacity(isCelebrating ? 1 : 0.55)
-            .animation(.easeInOut(duration: 0.45).repeatCount(2, autoreverses: true), value: isCelebrating)
+            .opacity(isCelebrating ? 1 : ScoreMotion.glowRestingOpacity)
+            // `scGlow`: .55 → 1 → .55 über 0,9 s, hier als halbe Strecke, die
+            // einmal hin und zurück läuft.
+            .scoreAnimation(
+                ScoreMotion.glow.repeatCount(2, autoreverses: true),
+                value: isCelebrating
+            )
             .allowsHitTesting(false)
     }
 
@@ -127,8 +132,8 @@ struct GlowScoreCard: View {
                 .tracking(-0.055 * scoreSize)
                 .foregroundStyle(ScorePalette.scoreInk)
                 .padding(.top, ScoreMetrics.Spacing.sm)
-                .scaleEffect(isCelebrating ? 1.055 : 1, anchor: .leading)
-                .animation(.spring(response: 0.35, dampingFraction: 0.5), value: isCelebrating)
+                .animatedValue(average)
+                .scorePop(isActive: isCelebrating)
 
             ScoreScale(average: averageValue)
                 .padding(.top, ScoreMetrics.Spacing.md)
@@ -145,12 +150,18 @@ struct GlowScoreCard: View {
 
     private var statRow: some View {
         HStack(spacing: 0) {
-            ForEach(Array(stats.enumerated()), id: \.element.id) { index, stat in
+            // Über die Position und nicht über `stat.id`: die Kennzahlen werden
+            // bei jeder Neuberechnung frisch gebaut, eine neue Identität würde
+            // den weichen Ziffernwechsel jedes Mal verschlucken.
+            ForEach(Array(stats.enumerated()), id: \.offset) { index, stat in
                 VStack(alignment: .leading, spacing: 6) {
                     Text(verbatim: stat.value)
                         .font(.statValue)
                         .monospacedDigit()
                         .foregroundStyle(stat.isAccented ? ScorePalette.accent : ScorePalette.scoreInk)
+                        // Block I, Kurszähler und Halbjahresschnitt ändern sich
+                        // unter dem Umschalter — die Ziffern zählen sichtbar um.
+                        .animatedValue(stat.value)
                     Text(stat.label)
                         .font(.cardLabel)
                         .foregroundStyle(ScorePalette.scoreInkSecondary)

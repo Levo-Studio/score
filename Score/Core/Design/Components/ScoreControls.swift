@@ -71,7 +71,7 @@ struct ScoreChip: View {
                 )
         }
         .buttonStyle(.plain)
-        .animation(.easeOut(duration: 0.22), value: isSelected)
+        .scoreAnimation(ScoreMotion.selection, value: isSelected)
     }
 }
 
@@ -149,7 +149,7 @@ struct ScoreSwitch: View {
             .clipShape(Capsule())
         }
         .buttonStyle(.plain)
-        .animation(.spring(response: 0.28, dampingFraction: 0.75), value: isOn)
+        .scoreAnimation(ScoreMotion.toggle, value: isOn)
         .accessibilityRepresentation {
             Toggle(isOn: $isOn) { EmptyView() }
         }
@@ -263,7 +263,7 @@ struct SemesterPicker: View {
             RoundedRectangle(cornerRadius: ScoreMetrics.Radius.group, style: .continuous)
                 .strokeBorder(ScorePalette.line, lineWidth: 1)
         )
-        .animation(.easeOut(duration: 0.26), value: selection)
+        .scoreAnimation(ScoreMotion.segment, value: selection)
     }
 }
 

@@ -151,13 +151,16 @@ struct DashboardView: View {
                 emptyState
             } else {
                 VStack(spacing: ScoreMetrics.Spacing.xs) {
-                    ForEach(recentSubjects) { subject in
+                    ForEach(Array(recentSubjects.enumerated()), id: \.element.id) { index, subject in
                         SubjectRow(
                             subject: subject,
                             semesterIndex: selectedSemester,
                             result: model.result(for: subject, semesterIndex: selectedSemester),
                             entryCount: model.entryCount(for: subject, semesterIndex: selectedSemester)
                         )
+                        // Die Zeilen fahren nacheinander ein, aber erst nachdem
+                        // Karte und Umschalter darüber stehen — daher der Vorlauf.
+                        .rowAppearance(index: index, base: 0.08)
                     }
                 }
             }
@@ -234,6 +237,7 @@ private struct SubjectRow: View {
                 .monospacedDigit()
                 .tracking(em: -0.03, at: 20)
                 .foregroundStyle(ScorePalette.ink)
+                .animatedValue(result)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 13)
@@ -244,6 +248,7 @@ private struct SubjectRow: View {
                 .strokeBorder(ScorePalette.line, lineWidth: 1)
         )
         .opacity(isActive ? 1 : 0.55)
+        .scoreAnimation(ScoreMotion.valueChange, value: isActive)
     }
 }
 

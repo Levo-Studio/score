@@ -52,7 +52,7 @@ struct DashedChip: View {
         .overlay(
             Capsule().strokeBorder(ScorePalette.lineStrong, style: DashedBorder.style)
         )
-        .animation(.easeOut(duration: 0.22), value: isEditing)
+        .scoreAnimation(ScoreMotion.selection, value: isEditing)
     }
 
     private var idle: some View {

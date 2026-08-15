@@ -63,23 +63,27 @@ struct PadDashboardView: View {
     /// enger — iPad im Hochformat —, rutscht „Auf einen Blick" unter die beiden
     /// anderen, statt dass alle drei zusammengequetscht werden.
     ///
-    /// Jede Karte ist so hoch, wie ihr Inhalt es verlangt. Gleiche Höhe wäre
-    /// hübsch, aber „Halbjahre" hat nur vier kurze Zeilen — auf die Höhe der
-    /// Score-Karte gestreckt bekäme die Karte ein Loch, und das sieht schlechter
-    /// aus als eine kürzere Karte. Die Fläche darunter füllt das Kursraster.
+    /// Die Score-Karte gibt die Höhe der Reihe vor; die beiden Listenkarten
+    /// wachsen auf dieselbe Höhe mit und verteilen dabei ihre Zeilen über die
+    /// gewonnene Fläche. Gleiche Höhe ohne Loch — die Zeilen atmen, statt oben
+    /// zu kleben.
+    ///
+    /// Die Breiten folgen dem Inhalt: „Halbjahre" hat vier kurze Zeilen aus
+    /// Kürzel, Balken und Zahl und braucht wenig, „Auf einen Blick" sechs Zeilen
+    /// mit ausgeschriebenen Werten und bekommt darum den Rest.
     private var topRow: some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .top, spacing: ScoreMetrics.Spacing.md) {
-                scoreCard.frame(width: 330)
-                semesterCard.frame(width: 186)
-                glanceCard.frame(minWidth: 260)
+                scoreCard.frame(width: 356)
+                semesterCard.frame(width: 212)
+                glanceCard.frame(minWidth: 340)
             }
             .fixedSize(horizontal: false, vertical: true)
 
             VStack(spacing: ScoreMetrics.Spacing.md) {
                 HStack(alignment: .top, spacing: ScoreMetrics.Spacing.md) {
-                    scoreCard.frame(maxWidth: 330)
-                    semesterCard.frame(minWidth: 186)
+                    scoreCard.frame(maxWidth: 356)
+                    semesterCard.frame(minWidth: 212)
                 }
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -112,7 +116,7 @@ struct PadDashboardView: View {
     // MARK: - Halbjahre
 
     private var semesterCard: some View {
-        PadCard(horizontalPadding: ScoreMetrics.Spacing.md) {
+        PadCard(horizontalPadding: ScoreMetrics.Spacing.md, fillsHeight: true) {
             VStack(alignment: .leading, spacing: 0) {
                 PadCardTitle(title: "Halbjahre")
                     .padding(.bottom, 10)
@@ -126,12 +130,15 @@ struct PadDashboardView: View {
                             label: "HJ \(Semester.label(index))",
                             value: ScoreNumberFormat.decimal(average),
                             points: average.map { Int($0.rounded()) },
-                            isSelected: index == semesterIndex
+                            isSelected: index == semesterIndex,
+                            valueWidth: 42
                         )
                         .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .frame(maxHeight: .infinity)
                     .overlay(alignment: .top) {
                         if index > 0 {
                             Rectangle()
@@ -141,13 +148,14 @@ struct PadDashboardView: View {
                     }
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
     }
 
     // MARK: - Auf einen Blick
 
     private var glanceCard: some View {
-        PadCard {
+        PadCard(fillsHeight: true) {
             VStack(alignment: .leading, spacing: 0) {
                 PadCardTitle(title: "Auf einen Blick")
                     .padding(.bottom, ScoreMetrics.Spacing.xs)
@@ -160,6 +168,7 @@ struct PadDashboardView: View {
                     )
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
     }
 
@@ -326,15 +335,12 @@ struct PadDashboardView: View {
             }
             .buttonStyle(.plain)
         case .add:
-            DashedButton(
-                title: "＋ Fach\nhinzufügen",
-                cornerRadius: 20,
-                verticalPadding: 14,
-                font: ScoreTypography.publicSans(500, 12.5)
-            ) {
+            Button {
                 route = .newSubject
+            } label: {
+                PadAddCourseTile()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .buttonStyle(.plain)
         }
     }
 
@@ -375,6 +381,16 @@ struct PadDashboardView: View {
 }
 
 // MARK: - Kachel eines Kurses
+
+/// Die Masse, die sich Fachkachel und Hinzufügen-Kachel teilen.
+///
+/// Beide sind Plätze desselben Rasters und müssen darum bis auf die Kante gleich
+/// gebaut sein — sonst fällt der letzte Platz aus der Reihe.
+private enum PadCourseTileMetrics {
+    static let cornerRadius: CGFloat = 20
+    static let horizontalPadding = ScoreMetrics.Spacing.md
+    static let verticalPadding: CGFloat = 14
+}
 
 /// Eine Fachkachel im waagerechten Streifen unter der Übersicht.
 ///
@@ -423,13 +439,15 @@ private struct PadCourseTile: View {
                     )
             }
         }
-        .padding(.horizontal, ScoreMetrics.Spacing.md)
-        .padding(.vertical, 14)
+        .padding(.horizontal, PadCourseTileMetrics.horizontalPadding)
+        .padding(.vertical, PadCourseTileMetrics.verticalPadding)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(ScorePalette.fill)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .clipShape(
+            RoundedRectangle(cornerRadius: PadCourseTileMetrics.cornerRadius, style: .continuous)
+        )
         .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: PadCourseTileMetrics.cornerRadius, style: .continuous)
                 .strokeBorder(summary.isActive ? ScorePalette.line : .clear, lineWidth: 1)
         )
         .opacity(summary.isActive ? 1 : 0.55)
@@ -440,5 +458,36 @@ private struct PadCourseTile: View {
         guard summary.isActive else { return Text("nicht belegt") }
         let count = subject.semester(at: summary.semesterIndex)?.entries?.count ?? 0
         return Text("\(count) Leistungen")
+    }
+}
+
+// MARK: - Kachel für ein neues Fach
+
+/// Der letzte Platz im Kursraster: eine leere Kachel, die ein Fach aufnimmt.
+///
+/// Sie ist keine Schaltfläche neben dem Raster, sondern eine Kachel unter
+/// Kacheln — gleiche Breite, gleiche Höhe, gleiche Ecken wie eine Fachkachel,
+/// nur gestrichelt statt gefüllt. Deshalb wird hier nicht `DashedButton`
+/// benutzt: der wächst nur mit seinem Text und bliebe flacher als die Nachbarn.
+private struct PadAddCourseTile: View {
+
+    var body: some View {
+        VStack(spacing: ScoreMetrics.Spacing.xs) {
+            Image(systemName: "plus")
+                .font(.system(size: 17, weight: .semibold))
+            Text("Fach hinzufügen")
+                .font(ScoreTypography.publicSans(500, 12.5))
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+        }
+        .foregroundStyle(ScorePalette.inkSecondary)
+        .padding(.horizontal, PadCourseTileMetrics.horizontalPadding)
+        .padding(.vertical, PadCourseTileMetrics.verticalPadding)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: PadCourseTileMetrics.cornerRadius, style: .continuous)
+                .strokeBorder(ScorePalette.lineStrong, style: DashedBorder.style)
+        )
+        .contentShape(Rectangle())
     }
 }

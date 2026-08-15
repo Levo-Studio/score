@@ -131,6 +131,9 @@ struct PadBarRow: View {
     let points: Int?
     let isSelected: Bool
     var labelWidth: CGFloat = 38
+    /// Breite der Wertspalte. Sie ist fest, damit die Zahlen aller Zeilen auf
+    /// einer gemeinsamen rechten Kante stehen — auch die zweistelligen.
+    var valueWidth: CGFloat = 36
     var barHeight: CGFloat = 8
     var valueFont: Font = ScoreTypography.archivo(700, 15)
 
@@ -162,7 +165,7 @@ struct PadBarRow: View {
                 .foregroundStyle(isSelected ? ScorePalette.accent : ScorePalette.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-                .frame(width: 36, alignment: .trailing)
+                .frame(width: valueWidth, alignment: .trailing)
         }
         .scoreAnimation(ScoreMotion.bar, value: points)
     }
@@ -192,6 +195,10 @@ struct PadStatRow: View {
                 .truncationMode(.tail)
         }
         .padding(.vertical, 9)
+        // Die Zeile nimmt die Höhe, die ihr angeboten wird. Stehen mehrere in
+        // einer Karte, die höher ist als ihr Inhalt, teilen sie den Rest unter
+        // sich auf, statt oben zu kleben und unten ein Loch zu lassen.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .overlay(alignment: .top) {
             if !isFirst {
                 Rectangle()

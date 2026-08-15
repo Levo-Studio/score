@@ -126,18 +126,23 @@ struct PadSubjectDetailView: View {
 
     /// Wie auf der Übersicht: nebeneinander, solange der Platz reicht, sonst
     /// wandert der Verlauf unter die beiden schmalen Karten.
+    ///
+    /// Die Halbjahres-Karte trägt vier kurze Zeilen und bekommt darum die
+    /// schmalste Spalte; die Breite, die sie abgibt, geht an den Verlauf, dessen
+    /// Balken davon wirklich profitieren. Alle drei Karten sind gleich hoch und
+    /// verteilen ihre Zeilen über diese Höhe.
     private var cardRow: some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .top, spacing: 14) {
-                glowCard.frame(width: 252)
-                semesterCard.frame(width: 230)
-                historyCard.frame(minWidth: 280)
+                glowCard.frame(width: 272)
+                semesterCard.frame(width: 200)
+                historyCard.frame(minWidth: 320)
             }
 
             VStack(spacing: 14) {
                 HStack(alignment: .top, spacing: 14) {
-                    glowCard.frame(maxWidth: 252)
-                    semesterCard.frame(minWidth: 210)
+                    glowCard.frame(maxWidth: 272)
+                    semesterCard.frame(minWidth: 200)
                 }
                 historyCard
             }
@@ -173,6 +178,11 @@ struct PadSubjectDetailView: View {
             }
             .padding(.top, 14)
 
+            // Der Abstand über der Trennlinie wächst mit, wenn die Nachbarkarte
+            // höher ausfällt: die drei Kennzahlen bleiben am Fuss der Karte
+            // stehen, statt dass darunter eine leere Fläche entsteht.
+            Spacer(minLength: ScoreMetrics.Spacing.lg)
+
             VStack(spacing: 9) {
                 glowRow("Bestes Halbjahr", value: statistics.bestSemesterText)
                 glowRow("Erfasste Leistungen", value: statistics.recordedEntriesText)
@@ -184,11 +194,10 @@ struct PadSubjectDetailView: View {
                     .fill(ScorePalette.scoreLine)
                     .frame(height: 1)
             }
-            .padding(.top, ScoreMetrics.Spacing.lg)
         }
         .padding(.horizontal, 22)
         .padding(.vertical, ScoreMetrics.Spacing.lg)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .background(alignment: .topLeading) {
             Circle()
                 .fill(
@@ -234,7 +243,7 @@ struct PadSubjectDetailView: View {
     // MARK: - Halbjahres-Karte
 
     private var semesterCard: some View {
-        PadCard(horizontalPadding: 18) {
+        PadCard(horizontalPadding: 18, fillsHeight: true) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 10) {
                     PadCardTitle(title: "Halbjahr \(Semester.label(semesterIndex))")
@@ -267,6 +276,7 @@ struct PadSubjectDetailView: View {
                     isFirst: false
                 )
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
     }
 
@@ -289,6 +299,9 @@ struct PadSubjectDetailView: View {
                 .foregroundStyle(isResult ? ScorePalette.accent : ScorePalette.ink)
         }
         .padding(.vertical, 9)
+        // Wie in „Auf einen Blick": die Zeilen teilen sich die Höhe der Karte,
+        // damit unten kein Rest bleibt.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .overlay(alignment: .top) {
             if !isFirst {
                 Rectangle()
@@ -308,7 +321,7 @@ struct PadSubjectDetailView: View {
     // MARK: - Verlauf
 
     private var historyCard: some View {
-        PadCard {
+        PadCard(fillsHeight: true) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .firstTextBaseline, spacing: ScoreMetrics.Spacing.sm) {
                     PadCardTitle(title: "Verlauf über alle Halbjahre")
@@ -330,15 +343,20 @@ struct PadSubjectDetailView: View {
                                 points: statistics.results[index],
                                 isSelected: index == semesterIndex,
                                 labelWidth: 42,
+                                valueWidth: 44,
                                 barHeight: 22,
                                 valueFont: ScoreTypography.archivo(800, 17)
                             )
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
+                        .frame(maxHeight: .infinity)
                     }
                 }
+                .frame(maxHeight: .infinity)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
     }
 

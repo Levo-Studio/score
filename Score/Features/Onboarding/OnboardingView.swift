@@ -6,6 +6,9 @@ import SwiftData
 /// Der Aufbau ist auf allen Schritten derselbe — Fortschritt oben, Kopfblock und
 /// Eingabe in der Mitte, Zurück und Weiter unten. Nur der mittlere Teil wechselt.
 /// Dadurch bleibt die Seite ruhig, während sich der Inhalt bewegt.
+///
+/// Quer auf dem iPad übernimmt ``OnboardingPadLayout``: dort steht dieselbe
+/// Abfolge zweispaltig, links die mitlaufende Vorschau des Profils.
 struct OnboardingView: View {
 
     @Environment(\.modelContext) private var modelContext
@@ -18,38 +21,61 @@ struct OnboardingView: View {
     /// iCloud hereingekommen ist.
     var onWillFinish: (() -> Void)?
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     var body: some View {
         ZStack {
             ScorePalette.background
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                if model.step != .welcome {
-                    OnboardingProgressBar(
-                        currentStep: model.progressStepNumber,
-                        totalStepCount: model.totalStepCount
+            // Quer auf dem iPad wird die Breite geteilt. Die Ausrichtung wird
+            // genauso gemessen wie in `PadShell` — über die angebotene Grösse,
+            // nicht über `UIDevice`: ein iPad im Splitscreen ist `.compact` und
+            // bekommt dann zu Recht wieder die einspaltige Fassung.
+            GeometryReader { proxy in
+                if horizontalSizeClass == .regular, proxy.size.width >= proxy.size.height {
+                    OnboardingPadLayout(
+                        model: model,
+                        primaryTitle: primaryTitle,
+                        onPrimary: advance
                     )
-                    .padding(.horizontal, ScoreMetrics.Spacing.xl)
-                    .padding(.top, 10)
-                    .padding(.bottom, 22)
+                } else {
+                    compactLayout
                 }
-
-                ScrollView {
-                    stepContent
-                        .padding(.horizontal, ScoreMetrics.Spacing.xl)
-                        .padding(.bottom, ScoreMetrics.Spacing.xl)
-                        // Der Schritt wechselt seine Identität, damit der neue
-                        // sich gestaffelt aufbaut. Der alte blendet dabei nur
-                        // aus — zwei Bewegungen übereinander wären unruhig.
-                        .id(model.step)
-                        .transition(.opacity)
-                }
-                .scoreAnimation(ScoreMotion.screenEnter, value: model.step)
-                .scrollIndicators(.hidden)
-                .scrollDismissesKeyboard(.interactively)
-
-                footer
             }
+        }
+    }
+
+    // MARK: - Einspaltig
+
+    /// Die einspaltige Fassung: iPhone und iPad im Hochformat.
+    private var compactLayout: some View {
+        VStack(spacing: 0) {
+            if model.step != .welcome {
+                OnboardingProgressBar(
+                    currentStep: model.progressStepNumber,
+                    totalStepCount: model.totalStepCount
+                )
+                .padding(.horizontal, ScoreMetrics.Spacing.xl)
+                .padding(.top, 10)
+                .padding(.bottom, 22)
+            }
+
+            ScrollView {
+                stepContent
+                    .padding(.horizontal, ScoreMetrics.Spacing.xl)
+                    .padding(.bottom, ScoreMetrics.Spacing.xl)
+                    // Der Schritt wechselt seine Identität, damit der neue
+                    // sich gestaffelt aufbaut. Der alte blendet dabei nur
+                    // aus — zwei Bewegungen übereinander wären unruhig.
+                    .id(model.step)
+                    .transition(.opacity)
+            }
+            .scoreAnimation(ScoreMotion.screenEnter, value: model.step)
+            .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
+
+            footer
         }
     }
 
@@ -82,44 +108,21 @@ struct OnboardingView: View {
     // MARK: - Fusszeile
 
     private var footer: some View {
-        HStack(spacing: 10) {
-            if model.canGoBack {
-                Button {
-                    model.goBack()
-                } label: {
-                    Text("Zurück")
-                        .font(ScoreTypography.publicSans(500, 14))
-                        .foregroundStyle(ScorePalette.inkSecondary)
-                        .padding(.horizontal, ScoreMetrics.Spacing.lg)
-                        .padding(.vertical, 18)
-                        .frame(minHeight: ScoreMetrics.minimumTapTarget)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous)
-                                .strokeBorder(ScorePalette.line, lineWidth: 1)
-                        )
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .transition(.opacity)
-            }
+        OnboardingFooter(model: model, primaryTitle: primaryTitle, onPrimary: advance)
+            .padding(.horizontal, ScoreMetrics.Spacing.xl)
+            .padding(.top, ScoreMetrics.Spacing.sm)
+            .padding(.bottom, ScoreMetrics.Spacing.xs)
+    }
 
-            PrimaryButton(title: primaryTitle) {
-                guard model.canAdvance else { return }
-                if model.step == .summary {
-                    onWillFinish?()
-                    model.finish(in: modelContext)
-                } else {
-                    model.advance()
-                }
-            }
-            .opacity(model.canAdvance ? 1 : 0.45)
-            .disabled(!model.canAdvance)
-            .scoreAnimation(ScoreMotion.selection, value: model.canAdvance)
+    /// Einen Schritt weiter — und am Ende das Profil anlegen.
+    private func advance() {
+        guard model.canAdvance else { return }
+        if model.step == .summary {
+            onWillFinish?()
+            model.finish(in: modelContext)
+        } else {
+            model.advance()
         }
-        .scoreAnimation(ScoreMotion.segment, value: model.canGoBack)
-        .padding(.horizontal, ScoreMetrics.Spacing.xl)
-        .padding(.top, ScoreMetrics.Spacing.sm)
-        .padding(.bottom, ScoreMetrics.Spacing.xs)
     }
 
     private var primaryTitle: LocalizedStringKey {

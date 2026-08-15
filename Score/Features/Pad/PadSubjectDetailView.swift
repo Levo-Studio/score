@@ -460,9 +460,9 @@ struct PadSubjectDetailView: View {
     private func defaultTitle(for category: GradeCategory, kind: GradeKind) -> String {
         let existing = entries(kind).count + 1
         switch category {
-        case .exam: return String(localized: "Klassenarbeit \(existing)")
-        case .test: return String(localized: "Test \(existing)")
-        case .other: return String(localized: "Mündliche Note \(existing)")
+        case .exam: return String.scoreLocalized("Klassenarbeit \(existing)")
+        case .test: return String.scoreLocalized("Test \(existing)")
+        case .other: return String.scoreLocalized("Mündliche Note \(existing)")
         }
     }
 

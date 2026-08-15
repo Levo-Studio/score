@@ -259,9 +259,9 @@ struct GradeEntrySheet: View {
         // ist abgekündigt, und ein gemeinsamer Schlüssel für beide Hälften
         // wären sechs Sätze statt fünf.
         return Text(
-            AttributedString(localized: lead)
+            AttributedString.scoreLocalized(lead)
                 + AttributedString(" — ")
-                + AttributedString(localized: tail)
+                + AttributedString.scoreLocalized(tail)
         )
     }
 

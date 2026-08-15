@@ -240,9 +240,9 @@ struct SubjectDetailView: View {
             return Text(verbatim: ScoreNumberFormat.placeholder)
         }
         return Text(
-            AttributedString(localized: "\(result) Punkte")
+            AttributedString.scoreLocalized("\(result) Punkte")
                 + AttributedString(" · ")
-                + AttributedString(localized: "Note \(grade)")
+                + AttributedString.scoreLocalized("Note \(grade)")
         )
     }
 
@@ -287,7 +287,7 @@ struct SubjectDetailView: View {
     /// Prozentzeichen ein Zeichen und wird nicht als Formatangabe gelesen, und
     /// die abgekündigte Verkettung zweier `Text` entfällt.
     private func shareLabel(_ title: String.LocalizationValue, percent: Int) -> Text {
-        Text(AttributedString(localized: title) + AttributedString(" · \(percent) %"))
+        Text(AttributedString.scoreLocalized(title) + AttributedString(" · \(percent) %"))
     }
 
     /// Der Hinweis, dass dieses Halbjahr nicht in den Score einfliesst.
@@ -430,9 +430,9 @@ struct SubjectDetailView: View {
     private func defaultTitle(for category: GradeCategory, kind: GradeKind) -> String {
         let existing = entries(kind).count + 1
         switch category {
-        case .exam: return String(localized: "Klassenarbeit \(existing)")
-        case .test: return String(localized: "Test \(existing)")
-        case .other: return String(localized: "Mündliche Note \(existing)")
+        case .exam: return String.scoreLocalized("Klassenarbeit \(existing)")
+        case .test: return String.scoreLocalized("Test \(existing)")
+        case .other: return String.scoreLocalized("Mündliche Note \(existing)")
         }
     }
 
@@ -453,12 +453,15 @@ extension GradeEntry {
     /// String: der Prozentwert steht in beiden Sprachen gleich, die Art und der
     /// Zusatz kommen dagegen aus dem Katalog. Als `AttributedString`, weil die
     /// Verkettung zweier `Text` abgekündigt ist.
+    /// `@MainActor`, weil die Sprachwahl an `AppSettings` hängt. Gerufen wird die
+    /// Methode ohnehin nur beim Aufbau der Oberfläche.
+    @MainActor
     func metaDescription(share: Double) -> Text {
         let percent = Int(share.rounded())
-        var meta = AttributedString(localized: category.localizedLabel)
+        var meta = AttributedString.scoreLocalized(category.localizedLabel)
         meta += AttributedString(" · \(percent) %")
         if usesAutomaticShare {
-            meta += AttributedString(" ") + AttributedString(localized: "automatisch")
+            meta += AttributedString(" ") + AttributedString.scoreLocalized("automatisch")
         }
         return Text(meta)
     }

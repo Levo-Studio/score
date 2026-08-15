@@ -179,9 +179,9 @@ struct ProfileHandoffView: View {
     /// die Verkettung zweier `Text` ist abgekündigt.
     private var foundSummary: Text {
         Text(
-            AttributedString(localized: "\(subjects.count) Fächer")
+            AttributedString.scoreLocalized("\(subjects.count) Fächer")
                 + AttributedString(" · ")
-                + AttributedString(localized: "\(gradeEntries.count) Leistungen")
+                + AttributedString.scoreLocalized("\(gradeEntries.count) Leistungen")
         )
     }
 

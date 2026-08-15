@@ -91,7 +91,7 @@ struct SubjectDraft {
         existingSubjects: [Subject]
     ) -> Subject {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let finalName = trimmed.isEmpty ? String(localized: "Neues Fach") : trimmed
+        let finalName = trimmed.isEmpty ? String.scoreLocalized("Neues Fach") : trimmed
         let finalAbbreviation = abbreviation.isEmpty ? String(finalName.prefix(2)) : abbreviation
         let semesters = activeSemesters.sorted()
 

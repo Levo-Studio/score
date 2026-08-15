@@ -184,7 +184,7 @@ struct PadDashboardView: View {
             Statistic(label: "Schwächstes", value: text(for: weakestCourse)),
             Statistic(
                 label: "Nicht gewertet",
-                value: String(localized: "\(model.outcome.excludedCourses.count) Kurse")
+                value: String.scoreLocalized("\(model.outcome.excludedCourses.count) Kurse")
             ),
             Statistic(label: "Leistungen", value: String(recordedEntryCount)),
             Statistic(label: "Trend", value: overallTrendText)

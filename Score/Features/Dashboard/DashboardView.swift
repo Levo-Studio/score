@@ -200,9 +200,9 @@ private struct SubjectRow: View {
     private var meta: Text {
         guard isActive else { return Text("nicht belegt") }
         return Text(
-            AttributedString(localized: kindTitle)
+            AttributedString.scoreLocalized(kindTitle)
                 + AttributedString(" · ")
-                + AttributedString(localized: "\(entryCount) Leistungen")
+                + AttributedString.scoreLocalized("\(entryCount) Leistungen")
         )
     }
 

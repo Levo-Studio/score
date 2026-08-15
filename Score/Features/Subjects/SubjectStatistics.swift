@@ -63,7 +63,7 @@ struct SubjectStatistics {
         // zweier `Text` abgekündigt ist.
         return Text(
             AttributedString(arrow)
-                + AttributedString(localized: "\(difference == 0 ? 0 : difference) Punkte")
+                + AttributedString.scoreLocalized("\(difference == 0 ? 0 : difference) Punkte")
         )
     }
 }

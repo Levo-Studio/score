@@ -36,8 +36,8 @@ struct PadSidebar: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         // Dasselbe Glas wie die Tab-Bar des iPhones: `.ultraThinMaterial` für den
         // Blur, darüber die Glasfarbe als Tönung, dazu die Kante zum Inhalt und
-        // der Lichtsaum an der Oberkante. Die Fläche läuft bis an den oberen und
-        // unteren Bildschirmrand, der Inhalt bleibt im sicheren Bereich.
+        // der Lichtsaum. Die Fläche läuft bis an den oberen und unteren
+        // Bildschirmrand, der Inhalt bleibt im sicheren Bereich.
         .background {
             Rectangle()
                 .fill(.ultraThinMaterial)
@@ -47,12 +47,21 @@ struct PadSidebar: View {
                         .fill(ScorePalette.glassLine)
                         .frame(width: 1)
                 }
-                .overlay(alignment: .top) {
-                    // Der Lichtsaum aus `inset 0 1px 0 rgba(255,255,255,.35)`.
+                .overlay {
+                    // Der Lichtsaum aus `inset 0 1px 0 rgba(255,255,255,.35)`:
+                    // ein innerer Schatten, der nach unten ausläuft — kein Strich
+                    // quer über die Fläche.
                     Rectangle()
-                        .fill(Color.white.opacity(0.35))
-                        .frame(height: 1)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [.white.opacity(0.35), .white.opacity(0)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 1
+                        )
                         .blendMode(.plusLighter)
+                        .allowsHitTesting(false)
                 }
                 .ignoresSafeArea(edges: .vertical)
         }

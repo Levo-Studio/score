@@ -24,17 +24,28 @@ func semester(_ index: Int, points: Int) -> SemesterInput {
 }
 
 /// Ein Fach, dessen Halbjahre der Reihe nach die angegebenen Punktzahlen ergeben.
-func subject(_ id: String, _ kind: SubjectKind, points: [Int]) -> SubjectInput {
+func subject(
+    _ id: String,
+    _ kind: SubjectKind,
+    points: [Int],
+    limit: Int? = nil
+) -> SubjectInput {
     SubjectInput(
         id: id,
         kind: kind,
-        semesters: points.enumerated().map { semester($0.offset, points: $0.element) }
+        semesters: points.enumerated().map { semester($0.offset, points: $0.element) },
+        maximumContributedCourses: limit
     )
 }
 
 /// Ein Fach mit vier Halbjahren derselben Punktzahl.
-func subject(_ id: String, _ kind: SubjectKind, allPoints: Int) -> SubjectInput {
-    subject(id, kind, points: Array(repeating: allPoints, count: 4))
+func subject(
+    _ id: String,
+    _ kind: SubjectKind,
+    allPoints: Int,
+    limit: Int? = nil
+) -> SubjectInput {
+    subject(id, kind, points: Array(repeating: allPoints, count: 4), limit: limit)
 }
 
 extension BlockOneCalculator.CourseIdentifier {

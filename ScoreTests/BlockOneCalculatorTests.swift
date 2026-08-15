@@ -246,6 +246,110 @@ struct BlockOneCalculatorTests {
         #expect(isClose(outcome.expectedGrade, 1.0))
     }
 
+    // MARK: - Kursgrenze eines Fachs
+
+    /// Drei Leistungsfächer und ein einzelnes Basisfach. Plätze sind reichlich da —
+    /// was hier herausfällt, fällt allein wegen der Kursgrenze heraus.
+    private static func limitScenario(_ limit: Int?) -> [SubjectInput] {
+        (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
+            + [subject("bf-sport", .basisfach, points: [4, 15, 9, 7], limit: limit)]
+    }
+
+    @Test("Mit Grenze 2 bringt ein Fach seine besten zwei Ergebnisse ein")
+    func subjectLimitKeepsBestCourses() {
+        let outcome = BlockOneCalculator.calculate(for: Self.limitScenario(2))
+
+        // Sport steht auf 4, 15, 9 und 7 — die besten zwei sind HJ 2 und HJ 3.
+        #expect(outcome.includedCourses.contains(course("bf-sport", 1)))
+        #expect(outcome.includedCourses.contains(course("bf-sport", 2)))
+        #expect(outcome.excludedCourses == [course("bf-sport", 0), course("bf-sport", 3)])
+        #expect(outcome.coursesBeyondSubjectLimit == [course("bf-sport", 0), course("bf-sport", 3)])
+
+        // Alle vier Halbjahre sind erfasst, eingebracht werden 12 + 2.
+        #expect(outcome.recordedCount == 16)
+        #expect(outcome.includedCount == 14)
+
+        // 12 · 12 + 15 + 9 = 168 auf 14 Kurse = 12,0 Punkte
+        #expect(isClose(outcome.averagePoints, 12))
+        #expect(outcome.blockOnePoints == 504)
+        // 17/3 − 12/3 = 5/3
+        #expect(isClose(outcome.expectedGrade, 5.0 / 3.0))
+    }
+
+    @Test("Ohne Grenze bleibt alles wie bisher")
+    func withoutLimitNothingChanges() {
+        let outcome = BlockOneCalculator.calculate(for: Self.limitScenario(nil))
+
+        #expect(outcome.excludedCourses.isEmpty)
+        #expect(outcome.coursesBeyondSubjectLimit.isEmpty)
+        #expect(outcome.includedCount == 16)
+
+        // 12 · 12 + 4 + 15 + 9 + 7 = 179 auf 16 Kurse
+        #expect(isClose(outcome.averagePoints, 179.0 / 16.0))
+    }
+
+    @Test("Eine Grenze über der Zahl der Ergebnisse bleibt wirkungslos")
+    func limitAboveRecordedCountIsHarmless() {
+        let generous = BlockOneCalculator.calculate(for: Self.limitScenario(6))
+        let none = BlockOneCalculator.calculate(for: Self.limitScenario(nil))
+
+        #expect(generous.includedCount == none.includedCount)
+        #expect(generous.excludedCourses.isEmpty)
+        #expect(isClose(generous.averagePoints, none.averagePoints))
+    }
+
+    @Test("Bei Gleichstand innerhalb eines Fachs gewinnt das frühere Halbjahr")
+    func limitPrefersEarlierSemesterOnTies() {
+        let subjects = [subject("bf-musik", .basisfach, points: [9, 9, 9, 4], limit: 2)]
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        #expect(outcome.includedCourses == [course("bf-musik", 0), course("bf-musik", 1)])
+        #expect(outcome.coursesBeyondSubjectLimit == [course("bf-musik", 2), course("bf-musik", 3)])
+    }
+
+    @Test("Die Grenze greift vor dem Wettbewerb um die freien Plätze")
+    func limitAppliesBeforeCompetition() {
+        // Sieben Kernfächer belegen 28 der 30 Plätze — es bleiben genau zwei.
+        let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
+            + (1...7).map { subject("kf-\($0)", .kernfach, allPoints: 10) }
+            + [
+                subject("bf-alpha", .basisfach, allPoints: 15, limit: 1),
+                subject("bf-beta", .basisfach, allPoints: 8)
+            ]
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        // Ohne Grenze nähme Alpha mit zweimal 15 beide Plätze. Mit Grenze 1 bringt
+        // es nur einen Kurs mit, der zweite Platz geht an Beta — obwohl Beta
+        // schlechter dasteht.
+        #expect(outcome.includedCourses.contains(course("bf-alpha", 0)))
+        #expect(outcome.includedCourses.contains(course("bf-beta", 0)))
+        #expect(outcome.coursesBeyondSubjectLimit == [
+            course("bf-alpha", 1), course("bf-alpha", 2), course("bf-alpha", 3)
+        ])
+        #expect(outcome.excludedCourses.count == 6)
+
+        #expect(outcome.recordedCount == 48)
+        #expect(outcome.includedCount == 42)
+        // 12 · 12 + 28 · 10 + 15 + 8 = 447 auf 42 Kurse
+        #expect(isClose(outcome.averagePoints, 447.0 / 42.0))
+        #expect(outcome.blockOnePoints == 447)
+    }
+
+    @Test("Leistungsfächer bringen immer alle vier Halbjahre ein")
+    func advancedSubjectsIgnoreTheLimit() {
+        let subjects = [subject("lf-deutsch", .leistungsfach, points: [15, 3, 3, 3], limit: 1)]
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        #expect(outcome.includedCount == 4)
+        #expect(outcome.excludedCourses.isEmpty)
+        #expect(outcome.coursesBeyondSubjectLimit.isEmpty)
+        // (15 + 3 + 3 + 3) / 4 = 6,0
+        #expect(isClose(outcome.averagePoints, 6))
+    }
+
     // MARK: - Randfälle
 
     @Test("Ohne Fächer kommt ein leeres, aber gültiges Ergebnis heraus")

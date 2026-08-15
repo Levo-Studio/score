@@ -27,6 +27,18 @@ import Foundation
 /// schwaches Kernfach dagegen nie — deshalb sind Kernfächer und Basisfächer im
 /// Datenmodell zwei verschiedene Typen und nicht bloss ein Namensabgleich.
 ///
+/// ## Wie viele Kurse ein Fach einbringt
+///
+/// Wer ein Fach über die Pflicht hinaus belegt hat, kann festlegen, dass es nur
+/// eine bestimmte Zahl seiner Halbjahre in Block I einbringt — etwa zwei von
+/// vier. Dann zählen die **besten** so vielen Ergebnisse dieses Fachs, die
+/// übrigen fallen heraus, noch bevor die Kurse um die freien Plätze antreten.
+///
+/// Die Grenze gilt nicht für Leistungsfächer: sie bringen immer alle vier
+/// Halbjahre ein. Und sie ersetzt die Auswahl nicht, sondern kommt ihr zuvor —
+/// ein Basisfach, das seine zwei besten Kurse einbringt, muss mit diesen zwei
+/// immer noch gut genug für einen freien Platz sein.
+///
 /// ## Abweichung von der amtlichen Regel
 ///
 /// Die amtliche Fassung kennt zusätzlich zwei doppelt gewertete Leistungsfächer
@@ -73,7 +85,16 @@ enum BlockOneCalculator {
         /// Die Kurse, die eingebracht werden.
         var includedCourses: [CourseIdentifier]
         /// Die Kurse, die erfasst sind, aber nicht in den Score einfliessen.
+        ///
+        /// Enthält beide Gründe: von besseren Kursen verdrängt und über der
+        /// Kursgrenze des eigenen Fachs. ``coursesBeyondSubjectLimit`` trennt sie.
         var excludedCourses: Set<CourseIdentifier>
+        /// Die Kurse, die an der Kursgrenze ihres eigenen Fachs scheitern.
+        ///
+        /// Eine Teilmenge von ``excludedCourses``. Sie sind nie in den Wettbewerb
+        /// um die freien Plätze gegangen — die Aufschlüsselung muss das
+        /// unterscheiden können, sonst stünde bei ihnen ein falscher Grund.
+        var coursesBeyondSubjectLimit: Set<CourseIdentifier> = []
         /// Wie viele Kurse eingebracht werden.
         var includedCount: Int { includedCourses.count }
         /// Wie viele Kurse überhaupt ein Ergebnis haben.
@@ -84,7 +105,13 @@ enum BlockOneCalculator {
 
     /// Wählt die Kurse aus und rechnet Block I.
     static func calculate(for subjects: [SubjectInput]) -> Outcome {
-        let courses = availableCourses(in: subjects)
+        let recorded = availableCourses(in: subjects)
+
+        // Zuerst greift die Kursgrenze der einzelnen Fächer: was ein Fach selbst
+        // nicht einbringt, geht gar nicht erst in die Auswahl. Das muss vor allem
+        // anderen passieren — sonst könnte ein Kurs, den der Nutzer bewusst
+        // ausgeklammert hat, einem anderen den Platz wegnehmen.
+        let (courses, beyondLimit) = coursesWithinSubjectLimits(recorded, of: subjects)
 
         // Leistungsfächer sind gesetzt, alle zwölf Kurse.
         let advanced = courses.filter { $0.kind == .leistungsfach }
@@ -119,9 +146,60 @@ enum BlockOneCalculator {
             blockOnePoints: Int((averagePoints * Double(totalCourseCount)).rounded()),
             averagePoints: averagePoints,
             includedCourses: included.map(\.id),
-            excludedCourses: Set(dropped.map(\.id)),
-            recordedCount: courses.count
+            excludedCourses: Set(dropped.map(\.id)).union(beyondLimit.map(\.id)),
+            coursesBeyondSubjectLimit: Set(beyondLimit.map(\.id)),
+            recordedCount: recorded.count
         )
+    }
+
+    /// Wendet die Kursgrenze jedes Fachs an.
+    ///
+    /// - Returns: Die Kurse, die weiter um einen Platz antreten, und daneben die,
+    ///   die schon an der Grenze ihres eigenen Fachs scheitern.
+    static func coursesWithinSubjectLimits(
+        _ courses: [Course],
+        of subjects: [SubjectInput]
+    ) -> (within: [Course], beyond: [Course]) {
+        let limits = subjects.reduce(into: [String: Int]()) { limits, subject in
+            // Eine Zuweisung von `nil` entfernt den Schlüssel wieder — hier genau
+            // richtig: ein Fach ohne Grenze soll gar nicht erst im Wörterbuch stehen.
+            limits[subject.id] = subject.effectiveCourseLimit
+        }
+
+        // Ohne eine einzige Grenze bleibt die Reihenfolge, wie sie hereinkam.
+        guard !limits.isEmpty else { return (courses, []) }
+
+        var within: [Course] = []
+        var beyond: [Course] = []
+
+        for (subjectID, subjectCourses) in Dictionary(grouping: courses, by: \.id.subjectID) {
+            guard let limit = limits[subjectID], limit < subjectCourses.count else {
+                within += subjectCourses
+                continue
+            }
+
+            // Beste zuerst; bei Gleichstand gewinnt das frühere Halbjahr, damit die
+            // Auswahl bei zwei gleich guten Ergebnissen nicht hin und her springt.
+            let ranked = subjectCourses.sorted { left, right in
+                if left.points != right.points { return left.points > right.points }
+                return left.id.semesterIndex < right.id.semesterIndex
+            }
+            within += ranked.prefix(limit)
+            beyond += ranked.dropFirst(limit)
+        }
+
+        // `Dictionary(grouping:)` liefert keine feste Reihenfolge. Für die Auswahl
+        // ist sie gleichgültig — die Basisfächer werden ohnehin sortiert —, für
+        // reproduzierbare Ergebnisse aber nicht.
+        return (within.sorted(by: isOrderedBefore), beyond.sorted(by: isOrderedBefore))
+    }
+
+    /// Die feste Reihenfolge zweier Kurse: erst nach Fach, dann nach Halbjahr.
+    private static func isOrderedBefore(_ left: Course, _ right: Course) -> Bool {
+        if left.id.subjectID != right.id.subjectID {
+            return left.id.subjectID < right.id.subjectID
+        }
+        return left.id.semesterIndex < right.id.semesterIndex
     }
 
     /// Sammelt alle Halbjahre, die ein Ergebnis haben.

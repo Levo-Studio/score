@@ -34,6 +34,15 @@ final class ProfileHandoffModel {
 
     private(set) var stage: Stage = .waitingForSync
 
+    /// Ob die Einrichtung auf diesem Gerät tatsächlich durchlaufen wurde.
+    ///
+    /// Entscheidet den einen Fall, den der Zustand allein nicht unterscheiden
+    /// kann: Ein Profil, das während des Onboardings auftaucht, stammt entweder
+    /// aus der gerade abgeschlossenen Einrichtung — dann ist alles gut — oder es
+    /// kam per iCloud herein, während der Nutzer noch tippte. Im zweiten Fall
+    /// darf die App nicht stillschweigend ins Dashboard springen.
+    private var didCompleteOnboardingHere = false
+
     /// Wie lange auf ein Profil aus iCloud gewartet wird.
     ///
     /// Der Deckel ist wichtiger als die genaue Zahl: iCloud kann langsam sein
@@ -76,10 +85,17 @@ final class ProfileHandoffModel {
             // Der Sync war schneller als der Deckel — fragen statt springen.
             stage = .offeringHandoff
         case .onboarding:
-            // Während des Onboardings entsteht das Profil auf diesem Gerät
-            // selbst. Danach noch einmal zu fragen, ob es übernommen werden
-            // soll, wäre absurd.
-            stage = .ready
+            if didCompleteOnboardingHere {
+                // Das Profil ist gerade hier entstanden. Danach noch einmal zu
+                // fragen, ob es übernommen werden soll, wäre absurd.
+                stage = .ready
+            } else {
+                // Es kam aus iCloud, während der Nutzer noch einrichtete. Ihn
+                // jetzt kommentarlos ins Dashboard zu schieben wäre genau der
+                // stille Sprung, den dieser Automat verhindern soll — und würde
+                // seine bisherigen Eingaben unerklärt verschlucken.
+                stage = .offeringHandoff
+            }
         case .offeringHandoff, .ready:
             break
         }
@@ -98,6 +114,15 @@ final class ProfileHandoffModel {
 
     /// Der Nutzer richtet sich neu ein und verwirft das gefundene Profil.
     func startFreshSetup() {
+        didCompleteOnboardingHere = false
         stage = .onboarding
+    }
+
+    /// Die Einrichtung auf diesem Gerät ist abgeschlossen.
+    ///
+    /// Muss gerufen werden, bevor das Profil gespeichert wird, damit das
+    /// anschliessende Auftauchen nicht als Fund aus iCloud missverstanden wird.
+    func onboardingDidComplete() {
+        didCompleteOnboardingHere = true
     }
 }

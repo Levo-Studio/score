@@ -76,6 +76,10 @@ struct ProfileHandoffModelTests {
         let model = ProfileHandoffModel()
         model.start(hasCompletedProfile: false, isProfileAcknowledged: false, mayReceiveCloudData: false)
 
+        // Den Abschluss ausdrücklich melden, so wie es die Onboarding-Ansicht
+        // tut, bevor sie das Profil anlegt. Ohne dieses Signal wäre ein
+        // auftauchendes Profil von einem aus iCloud nicht zu unterscheiden.
+        model.onboardingDidComplete()
         model.profileDidAppear()
 
         #expect(model.stage == .ready)
@@ -126,5 +130,64 @@ struct ProfileHandoffResetTests {
         #expect(try context.fetch(FetchDescriptor<Subject>()).isEmpty)
         #expect(try context.fetch(FetchDescriptor<SemesterResult>()).isEmpty)
         #expect(try context.fetch(FetchDescriptor<GradeEntry>()).isEmpty)
+    }
+}
+
+// MARK: - Spätes Eintreffen aus iCloud
+
+@MainActor
+@Suite("Spät eintreffendes Profil")
+struct LateProfileArrivalTests {
+
+    /// Der Fall vom zweiten Gerät: Die Wartezeit läuft ab, der Nutzer landet im
+    /// Onboarding, und erst danach liefert CloudKit das Profil. Vorher sprang
+    /// die App an dieser Stelle stumm ins Dashboard.
+    @Test func offersHandoffWhenProfileArrivesDuringOnboarding() {
+        let model = ProfileHandoffModel()
+        model.start(
+            hasCompletedProfile: false,
+            isProfileAcknowledged: false,
+            mayReceiveCloudData: true
+        )
+        #expect(model.stage == .waitingForSync)
+
+        model.syncGraceDidElapse()
+        #expect(model.stage == .onboarding)
+
+        model.profileDidAppear()
+        #expect(model.stage == .offeringHandoff)
+    }
+
+    /// Die Gegenprobe: Wer sich selbst fertig einrichtet, darf nicht gefragt
+    /// werden, ob er sein eigenes Profil übernehmen möchte.
+    @Test func goesStraightInAfterFinishingOnboardingHere() {
+        let model = ProfileHandoffModel()
+        model.start(
+            hasCompletedProfile: false,
+            isProfileAcknowledged: false,
+            mayReceiveCloudData: true
+        )
+        model.syncGraceDidElapse()
+
+        model.onboardingDidComplete()
+        model.profileDidAppear()
+        #expect(model.stage == .ready)
+    }
+
+    /// Nach „Neu einrichten" gilt die eigene Einrichtung wieder als offen.
+    @Test func freshSetupClearsTheLocalCompletionFlag() {
+        let model = ProfileHandoffModel()
+        model.start(
+            hasCompletedProfile: true,
+            isProfileAcknowledged: false,
+            mayReceiveCloudData: true
+        )
+        #expect(model.stage == .offeringHandoff)
+
+        model.startFreshSetup()
+        #expect(model.stage == .onboarding)
+
+        model.profileDidAppear()
+        #expect(model.stage == .offeringHandoff)
     }
 }

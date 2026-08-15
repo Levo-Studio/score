@@ -43,7 +43,7 @@ struct ContentView: View {
                 } else {
                     // Das Profil ist unter der laufenden App verschwunden — etwa
                     // gelöscht auf dem anderen Gerät. Dann bleibt nur von vorn.
-                    OnboardingView()
+                    OnboardingView(onWillFinish: { handoff.onboardingDidComplete() })
                 }
             case .waitingForSync:
                 ProfileLookupView()
@@ -55,10 +55,10 @@ struct ContentView: View {
                         onStartOver: { handoff.startFreshSetup() }
                     )
                 } else {
-                    OnboardingView()
+                    OnboardingView(onWillFinish: { handoff.onboardingDidComplete() })
                 }
             case .onboarding:
-                OnboardingView()
+                OnboardingView(onWillFinish: { handoff.onboardingDidComplete() })
             }
         }
         .animation(.easeInOut(duration: 0.35), value: handoff.stage)

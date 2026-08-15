@@ -11,6 +11,13 @@ struct OnboardingView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var model = OnboardingViewModel()
 
+    /// Wird gerufen, kurz bevor das Profil angelegt wird.
+    ///
+    /// Ohne dieses Signal könnte der Zustandsautomat das eigene, gerade
+    /// entstandene Profil nicht von einem unterscheiden, das währenddessen aus
+    /// iCloud hereingekommen ist.
+    var onWillFinish: (() -> Void)?
+
     var body: some View {
         ZStack {
             ScorePalette.background
@@ -94,6 +101,7 @@ struct OnboardingView: View {
             PrimaryButton(title: primaryTitle) {
                 guard model.canAdvance else { return }
                 if model.step == .summary {
+                    onWillFinish?()
                     model.finish(in: modelContext)
                 } else {
                     withAnimation(.easeInOut(duration: 0.28)) { model.advance() }

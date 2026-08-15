@@ -72,6 +72,10 @@ enum ScoreMotion {
     /// Ein Schalter kippt (`background .2s`).
     static let toggle = Animation.easeOut(duration: 0.20)
 
+    /// Die unmittelbare Rückmeldung auf einen Fingertipp
+    /// (`background .18s ease, transform .18s ease`).
+    static let tap = Animation.easeOut(duration: 0.18)
+
     /// Was bei eingeschalteter Bewegungsreduktion übrig bleibt: eine kurze
     /// Überblendung ohne Versatz, ohne Federung.
     static let reduced = Animation.easeOut(duration: 0.20)
@@ -94,6 +98,13 @@ enum ScoreMotion {
     /// Liste zwischen 14 und 60 ms; 60 ms ist der Wert für kurze Listen aus
     /// wenigen grossen Zeilen, und genau die sind hier der Regelfall.
     static let staggerStep: Double = 0.06
+
+    /// Der Vorlauf, bevor der Inhalt eines Sheets sich aufbaut.
+    ///
+    /// Das Sheet fährt zuerst herein (`scRise`); der Inhalt setzt kurz danach
+    /// ein, damit beide Bewegungen nicht übereinanderliegen. Voll abgewartet
+    /// wird die Fahrt nicht — dann stünde das Sheet spürbar lange leer da.
+    static let sheetContentLead: Double = 0.12
 
     /// Die Obergrenze der Staffelverzögerung, wie `Math.min(320, …)` der Vorlage.
     /// Ohne sie liesse eine lange Liste den letzten Eintrag sekundenlang warten.
@@ -208,6 +219,15 @@ extension View {
     /// Kurve automatisch auf eine kurze Überblendung zurück.
     func scoreAnimation<Value: Equatable>(_ animation: Animation, value: Value) -> some View {
         modifier(ResolvedAnimationModifier(animation: animation, value: value))
+    }
+
+    /// Baut einen Abschnitt eines Sheets auf, sobald das Sheet oben ist.
+    ///
+    /// Wie ``staggeredAppearance(index:step:base:)``, nur mit dem Vorlauf der
+    /// Sheet-Fahrt davor — damit nicht jede Sheet-Ansicht denselben Wert von
+    /// Hand mitschleppt.
+    func sheetContentAppearance(index: Int, step: Double = ScoreMotion.staggerStep) -> some View {
+        staggeredAppearance(index: index, step: step, base: ScoreMotion.sheetContentLead)
     }
 
     /// Lässt eine Zahl einmal aufpoppen (`scPop`), sobald `isActive` wahr wird.

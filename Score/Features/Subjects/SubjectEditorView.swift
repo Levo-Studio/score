@@ -53,18 +53,31 @@ struct SubjectEditorView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
                     nameCard
-                    if isNew { presetSection }
+                        .sheetContentAppearance(index: 0)
+                    if isNew {
+                        presetSection
+                            .sheetContentAppearance(index: 1)
+                    }
                     colorSection
+                        .sheetContentAppearance(index: 2)
                     abbreviationSection
+                        .sheetContentAppearance(index: 3)
                     kindSection
+                        .sheetContentAppearance(index: 4)
                     semesterSection
+                        .sheetContentAppearance(index: 5)
                     weightCard
+                        .sheetContentAppearance(index: 6)
                     PrimaryButton(
                         title: isNew ? "Fach anlegen" : "Änderungen sichern",
                         verticalPadding: 17,
                         action: save
                     )
-                    if canDelete { deleteButton }
+                    .sheetContentAppearance(index: 7)
+                    if canDelete {
+                        deleteButton
+                            .sheetContentAppearance(index: 8)
+                    }
                 }
                 .padding(.horizontal, ScoreMetrics.screenPadding)
                 .padding(.top, 6)

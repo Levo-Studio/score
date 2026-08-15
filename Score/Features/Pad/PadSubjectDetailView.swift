@@ -133,15 +133,16 @@ struct PadSubjectDetailView: View {
     /// Die Schnitt-Karte steht fest, weil ihre grosse Zahl eine feste Grösse hat.
     /// Die Halbjahres-Karte braucht dagegen echte Breite: in ihr steht die
     /// längste Zeile der Ansicht — „Ergebnis · Note 1,7" samt Punktzahl —, und
-    /// bei 200 Punkt drängte sie sich. Sie bekommt darum denselben Anteil wie
-    /// der Verlauf, statt die schmalste Spalte zu sein.
+    /// bei 200 Punkt drängte sie sich. Der Verlauf ist darum gedeckelt — seine
+    /// Balken zeigen 0 bis 15 Punkte und gewinnen durch Breite nichts —, und was
+    /// übrig bleibt, geht an die Halbjahres-Karte.
     /// Alle drei sind gleich hoch und verteilen ihre Zeilen über diese Höhe.
     private var cardRow: some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .top, spacing: 14) {
                 glowCard.frame(width: 272)
                 semesterCard.frame(maxWidth: .infinity)
-                historyCard.frame(maxWidth: .infinity)
+                historyCard.frame(maxWidth: 420)
             }
 
             VStack(spacing: 14) {

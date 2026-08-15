@@ -48,17 +48,74 @@ struct PadShell: View {
 
     @State private var route: PadRoute = .dashboard
 
+    /// Die Wahl des Nutzers, solange er eine getroffen hat.
+    ///
+    /// `nil` heisst „noch nichts entschieden" — dann entscheidet die Ausrichtung:
+    /// quer offen, hoch zu. Ein `Bool` mit Startwert liesse sich nicht sauber an
+    /// die Ausrichtung koppeln, weil die erste Layout-Runde noch keine Grösse
+    /// kennt und der Startwert dann hängen bliebe.
+    @State private var sidebarChoice: Bool?
+
+    /// Die Aufteilung ist von Hand gebaut und nicht mit `NavigationSplitView`.
+    ///
+    /// Score blendet die Navigationsleiste aus, weil die eigene Kopfleiste die
+    /// einzige sein soll — damit fällt der eingebaute Umschalter weg, und die
+    /// Sidebar liess sich im Querformat nicht mehr einklappen. Eine eigene
+    /// Aufteilung ist hier zudem ehrlicher: es gibt keinen Navigations-Stapel,
+    /// den ein `NavigationSplitView` verwalten könnte — die Sidebar setzt eine
+    /// Route, mehr passiert nicht.
+    ///
+    /// Quer steht die Sidebar neben dem Inhalt und schiebt ihn zur Seite; hoch
+    /// liegt sie über ihm und ist zunächst zu, weil sie sonst zu viel von der
+    /// ohnehin knappen Breite nähme.
     var body: some View {
-        NavigationSplitView {
-            PadSidebar(route: $route, summaries: summaries)
-                .navigationSplitViewColumnWidth(PadMetrics.sidebarWidth)
-                .toolbar(.hidden, for: .navigationBar)
-        } detail: {
-            detail
-                .toolbar(.hidden, for: .navigationBar)
+        GeometryReader { proxy in
+            let isLandscape = proxy.size.width >= proxy.size.height
+            let isSidebarVisible = sidebarChoice ?? isLandscape
+
+            ZStack(alignment: .topLeading) {
+                HStack(spacing: 0) {
+                    if isLandscape && isSidebarVisible {
+                        sidebar
+                            .transition(.move(edge: .leading))
+                    }
+                    detail(isSidebarVisible: isSidebarVisible)
+                }
+
+                if !isLandscape && isSidebarVisible {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                        .onTapGesture { setSidebar(visible: false) }
+                        .transition(.opacity)
+
+                    sidebar
+                        .shadow(color: Color(0x060E0D, alpha: 0.22), radius: 24, x: 6, y: 0)
+                        .transition(.move(edge: .leading))
+                }
+            }
+            .onChange(of: isLandscape) { _, _ in
+                // Nach dem Drehen gilt wieder, was zur neuen Ausrichtung passt.
+                sidebarChoice = nil
+            }
+            .onChange(of: route) { _, _ in
+                // Im Hochformat verdeckt die Sidebar den Inhalt. Wer ein Ziel
+                // gewählt hat, will es sehen.
+                if !isLandscape { setSidebar(visible: false) }
+            }
         }
-        .navigationSplitViewStyle(.balanced)
+        .background(ScorePalette.background)
         .tint(ScorePalette.accent)
+    }
+
+    private var sidebar: some View {
+        PadSidebar(route: $route, summaries: summaries)
+            .frame(width: PadMetrics.sidebarWidth)
+    }
+
+    private func setSidebar(visible: Bool) {
+        withAnimation(.easeOut(duration: 0.28)) {
+            sidebarChoice = visible
+        }
     }
 
     // MARK: - Abgeleitete Werte
@@ -74,9 +131,9 @@ struct PadShell: View {
 
     // MARK: - Detailseite
 
-    private var detail: some View {
+    private func detail(isSidebarVisible: Bool) -> some View {
         VStack(spacing: 0) {
-            header
+            header(isSidebarVisible: isSidebarVisible)
             content
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -131,13 +188,17 @@ struct PadShell: View {
 
     // MARK: - Kopfleiste
 
-    private var header: some View {
+    private func header(isSidebarVisible: Bool) -> some View {
         HStack(spacing: ScoreMetrics.Spacing.lg) {
-            Text(title)
-                .font(ScoreTypography.archivo(800, 21))
-                .tracking(em: -0.03, at: 21)
-                .foregroundStyle(ScorePalette.ink)
-                .lineLimit(1)
+            HStack(spacing: ScoreMetrics.Spacing.sm) {
+                sidebarToggle(isSidebarVisible: isSidebarVisible)
+
+                Text(title)
+                    .font(ScoreTypography.archivo(800, 21))
+                    .tracking(em: -0.03, at: 21)
+                    .foregroundStyle(ScorePalette.ink)
+                    .lineLimit(1)
+            }
 
             Spacer(minLength: ScoreMetrics.Spacing.sm)
 
@@ -156,6 +217,28 @@ struct PadShell: View {
                 .fill(ScorePalette.line)
                 .frame(height: 1)
         }
+    }
+
+    /// Klappt die Sidebar ein und aus. Der Pfeil zeigt in die Richtung, in die
+    /// sich die Sidebar bewegt.
+    private func sidebarToggle(isSidebarVisible: Bool) -> some View {
+        Button {
+            setSidebar(visible: !isSidebarVisible)
+        } label: {
+            Image(systemName: isSidebarVisible ? "sidebar.leading" : "sidebar.trailing")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(ScorePalette.ink)
+                .frame(width: 34, height: 34)
+                .background(ScorePalette.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(ScorePalette.line, lineWidth: 1)
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isSidebarVisible ? Text("Seitenleiste ausblenden") : Text("Seitenleiste einblenden"))
     }
 
     private var title: String {

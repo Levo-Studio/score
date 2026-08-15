@@ -105,7 +105,9 @@ struct ContentView: View {
     /// versucht es erneut. Ein Fehlerdialog wäre hier nur Lärm über etwas, das
     /// der Nutzer nicht verursacht hat und nicht beheben kann.
     private func mergeDuplicateProfiles() {
-        try? ProfileMerge.mergeDuplicates(in: modelContext)
+        // Das überlebende Profil interessiert hier nicht — die Ansicht liest es
+        // ohnehin frisch aus der Abfrage.
+        _ = try? ProfileMerge.mergeDuplicates(in: modelContext)
     }
 
     @ViewBuilder

@@ -58,6 +58,12 @@ struct SubjectStatistics {
         }
         let difference = last - first
         let arrow = difference > 0 ? "↑ +" : difference < 0 ? "↓ " : "→ "
-        return Text(verbatim: arrow) + Text("\(difference == 0 ? 0 : difference) Punkte")
+        // Der Pfeil bleibt unübersetzt, der Plural von „Punkte" kommt aus dem
+        // Katalog — zusammengesetzt als `AttributedString`, weil die Verkettung
+        // zweier `Text` abgekündigt ist.
+        return Text(
+            AttributedString(arrow)
+                + AttributedString(localized: "\(difference == 0 ? 0 : difference) Punkte")
+        )
     }
 }

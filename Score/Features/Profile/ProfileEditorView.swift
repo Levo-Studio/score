@@ -88,7 +88,14 @@ struct ProfileEditorView: View {
     // MARK: - Bild
 
     private var avatarSection: some View {
-        VStack(spacing: ScoreMetrics.Spacing.sm) {
+        // `PhotosPicker` nimmt seine Beschriftung als `@Sendable`-Closure
+        // entgegen, aus der heraus nichts vom MainActor gelesen werden darf.
+        // Der Titel wird deshalb hier festgehalten — `LocalizedStringKey` ist
+        // `Sendable` — und die Beschriftung selbst steckt in einer eigenen View,
+        // deren `body` wieder ganz normal auf dem MainActor läuft.
+        let title = pickerTitle
+
+        return VStack(spacing: ScoreMetrics.Spacing.sm) {
             ZStack {
                 ProfileAvatar(profile: profile, size: avatarSize)
                     .opacity(isPreparingImage ? 0.4 : 1)
@@ -110,11 +117,7 @@ struct ProfileEditorView: View {
                     matching: .images,
                     photoLibrary: .shared()
                 ) {
-                    Text(pickerTitle)
-                        .font(.chipLabel)
-                        .foregroundStyle(ScorePalette.accent)
-                        .frame(minHeight: ScoreMetrics.minimumTapTarget)
-                        .contentShape(Rectangle())
+                    PhotosPickerLabel(title: title)
                 }
                 .disabled(isPreparingImage)
 
@@ -141,11 +144,15 @@ struct ProfileEditorView: View {
 
     private var hasImage: Bool { profile.avatarData != nil }
 
-    /// Der Titel des Pickers. Als eigener Wert, damit der Typ eindeutig
-    /// `LocalizedStringKey` ist — ein ternärer Ausdruck aus zwei Literalen
-    /// direkt in `Text(…)` landet sonst in der `String`-Überladung und nähme
-    /// den Weg am String-Katalog vorbei.
-    private var pickerTitle: LocalizedStringKey {
+    /// Der Titel des Pickers. Als eigener Wert, damit der Typ eindeutig ist —
+    /// ein ternärer Ausdruck aus zwei Literalen direkt in `Text(…)` landet
+    /// sonst in der `String`-Überladung und nähme den Weg am String-Katalog
+    /// vorbei.
+    ///
+    /// `LocalizedStringResource` und nicht `LocalizedStringKey`, weil der Wert
+    /// in die `@Sendable`-Closure des Pickers wandert und `LocalizedStringKey`
+    /// ausdrücklich nicht `Sendable` ist.
+    private var pickerTitle: LocalizedStringResource {
         hasImage ? "Bild ändern" : "Bild wählen"
     }
 
@@ -173,6 +180,34 @@ struct ProfileEditorView: View {
         }
 
         profile.avatarData = prepared
+    }
+}
+
+// MARK: - Beschriftung der Bildauswahl
+
+/// Die Beschriftung des `PhotosPicker`.
+///
+/// Eine eigene View, weil der Picker seine Beschriftung als `@Sendable`-Closure
+/// entgegennimmt: Schrift, Farbe und Mindesthöhe liegen auf dem MainActor und
+/// dürfen dort nicht abgerufen werden. Als View verschiebt sich das in einen
+/// `body`, der wieder regulär isoliert ist.
+private struct PhotosPickerLabel: View {
+
+    nonisolated let title: LocalizedStringResource
+
+    /// Ausdrücklich `nonisolated`, weil der Aufruf aus der `@Sendable`-Closure
+    /// des Pickers kommt — der voreingestellt hauptaktor-isolierte
+    /// Memberwise-Initialisierer wäre von dort aus nicht erreichbar.
+    nonisolated init(title: LocalizedStringResource) {
+        self.title = title
+    }
+
+    var body: some View {
+        Text(title)
+            .font(.chipLabel)
+            .foregroundStyle(ScorePalette.accent)
+            .frame(minHeight: ScoreMetrics.minimumTapTarget)
+            .contentShape(Rectangle())
     }
 }
 

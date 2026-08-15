@@ -184,10 +184,32 @@ struct SubjectInput: Sendable, Equatable, Identifiable {
     var kind: SubjectKind
     var semesters: [SemesterInput]
 
-    init(id: String, kind: SubjectKind, semesters: [SemesterInput]) {
+    /// Wie viele Ergebnisse dieses Fach höchstens einbringt. `nil` heisst „alle".
+    ///
+    /// Leistungsfächer bringen immer alle vier Halbjahre ein; ein hier gesetzter
+    /// Wert bleibt bei ihnen wirkungslos. Siehe ``effectiveCourseLimit``.
+    var maximumContributedCourses: Int?
+
+    init(
+        id: String,
+        kind: SubjectKind,
+        semesters: [SemesterInput],
+        maximumContributedCourses: Int? = nil
+    ) {
         self.id = id
         self.kind = kind
         self.semesters = semesters
+        self.maximumContributedCourses = maximumContributedCourses
+    }
+
+    /// Die Grenze, die der Rechenkern anwendet.
+    ///
+    /// Bei Leistungsfächern immer `nil` — dass sie alle vier Halbjahre einbringen,
+    /// ist die Regel und keine Einstellung. Unter 1 wird nicht gegangen: ein Fach,
+    /// das gar nichts einbringt, wäre besser abgewählt.
+    var effectiveCourseLimit: Int? {
+        guard kind != .leistungsfach, let limit = maximumContributedCourses else { return nil }
+        return max(1, limit)
     }
 }
 
@@ -228,7 +250,8 @@ extension SubjectInput {
                     writtenShare: subject.writtenShare,
                     entries: (semester?.entries ?? []).map(GradeInput.init)
                 )
-            }
+            },
+            maximumContributedCourses: subject.maximumContributedCourses
         )
     }
 }

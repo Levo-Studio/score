@@ -145,6 +145,96 @@ struct BlockOneBreakdownTests {
         #expect(breakdown.includedPointsTotal == 9)
     }
 
+    // MARK: - Kursgrenze eines Fachs
+
+    /// Derselbe Jahrgang, aber `bf-e` bringt nur seine besten zwei Ergebnisse ein.
+    ///
+    /// Am Ergebnis ändert das nichts — die beiden Dreier von `bf-e` fielen schon
+    /// vorher heraus. Was sich ändert, ist der **Grund**: sie sind jetzt über der
+    /// eigenen Grenze und nicht mehr von besseren Kursen verdrängt.
+    static let limitedPresentations: [BlockOneBreakdown.SubjectPresentation] = presentations.map {
+        guard $0.input.id == "bf-e" else { return $0 }
+        var input = $0.input
+        input.maximumContributedCourses = 2
+        return BlockOneBreakdown.SubjectPresentation(name: $0.name, color: $0.color, input: input)
+    }
+
+    private static var limitedBreakdown: BlockOneBreakdown {
+        BlockOneBreakdown(presentations: limitedPresentations)
+    }
+
+    @Test("Kurse über der Kursgrenze tragen einen eigenen Zustand")
+    func coursesBeyondTheLimitAreMarked() {
+        let entry = Self.limitedBreakdown.optionalSubjects.first { $0.id == "bf-e" }
+
+        #expect(entry?.courses.map(\.state) == [
+            .included(points: 10),
+            .included(points: 10),
+            .beyondLimit(points: 3),
+            .beyondLimit(points: 3)
+        ])
+        #expect(entry?.courseLimit == 2)
+    }
+
+    @Test("Die Grenze ändert den Grund, nicht die Rechnung")
+    func theLimitChangesTheReasonNotTheResult() {
+        let plain = Self.breakdown
+        let limited = Self.limitedBreakdown
+
+        #expect(limited.includedPointsTotal == plain.includedPointsTotal)
+        #expect(limited.outcome.includedCount == plain.outcome.includedCount)
+        #expect(isClose(limited.outcome.averagePoints, plain.outcome.averagePoints))
+    }
+
+    @Test("Kurse über der Grenze treten nicht um die freien Plätze an")
+    func cappedCoursesAreNoCandidates() {
+        let limited = Self.limitedBreakdown
+
+        // 24 erfasste Basisfach-Kurse, zwei davon über der Grenze von bf-e.
+        #expect(limited.optionalCandidateCount == 22)
+        #expect(limited.optionalSlotCount == 18)
+        #expect(limited.groups[2].recordedCount == 24)
+        #expect(limited.groups[2].includedCount == 18)
+    }
+
+    @Test("Was herausfällt, steht nach Fach und Grund gebündelt da")
+    func droppedGroupsCarryTheReason() {
+        let groups = Self.limitedBreakdown.droppedGroups
+
+        // Erst die eigene Entscheidung, dann die Verdrängten.
+        #expect(groups.map(\.subjectID) == ["bf-e", "bf-f"])
+        #expect(groups.map(\.reason) == [.beyondSubjectLimit, .outranked])
+        #expect(groups[0].courses.map(\.semesterIndex) == [2, 3])
+        #expect(groups[0].courseLimit == 2)
+        #expect(groups[1].courses.count == 4)
+        #expect(Self.limitedBreakdown.hasSubjectLimits)
+    }
+
+    @Test("Ohne Grenze fällt alles aus demselben Grund heraus")
+    func withoutLimitsEveryDropIsAnOutranking() {
+        let groups = Self.breakdown.droppedGroups
+
+        #expect(groups.map(\.subjectID) == ["bf-e", "bf-f"])
+        #expect(groups.allSatisfy { $0.reason == .outranked })
+        #expect(!Self.breakdown.hasSubjectLimits)
+    }
+
+    @Test("Ein begrenztes Fach tritt mit dem Schnitt seiner besten Kurse an")
+    func competingAverageIgnoresCappedCourses() {
+        let entry = Self.limitedBreakdown.optionalSubjects.first { $0.id == "bf-e" }
+
+        // Erfasst sind 10, 10, 3 und 3 — antreten tun nur die beiden Zehner.
+        #expect(isClose(entry?.recordedAverage ?? 0, 6.5))
+        #expect(isClose(entry?.competingAverage ?? 0, 10))
+    }
+
+    // MARK: - Gruppen
+
+    @Test("Jede Gruppe nennt, wie viele Fächer sie stellt")
+    func groupsCountSubjects() {
+        #expect(Self.breakdown.groups.map(\.subjectCount) == [3, 3, 6])
+    }
+
     // MARK: - Hilfen
 
     private static func presentation(_ input: SubjectInput) -> BlockOneBreakdown.SubjectPresentation {

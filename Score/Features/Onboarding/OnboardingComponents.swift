@@ -183,16 +183,24 @@ struct ChipCloud<Item: Hashable, Trailing: View>: View {
     let isSelected: (Item) -> Bool
     let toggle: (Item) -> Void
     var spacing: CGFloat = ScoreMetrics.Spacing.xs
+
+    /// Der Abstand zweier Chips in der Staffel. Die Design-Datei rechnet für die
+    /// Fächerwolke `140 + i * 14` Millisekunden — bei vielen Chips laufen die
+    /// Stufen deshalb dicht hintereinander, nicht im Zeilenabstand einer Liste.
+    var staggerStep: Double = 0.014
+
     @ViewBuilder var trailing: Trailing
 
     var body: some View {
         ChipFlowLayout(spacing: spacing) {
-            ForEach(items, id: \.self) { item in
+            ForEach(Array(items.enumerated()), id: \.element) { index, item in
                 ScoreChip(verbatimTitle: title(item), isSelected: isSelected(item)) {
                     toggle(item)
                 }
+                .staggeredAppearance(index: index, step: staggerStep, base: 0.14)
             }
             trailing
+                .staggeredAppearance(index: items.count, step: staggerStep, base: 0.14)
         }
     }
 }

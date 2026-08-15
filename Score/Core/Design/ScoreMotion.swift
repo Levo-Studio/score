@@ -72,6 +72,9 @@ enum ScoreMotion {
     /// Ein Schalter kippt (`background .2s`).
     static let toggle = Animation.easeOut(duration: 0.20)
 
+    /// Ein Fortschrittsbalken rückt weiter (`background .3s ease`).
+    static let progress = Animation.easeOut(duration: 0.30)
+
     /// Die unmittelbare Rückmeldung auf einen Fingertipp
     /// (`background .18s ease, transform .18s ease`).
     static let tap = Animation.easeOut(duration: 0.18)

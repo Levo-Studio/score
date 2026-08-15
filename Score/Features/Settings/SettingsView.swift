@@ -37,14 +37,18 @@ struct SettingsView: View {
 
                 if let profile {
                     ProfileCard(profile: profile)
+                        .rowAppearance(index: 0)
                 }
 
                 appearanceCard(settings: $settings)
+                    .rowAppearance(index: 1)
                 dataCard
+                    .rowAppearance(index: 2)
 
                 studioMark
                     .frame(maxWidth: .infinity)
                     .padding(.top, 18)
+                    .rowAppearance(index: 3)
             }
             .padding(.horizontal, ScoreMetrics.screenPadding)
             .padding(.top, 6)
@@ -323,7 +327,7 @@ private struct LanguageSegments: View {
         .padding(3)
         .background(ScorePalette.fill)
         .clipShape(Capsule())
-        .animation(.spring(response: 0.3, dampingFraction: 0.85), value: selection)
+        .scoreAnimation(ScoreMotion.segment, value: selection)
     }
 }
 

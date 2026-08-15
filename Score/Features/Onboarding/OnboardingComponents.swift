@@ -23,7 +23,7 @@ struct OnboardingProgressBar: View {
                     .frame(height: 4)
             }
         }
-        .animation(.easeOut(duration: 0.3), value: currentStep)
+        .scoreAnimation(ScoreMotion.progress, value: currentStep)
         .accessibilityElement()
         .accessibilityLabel(Text("Schritt \(currentStep) von \(totalStepCount)"))
     }
@@ -142,7 +142,7 @@ struct OnboardingOptionCard: View {
             )
         }
         .buttonStyle(.plain)
-        .animation(.easeOut(duration: 0.22), value: isSelected)
+        .scoreAnimation(ScoreMotion.selection, value: isSelected)
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
     }
 

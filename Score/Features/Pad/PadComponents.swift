@@ -30,13 +30,25 @@ struct PadCard<Content: View>: View {
     var horizontalPadding: CGFloat = 22
     var verticalPadding: CGFloat = 20
     var cornerRadius: CGFloat = PadMetrics.cardRadius
+
+    /// Lässt die Karte die volle angebotene Höhe füllen, statt nur so hoch zu
+    /// werden wie ihr Inhalt. Für Karten, die in einer Reihe neben höheren
+    /// stehen: die Design-Datei setzt dort `align-items:stretch`.
+    ///
+    /// Der Inhalt bleibt dabei oben — er wird nicht auseinandergezogen.
+    var fillsHeight = false
+
     @ViewBuilder var content: Content
 
     var body: some View {
         content
             .padding(.horizontal, horizontalPadding)
             .padding(.vertical, verticalPadding)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(
+                maxWidth: .infinity,
+                maxHeight: fillsHeight ? .infinity : nil,
+                alignment: .topLeading
+            )
             .background(ScorePalette.surface)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .overlay(

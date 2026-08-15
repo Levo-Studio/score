@@ -34,11 +34,36 @@ struct PadSidebar: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 22)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(ScorePalette.fill)
-        .overlay(alignment: .trailing) {
+        // Dasselbe Glas wie die Tab-Bar des iPhones: `.ultraThinMaterial` für den
+        // Blur, darüber die Glasfarbe als Tönung, dazu die Kante zum Inhalt und
+        // der Lichtsaum. Die Fläche läuft bis an den oberen und unteren
+        // Bildschirmrand, der Inhalt bleibt im sicheren Bereich.
+        .background {
             Rectangle()
-                .fill(ScorePalette.line)
-                .frame(width: 1)
+                .fill(.ultraThinMaterial)
+                .overlay(ScorePalette.glass)
+                .overlay(alignment: .trailing) {
+                    Rectangle()
+                        .fill(ScorePalette.glassLine)
+                        .frame(width: 1)
+                }
+                .overlay {
+                    // Der Lichtsaum aus `inset 0 1px 0 rgba(255,255,255,.35)`:
+                    // ein innerer Schatten, der nach unten ausläuft — kein Strich
+                    // quer über die Fläche.
+                    Rectangle()
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [.white.opacity(0.35), .white.opacity(0)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 1
+                        )
+                        .blendMode(.plusLighter)
+                        .allowsHitTesting(false)
+                }
+                .ignoresSafeArea(edges: .vertical)
         }
         .scrollContentBackground(.hidden)
     }
@@ -68,12 +93,24 @@ struct PadSidebar: View {
 
     private var navigation: some View {
         VStack(alignment: .leading, spacing: 3) {
-            navigationRow(title: "Übersicht", route: .dashboard)
-            navigationRow(title: "Einstellungen", route: .settings)
+            navigationRow(title: "Übersicht", icon: .dashboard, route: .dashboard)
+            navigationRow(title: "Einstellungen", icon: .settings, route: .settings)
         }
     }
 
-    private func navigationRow(title: LocalizedStringKey, route target: PadRoute) -> some View {
+    /// Symbolgrösse der festen Ziele.
+    ///
+    /// Zusammen mit `iconGap` ergibt sie dieselben 23 Punkte bis zur Schrift wie
+    /// der 14er Farbpunkt der Fachzeilen mit seinem Abstand von 9 — die Texte
+    /// aller Zeilen stehen so in einer Flucht.
+    private static let iconSize: CGFloat = 16
+    private static let iconGap: CGFloat = 7
+
+    private func navigationRow(
+        title: LocalizedStringKey,
+        icon: ScoreTab,
+        route target: PadRoute
+    ) -> some View {
         // Die Aufschlüsselung ist ein Abstecher aus der Übersicht und hat keine
         // eigene Zeile — die Übersicht bleibt deshalb hervorgehoben.
         let isSelected = route == target || (target == .dashboard && route == .breakdown)
@@ -81,8 +118,12 @@ struct PadSidebar: View {
         return Button {
             route = target
         } label: {
-            Text(title)
-                .font(ScoreTypography.publicSans(500, 13.5))
+            HStack(spacing: Self.iconGap) {
+                ScoreTabIcon(tab: icon)
+                    .frame(width: Self.iconSize, height: Self.iconSize)
+                Text(title)
+                    .font(ScoreTypography.publicSans(500, 13.5))
+            }
                 .foregroundStyle(isSelected ? ScorePalette.accentInk : ScorePalette.ink)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, ScoreMetrics.Spacing.sm)

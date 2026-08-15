@@ -51,6 +51,14 @@ enum ScoreMotion {
     /// `scBackdrop` — der abgedunkelte Hintergrund hinter einem Sheet.
     static let backdrop = Animation.easeOut(duration: 0.24)
 
+    /// Das Ein- und Ausblenden der iPad-Sidebar im Hochformat.
+    ///
+    /// Deutlich langsamer als ein Bildschirmwechsel: Die Sidebar liegt über dem
+    /// Inhalt, und wer darin ein Ziel wählt, soll sehen, wie sie den Blick
+    /// freigibt — nicht, wie sie verschwindet. Sie blendet dabei aus, statt zur
+    /// Seite zu schiessen.
+    static let sidebarDismiss = Animation.timingCurve(0.2, 0.9, 0.3, 1, duration: 0.45)
+
     /// Ein Wert unter einem Umschalter wechselt — Score, Block I, Kurszähler.
     /// Entspricht der `left .55s`-Kurve der Skalenmarke, auf 0,4 s gekürzt, weil
     /// Ziffern schneller stehen dürfen als eine wandernde Marke.

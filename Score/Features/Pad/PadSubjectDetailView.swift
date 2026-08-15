@@ -127,18 +127,21 @@ struct PadSubjectDetailView: View {
     /// Wie auf der Übersicht: nebeneinander, solange der Platz reicht, sonst
     /// wandert der Verlauf unter die beiden schmalen Karten.
     ///
-    /// Alle drei Karten haben eine feste Breite und der Rest bleibt leer, statt
-    /// dass eine von ihnen ihn aufsaugt. Ein Balken, der 0 bis 15 Punkte zeigt,
-    /// wird durch mehr Breite nicht aussagekräftiger — auf einem 13-Zoll-iPad zog
-    /// sich der Verlauf sonst über 700 Punkt, und die Karte wirkte leer.
+    /// Die Reihe füllt die Breite, und die beiden rechten Karten teilen sich den
+    /// Platz zu gleichen Teilen.
+    ///
+    /// Die Schnitt-Karte steht fest, weil ihre grosse Zahl eine feste Grösse hat.
+    /// Die Halbjahres-Karte braucht dagegen echte Breite: in ihr steht die
+    /// längste Zeile der Ansicht — „Ergebnis · Note 1,7" samt Punktzahl —, und
+    /// bei 200 Punkt drängte sie sich. Sie bekommt darum denselben Anteil wie
+    /// der Verlauf, statt die schmalste Spalte zu sein.
     /// Alle drei sind gleich hoch und verteilen ihre Zeilen über diese Höhe.
     private var cardRow: some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .top, spacing: 14) {
                 glowCard.frame(width: 272)
-                semesterCard.frame(width: 200)
-                historyCard.frame(width: 380)
-                Spacer(minLength: 0)
+                semesterCard.frame(maxWidth: .infinity)
+                historyCard.frame(maxWidth: .infinity)
             }
 
             VStack(spacing: 14) {

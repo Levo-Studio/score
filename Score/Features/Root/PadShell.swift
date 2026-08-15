@@ -103,7 +103,9 @@ struct PadShell: View {
 
                     sidebar
                         .shadow(color: Color(0x060E0D, alpha: 0.22), radius: 24, x: 6, y: 0)
-                        .transition(.move(edge: .leading))
+                        .transition(
+                            .opacity.combined(with: .move(edge: .leading))
+                        )
                 }
 
                 if isBreakdownPresented {
@@ -145,7 +147,7 @@ struct PadShell: View {
                     // Sidebar danach — der Detailbereich tauschte seinen Inhalt
                     // also sofort aus, während die Sidebar erst hinterher
                     // wegblendete. Genau dieser Versatz sah nach Sprung aus.
-                    withAnimation(ScoreMotion.resolve(ScoreMotion.screenEnter, reduceMotion: reduceMotion)) {
+                    withAnimation(ScoreMotion.resolve(ScoreMotion.sidebarDismiss, reduceMotion: reduceMotion)) {
                         route = newRoute
                         // Im Hochformat verdeckt die Sidebar den Inhalt. Wer ein
                         // Ziel gewählt hat, will es sehen.
@@ -161,7 +163,7 @@ struct PadShell: View {
     }
 
     private func setSidebar(visible: Bool) {
-        withAnimation(ScoreMotion.resolve(ScoreMotion.screenEnter, reduceMotion: reduceMotion)) {
+        withAnimation(ScoreMotion.resolve(ScoreMotion.sidebarDismiss, reduceMotion: reduceMotion)) {
             sidebarChoice = visible
         }
     }

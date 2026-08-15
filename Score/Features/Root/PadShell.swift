@@ -9,8 +9,10 @@ import SwiftData
 /// Auswahl sonst ins Leere.
 enum PadRoute: Hashable {
     case dashboard
-    /// Die Aufschlüsselung von Block I. Kein Eintrag der Sidebar, sondern ein
-    /// Abstecher aus der Übersicht heraus — erreichbar über die Score-Karte.
+    /// Die Aufschlüsselung von Block I. Kein Eintrag der Sidebar und auf dem iPad
+    /// auch keine Detailseite: `PadShell` fängt diese Route ab und legt die
+    /// Aufschlüsselung als Überlagerung über den Inhalt. Sie bleibt trotzdem eine
+    /// Route, weil die Übersicht sie genauso setzt wie jedes andere Ziel.
     case breakdown
     case settings
     case subject(UUID)
@@ -47,6 +49,11 @@ struct PadShell: View {
     private var semesterIndex = SubjectPreference.defaultSemesterIndex
 
     @State private var route: PadRoute = .dashboard
+
+    /// Ob die Aufschlüsselung von Block I gerade über dem Inhalt liegt.
+    @State private var isBreakdownPresented = false
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Die Wahl des Nutzers, solange er eine getroffen hat.
     ///
@@ -92,6 +99,10 @@ struct PadShell: View {
                         .shadow(color: Color(0x060E0D, alpha: 0.22), radius: 24, x: 6, y: 0)
                         .transition(.move(edge: .leading))
                 }
+
+                if isBreakdownPresented {
+                    breakdownOverlay(in: proxy.size)
+                }
             }
             .onChange(of: isLandscape) { _, _ in
                 // Nach dem Drehen gilt wieder, was zur neuen Ausrichtung passt.
@@ -110,8 +121,30 @@ struct PadShell: View {
     }
 
     private var sidebar: some View {
-        PadSidebar(route: $route, summaries: summaries)
+        PadSidebar(route: navigation, summaries: summaries)
             .frame(width: PadMetrics.sidebarWidth)
+    }
+
+    /// Die Route, wie die Kinder sie setzen dürfen.
+    ///
+    /// `.breakdown` ist auf dem iPad kein Ziel im Detailbereich, sondern die
+    /// Bitte, die Aufschlüsselung über den Inhalt zu legen. Der Umweg über eine
+    /// abgeleitete Bindung statt über `onChange` ist Absicht: so wird
+    /// `.breakdown` nie kurzzeitig zur echten Route, und der Detailbereich
+    /// wechselt seinen Inhalt nicht für einen Wimpernschlag.
+    private var navigation: Binding<PadRoute> {
+        Binding(
+            get: { route },
+            set: { newRoute in
+                guard newRoute == .breakdown else {
+                    route = newRoute
+                    return
+                }
+                withAnimation(ScoreMotion.resolve(ScoreMotion.sheetRise, reduceMotion: reduceMotion)) {
+                    isBreakdownPresented = true
+                }
+            }
+        )
     }
 
     private func setSidebar(visible: Bool) {
@@ -151,16 +184,15 @@ struct PadShell: View {
     @ViewBuilder
     private var content: some View {
         switch route {
-        case .dashboard:
+        case .dashboard, .breakdown:
+            // `.breakdown` erreicht diesen Zweig nie — `navigation` fängt sie ab.
+            // Sollte sie es doch, steht die Übersicht darunter, und das ist genau
+            // der Inhalt, den die Überlagerung erklärt.
             PadDashboardView(
                 subjects: subjects,
                 semesterIndex: $semesterIndex,
-                route: $route
+                route: navigation
             )
-        case .breakdown:
-            BlockOneBreakdownView(subjects: subjects, layout: .pad) {
-                route = .dashboard
-            }
         case .settings:
             PadSettingsView()
         case .subject:
@@ -169,19 +201,74 @@ struct PadShell: View {
                     subject: selectedSubject,
                     summaries: summaries,
                     semesterIndex: $semesterIndex,
-                    route: $route
+                    route: navigation
                 )
             } else {
                 missingSubject
             }
         case .newSubject:
-            PadSubjectEditorView(target: .new, route: $route)
+            PadSubjectEditorView(target: .new, route: navigation)
         case .editSubject:
             if let selectedSubject {
-                PadSubjectEditorView(target: .existing(selectedSubject), route: $route)
+                PadSubjectEditorView(target: .existing(selectedSubject), route: navigation)
             } else {
                 missingSubject
             }
+        }
+    }
+
+    // MARK: - Die Aufschlüsselung als Überlagerung
+
+    /// Die Aufschlüsselung liegt auf dem iPad als mittige Karte über dem
+    /// abgedunkelten Inhalt — wie das Eingabe-Sheet in der Design-Vorlage, nur
+    /// breiter: sie zeigt mehr.
+    ///
+    /// Kein `.sheet`: das wäre auf dem iPad eine formblattgrosse Fläche mit
+    /// eigener Systemkante, und die Übersicht darunter verschwände. Hier soll man
+    /// sehen, wozu die Erklärung gehört.
+    /// Die Breite der Karte.
+    ///
+    /// Die Vorlage setzt für das Eingabe-Sheet 520pt. Die Aufschlüsselung darf
+    /// breiter sein — sie trägt Kurskacheln, Balken und ganze Sätze nebeneinander.
+    private static let breakdownSheetWidth: CGFloat = 640
+
+    private func breakdownOverlay(in size: CGSize) -> some View {
+        ZStack {
+            Color(0x060C0B, alpha: 0.42)
+                .ignoresSafeArea()
+                .onTapGesture { closeBreakdown() }
+                .transition(.opacity)
+                .scoreAnimation(ScoreMotion.backdrop, value: isBreakdownPresented)
+
+            BlockOneBreakdownView(subjects: subjects, layout: .padSheet) {
+                closeBreakdown()
+            }
+            .frame(
+                width: min(Self.breakdownSheetWidth, size.width - ScoreMetrics.Spacing.xl * 2),
+                height: max(320, size.height - ScoreMetrics.Spacing.xl * 2)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.sheet, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: ScoreMetrics.Radius.sheet, style: .continuous)
+                    .strokeBorder(ScorePalette.line, lineWidth: 1)
+            )
+            .shadow(color: Color(0x060E0D, alpha: 0.28), radius: 36, x: 0, y: 18)
+            .transition(sheetTransition)
+        }
+        .frame(width: size.width, height: size.height)
+    }
+
+    /// `scRise` der Vorlage: von unten herein und leicht heranwachsend.
+    private var sheetTransition: AnyTransition {
+        guard !reduceMotion else { return .opacity }
+        return .opacity
+            .combined(with: .offset(y: 18))
+            .combined(with: .scale(scale: 0.98))
+    }
+
+    private func closeBreakdown() {
+        withAnimation(ScoreMotion.resolve(ScoreMotion.sheetRise, reduceMotion: reduceMotion)) {
+            isBreakdownPresented = false
         }
     }
 
@@ -251,8 +338,9 @@ struct PadShell: View {
 
     private var title: String {
         switch route {
-        case .dashboard: String(localized: "Übersicht")
-        case .breakdown: String(localized: "So kommt dein Schnitt zustande")
+        // Die Aufschlüsselung legt sich über die Übersicht, statt sie zu
+        // ersetzen — die Kopfleiste nennt weiter, was darunter steht.
+        case .dashboard, .breakdown: String(localized: "Übersicht")
         case .settings: String(localized: "Einstellungen")
         case .newSubject: String(localized: "Neues Fach")
         case .editSubject: String(localized: "Fach bearbeiten")

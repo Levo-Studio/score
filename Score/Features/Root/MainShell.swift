@@ -20,6 +20,14 @@ struct MainShell: View {
     @State private var isAddingSubject = false
     @State private var tabBeforeAdding: ScoreTab = .dashboard
 
+    /// Der Reiter, dessen Inhalt tatsächlich steht.
+    ///
+    /// „Neu" führt keinen eigenen Bildschirm; er auf die Fächerliste abzubilden
+    /// hält den Übergang ruhig, wenn der Editor über ihr aufgeht.
+    private var visibleTab: ScoreTab {
+        selectedTab == .add ? .subjects : selectedTab
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             ScorePalette.background
@@ -27,6 +35,7 @@ struct MainShell: View {
 
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .screenSwitch(visibleTab)
 
             LiquidGlassTabBar(selection: $selectedTab)
                 .padding(.horizontal, ScoreMetrics.screenPadding)

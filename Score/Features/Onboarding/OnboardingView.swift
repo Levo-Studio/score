@@ -38,8 +38,13 @@ struct OnboardingView: View {
                     stepContent
                         .padding(.horizontal, ScoreMetrics.Spacing.xl)
                         .padding(.bottom, ScoreMetrics.Spacing.xl)
+                        // Der Schritt wechselt seine Identität, damit der neue
+                        // sich gestaffelt aufbaut. Der alte blendet dabei nur
+                        // aus — zwei Bewegungen übereinander wären unruhig.
                         .id(model.step)
+                        .transition(.opacity)
                 }
+                .scoreAnimation(ScoreMotion.screenEnter, value: model.step)
                 .scrollIndicators(.hidden)
                 .scrollDismissesKeyboard(.interactively)
 
@@ -80,7 +85,7 @@ struct OnboardingView: View {
         HStack(spacing: 10) {
             if model.canGoBack {
                 Button {
-                    withAnimation(.easeInOut(duration: 0.28)) { model.goBack() }
+                    model.goBack()
                 } label: {
                     Text("Zurück")
                         .font(ScoreTypography.publicSans(500, 14))
@@ -104,13 +109,14 @@ struct OnboardingView: View {
                     onWillFinish?()
                     model.finish(in: modelContext)
                 } else {
-                    withAnimation(.easeInOut(duration: 0.28)) { model.advance() }
+                    model.advance()
                 }
             }
             .opacity(model.canAdvance ? 1 : 0.45)
             .disabled(!model.canAdvance)
-            .animation(.easeOut(duration: 0.2), value: model.canAdvance)
+            .scoreAnimation(ScoreMotion.selection, value: model.canAdvance)
         }
+        .scoreAnimation(ScoreMotion.segment, value: model.canGoBack)
         .padding(.horizontal, ScoreMetrics.Spacing.xl)
         .padding(.top, ScoreMetrics.Spacing.sm)
         .padding(.bottom, ScoreMetrics.Spacing.xs)

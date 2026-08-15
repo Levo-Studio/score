@@ -41,8 +41,11 @@ struct ProfileEditorView: View {
         ScrollView {
             VStack(spacing: ScoreMetrics.Spacing.lg) {
                 titleRow
+                    .sheetContentAppearance(index: 0)
                 avatarSection
+                    .sheetContentAppearance(index: 1)
                 OnboardingNameField(text: $profile.firstName)
+                    .sheetContentAppearance(index: 2)
             }
             .padding(.horizontal, ScoreMetrics.Spacing.lg)
             .padding(.top, 18)
@@ -139,7 +142,7 @@ struct ProfileEditorView: View {
         .frame(maxWidth: .infinity)
         // Am `Bool` und nicht an den Bilddaten: nur das Erscheinen und
         // Verschwinden des Entfernen-Knopfs soll animiert werden.
-        .animation(.easeInOut(duration: 0.25), value: hasImage)
+        .scoreAnimation(ScoreMotion.segment, value: hasImage)
     }
 
     private var hasImage: Bool { profile.avatarData != nil }

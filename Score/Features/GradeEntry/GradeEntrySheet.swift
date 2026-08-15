@@ -23,15 +23,27 @@ struct GradeEntrySheet: View {
 
     var body: some View {
         ScrollView {
+            // Der Inhalt baut sich gestaffelt auf, nachdem das Sheet oben ist —
+            // der Vorlauf entspricht der Dauer von `scRise`.
             VStack(alignment: .leading, spacing: 0) {
                 titleRow
+                    .sheetContentAppearance(index: 0)
                 categoryChips
+                    .sheetContentAppearance(index: 1)
                 kindChips
+                    .sheetContentAppearance(index: 2)
                 pointsPad
+                    .sheetContentAppearance(index: 3)
                 automaticShareRow
-                if !entry.usesAutomaticShare { manualShare }
+                    .sheetContentAppearance(index: 4)
+                if !entry.usesAutomaticShare {
+                    manualShare
+                        .transition(.opacity.combined(with: .offset(y: ScoreMotion.rowOffset)))
+                }
                 footer
+                    .sheetContentAppearance(index: 5)
             }
+            .scoreAnimation(ScoreMotion.rowIn, value: entry.usesAutomaticShare)
             .padding(.horizontal, ScoreMetrics.Spacing.lg)
             .padding(.top, 18)
             .padding(.bottom, 28)
@@ -134,7 +146,7 @@ struct GradeEntrySheet: View {
             }
         }
         .padding(.top, 14)
-        .animation(.easeOut(duration: 0.18), value: entry.points)
+        .scoreAnimation(ScoreMotion.tap, value: entry.points)
     }
 
     // MARK: - Anteil
@@ -169,6 +181,7 @@ struct GradeEntrySheet: View {
                     .font(ScoreTypography.publicSans(500, 12))
                     .monospacedDigit()
                     .foregroundStyle(ScorePalette.accent)
+                    .animatedValue(entry.share)
             }
             WeightSlider(writtenShare: $entry.share, range: 5...100, step: 5)
         }

@@ -65,9 +65,13 @@ struct BlockOneBreakdownView: View {
                 }
 
                 resultCard(breakdown)
+                    .staggeredAppearance(index: 0)
                 groupSection(breakdown)
+                    .staggeredAppearance(index: 1)
                 courseSection(breakdown)
+                    .staggeredAppearance(index: 2)
                 explanation
+                    .staggeredAppearance(index: 3)
             }
             .padding(.horizontal, layout.contentPadding)
             .padding(.top, layout.topPadding)
@@ -124,6 +128,7 @@ struct BlockOneBreakdownView: View {
                 .font(.scoreDisplay(54))
                 .monospacedDigit()
                 .tracking(em: -0.045, at: 54)
+                .animatedValue(breakdown.outcome.expectedGrade)
                 .foregroundStyle(ScorePalette.scoreInk)
                 .padding(.top, ScoreMetrics.Spacing.xs)
 

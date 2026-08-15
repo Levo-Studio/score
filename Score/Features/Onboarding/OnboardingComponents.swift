@@ -23,7 +23,7 @@ struct OnboardingProgressBar: View {
                     .frame(height: 4)
             }
         }
-        .animation(.easeOut(duration: 0.3), value: currentStep)
+        .scoreAnimation(ScoreMotion.progress, value: currentStep)
         .accessibilityElement()
         .accessibilityLabel(Text("Schritt \(currentStep) von \(totalStepCount)"))
     }
@@ -68,43 +68,6 @@ struct OnboardingHeader: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
-// MARK: - Gestaffelte Einblendung
-
-extension View {
-
-    /// Blendet ein Element leicht versetzt ein.
-    ///
-    /// - Parameter index: Die Position in der Staffel. Jeder Schritt verzögert um
-    ///   70 ms — genug, damit die Bewegung als Reihenfolge lesbar wird, ohne dass
-    ///   auf den Inhalt gewartet werden muss.
-    func staggeredAppearance(index: Int) -> some View {
-        modifier(StaggeredAppearance(index: index))
-    }
-}
-
-private struct StaggeredAppearance: ViewModifier {
-
-    let index: Int
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var hasAppeared = false
-
-    func body(content: Content) -> some View {
-        content
-            .opacity(hasAppeared ? 1 : 0)
-            .offset(y: hasAppeared ? 0 : 10)
-            .onAppear {
-                guard !reduceMotion else {
-                    hasAppeared = true
-                    return
-                }
-                withAnimation(.easeOut(duration: 0.42).delay(Double(index) * 0.07)) {
-                    hasAppeared = true
-                }
-            }
     }
 }
 
@@ -179,7 +142,7 @@ struct OnboardingOptionCard: View {
             )
         }
         .buttonStyle(.plain)
-        .animation(.easeOut(duration: 0.22), value: isSelected)
+        .scoreAnimation(ScoreMotion.selection, value: isSelected)
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
     }
 
@@ -220,16 +183,24 @@ struct ChipCloud<Item: Hashable, Trailing: View>: View {
     let isSelected: (Item) -> Bool
     let toggle: (Item) -> Void
     var spacing: CGFloat = ScoreMetrics.Spacing.xs
+
+    /// Der Abstand zweier Chips in der Staffel. Die Design-Datei rechnet für die
+    /// Fächerwolke `140 + i * 14` Millisekunden — bei vielen Chips laufen die
+    /// Stufen deshalb dicht hintereinander, nicht im Zeilenabstand einer Liste.
+    var staggerStep: Double = 0.014
+
     @ViewBuilder var trailing: Trailing
 
     var body: some View {
         ChipFlowLayout(spacing: spacing) {
-            ForEach(items, id: \.self) { item in
+            ForEach(Array(items.enumerated()), id: \.element) { index, item in
                 ScoreChip(verbatimTitle: title(item), isSelected: isSelected(item)) {
                     toggle(item)
                 }
+                .staggeredAppearance(index: index, step: staggerStep, base: 0.14)
             }
             trailing
+                .staggeredAppearance(index: items.count, step: staggerStep, base: 0.14)
         }
     }
 }

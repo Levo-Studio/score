@@ -5,13 +5,19 @@ import SwiftData
 ///
 /// ## Verschlüsselung
 ///
-/// Punktzahl und Titel tragen `.allowsCloudEncryption` und liegen beim Sync in
-/// `CKRecord.encryptedValues`. Das sind die beiden Felder, die tatsächlich etwas
-/// über den Nutzer aussagen: die Note selbst und der frei eingetippte Titel.
+/// **Jedes gespeicherte Attribut trägt `.allowsCloudEncryption`** und liegt beim
+/// Sync in `CKRecord.encryptedValues`. Nicht nur Punktzahl und Titel: auch Art,
+/// Teilnote, Anteil und Anlagezeitpunkt sagen zusammengenommen genug über den
+/// Nutzer aus, dass sie nichts im Klartext zu suchen haben.
 ///
-/// Art und Teilnote bleiben im Klartext. Dass jemand eine Klassenarbeit
-/// geschrieben hat, ist keine schützenswerte Information — wie sie ausgefallen
-/// ist, schon.
+/// Ausgenommen ist **nur die Beziehung** `semester` — sie wird beim Mirroring als
+/// `CKReference` gespiegelt, und eine Referenz lässt sich nicht verschlüsselt
+/// ablegen: CloudKit muss den Zielsatz auflösen können.
+///
+/// > Wichtig: `allowsCloudEncryption` lässt sich nach dem ersten Deploy des
+/// > CloudKit-Schemas in die Production-Datenbank nicht mehr umschalten.
+/// > Verschlüsselt und unverschlüsselt sind für CloudKit zwei verschiedene
+/// > Feldtypen, und ein Feldtyp ist unveränderlich.
 @Model
 final class GradeEntry {
 
@@ -22,24 +28,24 @@ final class GradeEntry {
     @Attribute(.allowsCloudEncryption) var points: Int = 0
 
     /// Ob die Leistung in die schriftliche oder die mündliche Teilnote zählt.
-    var kindRawValue: String = GradeKind.written.rawValue
+    @Attribute(.allowsCloudEncryption) var kindRawValue: String = GradeKind.written.rawValue
 
     /// Die Art der Leistung.
-    var categoryRawValue: String = GradeCategory.exam.rawValue
+    @Attribute(.allowsCloudEncryption) var categoryRawValue: String = GradeCategory.exam.rawValue
 
     /// Der feste Anteil an der Teilnote in Prozent.
     ///
     /// Wird nur ausgewertet, wenn `usesAutomaticShare` aus ist.
-    var share: Int = 100
+    @Attribute(.allowsCloudEncryption) var share: Int = 100
 
     /// Ob sich die Leistung den verbleibenden Anteil automatisch teilt.
     ///
     /// Klassenarbeiten stehen standardmässig auf automatisch: sie nehmen sich
     /// zu gleichen Teilen, was nach den fest gesetzten Anteilen übrig bleibt.
-    var usesAutomaticShare: Bool = true
+    @Attribute(.allowsCloudEncryption) var usesAutomaticShare: Bool = true
 
     /// Anlagezeitpunkt, sorgt für eine stabile Reihenfolge in der Liste.
-    var createdAt: Date = Date.now
+    @Attribute(.allowsCloudEncryption) var createdAt: Date = Date.now
 
     /// Das Halbjahr, zu dem die Leistung gehört.
     var semester: SemesterResult?

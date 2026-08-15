@@ -6,6 +6,22 @@ import SwiftData
 /// Es gibt genau einen Datensatz davon. Kein Konto, keine Anmeldung — der Name
 /// steht nur auf dem Dashboard und wird wie die Noten verschlüsselt synchronisiert.
 ///
+/// ## Verschlüsselung
+///
+/// **Jedes gespeicherte Attribut trägt `.allowsCloudEncryption`** und landet beim
+/// Sync in `CKRecord.encryptedValues` — auch Bundesland, Klassenstufe und
+/// Abiturjahr, die für sich harmlos aussehen, zusammen aber eine Person
+/// eingrenzen.
+///
+/// Ausgenommen wären **nur Beziehungen**, weil sie beim Mirroring als
+/// `CKReference` gespiegelt werden und eine Referenz sich nicht verschlüsselt
+/// ablegen lässt. Dieses Modell hat keine.
+///
+/// > Wichtig: `allowsCloudEncryption` lässt sich nach dem ersten Deploy des
+/// > CloudKit-Schemas in die Production-Datenbank nicht mehr umschalten.
+/// > Verschlüsselt und unverschlüsselt sind für CloudKit zwei verschiedene
+/// > Feldtypen, und ein Feldtyp ist unveränderlich.
+///
 /// > Wichtig: Jedes Attribut hat einen Vorgabewert oder ist optional. CloudKit
 /// > kennt keine Pflichtfelder — ein Datensatz aus einer älteren App-Version
 /// > käme sonst ohne den neuen Wert an, und der `ModelContainer` würde beim
@@ -19,7 +35,7 @@ final class StudentProfile {
     /// lokal und wechselt, sobald ein Datensatz über CloudKit auf einem anderen
     /// Gerät ankommt. `ProfileMerge` braucht aber ein Kriterium, das auf allen
     /// Geräten dieselbe Antwort gibt, wenn es zwei Profile auseinanderhalten muss.
-    var identifier: UUID = UUID()
+    @Attribute(.allowsCloudEncryption) var identifier: UUID = UUID()
 
     /// Der Vorname, wie er in der Begrüssung auftaucht.
     @Attribute(.allowsCloudEncryption) var firstName: String = ""
@@ -49,17 +65,17 @@ final class StudentProfile {
     @Attribute(.allowsCloudEncryption) var avatarData: Data?
 
     /// Die Klassenstufe zum Zeitpunkt der Einrichtung.
-    var classLevelRawValue: String = ClassLevel.kursstufe1.rawValue
+    @Attribute(.allowsCloudEncryption) var classLevelRawValue: String = ClassLevel.kursstufe1.rawValue
 
     /// Das Bundesland. Score rechnet nach Baden-Württemberg; andere Länder sind
     /// erfasst, damit die Angabe stimmt, verändern die Rechnung aber nicht.
-    var federalState: String = "Baden-Württemberg"
+    @Attribute(.allowsCloudEncryption) var federalState: String = "Baden-Württemberg"
 
     /// Das Jahr der Abiturprüfung.
-    var graduationYear: Int = Calendar.current.component(.year, from: .now) + 2
+    @Attribute(.allowsCloudEncryption) var graduationYear: Int = Calendar.current.component(.year, from: .now) + 2
 
     /// Ob das Onboarding abgeschlossen wurde.
-    var hasCompletedOnboarding: Bool = false
+    @Attribute(.allowsCloudEncryption) var hasCompletedOnboarding: Bool = false
 
     init(
         identifier: UUID = UUID(),

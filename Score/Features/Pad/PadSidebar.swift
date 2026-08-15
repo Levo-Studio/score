@@ -35,9 +35,17 @@ struct PadSidebar: View {
         .padding(.vertical, 22)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         // Dasselbe Glas wie die Tab-Bar des iPhones: `.ultraThinMaterial` für den
-        // Blur, darüber die Glasfarbe als Tönung, dazu die Kante zum Inhalt und
-        // der Lichtsaum. Die Fläche läuft bis an den oberen und unteren
-        // Bildschirmrand, der Inhalt bleibt im sicheren Bereich.
+        // Blur, darüber die Glasfarbe als Tönung. Die Fläche läuft oben und unten
+        // aus dem sicheren Bereich heraus bis an die Gerätekante, der Inhalt
+        // bleibt darin.
+        //
+        // Anders als die Tab-Bar bekommt die Sidebar **keinen umlaufenden
+        // Lichtsaum**: Die Tab-Bar schwebt und ist auf allen Seiten sichtbar, die
+        // Sidebar sitzt bündig an drei Bildschirmkanten. Ein `strokeBorder`
+        // zeichnet aber rundherum — das ergab je eine helle Linie an der linken
+        // und unteren Gerätekante und eine zweite Linie rechts neben der
+        // eigentlichen Trennlinie. Bündig gehört genau eine Kante hin: die zum
+        // Inhalt, so wie die Vorlage sie als `border-right` vorgibt.
         .background {
             Rectangle()
                 .fill(.ultraThinMaterial)
@@ -46,22 +54,6 @@ struct PadSidebar: View {
                     Rectangle()
                         .fill(ScorePalette.glassLine)
                         .frame(width: 1)
-                }
-                .overlay {
-                    // Der Lichtsaum aus `inset 0 1px 0 rgba(255,255,255,.35)`:
-                    // ein innerer Schatten, der nach unten ausläuft — kein Strich
-                    // quer über die Fläche.
-                    Rectangle()
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [.white.opacity(0.35), .white.opacity(0)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            ),
-                            lineWidth: 1
-                        )
-                        .blendMode(.plusLighter)
-                        .allowsHitTesting(false)
                 }
                 .ignoresSafeArea(edges: .vertical)
         }

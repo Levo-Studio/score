@@ -73,19 +73,31 @@ extension View {
 /// zur Grösse bei — die Zeile ist so hoch wie ihr Inhalt, beide Spalten setzen
 /// oben an, und die Fläche ist trotzdem genau so hoch wie die Zeile.
 ///
-/// ## Warum eine einzige Geste
+/// ## Warum Wisch und Tipp einander ausschliessen
 ///
 /// Zuvor lagen ein `onTapGesture`, ein `DragGesture` und ein `Button` unter der
 /// Zeile übereinander. Ein kurzer Wisch von unter zehn Punkt legte die Achse nie
 /// fest, blieb aber innerhalb dessen, was `onTapGesture` noch als Tipp durchgehen
-/// lässt — und öffnete die Zeile, obwohl gewischt wurde. Jetzt entscheidet
-/// **eine** Geste alles: bewegt sich der Finger kaum, war es ein Tipp; und wo er
-/// aufgesetzt hat, sagt, ob der Tipp der Zeile oder der Löschfläche galt.
+/// lässt — und öffnete die Zeile, obwohl gewischt wurde.
 ///
-/// Als `simultaneousGesture`, damit die umgebende `ScrollView` weiter scrollt:
-/// eine reguläre Geste gewönne gegen sie, und die Liste liesse sich genau dort
-/// nicht mehr bewegen, wo Zeilen stehen — also überall. Überwiegt die Senkrechte,
-/// gibt diese Geste ab und die Zeile rührt sich nicht.
+/// Jetzt hängt an der Zeile eine **ausschliessende** Geste: erst der Wisch, und
+/// nur wenn der gar nicht erst anfängt, der Tipp. Wer sechs Punkt weit zieht,
+/// hat gewischt, und der Tipp kommt nicht mehr zum Zug — ohne Zeitfenster und
+/// ohne Reihenfolge, auf die man sich verlassen müsste.
+///
+/// ## Warum der Wisch eine Mindeststrecke braucht
+///
+/// `DragGesture(minimumDistance: 0)` greift den Finger schon beim Aufsetzen. Die
+/// umgebende `ScrollView` kommt dann nicht mehr an ihn heran, und die Liste steht
+/// fest — überall dort, wo Zeilen stehen, also überall. Genau daran liess sich
+/// der Reiter „Fächer" auf dem iPhone nicht mehr scrollen. Der Wisch fängt
+/// deshalb erst nach ``SwipeRowGesture/minimumDragDistance`` an; bis dahin gehört
+/// der Finger der Liste. Der Tipp braucht keine Strecke und nimmt der Liste
+/// nichts weg — eine Tippgeste hält keine `ScrollView` auf.
+///
+/// Zusätzlich als `simultaneousGesture`: eine reguläre Geste gewönne gegen die
+/// Liste. Überwiegt die Senkrechte, gibt diese Geste ab und die Zeile rührt sich
+/// nicht.
 ///
 /// ## Warum der Inhalt nicht selbst antippbar ist
 ///
@@ -200,48 +212,59 @@ struct SwipeToDelete<Content: View>: View {
 
     // MARK: - Geste
 
-    /// `minimumDistance: 0`, damit auch der reine Tipp durch diese Geste läuft.
+    /// Erst der Wisch, und nur wenn der nicht anspringt, der Tipp.
     ///
-    /// Ein eigener `onTapGesture` daneben wäre wieder ein zweiter Erkenner, und
-    /// dessen Toleranz für kleine Bewegungen ist grösser als die Achsensperre
-    /// hier — der kurze Wisch käme als Tipp an.
+    /// `exclusively(before:)` und nicht zwei Gesten nebeneinander: sobald der
+    /// Wisch seine Mindeststrecke genommen hat, ist der Tipp aus dem Rennen.
+    /// Nebeneinander liefen beide, und welcher zuerst meldet, ist nichts, worauf
+    /// sich bauen liesse.
     private var swipe: some Gesture {
-        DragGesture(minimumDistance: 0)
+        DragGesture(minimumDistance: SwipeRowGesture.minimumDragDistance)
+            .exclusively(before: SpatialTapGesture(coordinateSpace: .local))
             .onChanged { value in
+                guard case .first(let drag) = value else { return }
                 // Die Breite kommt von aussen und muss im Ablauf dieselbe sein.
                 gesture.actionWidth = actionWidth
-                gesture.touchDown(isOpen: gesture.offset != 0)
-                let closes = gesture.drag(translation: value.translation)
+                gesture.touchDown()
+                let closes = gesture.drag(translation: drag.translation)
                 if closes { SwipeRowRegistry.shared.close(id) }
             }
             .onEnded { value in
                 var outcome = SwipeRowGesture.Outcome.none
                 animated {
-                    outcome = gesture.release(
-                        translation: value.translation,
-                        predicted: value.predictedEndTranslation,
-                        startX: value.startLocation.x,
-                        width: width
-                    )
+                    switch value {
+                    case .first(let drag):
+                        outcome = gesture.release(
+                            translation: drag.translation,
+                            predicted: drag.predictedEndTranslation
+                        )
+                    case .second(let tap):
+                        gesture.actionWidth = actionWidth
+                        outcome = gesture.tap(atX: tap.location.x, width: width)
+                    }
                 }
-
-                switch outcome {
-                case .open:
-                    SwipeRowRegistry.shared.open(id)
-                case .close:
-                    SwipeRowRegistry.shared.close(id)
-                case .tap:
-                    // Ein Tipp irgendwo lässt eine offene Zeile zugehen — auch
-                    // dann, wenn er dieser hier galt und sie geschlossen war.
-                    SwipeRowRegistry.shared.closeAll()
-                    onTap()
-                case .delete:
-                    SwipeRowRegistry.shared.close(id)
-                    onDelete()
-                case .none:
-                    break
-                }
+                apply(outcome)
             }
+    }
+
+    /// Was aus dem Loslassen folgt.
+    private func apply(_ outcome: SwipeRowGesture.Outcome) {
+        switch outcome {
+        case .open:
+            SwipeRowRegistry.shared.open(id)
+        case .close:
+            SwipeRowRegistry.shared.close(id)
+        case .tap:
+            // Ein Tipp irgendwo lässt eine offene Zeile zugehen — auch dann,
+            // wenn er dieser hier galt und sie geschlossen war.
+            SwipeRowRegistry.shared.closeAll()
+            onTap()
+        case .delete:
+            SwipeRowRegistry.shared.close(id)
+            onDelete()
+        case .none:
+            break
+        }
     }
 
     /// Setzt eine Änderung des Versatzes in Bewegung — mit der Kurve der

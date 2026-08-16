@@ -31,15 +31,10 @@ struct SwipeRowGestureTests {
     @Test("Ein Tipp bleibt ein Tipp")
     func aTapOpensTheRow() {
         var gesture = makeGesture()
-        gesture.touchDown(isOpen: false)
-        gesture.drag(translation: .zero)
 
-        let outcome = gesture.release(
-            translation: .zero,
-            predicted: .zero,
-            startX: 40,
-            width: 360
-        )
+        // Ein Tipp läuft nicht mehr durch den Wisch: der fängt erst nach seiner
+        // Mindeststrecke an, und bis dahin ist er gar nicht zuständig.
+        let outcome = gesture.tap(atX: 40, width: 360)
 
         #expect(outcome == .tap)
         #expect(gesture.offset == 0)
@@ -49,16 +44,17 @@ struct SwipeRowGestureTests {
     func aShortSwipeIsNotATap() {
         // Genau der Fall, der die Zeile versehentlich öffnete: acht Punkt nach
         // links — zu wenig für die Achsensperre, aber innerhalb dessen, was ein
-        // `onTapGesture` noch als Tipp durchgehen liess.
+        // `onTapGesture` noch als Tipp durchgehen liess. Der Wisch fängt vorher
+        // an und nimmt dem Tipp damit den Zug.
+        #expect(SwipeRowGesture.minimumDragDistance <= 8)
+
         var gesture = makeGesture()
-        gesture.touchDown(isOpen: false)
+        gesture.touchDown()
         gesture.drag(translation: CGSize(width: -8, height: 0))
 
         let outcome = gesture.release(
             translation: CGSize(width: -8, height: 0),
-            predicted: CGSize(width: -8, height: 0),
-            startX: 40,
-            width: 360
+            predicted: CGSize(width: -8, height: 0)
         )
 
         #expect(outcome == .none)
@@ -67,23 +63,42 @@ struct SwipeRowGestureTests {
 
     // MARK: - Achsen
 
-    @Test("Senkrecht gezogen rührt sich die Zeile nicht")
+    @Test("Die Geste greift den Finger nicht schon beim Aufsetzen")
+    func theGestureLeavesTheFingerToTheList() {
+        // Der Kern der Regression: mit `minimumDistance: 0` hing der Finger vom
+        // ersten Moment an dieser Zeile, und die Liste liess sich nicht mehr
+        // scrollen — überall dort, wo Zeilen stehen, also überall.
+        #expect(SwipeRowGesture.minimumDragDistance > 0)
+        // Und der Wisch muss laufen, bevor sich die Achse festlegt, sonst fiele
+        // eine Bewegung dazwischen zwischen Wisch und Tipp hindurch.
+        #expect(SwipeRowGesture.minimumDragDistance <= SwipeRowGesture.axisLock)
+    }
+
+    @Test("Senkrecht gezogen gibt die Zeile an die Liste ab")
     func aVerticalDragScrolls() {
         var gesture = makeGesture()
-        gesture.touchDown(isOpen: false)
+        gesture.touchDown()
         gesture.drag(translation: CGSize(width: -6, height: -40))
         gesture.drag(translation: CGSize(width: -14, height: -120))
 
         #expect(gesture.axis == .vertical)
         #expect(gesture.offset == 0)
 
+        // Auch wenn es danach waagerecht weitergeht: die Achse steht, der Finger
+        // gehört der Liste, und die Zeile rührt sich bis zum Loslassen nicht.
+        gesture.drag(translation: CGSize(width: -80, height: -130))
+        #expect(gesture.axis == .vertical)
+        #expect(gesture.offset == 0)
+        #expect(gesture.restingOffset == 0)
+
         let outcome = gesture.release(
-            translation: CGSize(width: -14, height: -120),
-            predicted: CGSize(width: -20, height: -400),
-            startX: 40,
-            width: 360
+            translation: CGSize(width: -80, height: -130),
+            predicted: CGSize(width: -140, height: -400)
         )
+        // Kein Öffnen, kein Tipp, kein Löschen — die senkrechte Bewegung war die
+        // der Liste.
         #expect(outcome == .none)
+        #expect(gesture.offset == 0)
     }
 
     @Test("Wer bei offener Zeile zu scrollen beginnt, schliesst sie")
@@ -91,7 +106,7 @@ struct SwipeRowGestureTests {
         var gesture = makeGesture()
         gesture.settle(at: -Self.actionWidth)
 
-        gesture.touchDown(isOpen: true)
+        gesture.touchDown()
         let closes = gesture.drag(translation: CGSize(width: 2, height: 60))
 
         #expect(closes)
@@ -103,7 +118,7 @@ struct SwipeRowGestureTests {
     @Test("Über der halben Breite bleibt die Fläche stehen")
     func aFullSwipeOpensTheRow() {
         var gesture = makeGesture()
-        gesture.touchDown(isOpen: false)
+        gesture.touchDown()
         gesture.drag(translation: CGSize(width: -20, height: 2))
         gesture.drag(translation: CGSize(width: -70, height: 4))
 
@@ -112,9 +127,7 @@ struct SwipeRowGestureTests {
 
         let outcome = gesture.release(
             translation: CGSize(width: -70, height: 4),
-            predicted: CGSize(width: -80, height: 4),
-            startX: 200,
-            width: 360
+            predicted: CGSize(width: -80, height: 4)
         )
 
         #expect(outcome == .open)
@@ -125,7 +138,7 @@ struct SwipeRowGestureTests {
     @Test("Ein abgebrochener Wisch federt sauber zurück")
     func anAbandonedSwipeSpringsBack() {
         var gesture = makeGesture()
-        gesture.touchDown(isOpen: false)
+        gesture.touchDown()
         gesture.drag(translation: CGSize(width: -20, height: 0))
         gesture.drag(translation: CGSize(width: -30, height: 0))
 
@@ -133,9 +146,7 @@ struct SwipeRowGestureTests {
 
         let outcome = gesture.release(
             translation: CGSize(width: -30, height: 0),
-            predicted: CGSize(width: -32, height: 0),
-            startX: 200,
-            width: 360
+            predicted: CGSize(width: -32, height: 0)
         )
 
         #expect(outcome == .close)
@@ -148,15 +159,13 @@ struct SwipeRowGestureTests {
     @Test("Ein kurzer, schneller Wisch öffnet trotzdem")
     func aFlickOpensTheRow() {
         var gesture = makeGesture()
-        gesture.touchDown(isOpen: false)
+        gesture.touchDown()
         gesture.drag(translation: CGSize(width: -20, height: 0))
         gesture.drag(translation: CGSize(width: -32, height: 0))
 
         let outcome = gesture.release(
             translation: CGSize(width: -32, height: 0),
-            predicted: CGSize(width: -180, height: 0),
-            startX: 200,
-            width: 360
+            predicted: CGSize(width: -180, height: 0)
         )
 
         #expect(outcome == .open)
@@ -166,7 +175,7 @@ struct SwipeRowGestureTests {
     @Test("Weiter als die Fläche lässt sich die Zeile nicht ziehen")
     func theRowStopsAtTheOverpull() {
         var gesture = makeGesture()
-        gesture.touchDown(isOpen: false)
+        gesture.touchDown()
         gesture.drag(translation: CGSize(width: -400, height: 0))
 
         #expect(gesture.offset == -(Self.actionWidth + SwipeRowGesture.overpull))
@@ -175,7 +184,7 @@ struct SwipeRowGestureTests {
     @Test("Nach rechts geht die geschlossene Zeile nicht auf")
     func theClosedRowDoesNotOpenToTheRight() {
         var gesture = makeGesture()
-        gesture.touchDown(isOpen: false)
+        gesture.touchDown()
         gesture.drag(translation: CGSize(width: 120, height: 0))
 
         #expect(gesture.offset == 0)
@@ -188,16 +197,8 @@ struct SwipeRowGestureTests {
         var gesture = makeGesture()
         gesture.settle(at: -Self.actionWidth)
 
-        gesture.touchDown(isOpen: true)
-        gesture.drag(translation: .zero)
-
         // Aufgesetzt rechts, in der freigelegten Fläche.
-        let outcome = gesture.release(
-            translation: .zero,
-            predicted: .zero,
-            startX: 320,
-            width: 360
-        )
+        let outcome = gesture.tap(atX: 320, width: 360)
 
         #expect(outcome == .delete)
         #expect(gesture.offset == 0)
@@ -208,15 +209,7 @@ struct SwipeRowGestureTests {
         var gesture = makeGesture()
         gesture.settle(at: -Self.actionWidth)
 
-        gesture.touchDown(isOpen: true)
-        gesture.drag(translation: .zero)
-
-        let outcome = gesture.release(
-            translation: .zero,
-            predicted: .zero,
-            startX: 60,
-            width: 360
-        )
+        let outcome = gesture.tap(atX: 60, width: 360)
 
         #expect(outcome == .close)
         #expect(gesture.offset == 0)
@@ -232,17 +225,9 @@ struct SwipeRowGestureTests {
         #expect(gesture.offset == 0)
         #expect(gesture.restingOffset == 0)
 
-        gesture.touchDown(isOpen: false)
-        let outcome = gesture.release(
-            translation: .zero,
-            predicted: .zero,
-            startX: 320,
-            width: 360
-        )
-
         // Der Finger liegt zwar dort, wo eben noch die Löschfläche war — die
         // steht aber nicht mehr offen. Ein Tipp darf hier nichts löschen.
-        #expect(outcome == .tap)
+        #expect(gesture.tap(atX: 320, width: 360) == .tap)
     }
 }
 

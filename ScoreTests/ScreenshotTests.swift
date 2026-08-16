@@ -117,11 +117,62 @@ struct ScreenshotTests {
     }
 
     private static func makeContext() throws -> ModelContext {
-        let container = try ModelContainer(
+        ModelContext(try makeContainer())
+    }
+
+    /// Ein Behälter mit gesicherten Fächern — für Ansichten, die ihre Fächer
+    /// selbst über `@Query` holen statt sie gereicht zu bekommen.
+    ///
+    /// Zurück kommt der Behälter und nicht sein Hauptkontext: Ein `ModelContext`
+    /// hält seinen Behälter nicht am Leben. Wer nur den Kontext behält, arbeitet
+    /// kurz darauf auf einem abgeräumten Behälter, und das endet im Absturz.
+    private static func makeStoredSubjects(
+        _ adjust: (Subject) -> Void = { _ in }
+    ) throws -> ModelContainer {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        for subject in makeSubjects(in: context) { adjust(subject) }
+        try context.save()
+        return container
+    }
+
+    private static func makeContainer() throws -> ModelContainer {
+        try ModelContainer(
             for: Subject.self, SemesterResult.self, GradeEntry.self, StudentProfile.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
-        return ModelContext(container)
+    }
+
+    /// Ein Stand der Einrichtung, in dem die Wolke der Wahl-Basisfächer schon
+    /// gefüllte Chips trägt — daneben steht der gestrichelte Tag.
+    private static func makeSetupModel() -> OnboardingViewModel {
+        let model = OnboardingViewModel()
+        model.advancedSubjects = ["Deutsch", "Mathematik", "Biologie"]
+        model.requiredBasicSubjects = ["Englisch", "Geschichte"]
+        model.electiveBasicSubjects = ["Sport", "Musik"]
+        model.step = .electiveBasicSubjects
+        return model
+    }
+
+    /// Das Element mit dieser Beschriftung, irgendwo im Baum der Bedienungshilfen.
+    private static func node(labelled key: String.LocalizationValue, in root: UIView) -> NSObject? {
+        let wanted = String.scoreLocalized(key)
+        var found: NSObject?
+
+        func walk(_ node: NSObject) {
+            guard found == nil else { return }
+            if node.accessibilityLabel == wanted {
+                found = node
+                return
+            }
+            for child in (node.accessibilityElements as? [NSObject]) ?? [] { walk(child) }
+            if let view = node as? UIView {
+                for subview in view.subviews { walk(subview) }
+            }
+        }
+
+        walk(root)
+        return found
     }
 
     // MARK: - Die Bilder
@@ -289,6 +340,150 @@ struct ScreenshotTests {
             try await capture("eigenes-fach-ipad", scheme: scheme, size: Device.pad, context: context) {
                 OnboardingPadLayout(model: model, primaryTitle: "Weiter") {}
                     .background(ScorePalette.background)
+            }
+        }
+    }
+
+    @Test("Der Eingabe-Chip neben den gefüllten Chips der Wolke")
+    func customSubjectEditorNextToAFilledChip() async throws {
+        let context = try Self.makeContext()
+
+        // Der Tag wird über den Baum der Bedienungshilfen angetippt und der Name
+        // von aussen gesetzt — genau der Zustand aus dem Beleg des Nutzers, in
+        // dem der Tag früher über und unter der Kante seiner Nachbarn stand.
+        func startTyping(_ model: OnboardingViewModel) -> (UIWindow) async throws -> Void {
+            { window in
+                guard let tag = Self.node(labelled: "Eigenes Fach", in: window) else { return }
+                _ = tag.accessibilityActivate()
+                try await Task.sleep(for: .seconds(0.4))
+                model.customSubjectDraft = "Astronomie"
+            }
+        }
+
+        for scheme in ColorScheme.allCases {
+            // Auf dem iPhone der Schritt mit der kurzen Wolke: Dort steht der Tag
+            // in derselben Zeile wie ein gewöhnlicher Chip, und die gleiche Höhe
+            // ist im Bild direkt nachprüfbar.
+            // Auf der schmalen Breite passt neben den Eingabezustand genau ein
+            // Chip. Genau der wird gebraucht: Der Beleg soll die gleiche Höhe in
+            // einer Zeile zeigen, nicht über zwei.
+            let phoneModel = Self.makeSetupModel()
+            phoneModel.requiredBasicSubjects = ["Englisch"]
+            phoneModel.electiveBasicSubjects = []
+            phoneModel.step = .oralExamSubjects
+            try await capture(
+                "eingabe-chip-iphone",
+                scheme: scheme,
+                size: Device.phone,
+                context: context,
+                beforeCapture: startTyping(phoneModel)
+            ) {
+                ScrollView {
+                    OralExamSubjectsStep(model: phoneModel)
+                        .padding(ScoreMetrics.Spacing.xl)
+                }
+                .background(ScorePalette.background)
+            }
+
+            let padModel = Self.makeSetupModel()
+            try await capture(
+                "eingabe-chip-ipad",
+                scheme: scheme,
+                size: Device.pad,
+                context: context,
+                beforeCapture: startTyping(padModel)
+            ) {
+                OnboardingPadLayout(model: padModel, primaryTitle: "Weiter") {}
+                    .background(ScorePalette.background)
+            }
+        }
+    }
+
+    @Test("Ein mündliches Prüfungsfach trägt seinen Tag in der Kopfzeile")
+    func oralExamSubjectShowsItsTag() async throws {
+        let context = try Self.makeContext()
+        let subjects = Self.makeSubjects(in: context)
+        // Bildende Kunst ist eines der beiden mündlichen Prüfungsfächer.
+        let kunst = try #require(subjects.first { $0.name == "Bildende Kunst" })
+
+        UserDefaults.standard.set(3, forKey: SubjectPreference.selectedSemesterKey)
+
+        for scheme in ColorScheme.allCases {
+            try await capture("pruefungsfach-tag-iphone", scheme: scheme, size: Device.phone, context: context) {
+                NavigationStack { SubjectDetailView(subject: kunst) }
+            }
+
+            try await capture("pruefungsfach-tag-ipad", scheme: scheme, size: Device.pad, context: context) {
+                PadSubjectDetailView(
+                    subject: kunst,
+                    summaries: SubjectOverview.summaries(of: subjects, semesterIndex: 3),
+                    semesterIndex: .constant(3),
+                    route: .constant(.subject(kunst.identifier))
+                )
+                .background(ScorePalette.background)
+            }
+        }
+    }
+
+    @Test("Die Fächerliste mit offener und mit erledigter Prüfungsfach-Wahl")
+    func subjectListBeforeAndAfterTheOralExamChoice() async throws {
+        // Die Liste holt ihre Fächer selbst über `@Query`, und das tut sie im
+        // Hauptkontext des Behälters. Angelegt wird wie überall sonst in einem
+        // eigenen Kontext — gesichert, damit der Hauptkontext sie sieht.
+        let open = try Self.makeStoredSubjects { $0.isOralExamSubject = false }
+        let done = try Self.makeStoredSubjects()
+        let openContext = open.mainContext
+        let doneContext = done.mainContext
+
+        UserDefaults.standard.set(3, forKey: SubjectPreference.selectedSemesterKey)
+
+        // Die Liste ist länger als ein Gerät; der Einstieg zu den
+        // Prüfungsfächern steht ganz unten. Sie wird deshalb in voller
+        // Inhaltshöhe aufgenommen.
+        let size = CGSize(width: Device.phone.width, height: 1700)
+
+        for scheme in ColorScheme.allCases {
+            try await capture("faecherliste-offen-iphone", scheme: scheme, size: size, context: openContext) {
+                SubjectListView()
+            }
+
+            try await capture("faecherliste-erledigt-iphone", scheme: scheme, size: size, context: doneContext) {
+                SubjectListView()
+            }
+
+            // Auf dem iPad trägt die Seitenleiste denselben Einstieg — dort
+            // stand nie eine Mahnung, wohl aber jetzt das Siegel an den beiden
+            // Fächern.
+            try await capture(
+                "faecherliste-offen-ipad",
+                scheme: scheme,
+                size: CGSize(width: 300, height: Device.pad.height),
+                context: openContext
+            ) {
+                PadSidebar(
+                    route: .constant(.dashboard),
+                    summaries: SubjectOverview.summaries(
+                        of: (try? openContext.fetch(FetchDescriptor<Subject>())) ?? [],
+                        semesterIndex: 3
+                    )
+                )
+                .background(ScorePalette.background)
+            }
+
+            try await capture(
+                "faecherliste-erledigt-ipad",
+                scheme: scheme,
+                size: CGSize(width: 300, height: Device.pad.height),
+                context: doneContext
+            ) {
+                PadSidebar(
+                    route: .constant(.dashboard),
+                    summaries: SubjectOverview.summaries(
+                        of: (try? doneContext.fetch(FetchDescriptor<Subject>())) ?? [],
+                        semesterIndex: 3
+                    )
+                )
+                .background(ScorePalette.background)
             }
         }
     }
@@ -462,6 +657,7 @@ struct ScreenshotTests {
         scheme: ColorScheme,
         size: CGSize,
         context: ModelContext,
+        beforeCapture: ((UIWindow) async throws -> Void)? = nil,
         @ViewBuilder content: () -> Content
     ) async throws {
         let directory = try #require(ScreenshotOutput.directory)
@@ -499,11 +695,25 @@ struct ScreenshotTests {
             window.rootViewController = nil
         }
 
+        // Ohne diesen Anstoss bleibt der Baum der Bedienungshilfen im
+        // Testprozess leer — über ihn wird bedient, wo ein Bild einen Zustand
+        // zeigen soll, den erst ein Tipp herstellt.
+        if beforeCapture != nil {
+            _ = UIApplication.shared.accessibilityActivate()
+        }
+
         // Der längste Aufgang liegt bei Verzögerung plus Dauer, also gut
         // anderthalb Sekunden. Zwei sind der Sicherheitsabstand darauf.
         window.layoutIfNeeded()
         try await Task.sleep(for: .seconds(2))
         window.layoutIfNeeded()
+
+        if let beforeCapture {
+            try await beforeCapture(window)
+            window.layoutIfNeeded()
+            try await Task.sleep(for: .seconds(0.5))
+            window.layoutIfNeeded()
+        }
 
         // `layer.render(in:)` und nicht `drawHierarchy`: Letzteres nimmt nur auf,
         // was tatsächlich auf dem Bildschirm liegt, und schneidet an dessen Kante

@@ -1891,6 +1891,23 @@
         }
       }
     },
+    "Da geht was, %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Da geht was, %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coming along, %@"
+          }
+        }
+      }
+    },
     "Damit verschwinden dein Profil, %lld Fächer und %lld Leistungen — von diesem Gerät und aus deiner iCloud, also auch von deinen anderen Geräten. Einen Server von uns gibt es nicht, dort bleibt nichts zurück. Rückgängig machen lässt sich das nicht." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2467,6 +2484,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You can change any of this later in Settings."
+          }
+        }
+      }
+    },
+    "Du packst das, %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du packst das, %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You got this, %@"
           }
         }
       }
@@ -3113,6 +3147,23 @@
         }
       }
     },
+    "Gut unterwegs, %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gut unterwegs, %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On track, %@"
+          }
+        }
+      }
+    },
     "HJ %@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3687,6 +3738,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AC"
+          }
+        }
+      }
+    },
+    "Leg los, %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leg los, %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Let’s go, %@"
           }
         }
       }

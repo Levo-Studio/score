@@ -53,6 +53,15 @@ struct PadShell: View {
 
     @State private var route: PadRoute = .dashboard
 
+    /// Nur für die Begrüssung in der Kopfleiste.
+    ///
+    /// Die Kopfleiste steht über jedem Ziel, also auch über den Einstellungen und
+    /// dem Fach-Editor — sie kann den Stand darum nicht von der Übersicht
+    /// bekommen, die dann gar nicht auf dem Schirm ist. Gerechnet wird mit
+    /// derselben Schnittstelle wie dort, `DashboardViewModel`, und nur dann, wenn
+    /// sich die Leistungen tatsächlich geändert haben.
+    @State private var greetingModel = DashboardViewModel()
+
     /// Ob die Aufschlüsselung von Block I gerade über dem Inhalt liegt.
     @State private var isBreakdownPresented = false
 
@@ -126,6 +135,13 @@ struct PadShell: View {
         // Safe Area, und unten sowie rechts bleibt ein schwarzes Band stehen.
         .background(ScorePalette.background.ignoresSafeArea())
         .tint(ScorePalette.accent)
+        .onChange(of: inputs, initial: true) { _, newInputs in
+            greetingModel.update(with: newInputs)
+        }
+    }
+
+    private var inputs: [SubjectInput] {
+        subjects.map(SubjectInput.init)
     }
 
     private var sidebar: some View {
@@ -325,6 +341,8 @@ struct PadShell: View {
                     .foregroundStyle(ScorePalette.inkSecondary)
                 PadSemesterSegments(selection: $semesterIndex)
             }
+
+            greeting
         }
         .padding(.horizontal, PadMetrics.contentPadding)
         .padding(.top, ScoreMetrics.Spacing.lg)
@@ -334,6 +352,53 @@ struct PadShell: View {
                 .fill(ScorePalette.line)
                 .frame(height: 1)
         }
+    }
+
+    // MARK: - Begrüssung und Profilbild
+
+    /// Zuspruch und eigenes Bild am äusseren Ende der Kopfleiste.
+    ///
+    /// Auf dem iPhone stehen beide über dem Score, weil das dort der erste
+    /// Bildschirm ist. Auf dem iPad gibt es keinen ersten Bildschirm — die
+    /// Sidebar führt direkt überallhin. Also gehören sie in die Kopfleiste, die
+    /// über allem steht, und dort ans äussere Ende: erst der Ort, an dem man
+    /// arbeitet (Titel, Halbjahr), dann der Mensch, der dort arbeitet.
+    ///
+    /// Keine hochskalierte iPhone-Kopfzeile: Die Zeile steht neben dem Bild statt
+    /// darunter, im Schriftgrad der Kopfleiste und nicht im Schaugrad des
+    /// Dashboards. Die Farbgebung der Kopfleiste bleibt unangetastet; der
+    /// Haarstrich ist derselbe, der die Kopfleiste ohnehin nach unten abschliesst.
+    private var greeting: some View {
+        HStack(spacing: ScoreMetrics.Spacing.sm) {
+            Rectangle()
+                .fill(ScorePalette.line)
+                .frame(width: 1, height: 26)
+
+            // Wird es eng — Hochformat mit offener Sidebar, grosse Schrift —,
+            // weicht die Zeile, nicht das Bild: Ein abgeschnittener Zuspruch wäre
+            // schlimmer als gar keiner.
+            ViewThatFits(in: .horizontal) {
+                greetingText
+                Color.clear.frame(width: 0, height: 0)
+            }
+
+            ProfileAvatar(profile: profile, size: 34)
+        }
+    }
+
+    /// Die Zeile kommt aus `DashboardGreeting` und nicht aus dem Katalog dieser
+    /// View — dort stehen alle Stufen beieinander.
+    private var greetingText: some View {
+        greetingModel.greetingText(firstName: profile.firstName)
+            .font(ScoreTypography.archivo(700, 14))
+            .tracking(em: -0.02, at: 14)
+            .foregroundStyle(ScorePalette.ink)
+            .lineLimit(1)
+            // Ohne feste Grösse böte die Zeile `ViewThatFits` an, sich schmal
+            // machen zu können — sie passte dann immer und würde abgeschnitten.
+            .fixedSize()
+            .contentTransition(.opacity)
+            .scoreAnimation(ScoreMotion.valueChange, value: greetingModel.greetingStage)
     }
 
     /// Klappt die Sidebar ein und aus. Der Pfeil zeigt in die Richtung, in die

@@ -38,8 +38,10 @@ struct ExamResultSection: View {
                     additionalOralToggle
 
                     if draft.oralExamPoints != nil {
+                        // Die Beschriftung wiederholt nicht den Schalter darüber:
+                        // dort steht, *ob* es sie gab, hier *wie sie ausging*.
                         ExamPointsField(
-                            title: Text("Zusätzliche mündliche Prüfung"),
+                            title: Text("Mündliches Ergebnis"),
                             points: $draft.oralExamPoints
                         )
                     }

@@ -296,7 +296,7 @@ struct BlockOneBreakdownView: View {
     private func projectionNote(_ breakdown: BlockOneBreakdown) -> Text {
         let missing = breakdown.result.examBlock.missingExamCount
         let level = ScoreNumberFormat.decimal(breakdown.result.projectionLevel)
-        return Text("Noch \(missing) von fünf Prüfungen offen. Score setzt sie mit \(level) Punkten an — deinem heutigen Stand — und rechnet die Gesamtpunktzahl daraus hoch.")
+        return Text("Noch \(missing) von 5 Prüfungen offen. Score setzt sie mit \(level) Punkten an — deinem heutigen Stand — und rechnet die Gesamtpunktzahl daraus hoch.")
     }
 
     // MARK: - 2. Die Mindestbedingungen

@@ -165,7 +165,7 @@ struct PadSettingsView: View {
             PadCard(horizontalPadding: ScoreMetrics.Spacing.lg, cornerRadius: 24) {
                 VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
                     PadCardTitle(title: "So rechnet Score")
-                    Text("Block I besteht aus 42 Halbjahresergebnissen: 12 aus deinen drei Leistungsfächern plus 30 aus deinen Basisfächern. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt.")
+                    Text("Eingebracht werden 40 Kurse: 12 aus deinen drei Leistungsfächern plus 28 aus deinen Basisfächern. Zwei der drei Leistungsfächer zählen doppelt. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt.")
                         .font(ScoreTypography.publicSans(400, 12))
                         .lineSpacing(5)
                         .foregroundStyle(ScorePalette.inkSecondary)

@@ -1460,67 +1460,6 @@
         }
       }
     },
-    "Automatisch geklammert: Block I fasst %lld Kurse, und dieser gehört zu den schwächsten. Ab %lld Punkten bleibt ein Wahl-Basisfach-Kurs drin." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Automatisch geklammert: Block I fasst %1$lld Kurse, und dieser gehört zu den schwächsten. Ab %2$#@points@ bleibt ein Wahl-Basisfach-Kurs drin."
-          },
-          "substitutions" : {
-            "points" : {
-              "argNum" : 2,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg Punkt"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg Punkten"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bracketed automatically: Block I holds %1$lld courses, and this one is among the weakest. From %2$#@points@ upwards a elective basic course course stays in."
-          },
-          "substitutions" : {
-            "points" : {
-              "argNum" : 2,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg point"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg points"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "Automatisch geklammert: Eingebracht werden %lld Kurse, und dieser gehört zu den schwächsten. Ab %lld Punkten bleibt ein Wahl-Basisfach-Kurs drin." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1742,23 +1681,6 @@
         }
       }
     },
-    "Block I besteht aus 42 Halbjahresergebnissen: 12 aus deinen drei Leistungsfächern plus 30 aus deinen Basisfächern. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I besteht aus 42 Halbjahresergebnissen: 12 aus deinen drei Leistungsfächern plus 30 aus deinen Basisfächern. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I is made up of 42 semester results: 12 from your three advanced courses plus 30 from your basic courses. The required basic courses are fixed, and the rest is filled automatically from your best remaining courses."
-          }
-        }
-      }
-    },
     "Block I besteht aus 42 Halbjahresergebnissen: 12 aus deinen drei Leistungsfächern plus 30 aus den Wahl-Basisfächern. Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1772,23 +1694,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Block I is made up of 42 semester results: 12 from your three advanced courses plus 30 from the elective basic courses. Required basic courses are fixed, and the rest is filled automatically from your best remaining courses."
-          }
-        }
-      }
-    },
-    "Block I fasst 42 Halbjahresergebnisse. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 42 übrig sind. Aus dem Punkteschnitt dieser Kurse folgt beides — Block I als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I fasst 42 Halbjahresergebnisse. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 42 übrig sind. Aus dem Punkteschnitt dieser Kurse folgt beides — Block I als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I holds 42 semester results. If you have more, they get bracketed: first whatever you bracketed yourself, then the weakest ones from the bottom until 42 remain. The point average of those courses gives you both — Block I as the average times 42, and the expected final grade via the conversion above."
           }
         }
       }
@@ -2828,6 +2733,23 @@
         }
       }
     },
+    "Eingebracht werden 40 Kurse: 12 aus deinen drei Leistungsfächern plus 28 aus deinen Basisfächern. Zwei der drei Leistungsfächer zählen doppelt. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingebracht werden 40 Kurse: 12 aus deinen drei Leistungsfächern plus 28 aus deinen Basisfächern. Zwei der drei Leistungsfächer zählen doppelt. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "40 courses are submitted: 12 from your three advanced subjects plus 28 from your basic subjects. Two of the three advanced subjects count twice. The required basic subjects are fixed; the rest is filled automatically from your best remaining courses."
+          }
+        }
+      }
+    },
     "Einrichten" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3742,19 +3664,19 @@
         }
       }
     },
-    "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. Block I fasst 42 Kurse — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso." : {
+    "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. Eingebracht werden 40 Kurse — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. Block I fasst 42 Kurse — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso."
+            "value" : "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. Eingebracht werden 40 Kurse — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Every grade counts towards its part-grade with its own percentage. Block I holds 42 courses — if you have more, Score brackets the weakest from the bottom. Required basic courses always stay in, and so do the courses of your exam subjects."
+            "value" : "Every assessment enters its partial grade with its percentage. 40 courses are submitted — if you have more, Score brackets the weakest from the bottom. Required basic subjects always stay in, and so do the courses of your exam subjects."
           }
         }
       }
@@ -4670,6 +4592,23 @@
         }
       }
     },
+    "Mündliches Ergebnis" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mündliches Ergebnis"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oral result"
+          }
+        }
+      }
+    },
     "Mündliches Prüfungsfach" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4857,19 +4796,19 @@
         }
       }
     },
-    "Noch %lld von fünf Prüfungen offen. Score setzt sie mit %@ Punkten an — deinem heutigen Stand — und rechnet die Gesamtpunktzahl daraus hoch." : {
+    "Noch %lld von 5 Prüfungen offen. Score setzt sie mit %@ Punkten an — deinem heutigen Stand — und rechnet die Gesamtpunktzahl daraus hoch." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Noch %lld von fünf Prüfungen offen. Score setzt sie mit %@ Punkten an — deinem heutigen Stand — und rechnet die Gesamtpunktzahl daraus hoch."
+            "value" : "Noch %lld von 5 Prüfungen offen. Score setzt sie mit %@ Punkten an — deinem heutigen Stand — und rechnet die Gesamtpunktzahl daraus hoch."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld of five exams still to come. Score assumes %2$@ points for them — where you stand today — and projects the total from that."
+            "value" : "%1$lld of 5 exams still to come. Score assumes %2$@ points for them — where you stand today — and projects the total from that."
           }
         }
       }
@@ -6140,67 +6079,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Of the 40 courses, %lld are still open after the ones that cannot be bracketed. Score brackets from the bottom: the elective subjects stand here in exactly the order it hits them."
-          }
-        }
-      }
-    },
-    "Von den 42 Kursen sind nach den nicht klammerbaren noch %lld offen. Score klammert von unten: hier stehen die Wahl-Basisfächer in genau der Reihenfolge, in der es sie trifft." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nach den nicht klammerbaren %#@open@ von den 42 offen. Score klammert von unten: hier stehen die Wahl-Basisfächer in genau der Reihenfolge, in der es sie trifft."
-          },
-          "substitutions" : {
-            "open" : {
-              "argNum" : 1,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "ist noch %arg Kurs"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "sind noch %arg Kurse"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Once the ones that cannot be bracketed are in, %#@open@ of the 42 still open. Score brackets from the bottom: here are the basic subjects in exactly the order it works through them."
-          },
-          "substitutions" : {
-            "open" : {
-              "argNum" : 1,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg course is"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg courses are"
-                    }
-                  }
-                }
-              }
-            }
           }
         }
       }

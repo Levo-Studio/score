@@ -10,8 +10,9 @@ import SwiftUI
 /// dazukommt. Eine Zahl heisst: Score nimmt die *besten* so vielen Ergebnisse
 /// dieses Fachs und klammert die übrigen aus.
 ///
-/// Für Leistungsfächer erscheint die Auswahl gar nicht. Sie bringen immer alle
-/// vier Halbjahre ein — das ist die Regel und keine Einstellung, und ein
+/// Für Prüfungsfächer erscheint die Auswahl gar nicht — für Leistungsfächer
+/// ebenso wenig wie für mündliche. Ihre belegten Halbjahre sind
+/// anrechnungspflichtig, das ist die Regel und keine Einstellung, und ein
 /// gesperrter Schalter würde etwas anderes behaupten.
 struct CourseLimitPicker: View {
 
@@ -58,7 +59,7 @@ struct CourseLimitPicker: View {
     /// Sprache, in der die Aufschlüsselung es später erklärt.
     private var note: Text {
         guard isAvailable else {
-            return Text("Leistungsfächer bringen immer alle vier Halbjahre ein.")
+            return Text("Prüfungsfächer bringen immer alle belegten Kurse ein — Leistungsfächer wie mündliche.")
         }
         guard !options.isEmpty else {
             return Text("Mit einem belegten Halbjahr gibt es nichts auszuwählen.")

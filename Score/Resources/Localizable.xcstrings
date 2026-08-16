@@ -4160,23 +4160,6 @@
         }
       }
     },
-    "Leistungsfächer bringen immer alle vier Halbjahre ein." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Leistungsfächer bringen immer alle vier Halbjahre ein."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Advanced subjects always contribute all four semesters."
-          }
-        }
-      }
-    },
     "Los geht’s" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5186,6 +5169,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exam subject: every semester must be counted and cannot be bracketed."
+          }
+        }
+      }
+    },
+    "Prüfungsfächer bringen immer alle belegten Kurse ein — Leistungsfächer wie mündliche." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüfungsfächer bringen immer alle belegten Kurse ein — Leistungsfächer wie mündliche."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exam subjects always contribute every course you took — advanced and oral alike."
           }
         }
       }

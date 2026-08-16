@@ -44,10 +44,10 @@ struct SwipeRowGestureTests {
     func aShortSwipeIsNotATap() {
         // Genau der Fall, der die Zeile versehentlich öffnete: acht Punkt nach
         // links — zu wenig für die Achsensperre, aber innerhalb dessen, was ein
-        // `onTapGesture` noch als Tipp durchgehen liess. Der Wisch fängt vorher
-        // an und nimmt dem Tipp damit den Zug.
-        #expect(SwipeRowGesture.minimumDragDistance <= 8)
-
+        // Tipp noch durchgehen liess. Dass daraus kein Tipp wird, sorgt heute
+        // der `UITapGestureRecognizer` selbst: er scheitert, sobald der Finger
+        // weiter als `allowableMovement` wandert. Hier steht die andere Hälfte —
+        // aus so wenig Bewegung wird auch kein Wisch.
         var gesture = makeGesture()
         gesture.touchDown()
         gesture.drag(translation: CGSize(width: -8, height: 0))
@@ -63,15 +63,21 @@ struct SwipeRowGestureTests {
 
     // MARK: - Achsen
 
-    @Test("Die Geste greift den Finger nicht schon beim Aufsetzen")
-    func theGestureLeavesTheFingerToTheList() {
-        // Der Kern der Regression: mit `minimumDistance: 0` hing der Finger vom
-        // ersten Moment an dieser Zeile, und die Liste liess sich nicht mehr
-        // scrollen — überall dort, wo Zeilen stehen, also überall.
-        #expect(SwipeRowGesture.minimumDragDistance > 0)
-        // Und der Wisch muss laufen, bevor sich die Achse festlegt, sonst fiele
-        // eine Bewegung dazwischen zwischen Wisch und Tipp hindurch.
-        #expect(SwipeRowGesture.minimumDragDistance <= SwipeRowGesture.axisLock)
+    @Test("Unterhalb der Achsensperre rührt sich die Zeile nicht")
+    func theRowStaysPutBelowTheAxisLock() {
+        // Ob die Liste scrollbar bleibt, entscheidet sich nicht mehr hier: das
+        // tut ``SwipeRowPanGestureRecognizer``, indem er senkrechte Züge gar
+        // nicht erst annimmt, und gemessen wird es an der laufenden Oberfläche
+        // in ``SwipeRowScrollTests``. Eine Zahl in diesem Ablauf kann das nicht
+        // belegen — genau diese Verwechslung hat den ersten Anlauf gekostet.
+        //
+        // Was hier gilt: solange die Achse nicht steht, bewegt sich nichts.
+        var gesture = makeGesture()
+        gesture.touchDown()
+        gesture.drag(translation: CGSize(width: -(SwipeRowGesture.axisLock - 1), height: 0))
+
+        #expect(gesture.axis == nil)
+        #expect(gesture.offset == 0)
     }
 
     @Test("Senkrecht gezogen gibt die Zeile an die Liste ab")

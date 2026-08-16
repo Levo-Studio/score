@@ -73,31 +73,27 @@ extension View {
 /// zur Grösse bei — die Zeile ist so hoch wie ihr Inhalt, beide Spalten setzen
 /// oben an, und die Fläche ist trotzdem genau so hoch wie die Zeile.
 ///
-/// ## Warum Wisch und Tipp einander ausschliessen
+/// ## Warum die Geste bei UIKit liegt
 ///
-/// Zuvor lagen ein `onTapGesture`, ein `DragGesture` und ein `Button` unter der
-/// Zeile übereinander. Ein kurzer Wisch von unter zehn Punkt legte die Achse nie
-/// fest, blieb aber innerhalb dessen, was `onTapGesture` noch als Tipp durchgehen
-/// lässt — und öffnete die Zeile, obwohl gewischt wurde.
+/// Die Zeilen stehen in einer `ScrollView`, und deren Finger hängt an einem
+/// `UIScrollViewPanGestureRecognizer`. Eine `DragGesture` ist dagegen kein
+/// Erkenner — SwiftUI führt seine Gesten in einem eigenen Ereignissystem, und im
+/// Baum der laufenden Ansicht steht dafür nichts. Beide Seiten haben damit keine
+/// gemeinsame Grundlage, auf der sich der Konflikt austragen liesse:
+/// `simultaneousGesture` verhandelt nur SwiftUI-Gesten untereinander und sagt
+/// der `UIScrollView` nichts. Es entschied also niemand, SwiftUI nahm den Finger,
+/// und die Liste stand — der Reiter „Fächer" liess sich auf dem iPhone nicht
+/// mehr scrollen. An ``SwipeRowGesture/minimumDragDistance`` zu drehen half
+/// nicht: die Strecke verschiebt nur den Moment des Zugriffs, nicht das fehlende
+/// Aushandeln.
 ///
-/// Jetzt hängt an der Zeile eine **ausschliessende** Geste: erst der Wisch, und
-/// nur wenn der gar nicht erst anfängt, der Tipp. Wer sechs Punkt weit zieht,
-/// hat gewischt, und der Tipp kommt nicht mehr zum Zug — ohne Zeitfenster und
-/// ohne Reihenfolge, auf die man sich verlassen müsste.
-///
-/// ## Warum der Wisch eine Mindeststrecke braucht
-///
-/// `DragGesture(minimumDistance: 0)` greift den Finger schon beim Aufsetzen. Die
-/// umgebende `ScrollView` kommt dann nicht mehr an ihn heran, und die Liste steht
-/// fest — überall dort, wo Zeilen stehen, also überall. Genau daran liess sich
-/// der Reiter „Fächer" auf dem iPhone nicht mehr scrollen. Der Wisch fängt
-/// deshalb erst nach ``SwipeRowGesture/minimumDragDistance`` an; bis dahin gehört
-/// der Finger der Liste. Der Tipp braucht keine Strecke und nimmt der Liste
-/// nichts weg — eine Tippgeste hält keine `ScrollView` auf.
-///
-/// Zusätzlich als `simultaneousGesture`: eine reguläre Geste gewönne gegen die
-/// Liste. Überwiegt die Senkrechte, gibt diese Geste ab und die Zeile rührt sich
-/// nicht.
+/// Wisch und Tipp hängen deshalb an ``SwipeRowGestureHost`` — echte
+/// `UIGestureRecognizer` auf einer durchsichtigen `UIView` über der Zeile. Ab da
+/// entscheidet UIKit, so wie es das zwischen `List` und `swipeActions` auch tut:
+/// Der Wisch springt nur an, wenn die Bewegung überwiegend waagerecht ist, und
+/// gibt bei einem senkrechten Zug sofort ab. Dass ein Wisch nicht versehentlich
+/// die Zeile öffnet, kommt aus dem Tipp-Erkenner selbst — er scheitert, sobald
+/// der Finger weiter als `allowableMovement` wandert.
 ///
 /// ## Warum der Inhalt nicht selbst antippbar ist
 ///
@@ -168,7 +164,10 @@ struct SwipeToDelete<Content: View>: View {
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .contentShape(Rectangle())
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
-            .simultaneousGesture(swipe)
+            // Die Erkenner liegen als Überlagerung über der Zeile. Sie trägt
+            // nichts Sichtbares und hält allein den Pan und den Tipp; der Inhalt
+            // darunter ist ohnehin nicht antippbar.
+            .overlay { gestureHost }
             // Öffnet woanders eine Zeile — oder wird woanders getippt —, schliesst
             // diese hier. Genau das Verhalten einer Systemliste.
             .onChange(of: openRow) { _, newValue in
@@ -212,39 +211,42 @@ struct SwipeToDelete<Content: View>: View {
 
     // MARK: - Geste
 
-    /// Erst der Wisch, und nur wenn der nicht anspringt, der Tipp.
+    /// Die beiden Erkenner, gehalten von einer durchsichtigen `UIView`.
     ///
-    /// `exclusively(before:)` und nicht zwei Gesten nebeneinander: sobald der
-    /// Wisch seine Mindeststrecke genommen hat, ist der Tipp aus dem Rennen.
-    /// Nebeneinander liefen beide, und welcher zuerst meldet, ist nichts, worauf
-    /// sich bauen liesse.
-    private var swipe: some Gesture {
-        DragGesture(minimumDistance: SwipeRowGesture.minimumDragDistance)
-            .exclusively(before: SpatialTapGesture(coordinateSpace: .local))
-            .onChanged { value in
-                guard case .first(let drag) = value else { return }
+    /// Ob überhaupt gewischt wird, entscheidet
+    /// ``SwipeRowGestureCoordinator/gestureRecognizerShouldBegin(_:)``; hier
+    /// steht nur, was aus der Strecke folgt. Weil der Erkenner senkrechte Züge
+    /// gar nicht erst annimmt, kommt ``SwipeRowGesture/drag(translation:)``
+    /// immer auf der waagerechten Achse heraus — die Achsenlogik im Ablauf
+    /// bleibt trotzdem stehen, sie trägt den Fall, dass ein Wisch unterwegs die
+    /// Richtung wechselt.
+    private var gestureHost: some View {
+        SwipeRowGestureHost(
+            onBegan: {
                 // Die Breite kommt von aussen und muss im Ablauf dieselbe sein.
                 gesture.actionWidth = actionWidth
                 gesture.touchDown()
-                let closes = gesture.drag(translation: drag.translation)
+            },
+            onChanged: { translation in
+                let closes = gesture.drag(translation: translation)
                 if closes { SwipeRowRegistry.shared.close(id) }
-            }
-            .onEnded { value in
+            },
+            onEnded: { translation, predicted in
                 var outcome = SwipeRowGesture.Outcome.none
                 animated {
-                    switch value {
-                    case .first(let drag):
-                        outcome = gesture.release(
-                            translation: drag.translation,
-                            predicted: drag.predictedEndTranslation
-                        )
-                    case .second(let tap):
-                        gesture.actionWidth = actionWidth
-                        outcome = gesture.tap(atX: tap.location.x, width: width)
-                    }
+                    outcome = gesture.release(translation: translation, predicted: predicted)
+                }
+                apply(outcome)
+            },
+            onTap: { location in
+                var outcome = SwipeRowGesture.Outcome.none
+                animated {
+                    gesture.actionWidth = actionWidth
+                    outcome = gesture.tap(atX: location.x, width: width)
                 }
                 apply(outcome)
             }
+        )
     }
 
     /// Was aus dem Loslassen folgt.

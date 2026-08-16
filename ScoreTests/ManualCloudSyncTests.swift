@@ -4,7 +4,7 @@ import Testing
 
 /// Der Abgleich von Hand — und vor allem die Frage, woher der Zeitpunkt kommt.
 ///
-/// Die Versuchung wäre, „Zuletzt abgeglichen" beim Antippen zu setzen. Dann
+/// Die Versuchung wäre, „Zuletzt synchronisiert" beim Antippen zu setzen. Dann
 /// stünde dort auch nach einem gescheiterten Lauf eine frische Uhrzeit. Diese
 /// Suite hält fest, dass der Zeitpunkt aus einem abgeschlossenen, fehlerfreien
 /// Lauf der Spiegelung kommt und aus nichts anderem.
@@ -34,6 +34,17 @@ struct ManualCloudSyncTests {
         )
     }
 
+    /// Wartet, bis die Bedingung eintritt — höchstens aber zwei Sekunden.
+    ///
+    /// Der Lauf beginnt bewusst eine Runde später; ein fester Schlaf wäre
+    /// entweder zu kurz oder unnötig lang.
+    private func waitUntil(_ condition: () -> Bool) async {
+        let deadline = Date.now.addingTimeInterval(2)
+        while !condition(), Date.now < deadline {
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+    }
+
     private func finishedImport(at date: Date) -> ManualCloudSync.Event {
         ManualCloudSync.Event(isImportOrExport: true, endDate: date, hasFailed: false, isNoAccount: false)
     }
@@ -60,7 +71,7 @@ struct ManualCloudSyncTests {
 
         // Das Neuöffnen läuft bewusst erst nach einer Runde durch die Schleife,
         // damit die Zeile ihren Lauf zeigt, bevor sie dafür kurz steht.
-        try? await Task.sleep(for: .milliseconds(100))
+        await waitUntil { didReopen }
         #expect(didReopen)
     }
 
@@ -79,7 +90,7 @@ struct ManualCloudSyncTests {
         let sync = makeSync(defaults: makeDefaults()) { throw Failure() }
 
         sync.start()
-        try? await Task.sleep(for: .milliseconds(100))
+        await waitUntil { sync.phase != .running }
 
         #expect(sync.phase == .failed(.store))
         #expect(sync.lastSyncedAt == nil)
@@ -246,7 +257,7 @@ struct ManualCloudSyncTests {
     }
 }
 
-/// Ob eine Zeile „Zuletzt abgeglichen" überhaupt einen Zeitpunkt zeigen darf.
+/// Ob eine Zeile „Zuletzt synchronisiert" überhaupt einen Zeitpunkt zeigen darf.
 @Suite("Wann ein Abgleich möglich ist")
 struct CloudSyncStateAllowsSyncTests {
 

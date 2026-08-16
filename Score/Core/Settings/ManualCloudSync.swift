@@ -8,7 +8,7 @@ import SwiftUI
 /// ## Was hier tatsächlich angestossen wird
 ///
 /// `NSPersistentCloudKitContainer` hat keine öffentliche Schnittstelle für
-/// „jetzt abgleichen". Geprüft und verworfen wurden:
+/// „jetzt synchronisieren". Geprüft und verworfen wurden:
 ///
 /// - **Eine erfundene Änderung speichern.** Ein Speichern ohne Änderung tut
 ///   nichts, und eine Änderung zu erfinden, nur damit CloudKit etwas zu
@@ -94,7 +94,7 @@ final class ManualCloudSync {
     static let successDuration: Duration = .seconds(2.5)
 
     private let defaults: UserDefaults
-    private let saveAndReopen: @MainActor () throws -> Void
+    private let saveAndReopen: @MainActor () async throws -> Void
     private let isAvailable: @MainActor () -> Bool
 
     private var observation: NotificationObservation?
@@ -114,7 +114,7 @@ final class ManualCloudSync {
     init(
         defaults: UserDefaults = .standard,
         observesEvents: Bool = true,
-        saveAndReopen: @escaping @MainActor () throws -> Void = ScoreDataStore.saveAndReopen,
+        saveAndReopen: @escaping @MainActor () async throws -> Void = ScoreDataStore.saveAndReopen,
         isAvailable: @escaping @MainActor () -> Bool = {
             CloudKitAvailability.isEntitled && CloudSyncActivation.isActiveInThisSession
         }
@@ -156,7 +156,7 @@ final class ManualCloudSync {
             guard let self, !Task.isCancelled else { return }
 
             do {
-                try self.saveAndReopen()
+                try await self.saveAndReopen()
             } catch {
                 // Der bisherige Speicher steht noch; verloren ist nichts.
                 self.phase = .failed(.store)
@@ -186,6 +186,11 @@ final class ManualCloudSync {
         var endDate: Date?
         var hasFailed: Bool
         var isNoAccount: Bool
+
+        /// Ob der Fehler nur davon kommt, dass der alte Speicher gerade
+        /// abgeräumt wurde. Beim Neuöffnen ist das der Normalfall und kein
+        /// Grund, dem Nutzer einen Fehler zu melden.
+        var isTeardown = false
     }
 
     /// Verarbeitet einen Lauf — auch einen, den niemand angestossen hat.
@@ -194,6 +199,12 @@ final class ManualCloudSync {
     /// stillen Push-Nachricht kam, ist genauso ein Abgleich und zählt genauso.
     func apply(_ event: Event) {
         guard event.endDate != nil else { return }
+
+        // Das Neuöffnen räumt den alten Spiegel ab, und der meldet seine
+        // abgebrochenen Anfragen. Diese Meldungen gehören zum Vorgang, nicht zu
+        // seinem Ergebnis — sie als Fehlschlag auszugeben hiesse, den Abbruch
+        // zu melden, den man selbst ausgelöst hat.
+        if event.isTeardown { return }
 
         if event.hasFailed {
             guard phase == .running else { return }
@@ -249,7 +260,8 @@ final class ManualCloudSync {
                 isImportOrExport: raw.type == .import || raw.type == .export,
                 endDate: raw.endDate,
                 hasFailed: raw.error != nil,
-                isNoAccount: raw.error.map(Self.isNoAccountError) ?? false
+                isNoAccount: raw.error.map(Self.isNoAccountError) ?? false,
+                isTeardown: raw.error.map(Self.isTeardownError) ?? false
             )
 
             MainActor.assumeIsolated {
@@ -267,6 +279,16 @@ final class ManualCloudSync {
         if nsError.domain == NSCocoaErrorDomain && nsError.code == 134400 { return true }
         if let ckError = error as? CKError { return ckError.code == .notAuthenticated }
         return false
+    }
+
+    /// Ob ein Fehler nur davon kommt, dass der alte Speicher abgeräumt wurde.
+    ///
+    /// CoreData meldet abgebrochene Anfragen als 134407 („the store was removed
+    /// from the coordinator"). Genau das tut das Neuöffnen — der Abbruch ist der
+    /// Vorgang selbst und kein Ergebnis.
+    private nonisolated static func isTeardownError(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == NSCocoaErrorDomain && nsError.code == 134407
     }
 }
 
@@ -293,9 +315,9 @@ extension ManualCloudSync.Phase {
     var accessibilityValue: LocalizedStringKey? {
         switch self {
         case .idle: nil
-        case .running: "Wird abgeglichen …"
-        case .succeeded: "Abgeglichen"
-        case .failed: "Abgleich fehlgeschlagen"
+        case .running: "Wird synchronisiert …"
+        case .succeeded: "Synchronisiert"
+        case .failed: "Synchronisierung fehlgeschlagen"
         }
     }
 
@@ -307,18 +329,18 @@ extension ManualCloudSync.Phase {
         case .store:
             return "Der Speicher liess sich nicht neu öffnen. Deine Daten sind unverändert — versuch es gleich noch einmal."
         case .noAccount:
-            return "Ohne angemeldetes iCloud-Konto gibt es nichts abzugleichen."
+            return "Ohne angemeldetes iCloud-Konto gibt es nichts zu synchronisieren."
         case .sync:
-            return "Der Abgleich ist nicht durchgelaufen. Versuch es später noch einmal."
+            return "Die Synchronisierung ist nicht durchgelaufen. Versuch es später noch einmal."
         case .timedOut:
-            return "Der Abgleich meldet sich nicht. Prüf deine Verbindung und versuch es später noch einmal."
+            return "Die Synchronisierung meldet sich nicht. Prüf deine Verbindung und versuch es später noch einmal."
         }
     }
 }
 
 extension ManualCloudSync {
 
-    /// Was in der Zeile „Zuletzt abgeglichen" steht.
+    /// Was in der Zeile „Zuletzt synchronisiert" steht.
     ///
     /// - Parameters:
     ///   - date: Das Ende des letzten erfolgreichen Laufs.

@@ -23,20 +23,26 @@ import UIKit
 /// zuerst zugreift. Deshalb trug es nicht, an
 /// ``SwipeRowGesture/minimumDragDistance`` zu drehen.
 ///
-/// ## Warum ein `UIViewRepresentable` und nicht `UIGestureRecognizerRepresentable`
+/// ## Warum die Erkenner an der Liste hängen und nicht an der Zeile
 ///
-/// Naheliegend wäre `UIGestureRecognizerRepresentable` (ab iOS 18). Nur hängt
-/// **SwiftUI** den Erkenner dann selbst ein, und zwar nicht an eine `UIView` des
-/// Baums: `makeUIGestureRecognizer` wird in einem gehosteten Fenster gar nicht
-/// erst aufgerufen, und in `gestureRecognizers` steht anschliessend nichts. Der
-/// Erkenner bliebe damit genauso unsichtbar wie die `DragGesture` zuvor — für
-/// UIKit und für jeden Test.
+/// Naheliegend wäre, sie auf eine `UIView` **über** der Zeile zu legen. Genau das
+/// bricht aber das Scrollen, und zwar auf eine Art, die man leicht übersieht: Die
+/// aufgelegte Fläche wird zur getroffenen Ansicht, und die **erste** Berührung
+/// nach dem Aufbau erreicht dann den Pan der Liste überhaupt nicht — er sieht
+/// keinen einzigen Zustandswechsel, die Liste rührt sich nicht, ab der zweiten
+/// Berührung läuft alles. Ein „beim ersten Mal geht es nie" wird als „manchmal
+/// klemmt es" gemeldet und ist schwer zu fassen.
 ///
-/// Hier trägt deshalb eine gewöhnliche `UIView` die Erkenner. Sie liegt als
-/// Überlagerung über der Zeile, ist selbst durchsichtig und tut nichts, ausser
-/// die beiden Erkenner zu halten. Ab da liegen sie im selben Baum wie der Pan
-/// der Liste, und UIKit trägt den Konflikt aus — dieselbe Mechanik, mit der eine
-/// `List` ihre `swipeActions` gegen das Scrollen abgrenzt.
+/// Deshalb ist die Fläche hier ein reiner **Anker**: `isUserInteractionEnabled`
+/// steht auf `false`, sie wird nie getroffen, und die Trefferprüfung läuft genau
+/// so ab wie ohne sie. Sie sagt nur, wo die Zeile liegt. Die Erkenner selbst
+/// hängen an der umgebenden `UIScrollView` — dort, wo der Pan der Liste schon
+/// hängt. Ab da liegen beide Seiten im selben Baum, und UIKit trägt den Konflikt
+/// aus, wie es das zwischen `List` und `swipeActions` auch tut.
+///
+/// Damit nicht jede Zeile auf jede Berührung anspringt, prüfen beide Erkenner
+/// beim Aufsetzen, ob der Finger im Rechteck **ihres** Ankers liegt, und lassen
+/// sich sonst sofort fallen.
 ///
 /// ## Wie der Konflikt entschieden wird
 ///
@@ -73,11 +79,9 @@ struct SwipeRowGestureHost: UIViewRepresentable {
         SwipeRowGestureCoordinator()
     }
 
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        // Durchsichtig und ohne eigenen Inhalt: sie trägt nur die Erkenner.
-        view.backgroundColor = .clear
-        view.isUserInteractionEnabled = true
+    func makeUIView(context: Context) -> SwipeRowAnchorView {
+        let anchor = SwipeRowAnchorView()
+        context.coordinator.apply(self)
 
         let pan = SwipeRowPanGestureRecognizer(
             target: context.coordinator,
@@ -87,48 +91,129 @@ struct SwipeRowGestureHost: UIViewRepresentable {
         pan.maximumNumberOfTouches = 1
         pan.delegate = context.coordinator
         pan.name = Self.panName
-        view.addGestureRecognizer(pan)
+        pan.anchor = anchor
 
-        let tap = UITapGestureRecognizer(
+        let tap = SwipeRowTapGestureRecognizer(
             target: context.coordinator,
             action: #selector(SwipeRowGestureCoordinator.handleTap(_:))
         )
         tap.delegate = context.coordinator
         tap.name = Self.tapName
-        view.addGestureRecognizer(tap)
+        tap.anchor = anchor
 
-        context.coordinator.apply(self)
-        return view
+        anchor.recognizers = [pan, tap]
+        return anchor
     }
 
-    func updateUIView(_ view: UIView, context: Context) {
+    func updateUIView(_ anchor: SwipeRowAnchorView, context: Context) {
         // Die Rückrufe hängen an der Ansicht und werden bei jedem Neuaufbau
         // andere. Ohne dieses Nachziehen riefe der Erkenner ewig die ersten auf
         // und schriebe in einen Zustand, den es nicht mehr gibt.
         context.coordinator.apply(self)
     }
+
+    static func dismantleUIView(_ anchor: SwipeRowAnchorView, coordinator: SwipeRowGestureCoordinator) {
+        anchor.detach()
+    }
+}
+
+/// Sagt, wo die Zeile liegt — und sonst nichts.
+///
+/// Nimmt selbst keine Berührung entgegen: `isUserInteractionEnabled` bleibt
+/// `false`, damit die Trefferprüfung genau so abläuft wie ohne sie. Wäre sie
+/// treffbar, verschluckte sie die erste Berührung nach dem Aufbau, und die Liste
+/// liesse sich beim ersten Versuch nicht scrollen.
+final class SwipeRowAnchorView: UIView {
+
+    /// Die Erkenner dieser Zeile. Sie hängen nicht hier, sondern an der Liste.
+    var recognizers: [UIGestureRecognizer] = []
+
+    /// Woran sie gerade hängen.
+    private weak var host: UIScrollView?
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .clear
+        isUserInteractionEnabled = false
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) wird nicht benutzt")
+    }
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        guard window != nil else {
+            detach()
+            return
+        }
+        attach()
+    }
+
+    /// Hängt die Erkenner an die umgebende Liste.
+    private func attach() {
+        var ancestor: UIView? = superview
+        while let current = ancestor {
+            if let scrollView = current as? UIScrollView {
+                guard host !== scrollView else { return }
+                detach()
+                for recognizer in recognizers { scrollView.addGestureRecognizer(recognizer) }
+                host = scrollView
+                return
+            }
+            ancestor = current.superview
+        }
+    }
+
+    /// Nimmt sie wieder ab — sonst sammelten sich an einer langlebigen Liste die
+    /// Erkenner längst verschwundener Zeilen.
+    func detach() {
+        guard let host else { return }
+        for recognizer in recognizers { host.removeGestureRecognizer(recognizer) }
+        self.host = nil
+    }
+}
+
+/// Was beide Erkenner gemeinsam haben: Sie gehören einer Zeile.
+protocol SwipeRowAnchored: AnyObject {
+    var anchor: SwipeRowAnchorView? { get }
+}
+
+extension SwipeRowAnchored where Self: UIGestureRecognizer {
+
+    /// Ob der Finger auf der Zeile aufgesetzt hat, zu der dieser Erkenner gehört.
+    ///
+    /// Die Erkenner hängen an der Liste und sehen deshalb **jede** Berührung auf
+    /// ihr. Ohne diese Prüfung spränge jede Zeile bei jedem Wisch an.
+    func touchBelongsToRow(_ touches: Set<UITouch>) -> Bool {
+        guard let anchor, anchor.window != nil, let touch = touches.first else { return false }
+        return anchor.bounds.contains(touch.location(in: anchor))
+    }
 }
 
 /// Ein Pan, der sich auf die Waagerechte festlegt — oder aufgibt.
 ///
-/// ## Warum das hier steht und nicht in `gestureRecognizerShouldBegin`
+/// ## Warum die Achse hier entschieden wird und nicht im Delegierten
 ///
-/// Naheliegender wäre, die Achse im Delegierten zu prüfen. UIKit fragt dort aber
-/// nicht verlässlich erst nach der ersten Bewegung: beim ersten Wisch auf eine
-/// frisch gebaute Zeile kommt die Frage mit einer Strecke von genau `(0, 0)` an.
-/// Wer dann „nein" sagt, hat den Erkenner für die **ganze** Berührung auf
-/// `failed` gesetzt — der erste Wisch ginge verloren, jeder folgende liefe. Genau
-/// so ein „mal geht es, mal nicht" soll hier nicht entstehen.
+/// Naheliegender wäre `gestureRecognizerShouldBegin`. UIKit fragt dort aber nicht
+/// verlässlich erst nach der ersten Bewegung: beim ersten Wisch auf eine frisch
+/// gebaute Zeile kommt die Frage mit einer Strecke von genau `(0, 0)` an. Wer dann
+/// „nein" sagt, hat den Erkenner für die **ganze** Berührung auf `failed` gesetzt
+/// — der erste Wisch ginge verloren, jeder folgende liefe. Genau so ein „mal geht
+/// es, mal nicht" soll hier nicht entstehen.
 ///
 /// Deshalb entscheidet der Erkenner selbst, und zwar zu dem Zeitpunkt, zu dem es
 /// etwas zu entscheiden gibt: sobald der Finger ``axisLock`` Punkt weit gewandert
 /// ist. Überwiegt bis dahin die Senkrechte, lässt er sich fallen und die
 /// `UIScrollView` scrollt. Überwiegt die Waagerechte, läuft er weiter und die
 /// Zeile folgt dem Finger.
-final class SwipeRowPanGestureRecognizer: UIPanGestureRecognizer {
+final class SwipeRowPanGestureRecognizer: UIPanGestureRecognizer, SwipeRowAnchored {
 
     /// Ab dieser Strecke steht die Achse fest.
     static let axisLock: CGFloat = 8
+
+    weak var anchor: SwipeRowAnchorView?
 
     /// Wo der Finger aufgesetzt hat.
     private var origin: CGPoint?
@@ -137,8 +222,15 @@ final class SwipeRowPanGestureRecognizer: UIPanGestureRecognizer {
     private var hasDecided = false
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
+        guard touchBelongsToRow(touches) else {
+            state = .failed
+            return
+        }
         super.touchesBegan(touches, with: event)
-        origin = touches.first?.location(in: view)
+        // In Fensterkoordinaten: scrollt die Liste währenddessen, wanderte ein
+        // Punkt in ihren eigenen Koordinaten mit, und die Achse käme falsch
+        // heraus.
+        origin = touches.first?.location(in: nil)
         hasDecided = false
     }
 
@@ -146,7 +238,7 @@ final class SwipeRowPanGestureRecognizer: UIPanGestureRecognizer {
         defer { super.touchesMoved(touches, with: event) }
 
         guard !hasDecided, let origin, let touch = touches.first else { return }
-        let point = touch.location(in: view)
+        let point = touch.location(in: nil)
         let dx = point.x - origin.x
         let dy = point.y - origin.y
         guard max(abs(dx), abs(dy)) >= Self.axisLock else { return }
@@ -161,6 +253,20 @@ final class SwipeRowPanGestureRecognizer: UIPanGestureRecognizer {
         super.reset()
         origin = nil
         hasDecided = false
+    }
+}
+
+/// Ein Tipp, der nur für seine eigene Zeile gilt.
+final class SwipeRowTapGestureRecognizer: UITapGestureRecognizer, SwipeRowAnchored {
+
+    weak var anchor: SwipeRowAnchorView?
+
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
+        guard touchBelongsToRow(touches) else {
+            state = .failed
+            return
+        }
+        super.touchesBegan(touches, with: event)
     }
 }
 
@@ -208,8 +314,12 @@ final class SwipeRowGestureCoordinator: NSObject, UIGestureRecognizerDelegate {
     }
 
     @objc func handleTap(_ recognizer: UITapGestureRecognizer) {
-        guard recognizer.state == .ended else { return }
-        onTap(recognizer.location(in: recognizer.view))
+        guard recognizer.state == .ended,
+              let anchor = (recognizer as? SwipeRowTapGestureRecognizer)?.anchor
+        else { return }
+        // In den Koordinaten der Zeile, nicht der Liste: die Zeile rechnet
+        // daraus aus, ob die Löschfläche getroffen wurde.
+        onTap(recognizer.location(in: anchor))
     }
 
     // MARK: - Der Konflikt mit der Liste
@@ -217,8 +327,8 @@ final class SwipeRowGestureCoordinator: NSObject, UIGestureRecognizerDelegate {
     /// Nebeneinander mit allem anderen, insbesondere dem Pan der Liste.
     ///
     /// Ohne das sperrte der zuerst angesprungene Erkenner den anderen für die
-    /// Dauer der Berührung. Weil ``gestureRecognizerShouldBegin(_:)`` schon nach
-    /// der Achse trennt, führt das Nebeneinander zu keiner doppelten Bewegung.
+    /// Dauer der Berührung. Weil ``SwipeRowPanGestureRecognizer`` schon nach der
+    /// Achse trennt, führt das Nebeneinander zu keiner doppelten Bewegung.
     func gestureRecognizer(
         _ gestureRecognizer: UIGestureRecognizer,
         shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer

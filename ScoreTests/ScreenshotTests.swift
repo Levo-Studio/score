@@ -293,6 +293,65 @@ struct ScreenshotTests {
         }
     }
 
+    @Test("Die Fachansicht mit ungleich vielen Leistungen links und rechts")
+    func unevenEntryColumns() async throws {
+        let context = try Self.makeContext()
+        let subjects = Self.makeSubjects(in: context)
+        let physik = try #require(subjects.first { $0.name == "Physik" })
+        Self.fillEntries(of: physik, semesterIndex: 3, written: 4, oral: 1, in: context)
+
+        UserDefaults.standard.set(3, forKey: SubjectPreference.selectedSemesterKey)
+
+        for scheme in ColorScheme.allCases {
+            try await capture(
+                "leistungen-iphone",
+                scheme: scheme,
+                size: CGSize(width: Device.phone.width, height: 1500),
+                context: context
+            ) {
+                NavigationStack { SubjectDetailView(subject: physik) }
+            }
+
+            try await capture("leistungen-ipad", scheme: scheme, size: Device.pad, context: context) {
+                PadSubjectDetailView(
+                    subject: physik,
+                    summaries: SubjectOverview.summaries(of: subjects, semesterIndex: 3),
+                    semesterIndex: .constant(3),
+                    route: .constant(.subject(physik.identifier))
+                )
+                .background(ScorePalette.background)
+            }
+        }
+    }
+
+    /// Füllt ein Halbjahr mit ungleich vielen schriftlichen und mündlichen
+    /// Leistungen — genau der Fall, in dem die beiden Spalten bündig stehen müssen.
+    private static func fillEntries(
+        of subject: Subject,
+        semesterIndex: Int,
+        written: Int,
+        oral: Int,
+        in context: ModelContext
+    ) {
+        guard let semester = subject.semester(at: semesterIndex) else { return }
+        for entry in semester.entries ?? [] { context.delete(entry) }
+
+        for index in 0..<written {
+            let entry = GradeEntry(category: .exam, title: "Klassenarbeit \(index + 1)")
+            entry.points = 11 + index % 4
+            entry.kind = .written
+            entry.semester = semester
+            context.insert(entry)
+        }
+        for index in 0..<oral {
+            let entry = GradeEntry(category: .other, title: "Mündliche Note \(index + 1)")
+            entry.points = 13 - index
+            entry.kind = .oral
+            entry.semester = semester
+            context.insert(entry)
+        }
+    }
+
     /// Nur die drei Leistungsfächer — der Stand, in dem nichts zur Wahl steht.
     @discardableResult
     private static func makeAdvancedSubjectsOnly(in context: ModelContext) -> [Subject] {

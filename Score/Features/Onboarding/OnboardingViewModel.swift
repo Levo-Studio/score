@@ -143,13 +143,23 @@ final class OnboardingViewModel {
 
     // MARK: - Weiterkommen
 
+    /// Ob im gestrichelten „Eigenes Fach"-Tag ein Name steht, der noch nicht
+    /// bestätigt wurde.
+    var hasPendingCustomSubject: Bool {
+        !customSubjectDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     /// Ob der aktuelle Schritt vollständig beantwortet ist.
     var canAdvance: Bool {
         switch step {
         case .firstName:
             !firstName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         case .advancedSubjects:
-            advancedSubjects.count == Self.requiredAdvancedSubjectCount
+            // Ein eingetippter, noch nicht bestätigter Name zählt mit: er wird
+            // beim Weitergehen übernommen. Sonst stünde der Knopf grau da,
+            // obwohl das dritte Fach längst getippt ist.
+            advancedSubjects.count + (hasPendingCustomSubject ? 1 : 0)
+                == Self.requiredAdvancedSubjectCount
         default:
             true
         }
@@ -160,6 +170,11 @@ final class OnboardingViewModel {
     }
 
     func advance() {
+        // Ein getippter, aber nicht bestätigter Name geht nicht verloren. Genau
+        // das war der Fehler: wer sein Fach eintippte und gleich weiterblätterte,
+        // liess es kommentarlos hier liegen.
+        commitCustomSubject()
+
         guard let next = OnboardingStep(rawValue: step.rawValue + 1) else { return }
 
         // Die Pflicht-Basisfächer hängen von den Leistungsfächern ab, deshalb wird ihre
@@ -179,6 +194,8 @@ final class OnboardingViewModel {
     }
 
     func goBack() {
+        commitCustomSubject()
+
         guard let previous = OnboardingStep(rawValue: step.rawValue - 1) else { return }
         customSubjectDraft = ""
         step = previous
@@ -246,13 +263,27 @@ final class OnboardingViewModel {
         switch step {
         case .advancedSubjects:
             if !isKnown { customAdvancedNames.append(name) }
-            toggleAdvancedSubject(name)
+            // Ein eingetippter Name heisst „dazu", nie „weg": stünde hier das
+            // blosse Umschalten, nähme ein zweimal getippter Name das Fach
+            // wieder heraus.
+            if !advancedSubjects.contains(name) { toggleAdvancedSubject(name) }
         case .requiredBasicSubjects:
             if !isKnown { customCoreNames.append(name) }
             requiredBasicSubjects.insert(name)
         case .electiveBasicSubjects:
             if !isKnown { customBasicNames.append(name) }
             electiveBasicSubjects.insert(name)
+        case .oralExamSubjects:
+            // Wer erst hier merkt, dass ihm ein Fach fehlt, legt es hier an:
+            // als Wahl-Basisfach, damit es überhaupt existiert, und gleich als
+            // Prüfungsfach. Sonst müsste er zwei Schritte zurück und wieder vor.
+            //
+            // Ein Leistungsfach bleibt aussen vor: in ihm wird bereits
+            // schriftlich geprüft, ein viertes Mal geprüft wird nicht.
+            guard !advancedSubjects.contains(name) else { break }
+            if !isKnown { customBasicNames.append(name) }
+            electiveBasicSubjects.insert(name)
+            if !oralExamSubjects.contains(name) { toggleOralExamSubject(name) }
         default:
             break
         }

@@ -41,18 +41,28 @@ struct DashedChip: View {
     var body: some View {
         Group {
             if isEditing {
-                editor
+                shell { editor }
             } else {
                 idle
             }
         }
-        .padding(.horizontal, 15)
-        .padding(.vertical, 11)
-        .frame(minHeight: ScoreMetrics.minimumTapTarget)
-        .overlay(
-            Capsule().strokeBorder(ScorePalette.lineStrong, style: DashedBorder.style)
-        )
         .scoreAnimation(ScoreMotion.selection, value: isEditing)
+    }
+
+    /// Die sichtbare Hülle des Tags: Polsterung, Mindesthöhe, gestrichelte Kante.
+    ///
+    /// Sie steht bewusst **innerhalb** des Knopfes. Aussen angesetzt vergrössert
+    /// sie nur die Fläche, die der Tag einnimmt — getroffen würde weiterhin allein
+    /// die Beschriftung, und der Tag reagierte auf den grössten Teil seiner
+    /// sichtbaren Fläche nicht.
+    private func shell<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .padding(.horizontal, 15)
+            .padding(.vertical, 11)
+            .frame(minHeight: ScoreMetrics.minimumTapTarget)
+            .overlay(
+                Capsule().strokeBorder(ScorePalette.lineStrong, style: DashedBorder.style)
+            )
     }
 
     private var idle: some View {
@@ -60,14 +70,17 @@ struct DashedChip: View {
             isEditing = true
             isFocused = true
         } label: {
-            HStack(spacing: ScoreMetrics.Spacing.xs) {
-                Image(systemName: "plus")
-                    .font(.system(size: 11, weight: .semibold))
-                Text(title)
-                    .font(.chipLabel)
+            shell {
+                HStack(spacing: ScoreMetrics.Spacing.xs) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 11, weight: .semibold))
+                    Text(title)
+                        .font(.chipLabel)
+                }
+                .foregroundStyle(ScorePalette.inkSecondary)
             }
-            .foregroundStyle(ScorePalette.inkSecondary)
-            .contentShape(Rectangle())
+            // Der ganze Tag ist der Knopf, nicht nur Plus und Beschriftung.
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
     }
@@ -89,6 +102,10 @@ struct DashedChip: View {
                     Text("OK")
                         .font(ScoreTypography.publicSans(600, 11.5))
                         .foregroundStyle(ScorePalette.accent)
+                        // Die Trefferfläche geht über die volle Höhe des Tags.
+                        // Auf die beiden Buchstaben allein zielt niemand.
+                        .padding(.vertical, 11)
+                        .padding(.leading, ScoreMetrics.Spacing.xs)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -96,9 +113,12 @@ struct DashedChip: View {
             }
         }
         .onChange(of: isFocused) { _, focused in
-            // Wer die Eingabe verlässt, ohne etwas einzutippen, bekommt den
-            // ruhigen Tag zurück statt eines leeren Feldes in der Wolke.
-            if !focused, !canCommit { isEditing = false }
+            guard !focused else { return }
+            // Wer die Eingabe verlässt, verliert den eingetippten Namen nicht —
+            // er wird übernommen. Ohne Text kommt der ruhige Tag zurück statt
+            // eines leeren Feldes in der Wolke.
+            commit()
+            isEditing = false
         }
     }
 

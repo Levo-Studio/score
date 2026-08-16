@@ -155,6 +155,86 @@ struct OralExamSubjectsTests {
         #expect(OralExamSubjects.selection(in: subjects).isEmpty)
     }
 
+    // MARK: - Fehlende Fächer hier anlegen
+
+    @Test("Ein hier angelegtes Fach ist sofort Prüfungsfach")
+    func addingCreatesAndSelects() throws {
+        let (context, subjects) = try Self.makeSubjects()
+
+        let created = try #require(
+            OralExamSubjects.add(named: "Astronomie", activeSemesters: [0, 1], in: subjects, context: context)
+        )
+
+        #expect(created.name == "Astronomie")
+        #expect(created.kind == .wahlBasisfach)
+        #expect(created.isCustom)
+        #expect(created.isOralExamSubject)
+        #expect(created.activeSemesters == [0, 1])
+        #expect(created.orderedSemesters.count == Semester.allIndices.count)
+    }
+
+    @Test("Ein leerer Name legt nichts an")
+    func blankNamesCreateNothing() throws {
+        let (context, subjects) = try Self.makeSubjects()
+
+        #expect(OralExamSubjects.add(named: "   ", activeSemesters: [0, 1], in: subjects, context: context) == nil)
+        #expect(try context.fetch(FetchDescriptor<Subject>()).count == subjects.count)
+    }
+
+    @Test("Ein vorhandenes Fach wird gewählt statt verdoppelt")
+    func knownNamesAreSelectedNotDuplicated() throws {
+        let (context, subjects) = try Self.makeSubjects()
+
+        // Auch mit anderer Schreibweise: eine Dublette zählte still doppelt.
+        let result = OralExamSubjects.add(named: "sport", activeSemesters: [0, 1], in: subjects, context: context)
+
+        #expect(result === (try subject("Sport", in: subjects)))
+        #expect(try subject("Sport", in: subjects).isOralExamSubject)
+        #expect(try context.fetch(FetchDescriptor<Subject>()).count == subjects.count)
+    }
+
+    @Test("Ein Leistungsfach wird durch das Anlegen nicht zum Prüfungsfach")
+    func addingAnAdvancedSubjectDoesNotSelectIt() throws {
+        let (context, subjects) = try Self.makeSubjects()
+
+        OralExamSubjects.add(named: "Deutsch", activeSemesters: [0, 1], in: subjects, context: context)
+
+        #expect(!(try subject("Deutsch", in: subjects).isOralExamSubject))
+        #expect(try context.fetch(FetchDescriptor<Subject>()).count == subjects.count)
+    }
+
+    @Test("Ist die Auswahl voll, entsteht das Fach trotzdem — nur ungewählt")
+    func aFullSelectionStillCreatesTheSubject() throws {
+        let (context, subjects) = try Self.makeSubjects()
+        OralExamSubjects.toggle(try identifier("Sport", in: subjects), in: subjects)
+        OralExamSubjects.toggle(try identifier("Musik", in: subjects), in: subjects)
+
+        let created = try #require(
+            OralExamSubjects.add(named: "Astronomie", activeSemesters: [0, 1], in: subjects, context: context)
+        )
+
+        // Das Fach fehlte in der Liste — es anzulegen ist richtig, auch wenn
+        // die zweite Prüfung schon vergeben ist.
+        #expect(!created.isOralExamSubject)
+        #expect(OralExamSubjects.selection(in: subjects + [created]).count == 2)
+    }
+
+    @Test("Ein Katalogfach bekommt Kürzel und Farbe aus dem Katalog")
+    func catalogNamesKeepTheirIdentity() throws {
+        let (context, subjects) = try Self.makeSubjects()
+        let template = try #require(SubjectCatalog.all.first { subject in
+            !subjects.contains { $0.name == subject.name } && subject.defaultKind != .leistungsfach
+        })
+
+        let created = try #require(
+            OralExamSubjects.add(named: template.name, activeSemesters: [0, 1], in: subjects, context: context)
+        )
+
+        #expect(created.abbreviation == template.abbreviation)
+        #expect(created.colorValue == template.colorValue)
+        #expect(created.kind != .leistungsfach)
+    }
+
     // MARK: - Was daraus für das Fach folgt
 
     @Test("Ein Prüfungsfach lässt sich nicht klammern")
@@ -240,6 +320,52 @@ struct OnboardingOralExamTests {
 
         #expect(model.step == .oralExamSubjects)
         #expect(model.oralExamSubjects == ["Sport"])
+    }
+
+    @Test("Ein hier angelegtes Fach ist Wahl-Basisfach und gleich Prüfungsfach")
+    func customSubjectsAreCreatedAndSelectedOnTheSpot() {
+        let model = model()
+        model.step = .oralExamSubjects
+        model.customSubjectDraft = "Astronomie"
+
+        model.commitCustomSubject()
+
+        #expect(model.electiveBasicSubjects.contains("Astronomie"))
+        #expect(model.oralExamSubjects.contains("Astronomie"))
+        #expect(model.oralExamOptions.contains("Astronomie"))
+    }
+
+    @Test("Ein Leistungsfach lässt sich hier nicht nachschieben")
+    func advancedSubjectsCannotBeAddedHere() {
+        let model = model()
+        model.step = .oralExamSubjects
+        model.customSubjectDraft = "Deutsch"
+
+        model.commitCustomSubject()
+
+        #expect(model.oralExamSubjects.isEmpty)
+        #expect(!model.electiveBasicSubjects.contains("Deutsch"))
+    }
+
+    @Test("Das hier angelegte Fach steht danach in der Datenbank")
+    func customSubjectsSurviveTheFinish() throws {
+        let container = try ModelContainer(
+            for: Subject.self, SemesterResult.self, GradeEntry.self, StudentProfile.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = ModelContext(container)
+
+        let model = model()
+        model.step = .oralExamSubjects
+        model.customSubjectDraft = "Astronomie"
+        model.commitCustomSubject()
+        model.finish(in: context)
+
+        let subjects = try context.fetch(FetchDescriptor<Subject>())
+        let astronomy = try #require(subjects.first { $0.name == "Astronomie" })
+
+        #expect(astronomy.kind == .wahlBasisfach)
+        #expect(astronomy.isOralExamSubject)
     }
 
     @Test("Die Auswahl landet als Kennzeichen an den angelegten Fächern")

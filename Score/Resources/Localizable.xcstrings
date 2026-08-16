@@ -2522,23 +2522,6 @@
         }
       }
     },
-    "Du hast noch kein Fach, das sich mündlich prüfen liesse. Leg zuerst deine Wahl-Basisfächer an." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Du hast noch kein Fach, das sich mündlich prüfen liesse. Leg zuerst deine Wahl-Basisfächer an."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You have no subject yet that could be examined orally. Add your basic subjects first."
-          }
-        }
-      }
-    },
     "Du kannst jede Angabe später in den Einstellungen ändern." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2569,23 +2552,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You got this, %@"
-          }
-        }
-      }
-    },
-    "Du wirst in zwei Fächern mündlich geprüft. Ihre Halbjahre sind anrechnungspflichtig — ohne die Angabe rechnet Score zu gut. Noch nicht entschieden? Dann später in der Fächerliste." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Du wirst in zwei Fächern mündlich geprüft. Ihre Halbjahre sind anrechnungspflichtig — ohne die Angabe rechnet Score zu gut. Noch nicht entschieden? Dann später in der Fächerliste."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You are examined orally in two subjects. Their semesters must be counted — without this, Score calculates too favourably. Not decided yet? Then do it later from the subject list."
           }
         }
       }
@@ -3364,6 +3330,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Light"
+          }
+        }
+      }
+    },
+    "Ihre Halbjahre sind anrechnungspflichtig — ohne die Angabe rechnet Score zu gut. Noch nicht entschieden? Dann später in der Fächerliste." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihre Halbjahre sind anrechnungspflichtig — ohne die Angabe rechnet Score zu gut. Noch nicht entschieden? Dann später in der Fächerliste."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Their semesters must be counted — without this, Score calculates too favourably. Not decided yet? Then do it later from the subject list."
           }
         }
       }
@@ -4959,36 +4942,19 @@
         }
       }
     },
-    "Schriftlich prüfst du deine drei Leistungsfächer, mündlich zwei weitere. Deren Halbjahre muss Score vollständig einrechnen — sie lassen sich nicht klammern." : {
+    "Schriftlich prüfst du deine drei Leistungsfächer, mündlich zwei weitere. Fehlt dir eins, leg es hier gleich an." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Schriftlich prüfst du deine drei Leistungsfächer, mündlich zwei weitere. Deren Halbjahre muss Score vollständig einrechnen — sie lassen sich nicht klammern."
+            "value" : "Schriftlich prüfst du deine drei Leistungsfächer, mündlich zwei weitere. Fehlt dir eins, leg es hier gleich an."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "You sit written exams in your three advanced subjects and oral exams in two more. Score has to count every one of their semesters — they cannot be bracketed."
-          }
-        }
-      }
-    },
-    "Schriftlich prüfst du deine drei Leistungsfächer, mündlich zwei weitere. Wähl sie hier — Score muss ihre Halbjahre vollständig einrechnen." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schriftlich prüfst du deine drei Leistungsfächer, mündlich zwei weitere. Wähl sie hier — Score muss ihre Halbjahre vollständig einrechnen."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You sit written exams in your three advanced subjects and oral exams in two more. Choose them here — Score has to count every one of their semesters."
+            "value" : "You sit written exams in your three advanced subjects and oral exams in two more. Missing one? Add it right here."
           }
         }
       }

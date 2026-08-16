@@ -226,6 +226,98 @@ struct ScreenshotTests {
         }
     }
 
+    @Test("Die Prüfungsfächer ohne ein einziges wählbares Fach")
+    func oralExamSubjectsWithNothingToChoose() async throws {
+        let context = try Self.makeContext()
+        Self.makeAdvancedSubjectsOnly(in: context)
+
+        // Vorher stand hier ein Satz und sonst nichts. Jetzt steht die Wolke mit
+        // dem gestrichelten Tag: das fehlende Fach entsteht an Ort und Stelle.
+        for scheme in ColorScheme.allCases {
+            try await capture("pruefungsfaecher-leer-iphone", scheme: scheme, size: Device.phone, context: context) {
+                OralExamSubjectSheet()
+            }
+
+            try await capture("pruefungsfaecher-leer-ipad", scheme: scheme, size: Device.pad, context: context) {
+                OralExamSubjectSheet(showsNavigationBar: false)
+                    .background(ScorePalette.background)
+            }
+        }
+    }
+
+    @Test("Die Prüfungsfächer nach dem Anlegen eines eigenen Fachs")
+    func oralExamSubjectsAfterAddingACustomSubject() async throws {
+        let context = try Self.makeContext()
+        let subjects = Self.makeAdvancedSubjectsOnly(in: context)
+
+        // Genau der Weg, den der Nutzer hier geht: er merkt, dass ihm ein Fach
+        // fehlt, tippt es in den gestrichelten Tag — und es ist gewählt.
+        OralExamSubjects.add(named: "Astronomie", activeSemesters: [0, 1, 2, 3], in: subjects, context: context)
+
+        for scheme in ColorScheme.allCases {
+            try await capture("pruefungsfaecher-angelegt-iphone", scheme: scheme, size: Device.phone, context: context) {
+                OralExamSubjectSheet()
+            }
+
+            try await capture("pruefungsfaecher-angelegt-ipad", scheme: scheme, size: Device.pad, context: context) {
+                OralExamSubjectSheet(showsNavigationBar: false)
+                    .background(ScorePalette.background)
+            }
+        }
+    }
+
+    @Test("Der gestrichelte Tag in der Fächerwolke der Einrichtung")
+    func customSubjectTagInTheSetup() async throws {
+        let context = try Self.makeContext()
+
+        let model = OnboardingViewModel()
+        model.advancedSubjects = ["Deutsch", "Mathematik", "Biologie"]
+        model.requiredBasicSubjects = ["Englisch", "Geschichte"]
+        model.electiveBasicSubjects = ["Sport", "Musik"]
+        model.step = .electiveBasicSubjects
+
+        for scheme in ColorScheme.allCases {
+            try await capture("eigenes-fach-iphone", scheme: scheme, size: Device.phone, context: context) {
+                ScrollView {
+                    ElectiveBasicSubjectsStep(model: model)
+                        .padding(ScoreMetrics.Spacing.xl)
+                }
+                .background(ScorePalette.background)
+            }
+
+            // Quer auf dem iPad läuft die Einrichtung zweispaltig.
+            try await capture("eigenes-fach-ipad", scheme: scheme, size: Device.pad, context: context) {
+                OnboardingPadLayout(model: model, primaryTitle: "Weiter") {}
+                    .background(ScorePalette.background)
+            }
+        }
+    }
+
+    /// Nur die drei Leistungsfächer — der Stand, in dem nichts zur Wahl steht.
+    @discardableResult
+    private static func makeAdvancedSubjectsOnly(in context: ModelContext) -> [Subject] {
+        let names = [("Deutsch", "D", 0x8A6A4A), ("Mathematik", "M", 0x1C6B6E), ("Biologie", "Bio", 0x5A7A61)]
+
+        return names.enumerated().map { index, definition in
+            let subject = Subject(
+                name: definition.0,
+                abbreviation: definition.1,
+                colorValue: definition.2,
+                kind: .leistungsfach,
+                sortIndex: index
+            )
+            context.insert(subject)
+
+            for semesterIndex in Semester.allIndices {
+                let semester = SemesterResult(index: semesterIndex)
+                semester.subject = subject
+                context.insert(semester)
+            }
+
+            return subject
+        }
+    }
+
     // MARK: - Rendern
 
     /// Zeigt eine Ansicht in Gerätegrösse in einem echten Fenster und legt sie als

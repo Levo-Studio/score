@@ -347,7 +347,7 @@ struct OralExamSubjectsStep: View {
             OnboardingHeader(
                 kicker: model.stepKicker,
                 title: "Worin wirst du mündlich geprüft?",
-                text: "Schriftlich prüfst du deine drei Leistungsfächer, mündlich zwei weitere. Deren Halbjahre muss Score vollständig einrechnen — sie lassen sich nicht klammern."
+                text: "Schriftlich prüfst du deine drei Leistungsfächer, mündlich zwei weitere. Fehlt dir eins, leg es hier gleich an."
             )
 
             OralExamSubjectSelection(
@@ -355,7 +355,9 @@ struct OralExamSubjectsStep: View {
                     OralExamSubjectSelection.Option(id: $0, name: $0, color: ScorePalette.accent)
                 },
                 selection: model.oralExamSubjects,
-                toggle: { model.toggleOralExamSubject($0) }
+                toggle: { model.toggleOralExamSubject($0) },
+                customDraft: $model.customSubjectDraft,
+                createCustom: { model.commitCustomSubject() }
             )
             .staggeredAppearance(index: 3)
         }

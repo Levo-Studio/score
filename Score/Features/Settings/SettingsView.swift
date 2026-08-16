@@ -28,14 +28,29 @@ struct SettingsView: View {
 
     @Environment(\.modelContext) private var modelContext
 
-    /// Es gibt genau ein Profil. Die Abfrage liefert trotzdem eine Liste, weil ein
-    /// unterbrochener CloudKit-Erstabgleich theoretisch zwei anlegen kann; genutzt
-    /// wird dann das erste.
+    /// Meist gibt es genau ein Profil, aber nicht zwangsläufig: Wer zwei parallel
+    /// führt, hat hier zwei — und wechselt zwischen ihnen über das Blatt unten.
     @Query private var profiles: [StudentProfile]
 
     @Query(sort: \Subject.sortIndex) private var subjects: [Subject]
 
-    private var profile: StudentProfile? { profiles.first }
+    /// Welches Profil dieses Gerät führt. Gerätesache, deshalb `AppStorage`.
+    @AppStorage(ActiveProfile.identifierKey) private var activeProfileIdentifier = ""
+
+    /// Der Zustandsautomat der Wurzel, für „Neu registrieren". Optional, weil
+    /// Vorschauen und Belegbilder diesen Bildschirm ohne ihn zeigen.
+    @Environment(ProfileHandoffModel.self) private var handoff: ProfileHandoffModel?
+
+    @State private var switchRequest: ProfileSwitchRequest?
+
+    private var completedProfiles: [StudentProfile] {
+        ProfileRoster.sorted(profiles.filter(\.hasCompletedOnboarding))
+    }
+
+    private var profile: StudentProfile? {
+        ActiveProfile.resolve(from: completedProfiles, identifier: activeProfileIdentifier)
+            ?? profiles.first
+    }
 
     var body: some View {
         @Bindable var settings = settings
@@ -51,6 +66,9 @@ struct SettingsView: View {
                     ProfileCard(profile: profile)
                         .rowAppearance(index: 0)
                 }
+
+                accountCard
+                    .rowAppearance(index: 0)
 
                 appearanceCard(settings: $settings)
                     .rowAppearance(index: 1)
@@ -72,6 +90,44 @@ struct SettingsView: View {
             // Der Kontostatus kann sich ändern, während die App läuft, deshalb
             // bei jedem Öffnen der Einstellungen neu abfragen.
             await syncStatus.refresh()
+        }
+        .profileSwitchSheet(
+            request: $switchRequest,
+            profiles: completedProfiles,
+            activeIdentifier: profile?.identifier,
+            onSelect: { activeProfileIdentifier = $0.identifier.uuidString },
+            onRegisterNew: handoff.map { model in { model.registerAdditionalProfile() } }
+        )
+    }
+
+    // MARK: - Konto
+
+    /// Der Wechsel zwischen mehreren Profilen.
+    ///
+    /// Die Zeile steht direkt unter der Profilkarte, weil sie dieselbe Frage
+    /// beantwortet wie diese — wessen Einstellungen das hier sind — nur eben
+    /// veränderlich. Sie steht auch dann da, wenn es nur ein Profil gibt: Über
+    /// sie führt der Weg zu „Neu registrieren", und eine Zeile, die je nach
+    /// Datenlage verschwindet, findet niemand wieder.
+    private var accountCard: some View {
+        SettingsGroup {
+            Button {
+                switchRequest = ProfileSwitchRequest()
+            } label: {
+                SettingsRowLabel(title: "Konto wechseln") {
+                    HStack(spacing: ScoreMetrics.Spacing.xs) {
+                        if completedProfiles.count > 1 {
+                            // Eine blanke Zahl, deshalb verbatim: `%lld` käme
+                            // gruppiert formatiert heraus.
+                            SettingsValue(text: String(completedProfiles.count))
+                        }
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(ScorePalette.inkSecondary)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
         }
     }
 

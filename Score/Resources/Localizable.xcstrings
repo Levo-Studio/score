@@ -1052,6 +1052,23 @@
         }
       }
     },
+    "Aktiv" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktiv"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active"
+          }
+        }
+      }
+    },
     "Aktuell" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3973,6 +3990,23 @@
         }
       }
     },
+    "Konto wechseln" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konto wechseln"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch account"
+          }
+        }
+      }
+    },
     "Kurs" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4795,6 +4829,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Set up again"
+          }
+        }
+      }
+    },
+    "Neu registrieren" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neu registrieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Register new"
           }
         }
       }
@@ -7102,6 +7153,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "open"
+          }
+        }
+      }
+    },
+    "sie hängen an deiner iCloud und gehören allen Profilen gemeinsam. Ein Wechsel tauscht den Namen über den Kursen, nicht die Kurse." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sie hängen an deiner iCloud und gehören allen Profilen gemeinsam. Ein Wechsel tauscht den Namen über den Kursen, nicht die Kurse."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "they belong to your iCloud and are shared by every profile. Switching swaps the name above the courses, not the courses themselves."
           }
         }
       }

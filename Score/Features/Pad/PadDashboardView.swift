@@ -13,15 +13,10 @@ import SwiftData
 /// welche Kurse nicht gewertet werden.
 struct PadDashboardView: View {
 
-    let profile: StudentProfile
     let subjects: [Subject]
 
     @Binding var semesterIndex: Int
     @Binding var route: PadRoute
-
-    /// Die in den Einstellungen gewählte Sprache — für das Datum über der
-    /// Begrüssung, das als einzige Stelle von Foundation formatiert wird.
-    @Environment(\.locale) private var locale
 
     @State private var model = DashboardViewModel()
 
@@ -44,15 +39,10 @@ struct PadDashboardView: View {
         GeometryReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
-                    // Begrüssung und obere Reihe werden zusammen gemessen: Was
-                    // für das Kursraster übrig bleibt, hängt an beidem.
-                    VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
-                        greeting
-                        topRow
-                    }
-                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
-                        topRowHeight = $0
-                    }
+                    topRow
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
+                            topRowHeight = $0
+                        }
                     courseCard(availableSize: proxy.size)
                 }
                 .padding(.horizontal, PadMetrics.contentPadding)
@@ -65,47 +55,6 @@ struct PadDashboardView: View {
         .onChange(of: inputs, initial: true) { _, newInputs in
             model.update(with: newInputs)
         }
-    }
-
-    // MARK: - Begrüssung
-
-    /// Datum, Zuspruch und Profilbild — direkt über dem Score.
-    ///
-    /// Auf dem iPhone steht dasselbe an derselben Stelle: über der Zahl, um die es
-    /// geht. Das iPad hat dafür mehr Platz, nutzt ihn aber nicht für einen
-    /// grösseren Schriftgrad, sondern für Luft — die Zeile spannt sich über die
-    /// ganze Breite des Inhalts, das Bild sitzt am äusseren Rand.
-    private var greeting: some View {
-        HStack(alignment: .center, spacing: ScoreMetrics.Spacing.md) {
-            VStack(alignment: .leading, spacing: 7) {
-                Text(verbatim: todayText)
-                    .font(ScoreTypography.publicSans(400, 12))
-                    .foregroundStyle(ScorePalette.inkSecondary)
-
-                // Die Zeile kommt aus `DashboardGreeting` und nicht aus dem
-                // Katalog dieser View — dort stehen alle Stufen beieinander.
-                model.greetingText(firstName: profile.firstName)
-                    .font(.greeting)
-                    .tracking(em: -0.03, at: 24)
-                    .foregroundStyle(ScorePalette.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .contentTransition(.opacity)
-                    .scoreAnimation(ScoreMotion.valueChange, value: model.greetingStage)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            ProfileAvatar(profile: profile)
-        }
-    }
-
-    /// Datum in der Schreibweise der Design-Datei: „Donnerstag, 14. Aug.".
-    private var todayText: String {
-        Date.now.formatted(
-            Date.FormatStyle(locale: locale)
-                .weekday(.wide)
-                .day()
-                .month(.abbreviated)
-        )
     }
 
     // MARK: - Obere Reihe

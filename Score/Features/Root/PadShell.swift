@@ -220,7 +220,6 @@ struct PadShell: View {
             // Sollte sie es doch, steht die Übersicht darunter, und das ist genau
             // der Inhalt, den die Überlagerung erklärt.
             PadDashboardView(
-                profile: profile,
                 subjects: subjects,
                 semesterIndex: $semesterIndex,
                 route: navigation
@@ -380,10 +379,10 @@ struct PadShell: View {
         }
     }
 
-    /// Bereits übersetzt, deshalb `verbatim` — die Zeile kommt aus
-    /// `DashboardGreeting`, nicht aus dem Katalog dieser View.
+    /// Die Zeile kommt aus `DashboardGreeting` und nicht aus dem Katalog dieser
+    /// View — dort stehen alle Stufen beieinander.
     private var greetingText: some View {
-        Text(verbatim: greetingModel.greetingText(firstName: profile.firstName))
+        greetingModel.greetingText(firstName: profile.firstName)
             .font(ScoreTypography.archivo(700, 14))
             .tracking(em: -0.02, at: 14)
             .foregroundStyle(ScorePalette.ink)

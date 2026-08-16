@@ -119,37 +119,12 @@ struct GradeEntrySheet: View {
 
     /// Zwei Reihen zu acht Feldern. Jedes Feld ist 44 Punkt hoch — auf dem iPhone
     /// wird hier mit dem Daumen getroffen, nicht gezielt.
+    ///
+    /// Das Pad selbst steht in ``PointsPad``: dieselbe Eingabe trägt auch das
+    /// Prüfungsergebnis in der Fachansicht ein.
     private var pointsPad: some View {
-        LazyVGrid(
-            columns: Array(repeating: GridItem(.flexible(), spacing: 7), count: 8),
-            spacing: 7
-        ) {
-            ForEach(GradeEntry.pointsRange, id: \.self) { value in
-                Button {
-                    entry.points = value
-                } label: {
-                    Text(verbatim: "\(value)")
-                        .font(ScoreTypography.archivo(600, 14))
-                        .monospacedDigit()
-                        .foregroundStyle(
-                            entry.points == value ? ScorePalette.accentInk : ScorePalette.ink
-                        )
-                        .frame(maxWidth: .infinity)
-                        .frame(height: ScoreMetrics.minimumTapTarget)
-                        .background(
-                            RoundedRectangle(
-                                cornerRadius: ScoreMetrics.Radius.chip,
-                                style: .continuous
-                            )
-                            .fill(entry.points == value ? ScorePalette.accent : ScorePalette.fill)
-                        )
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(.top, 14)
-        .scoreAnimation(ScoreMotion.tap, value: entry.points)
+        PointsPad(selection: entry.points) { entry.points = $0 }
+            .padding(.top, 14)
     }
 
     // MARK: - Anteil

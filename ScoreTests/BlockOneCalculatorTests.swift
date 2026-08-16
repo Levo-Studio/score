@@ -21,16 +21,16 @@ struct BlockOneCalculatorTests {
         subject("lf-mathematik", .leistungsfach, allPoints: 11),
         subject("lf-biologie", .leistungsfach, allPoints: 13),
 
-        subject("kf-englisch", .kernfach, allPoints: 10),
-        subject("kf-geschichte", .kernfach, allPoints: 9),
-        subject("kf-gemeinschaftskunde", .kernfach, allPoints: 11),
+        subject("kf-englisch", .pflichtBasisfach, allPoints: 10),
+        subject("kf-geschichte", .pflichtBasisfach, allPoints: 9),
+        subject("kf-gemeinschaftskunde", .pflichtBasisfach, allPoints: 11),
 
-        subject("bf-physik", .basisfach, allPoints: 14),
-        subject("bf-chemie", .basisfach, allPoints: 13),
-        subject("bf-geografie", .basisfach, allPoints: 12),
-        subject("bf-sport", .basisfach, allPoints: 11),
-        subject("bf-religion", .basisfach, allPoints: 5),
-        subject("bf-musik", .basisfach, allPoints: 4)
+        subject("bf-physik", .wahlBasisfach, allPoints: 14),
+        subject("bf-chemie", .wahlBasisfach, allPoints: 13),
+        subject("bf-geografie", .wahlBasisfach, allPoints: 12),
+        subject("bf-sport", .wahlBasisfach, allPoints: 11),
+        subject("bf-religion", .wahlBasisfach, allPoints: 5),
+        subject("bf-musik", .wahlBasisfach, allPoints: 4)
     ]
 
     @Test("Ein voller Jahrgang bringt genau 42 Kurse ein")
@@ -64,7 +64,7 @@ struct BlockOneCalculatorTests {
         let outcome = BlockOneCalculator.calculate(for: Self.fullYear)
 
         let mandatoryIDs = Self.fullYear
-            .filter { $0.kind != .basisfach }
+            .filter { $0.kind != .wahlBasisfach }
             .flatMap { subject in subject.semesters.map { course(subject.id, $0.index) } }
 
         #expect(mandatoryIDs.count == 24)
@@ -93,7 +93,7 @@ struct BlockOneCalculatorTests {
     func weakMandatorySubjectSurvives() {
         var subjects = Self.fullYear
         // Geschichte steht auf 3 Punkten — schlechter als jedes Basisfach.
-        subjects[4] = subject("kf-geschichte", .kernfach, allPoints: 3)
+        subjects[4] = subject("kf-geschichte", .pflichtBasisfach, allPoints: 3)
 
         let outcome = BlockOneCalculator.calculate(for: subjects)
 
@@ -119,16 +119,16 @@ struct BlockOneCalculatorTests {
             subject("lf-mathematik", .leistungsfach, points: [12, 12]),
             subject("lf-biologie", .leistungsfach, points: [11, 11]),
 
-            subject("kf-englisch", .kernfach, points: [10, 10]),
-            subject("kf-geschichte", .kernfach, points: [9, 9]),
-            subject("kf-gemeinschaftskunde", .kernfach, points: [14, 14]),
+            subject("kf-englisch", .pflichtBasisfach, points: [10, 10]),
+            subject("kf-geschichte", .pflichtBasisfach, points: [9, 9]),
+            subject("kf-gemeinschaftskunde", .pflichtBasisfach, points: [14, 14]),
 
-            subject("bf-physik", .basisfach, points: [12, 12]),
-            subject("bf-chemie", .basisfach, points: [8, 8]),
-            subject("bf-geografie", .basisfach, points: [7, 7]),
-            subject("bf-sport", .basisfach, points: [15, 15]),
-            subject("bf-religion", .basisfach, points: [10, 10]),
-            subject("bf-musik", .basisfach, points: [6, 6])
+            subject("bf-physik", .wahlBasisfach, points: [12, 12]),
+            subject("bf-chemie", .wahlBasisfach, points: [8, 8]),
+            subject("bf-geografie", .wahlBasisfach, points: [7, 7]),
+            subject("bf-sport", .wahlBasisfach, points: [15, 15]),
+            subject("bf-religion", .wahlBasisfach, points: [10, 10]),
+            subject("bf-musik", .wahlBasisfach, points: [6, 6])
         ]
 
         let outcome = BlockOneCalculator.calculate(for: subjects)
@@ -154,8 +154,8 @@ struct BlockOneCalculatorTests {
         let advanced = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
         // Acht Kernfächer sind mehr, als die Prüfungsordnung vorsieht — der
         // Rechenkern muss den Fall trotzdem sauber behandeln.
-        let mandatory = (1...8).map { subject("kf-\($0)", .kernfach, allPoints: 10) }
-        let optional = (1...2).map { subject("bf-\($0)", .basisfach, allPoints: 15) }
+        let mandatory = (1...8).map { subject("kf-\($0)", .pflichtBasisfach, allPoints: 10) }
+        let optional = (1...2).map { subject("bf-\($0)", .wahlBasisfach, allPoints: 15) }
 
         let outcome = BlockOneCalculator.calculate(for: advanced + mandatory + optional)
 
@@ -182,11 +182,11 @@ struct BlockOneCalculatorTests {
     @Test("Bei Gleichstand an der Auswahlgrenze bleibt die Auswahl stabil")
     func selectionIsStableOnTies() {
         // 29 Kernfach-Kurse lassen genau einen freien Platz.
-        let mandatory = (1...7).map { subject("kf-\($0)", .kernfach, allPoints: 10) }
-            + [subject("kf-8", .kernfach, points: [10])]
+        let mandatory = (1...7).map { subject("kf-\($0)", .pflichtBasisfach, allPoints: 10) }
+            + [subject("kf-8", .pflichtBasisfach, points: [10])]
         let optional = [
-            subject("bf-alpha", .basisfach, points: [10, 10]),
-            subject("bf-beta", .basisfach, points: [10])
+            subject("bf-alpha", .wahlBasisfach, points: [10, 10]),
+            subject("bf-beta", .wahlBasisfach, points: [10])
         ]
 
         let subjects = [subject("lf-1", .leistungsfach, allPoints: 12)] + mandatory + optional
@@ -207,7 +207,7 @@ struct BlockOneCalculatorTests {
     @Test("Die Block-I-Punkte sind der Schnitt auf 42 Kurse hochgerechnet")
     func blockOnePointsFromAverage() {
         let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 11) }
-            + (1...2).map { subject("kf-\($0)", .kernfach, allPoints: 8) }
+            + (1...2).map { subject("kf-\($0)", .pflichtBasisfach, allPoints: 8) }
 
         let outcome = BlockOneCalculator.calculate(for: subjects)
 
@@ -222,7 +222,7 @@ struct BlockOneCalculatorTests {
     @Test("Der erwartete Schnitt ist nach unten auf 4,0 gedeckelt")
     func expectedGradeIsCappedAtFour() {
         let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 0) }
-            + (1...3).map { subject("kf-\($0)", .kernfach, allPoints: 0) }
+            + (1...3).map { subject("kf-\($0)", .pflichtBasisfach, allPoints: 0) }
 
         let outcome = BlockOneCalculator.calculate(for: subjects)
 
@@ -235,7 +235,7 @@ struct BlockOneCalculatorTests {
     @Test("Der erwartete Schnitt ist nach oben auf 1,0 gedeckelt")
     func expectedGradeIsCappedAtOne() {
         let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 15) }
-            + (1...3).map { subject("kf-\($0)", .kernfach, allPoints: 15) }
+            + (1...3).map { subject("kf-\($0)", .pflichtBasisfach, allPoints: 15) }
 
         let outcome = BlockOneCalculator.calculate(for: subjects)
 
@@ -252,7 +252,7 @@ struct BlockOneCalculatorTests {
     /// was hier herausfällt, fällt allein wegen der Kursgrenze heraus.
     private static func limitScenario(_ limit: Int?) -> [SubjectInput] {
         (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
-            + [subject("bf-sport", .basisfach, points: [4, 15, 9, 7], limit: limit)]
+            + [subject("bf-sport", .wahlBasisfach, points: [4, 15, 9, 7], limit: limit)]
     }
 
     @Test("Mit Grenze 2 bringt ein Fach seine besten zwei Ergebnisse ein")
@@ -300,7 +300,7 @@ struct BlockOneCalculatorTests {
 
     @Test("Bei Gleichstand innerhalb eines Fachs gewinnt das frühere Halbjahr")
     func limitPrefersEarlierSemesterOnTies() {
-        let subjects = [subject("bf-musik", .basisfach, points: [9, 9, 9, 4], limit: 2)]
+        let subjects = [subject("bf-musik", .wahlBasisfach, points: [9, 9, 9, 4], limit: 2)]
 
         let outcome = BlockOneCalculator.calculate(for: subjects)
 
@@ -312,10 +312,10 @@ struct BlockOneCalculatorTests {
     func limitAppliesBeforeCompetition() {
         // Sieben Kernfächer belegen 28 der 30 Plätze — es bleiben genau zwei.
         let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
-            + (1...7).map { subject("kf-\($0)", .kernfach, allPoints: 10) }
+            + (1...7).map { subject("kf-\($0)", .pflichtBasisfach, allPoints: 10) }
             + [
-                subject("bf-alpha", .basisfach, allPoints: 15, limit: 1),
-                subject("bf-beta", .basisfach, allPoints: 8)
+                subject("bf-alpha", .wahlBasisfach, allPoints: 15, limit: 1),
+                subject("bf-beta", .wahlBasisfach, allPoints: 8)
             ]
 
         let outcome = BlockOneCalculator.calculate(for: subjects)
@@ -370,7 +370,7 @@ struct BlockOneCalculatorTests {
             subject("lf-deutsch", .leistungsfach, points: [12, 12]),
             SubjectInput(
                 id: "bf-musik",
-                kind: .basisfach,
+                kind: .wahlBasisfach,
                 semesters: [
                     SemesterInput(index: 0, entries: []),
                     SemesterInput(index: 1, isActive: false, entries: [GradeInput(points: 3, kind: .written)])

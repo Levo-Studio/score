@@ -298,8 +298,8 @@ struct BlockOneBreakdownView: View {
     private func barOpacity(_ kind: SubjectKind) -> Double {
         switch kind {
         case .leistungsfach: 1
-        case .kernfach: 0.6
-        case .basisfach: 0.32
+        case .pflichtBasisfach: 0.6
+        case .wahlBasisfach: 0.32
         }
     }
 
@@ -335,9 +335,9 @@ struct BlockOneBreakdownView: View {
         switch group.kind {
         case .leistungsfach:
             Text("\(group.includedCount) Kurse aus \(group.subjectCount) Leistungsfächern")
-        case .kernfach:
+        case .pflichtBasisfach:
             Text("\(group.includedCount) Kurse aus \(group.subjectCount) Kernfächern")
-        case .basisfach:
+        case .wahlBasisfach:
             Text("\(group.includedCount) Kurse aus \(group.subjectCount) Basisfächern")
         }
     }
@@ -349,9 +349,9 @@ struct BlockOneBreakdownView: View {
         switch group.kind {
         case .leistungsfach:
             Text("Alle vier Halbjahre jedes Leistungsfachs. Gesetzt, nicht abwählbar.")
-        case .kernfach:
+        case .pflichtBasisfach:
             Text("Gesetzt wie die Leistungsfächer, aber gegen die 30 Plätze der Nicht-Leistungsfächer gerechnet.")
-        case .basisfach:
+        case .wahlBasisfach:
             Text("\(breakdown.optionalCandidateCount) Ergebnisse treten um \(breakdown.optionalSlotCount) freie Plätze an. Die besten bekommen sie.")
         }
     }
@@ -502,7 +502,7 @@ struct BlockOneBreakdownView: View {
             return Text("Dieses Fach bringt nur \(limit) Ergebnisse ein. Score behält die besten und klammert diese hier aus.")
         case .outranked:
             let occupied = breakdown.groups
-                .first { $0.kind == .basisfach }?
+                .first { $0.kind == .wahlBasisfach }?
                 .includedCount ?? breakdown.optionalSlotCount
             return Text("Schlechter als die \(occupied) besseren Basisfach-Ergebnisse, die die freien Plätze belegen.")
         }

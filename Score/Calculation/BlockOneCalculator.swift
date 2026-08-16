@@ -117,13 +117,13 @@ enum BlockOneCalculator {
         let advanced = courses.filter { $0.kind == .leistungsfach }
 
         // Kernfächer sind ebenfalls gesetzt, zählen aber gegen die 30 Plätze.
-        let mandatory = courses.filter { $0.kind == .kernfach }
+        let mandatory = courses.filter { $0.kind == .pflichtBasisfach }
 
         // Basisfächer konkurrieren um die restlichen Plätze — bestes Ergebnis zuerst.
         // Bei Gleichstand entscheidet die Kennung, damit die Auswahl stabil bleibt
         // und nicht bei jedem Aufruf zwischen zwei gleich guten Kursen springt.
         let optional = courses
-            .filter { $0.kind == .basisfach }
+            .filter { $0.kind == .wahlBasisfach }
             .sorted { left, right in
                 if left.points != right.points { return left.points > right.points }
                 if left.id.subjectID != right.id.subjectID {

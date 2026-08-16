@@ -23,16 +23,16 @@ struct BlockOneBreakdownTests {
         presentation(subject("lf-b", .leistungsfach, allPoints: 12)),
         presentation(subject("lf-c", .leistungsfach, allPoints: 11)),
 
-        presentation(subject("kf-a", .kernfach, allPoints: 10)),
-        presentation(subject("kf-b", .kernfach, allPoints: 9)),
-        presentation(subject("kf-c", .kernfach, allPoints: 8)),
+        presentation(subject("kf-a", .pflichtBasisfach, allPoints: 10)),
+        presentation(subject("kf-b", .pflichtBasisfach, allPoints: 9)),
+        presentation(subject("kf-c", .pflichtBasisfach, allPoints: 8)),
 
-        presentation(subject("bf-f", .basisfach, allPoints: 2)),
-        presentation(subject("bf-d", .basisfach, allPoints: 11)),
-        presentation(subject("bf-a", .basisfach, allPoints: 14)),
-        presentation(subject("bf-e", .basisfach, points: [10, 10, 3, 3])),
-        presentation(subject("bf-c", .basisfach, allPoints: 12)),
-        presentation(subject("bf-b", .basisfach, allPoints: 13))
+        presentation(subject("bf-f", .wahlBasisfach, allPoints: 2)),
+        presentation(subject("bf-d", .wahlBasisfach, allPoints: 11)),
+        presentation(subject("bf-a", .wahlBasisfach, allPoints: 14)),
+        presentation(subject("bf-e", .wahlBasisfach, points: [10, 10, 3, 3])),
+        presentation(subject("bf-c", .wahlBasisfach, allPoints: 12)),
+        presentation(subject("bf-b", .wahlBasisfach, allPoints: 13))
     ]
 
     private static var breakdown: BlockOneBreakdown {
@@ -67,7 +67,7 @@ struct BlockOneBreakdownTests {
     func groups() {
         let groups = Self.breakdown.groups
 
-        #expect(groups.map(\.kind) == [.leistungsfach, .kernfach, .basisfach])
+        #expect(groups.map(\.kind) == [.leistungsfach, .pflichtBasisfach, .wahlBasisfach])
         #expect(groups[0].includedCount == 12)
         #expect(groups[0].excludedCount == 0)
         #expect(groups[1].includedCount == 12)
@@ -128,7 +128,7 @@ struct BlockOneBreakdownTests {
     func missingCourses() {
         let input = SubjectInput(
             id: "bf-lücke",
-            kind: .basisfach,
+            kind: .wahlBasisfach,
             semesters: [
                 semester(0, points: 9),
                 SemesterInput(index: 1, entries: []),

@@ -278,7 +278,7 @@ struct AdvancedSubjectsStep: View {
 
 // MARK: - Kernfächer
 
-struct CoreSubjectsStep: View {
+struct RequiredBasicSubjectsStep: View {
 
     @Bindable var model: OnboardingViewModel
 
@@ -291,10 +291,10 @@ struct CoreSubjectsStep: View {
             )
 
             SubjectSelectionSection(
-                counter: "\(model.coreSubjects.count) gewählt",
-                options: model.coreOptions,
-                isSelected: { model.coreSubjects.contains($0) },
-                toggle: { model.toggleCoreSubject($0) },
+                counter: "\(model.requiredBasicSubjects.count) gewählt",
+                options: model.requiredBasicOptions,
+                isSelected: { model.requiredBasicSubjects.contains($0) },
+                toggle: { model.toggleRequiredBasicSubject($0) },
                 draft: $model.customSubjectDraft,
                 onCommitCustom: { model.commitCustomSubject() }
             )
@@ -304,7 +304,7 @@ struct CoreSubjectsStep: View {
 
 // MARK: - Basisfächer
 
-struct BasicSubjectsStep: View {
+struct ElectiveBasicSubjectsStep: View {
 
     @Bindable var model: OnboardingViewModel
 
@@ -317,10 +317,10 @@ struct BasicSubjectsStep: View {
             )
 
             SubjectSelectionSection(
-                counter: "\(model.basicSubjects.count) gewählt",
-                options: model.basicOptions,
-                isSelected: { model.basicSubjects.contains($0) },
-                toggle: { model.toggleBasicSubject($0) },
+                counter: "\(model.electiveBasicSubjects.count) gewählt",
+                options: model.electiveBasicOptions,
+                isSelected: { model.electiveBasicSubjects.contains($0) },
+                toggle: { model.toggleElectiveBasicSubject($0) },
                 draft: $model.customSubjectDraft,
                 onCommitCustom: { model.commitCustomSubject() }
             )
@@ -412,8 +412,8 @@ struct SummaryStep: View {
                     SummaryRow(label: "Bundesland", value: Text(verbatim: model.federalState))
                     SummaryRow(label: "Abitur", value: Text(verbatim: String(model.graduationYear)))
                     SummaryRow(label: "Leistungsfächer", value: Text(verbatim: model.summaryList(model.advancedSubjects)))
-                    SummaryRow(label: "Kernfächer", value: Text(verbatim: model.summaryList(model.sortedCoreSubjects)))
-                    SummaryRow(label: "Basisfächer", value: Text(verbatim: model.summaryList(model.sortedBasicSubjects)))
+                    SummaryRow(label: "Kernfächer", value: Text(verbatim: model.summaryList(model.sortedRequiredBasicSubjects)))
+                    SummaryRow(label: "Basisfächer", value: Text(verbatim: model.summaryList(model.sortedElectiveBasicSubjects)))
                     SummaryRow(label: "Sprache", value: Text(model.summaryLanguage))
                 }
             }

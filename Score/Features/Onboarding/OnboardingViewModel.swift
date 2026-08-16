@@ -12,8 +12,8 @@ enum OnboardingStep: Int, CaseIterable {
     case classLevel
     case region
     case advancedSubjects
-    case coreSubjects
-    case basicSubjects
+    case requiredBasicSubjects
+    case electiveBasicSubjects
     case language
     case summary
 
@@ -52,16 +52,16 @@ final class OnboardingViewModel {
     /// Die drei Leistungsfächer, in der Reihenfolge der Auswahl.
     var advancedSubjects: [String] = []
 
-    var coreSubjects: Set<String> = []
-    var basicSubjects: Set<String> = []
+    var requiredBasicSubjects: Set<String> = []
+    var electiveBasicSubjects: Set<String> = []
 
     /// Fächer, die der Nutzer selbst eingetippt hat, je Schritt getrennt.
     ///
     /// Sie stehen in der Wolke ganz hinten und verhalten sich sonst wie
     /// Katalogfächer.
     var customAdvancedNames: [String] = []
-    var customCoreNames: [String] = []
-    var customBasicNames: [String] = []
+    var customRequiredBasicNames: [String] = []
+    var customElectiveBasicNames: [String] = []
 
     /// Der Text im Eingabefeld für ein eigenes Fach.
     var customSubjectDraft = ""
@@ -79,19 +79,19 @@ final class OnboardingViewModel {
     }
 
     /// Die Kernfächer, ohne die bereits als Leistungsfach gewählten.
-    var coreOptions: [String] {
+    var requiredBasicOptions: [String] {
         SubjectCatalog.all
             .map(\.name)
-            .filter { SubjectCatalog.isCoreSubject($0) && !advancedSubjects.contains($0) }
-            + customCoreNames
+            .filter { SubjectCatalog.isRequiredBasicSubject($0) && !advancedSubjects.contains($0) }
+            + customRequiredBasicNames
     }
 
     /// Alles, was weder Leistungs- noch gewähltes Kernfach ist.
-    var basicOptions: [String] {
+    var electiveBasicOptions: [String] {
         SubjectCatalog.all
             .map(\.name)
-            .filter { !advancedSubjects.contains($0) && !coreSubjects.contains($0) }
-            + customBasicNames
+            .filter { !advancedSubjects.contains($0) && !requiredBasicSubjects.contains($0) }
+            + customElectiveBasicNames
     }
 
     /// Die Kernfächer, die Score von sich aus vorschlägt.
@@ -99,8 +99,8 @@ final class OnboardingViewModel {
     /// Alles, was der Katalog als Kernfach führt und nicht schon Leistungsfach
     /// ist. Sprachen sind bewusst alle dabei — wer Latein nicht belegt, nimmt es
     /// mit einem Tipp wieder heraus, das ist schneller als jede Rückfrage.
-    private var suggestedCoreSubjects: Set<String> {
-        Set(coreOptions.filter { SubjectCatalog.isCoreSubject($0) })
+    private var suggestedRequiredBasicSubjects: Set<String> {
+        Set(requiredBasicOptions.filter { SubjectCatalog.isRequiredBasicSubject($0) })
     }
 
     // MARK: - Fortschritt
@@ -142,8 +142,8 @@ final class OnboardingViewModel {
 
         // Die Kernfächer hängen von den Leistungsfächern ab, deshalb wird ihre
         // Vorauswahl erst gesetzt, wenn die Leistungsfächer feststehen.
-        if next == .coreSubjects, coreSubjects.isEmpty {
-            coreSubjects = suggestedCoreSubjects
+        if next == .requiredBasicSubjects, requiredBasicSubjects.isEmpty {
+            requiredBasicSubjects = suggestedRequiredBasicSubjects
         }
 
         customSubjectDraft = ""
@@ -171,19 +171,19 @@ final class OnboardingViewModel {
         }
     }
 
-    func toggleCoreSubject(_ name: String) {
-        if coreSubjects.contains(name) {
-            coreSubjects.remove(name)
+    func toggleRequiredBasicSubject(_ name: String) {
+        if requiredBasicSubjects.contains(name) {
+            requiredBasicSubjects.remove(name)
         } else {
-            coreSubjects.insert(name)
+            requiredBasicSubjects.insert(name)
         }
     }
 
-    func toggleBasicSubject(_ name: String) {
-        if basicSubjects.contains(name) {
-            basicSubjects.remove(name)
+    func toggleElectiveBasicSubject(_ name: String) {
+        if electiveBasicSubjects.contains(name) {
+            electiveBasicSubjects.remove(name)
         } else {
-            basicSubjects.insert(name)
+            electiveBasicSubjects.insert(name)
         }
     }
 
@@ -195,19 +195,19 @@ final class OnboardingViewModel {
 
         let isKnown = SubjectCatalog.template(named: name) != nil
             || customAdvancedNames.contains(name)
-            || customCoreNames.contains(name)
-            || customBasicNames.contains(name)
+            || customRequiredBasicNames.contains(name)
+            || customElectiveBasicNames.contains(name)
 
         switch step {
         case .advancedSubjects:
             if !isKnown { customAdvancedNames.append(name) }
             toggleAdvancedSubject(name)
-        case .coreSubjects:
-            if !isKnown { customCoreNames.append(name) }
-            coreSubjects.insert(name)
-        case .basicSubjects:
-            if !isKnown { customBasicNames.append(name) }
-            basicSubjects.insert(name)
+        case .requiredBasicSubjects:
+            if !isKnown { customRequiredBasicNames.append(name) }
+            requiredBasicSubjects.insert(name)
+        case .electiveBasicSubjects:
+            if !isKnown { customElectiveBasicNames.append(name) }
+            electiveBasicSubjects.insert(name)
         default:
             break
         }
@@ -243,12 +243,12 @@ final class OnboardingViewModel {
         names.isEmpty ? ScoreNumberFormat.placeholder : names.joined(separator: ", ")
     }
 
-    var sortedCoreSubjects: [String] {
-        coreOptions.filter { coreSubjects.contains($0) }
+    var sortedRequiredBasicSubjects: [String] {
+        requiredBasicOptions.filter { requiredBasicSubjects.contains($0) }
     }
 
-    var sortedBasicSubjects: [String] {
-        basicOptions.filter { basicSubjects.contains($0) }
+    var sortedElectiveBasicSubjects: [String] {
+        electiveBasicOptions.filter { electiveBasicSubjects.contains($0) }
     }
 
     // MARK: - Abschluss
@@ -275,11 +275,11 @@ final class OnboardingViewModel {
         for name in advancedSubjects {
             insertSubject(named: name, kind: .leistungsfach, sortIndex: &sortIndex, in: context)
         }
-        for name in sortedCoreSubjects {
-            insertSubject(named: name, kind: .kernfach, sortIndex: &sortIndex, in: context)
+        for name in sortedRequiredBasicSubjects {
+            insertSubject(named: name, kind: .pflichtBasisfach, sortIndex: &sortIndex, in: context)
         }
-        for name in sortedBasicSubjects {
-            insertSubject(named: name, kind: .basisfach, sortIndex: &sortIndex, in: context)
+        for name in sortedElectiveBasicSubjects {
+            insertSubject(named: name, kind: .wahlBasisfach, sortIndex: &sortIndex, in: context)
         }
     }
 

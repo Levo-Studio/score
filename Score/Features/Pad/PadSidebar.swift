@@ -211,8 +211,8 @@ extension SubjectKind {
     var sidebarSectionTitle: LocalizedStringKey {
         switch self {
         case .leistungsfach: "Leistungsfächer"
-        case .kernfach: "Kernfächer"
-        case .basisfach: "Basisfächer"
+        case .pflichtBasisfach: "Kernfächer"
+        case .wahlBasisfach: "Basisfächer"
         }
     }
 }

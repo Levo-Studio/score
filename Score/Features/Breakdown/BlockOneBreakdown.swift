@@ -270,13 +270,13 @@ struct BlockOneBreakdown {
         }
 
         advancedSubjects = entries.filter { $0.kind == .leistungsfach }
-        mandatorySubjects = entries.filter { $0.kind == .kernfach }
+        mandatorySubjects = entries.filter { $0.kind == .pflichtBasisfach }
 
         // Absteigend nach Schnitt, bei Gleichstand nach Name: die Liste liest sich
         // von „reicht sicher" nach „reicht nicht mehr". Fächer ganz ohne Ergebnis
         // stehen am Ende, sie treten gar nicht erst an.
         optionalSubjects = entries
-            .filter { $0.kind == .basisfach }
+            .filter { $0.kind == .wahlBasisfach }
             .sorted { left, right in
                 let leftAverage = left.competingAverage ?? -1
                 let rightAverage = right.competingAverage ?? -1
@@ -286,8 +286,8 @@ struct BlockOneBreakdown {
 
         groups = [
             Self.group(.leistungsfach, in: advancedSubjects),
-            Self.group(.kernfach, in: mandatorySubjects),
-            Self.group(.basisfach, in: optionalSubjects)
+            Self.group(.pflichtBasisfach, in: mandatorySubjects),
+            Self.group(.wahlBasisfach, in: optionalSubjects)
         ]
 
         // Die Trennlinie sitzt hinter dem letzten Fach, das noch etwas einbringt.

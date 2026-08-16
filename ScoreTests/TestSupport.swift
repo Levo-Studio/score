@@ -19,22 +19,39 @@ func isClose(_ value: Double, _ expected: Double, tolerance: Double = 0.0001) ->
 /// Halbjahresergebnis exakt die eingetragene Punktzahl. So lassen sich die Tests
 /// zur Kursauswahl über die gewünschten Punktzahlen schreiben, ohne die Rechnung
 /// innerhalb des Fachs mitzudenken.
-func semester(_ index: Int, points: Int) -> SemesterInput {
-    SemesterInput(index: index, entries: [GradeInput(points: points, kind: .written)])
+func semester(_ index: Int, points: Int, bracketed: Bool = false) -> SemesterInput {
+    SemesterInput(
+        index: index,
+        entries: [GradeInput(points: points, kind: .written)],
+        isManuallyBracketed: bracketed
+    )
 }
 
 /// Ein Fach, dessen Halbjahre der Reihe nach die angegebenen Punktzahlen ergeben.
+///
+/// - Parameter bracketed: Die Halbjahres-Indizes, die von Hand geklammert sind.
 func subject(
     _ id: String,
     _ kind: SubjectKind,
     points: [Int],
-    limit: Int? = nil
+    limit: Int? = nil,
+    bracketed: Set<Int> = [],
+    isOralExam: Bool = false,
+    isDoubleWeighted: Bool = false,
+    writtenExamPoints: Int? = nil,
+    oralExamPoints: Int? = nil
 ) -> SubjectInput {
     SubjectInput(
         id: id,
         kind: kind,
-        semesters: points.enumerated().map { semester($0.offset, points: $0.element) },
-        maximumContributedCourses: limit
+        semesters: points.enumerated().map {
+            semester($0.offset, points: $0.element, bracketed: bracketed.contains($0.offset))
+        },
+        maximumContributedCourses: limit,
+        isOralExamSubject: isOralExam,
+        isDoubleWeighted: isDoubleWeighted,
+        writtenExamPoints: writtenExamPoints,
+        oralExamPoints: oralExamPoints
     )
 }
 
@@ -43,13 +60,28 @@ func subject(
     _ id: String,
     _ kind: SubjectKind,
     allPoints: Int,
-    limit: Int? = nil
+    limit: Int? = nil,
+    bracketed: Set<Int> = [],
+    isOralExam: Bool = false,
+    isDoubleWeighted: Bool = false,
+    writtenExamPoints: Int? = nil,
+    oralExamPoints: Int? = nil
 ) -> SubjectInput {
-    subject(id, kind, points: Array(repeating: allPoints, count: 4), limit: limit)
+    subject(
+        id,
+        kind,
+        points: Array(repeating: allPoints, count: 4),
+        limit: limit,
+        bracketed: bracketed,
+        isOralExam: isOralExam,
+        isDoubleWeighted: isDoubleWeighted,
+        writtenExamPoints: writtenExamPoints,
+        oralExamPoints: oralExamPoints
+    )
 }
 
 extension BlockOneCalculator.CourseIdentifier {
-    /// Kurzschreibweise für Erwartungen wie `course("bf-b", 2)`.
+    /// Kurzschreibweise für Erwartungen wie `course("wbf-b", 2)`.
     init(_ subjectID: String, _ semesterIndex: Int) {
         self.init(subjectID: subjectID, semesterIndex: semesterIndex)
     }

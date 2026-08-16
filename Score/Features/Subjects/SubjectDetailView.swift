@@ -21,6 +21,11 @@ struct SubjectDetailView: View {
     @State private var isEditorPresented = false
     @State private var editedEntry: GradeEntry?
 
+    /// Die zuletzt gelöschte Leistung, solange sie sich zurückholen lässt.
+    @State private var pendingUndo: GradeEntryUndo?
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
@@ -48,11 +53,21 @@ struct SubjectDetailView: View {
             .padding(.bottom, 170)
         }
         .background(ScorePalette.background)
+        // Ein Tipp neben die Zeilen schliesst eine offene Zeile — wie in einer
+        // Systemliste.
+        .closesOpenSwipeRow()
+        // Der Streifen liegt über dem Inhalt, aber unter der schwebenden
+        // Tab-Bar — sonst verdeckte die Leiste genau die Schaltfläche, die er
+        // anbietet.
+        .overlay(alignment: .bottom) {
+            undoOverlay
+        }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $isEditorPresented) {
             SubjectEditorView(target: .existing(subject)) { dismiss() }
         }
-        .sheet(item: $editedEntry) { entry in
+        // Mittig und nicht von unten: siehe ``ScoreOverlaySheet``.
+        .scoreOverlaySheet(item: $editedEntry) { entry in
             GradeEntrySheet(entry: entry, subject: subject) {
                 delete(entry)
             }
@@ -133,6 +148,9 @@ struct SubjectDetailView: View {
                         title: subject.kind.editorLabel,
                         isHighlighted: subject.kind == .leistungsfach
                     )
+                    if subject.isOralExamSubject {
+                        OralExamBadge()
+                    }
                     Text("Ø \(ScoreNumberFormat.points(summary.average)) Punkte")
                         .font(.optionMeta)
                         .foregroundStyle(ScorePalette.inkSecondary)
@@ -271,13 +289,33 @@ struct SubjectDetailView: View {
                         value: ScoreNumberFormat.points(partialGrade(.oral))
                     )
                     semesterTile(
-                        label: Text("Ergebnis"),
+                        label: Text("Kurs"),
                         value: ScoreNumberFormat.points(summary.result),
                         isAccented: true
                     )
                 }
+
+                CourseBracketRow(
+                    isBracketed: bracketBinding,
+                    allowsBracketing: summary.allowsBracketing,
+                    bracketReason: summary.bracketReason,
+                    isActive: summary.isActive
+                )
             }
         }
+    }
+
+    /// Die Klammer des gerade gewählten Halbjahres.
+    ///
+    /// Schreibt direkt ins Modell: Klammern ist eine einzelne, sofort sichtbare
+    /// Entscheidung und kein Formular, das man abbricht. Fehlt der Halbjahres-
+    /// Datensatz — was nach dem Anlegen eines Fachs nie vorkommt —, bleibt der
+    /// Schalter wirkungslos, statt still einen neuen anzulegen.
+    private var bracketBinding: Binding<Bool> {
+        Binding(
+            get: { currentSemester?.isManuallyBracketed ?? false },
+            set: { currentSemester?.isManuallyBracketed = $0 }
+        )
     }
 
     /// Die Beschriftung einer Anteils-Kachel: „Schriftlich · 60 %".
@@ -296,8 +334,12 @@ struct SubjectDetailView: View {
     /// Problem, das gelöst werden müsste.
     private var semesterStateText: LocalizedStringKey? {
         if !summary.isActive { return "nicht belegt" }
-        if summary.isExcluded { return "wird nicht gewertet" }
-        return nil
+        switch summary.bracketReason {
+        case .manual: return "von dir geklammert"
+        case .automatic: return "geklammert"
+        case .beyondSubjectLimit: return "über der Kursgrenze"
+        case .none: return nil
+        }
     }
 
     /// Eine der drei Kacheln: Beschriftung oben, Wert darunter.
@@ -348,12 +390,15 @@ struct SubjectDetailView: View {
 
             ForEach(Array(zip(list, shares).enumerated()), id: \.element.0.persistentModelID) { index, pair in
                 let (entry, share) = pair
-                Button {
-                    editedEntry = entry
-                } label: {
+                // Ohne Rückfrage: eine einzelne Leistung ist schnell wieder
+                // eingetragen, und der Streifen unten nimmt den Fehlgriff zurück.
+                SwipeToDelete(
+                    accessibilityLabel: Text("\(entry.title) löschen"),
+                    onDelete: { delete(entry) },
+                    onTap: { editedEntry = entry }
+                ) {
                     entryRow(entry, share: share)
                 }
-                .buttonStyle(.plain)
                 .rowAppearance(index: index, base: 0.1)
             }
 
@@ -403,7 +448,7 @@ struct SubjectDetailView: View {
     // MARK: - Erklärung
 
     private var blockOneNote: some View {
-        Text("Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. Nicht gewertete Kurse rechnet Score automatisch raus, Kernfächer bleiben immer drin.")
+        Text("Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. In den Schnitt gehen 40 Kurse ein — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso.")
             .font(.optionMeta)
             .lineSpacing(5.5)
             .foregroundStyle(ScorePalette.inkSecondary)
@@ -436,9 +481,49 @@ struct SubjectDetailView: View {
         }
     }
 
+    /// Löscht eine Leistung sofort und bietet sie zur Rücknahme an.
+    ///
+    /// Denselben Weg nimmt auch die Schaltfläche „Löschen" im Eingabe-Sheet —
+    /// zwei Wege zum selben Ziel dürfen sich nicht unterschiedlich verhalten.
     private func delete(_ entry: GradeEntry) {
+        let snapshot = GradeEntryUndo(of: entry)
         modelContext.delete(entry)
         editedEntry = nil
+
+        withAnimation(ScoreMotion.resolve(ScoreMotion.sheetRise, reduceMotion: reduceMotion)) {
+            pendingUndo = snapshot
+        }
+    }
+
+    private func undoDeletion(_ snapshot: GradeEntryUndo) {
+        snapshot.restore(to: subject, in: modelContext)
+        dismissUndo()
+    }
+
+    private func dismissUndo() {
+        withAnimation(ScoreMotion.resolve(ScoreMotion.backdrop, reduceMotion: reduceMotion)) {
+            pendingUndo = nil
+        }
+    }
+
+    // MARK: - Rücknahme
+
+    /// Der Abstand, den die schwebende Tab-Bar für sich braucht: 62 Punkt Höhe,
+    /// 8 Punkt Bodenabstand, dazu die Lücke zum Streifen.
+    private static let undoBannerClearance: CGFloat = 82
+
+    @ViewBuilder
+    private var undoOverlay: some View {
+        if let pendingUndo {
+            UndoBanner(
+                message: "Leistung gelöscht",
+                action: { undoDeletion(pendingUndo) },
+                onExpire: { dismissUndo() }
+            )
+            .id(pendingUndo.id)
+            .padding(.horizontal, ScoreMetrics.screenPadding)
+            .padding(.bottom, Self.undoBannerClearance)
+        }
     }
 }
 

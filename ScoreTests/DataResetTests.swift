@@ -30,7 +30,7 @@ struct DataResetTests {
                 name: name,
                 abbreviation: String(name.prefix(2)),
                 colorValue: 0x1C6B6E,
-                kind: index == 0 ? .leistungsfach : .basisfach,
+                kind: index == 0 ? .leistungsfach : .wahlBasisfach,
                 sortIndex: index
             )
             context.insert(subject)

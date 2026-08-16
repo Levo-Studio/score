@@ -59,7 +59,7 @@ struct ScoreChip: View {
                 .font(.chipLabel)
                 .padding(.horizontal, 15)
                 .padding(.vertical, 11)
-                .frame(minHeight: ScoreMetrics.minimumTapTarget)
+                .frame(minHeight: ScoreMetrics.chipHeight)
                 .foregroundStyle(isSelected ? ScorePalette.accentInk : ScorePalette.inkSecondary)
                 .background(isSelected ? ScorePalette.accent : ScorePalette.surface)
                 .clipShape(Capsule())
@@ -92,6 +92,40 @@ struct ScoreBadge: View {
             .foregroundStyle(isHighlighted ? ScorePalette.accentInk : ScorePalette.inkSecondary)
             .background(isHighlighted ? ScorePalette.accent : ScorePalette.fill)
             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+    }
+}
+
+/// Das Zeichen für ein mündliches Prüfungsfach.
+///
+/// Es steht neben dem Kürzel der Kategorie, nicht darin: Ein Prüfungsfach ist
+/// keine vierte Kategorie, sondern eine Eigenschaft, die auf jede der drei
+/// treffen kann. Die Angabe ist wichtig genug für die Kopfzeile — sie erklärt,
+/// warum der Klammer-Schalter im Fach gesperrt ist: In einem Prüfungsfach sind
+/// alle Halbjahre anrechnungspflichtig.
+struct OralExamBadge: View {
+
+    /// In Listen und in der Seitenleiste bleibt allein das Siegel. Dort steht
+    /// die Zeile ohnehin eng, und zwei zusätzliche Wörter drängten den Fachnamen
+    /// in den Umbruch. Die Beschriftung für die Bedienungshilfen bleibt voll.
+    var isCompact: Bool = false
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 9, weight: .semibold))
+
+            if !isCompact {
+                Text("Mündliche Prüfung")
+                    .font(.badgeLabel)
+            }
+        }
+        .padding(.horizontal, isCompact ? 4 : 6)
+        .padding(.vertical, 4)
+        .foregroundStyle(ScorePalette.accent)
+        .background(ScorePalette.fill)
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .accessibilityElement()
+        .accessibilityLabel(Text("Mündliches Prüfungsfach"))
     }
 }
 

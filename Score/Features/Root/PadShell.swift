@@ -18,13 +18,16 @@ enum PadRoute: Hashable {
     case subject(UUID)
     case newSubject
     case editSubject(UUID)
+    /// Die Wahl der mündlichen Prüfungsfächer. Eine gewöhnliche Detailseite —
+    /// anders als die Aufschlüsselung erklärt sie nichts, was darunter stünde.
+    case oralExamSubjects
 
     /// Das Fach, zu dem diese Route gehört. Die Sidebar hebt seine Zeile hervor,
     /// auch während das Fach im Editor steht.
     var subjectIdentifier: UUID? {
         switch self {
         case .subject(let identifier), .editSubject(let identifier): identifier
-        case .dashboard, .breakdown, .settings, .newSubject: nil
+        case .dashboard, .breakdown, .settings, .newSubject, .oralExamSubjects: nil
         }
     }
 }
@@ -204,6 +207,7 @@ struct PadShell: View {
             // Sollte sie es doch, steht die Übersicht darunter, und das ist genau
             // der Inhalt, den die Überlagerung erklärt.
             PadDashboardView(
+                profile: profile,
                 subjects: subjects,
                 semesterIndex: $semesterIndex,
                 route: navigation
@@ -221,6 +225,10 @@ struct PadShell: View {
             } else {
                 missingSubject
             }
+        case .oralExamSubjects:
+            // Dieselbe Auswahl wie im Sheet des iPhones, nur ohne dessen
+            // Navigationsleiste: die Kopfleiste des iPads nennt den Titel schon.
+            OralExamSubjectSheet(showsNavigationBar: false)
         case .newSubject:
             PadSubjectEditorView(target: .new, route: navigation)
         case .editSubject:
@@ -318,6 +326,8 @@ struct PadShell: View {
                     .foregroundStyle(ScorePalette.inkSecondary)
                 PadSemesterSegments(selection: $semesterIndex)
             }
+
+            profileAvatar
         }
         .padding(.horizontal, PadMetrics.contentPadding)
         .padding(.top, ScoreMetrics.Spacing.lg)
@@ -327,6 +337,22 @@ struct PadShell: View {
                 .fill(ScorePalette.line)
                 .frame(height: 1)
         }
+    }
+
+    // MARK: - Profilbild
+
+    /// Das eigene Bild am äusseren Ende der Kopfleiste.
+    ///
+    /// Es steht hier und nicht auf der Übersicht, weil es über jedem Ziel gleich
+    /// sinnvoll ist: Es sagt nichts über die Leistung, sondern „das ist dein
+    /// Konto". Diese Auskunft gilt in den Einstellungen so wie im Fach-Editor.
+    ///
+    /// Die Begrüssung teilt diesen Platz bewusst **nicht**. Sie kommentiert den
+    /// Schnitt und gehört deshalb dorthin, wo der Schnitt steht — über die
+    /// Score-Karte der Übersicht, wie auf dem iPhone. In der Kopfleiste stünde
+    /// sie auch über Bildschirmen, auf denen die Note gar nicht zu sehen ist.
+    private var profileAvatar: some View {
+        ProfileAvatar(profile: profile, size: 34)
     }
 
     /// Klappt die Sidebar ein und aus. Der Pfeil zeigt in die Richtung, in die
@@ -358,6 +384,7 @@ struct PadShell: View {
         case .dashboard, .breakdown: String.scoreLocalized("Übersicht")
         case .settings: String.scoreLocalized("Einstellungen")
         case .newSubject: String.scoreLocalized("Neues Fach")
+        case .oralExamSubjects: String.scoreLocalized("Mündliche Prüfungsfächer")
         case .editSubject: String.scoreLocalized("Fach bearbeiten")
         case .subject: selectedSubject?.name ?? String.scoreLocalized("Fach")
         }

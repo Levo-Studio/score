@@ -58,9 +58,9 @@ struct DashboardView: View {
                     title: "Erwarteter Abischnitt",
                     trend: model.trendText(for: selectedSemester),
                     average: model.expectedGradeText,
-                    averageValue: model.outcome.expectedGrade,
+                    averageValue: model.expectedGrade,
                     stats: [
-                        ScoreStat(value: model.blockOneText, label: "Block I"),
+                        ScoreStat(value: model.blockOneText, label: "Kurspunkte"),
                         ScoreStat(value: model.courseCountText, label: "Kurse"),
                         ScoreStat(
                             value: model.semesterAverageText(selectedSemester),
@@ -101,11 +101,15 @@ struct DashboardView: View {
                     .font(ScoreTypography.publicSans(400, 12))
                     .foregroundStyle(ScorePalette.inkSecondary)
 
-                Text("Läuft bei dir, \(profile.firstName)")
+                // Die Zeile kommt aus `DashboardGreeting` und nicht aus dem
+                // Katalog dieser View — dort stehen alle Stufen beieinander.
+                model.greetingText(firstName: profile.firstName)
                     .font(.greeting)
                     .tracking(em: -0.03, at: 24)
                     .foregroundStyle(ScorePalette.ink)
                     .fixedSize(horizontal: false, vertical: true)
+                    .contentTransition(.opacity)
+                    .scoreAnimation(ScoreMotion.valueChange, value: model.greetingStage)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -210,8 +214,8 @@ private struct SubjectRow: View {
     private var kindTitle: String.LocalizationValue {
         switch subject.kind {
         case .leistungsfach: "Leistungsfach"
-        case .kernfach: "Kernfach"
-        case .basisfach: "Basisfach"
+        case .pflichtBasisfach: "Pflicht-Basisfach"
+        case .wahlBasisfach: "Wahl-Basisfach"
         }
     }
 

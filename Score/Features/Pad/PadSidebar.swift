@@ -13,18 +13,25 @@ struct PadSidebar: View {
     /// Die Fächer samt ihren Kennzahlen für das gewählte Halbjahr.
     let summaries: [SubjectSummary]
 
+    /// Das Fach, dessen Löschung nach einem Wisch zur Bestätigung ansteht.
+    @State private var pendingDeletion: SubjectDeletion.Request?
+
     var body: some View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
             brand
             navigation
             subjectSections
-            DashedButton(
-                title: "＋ Neues Fach",
-                cornerRadius: 14,
-                verticalPadding: 11,
-                font: ScoreTypography.publicSans(500, 12)
-            ) {
-                route = .newSubject
+            VStack(spacing: ScoreMetrics.Spacing.xs) {
+                DashedButton(
+                    title: "＋ Neues Fach",
+                    cornerRadius: 14,
+                    verticalPadding: 11,
+                    font: ScoreTypography.publicSans(500, 12)
+                ) {
+                    route = .newSubject
+                }
+
+                oralExamButton
             }
             Text("Product by Levo Studio")
                 .font(ScoreTypography.publicSans(400, 9.5))
@@ -58,6 +65,15 @@ struct PadSidebar: View {
                 .ignoresSafeArea(edges: .vertical)
         }
         .scrollContentBackground(.hidden)
+        .subjectDeleteConfirmation($pendingDeletion, among: summaries.map(\.subject)) { deleted in
+            // Stand der Detailbereich auf dem gelöschten Fach, zeigte er sonst
+            // die Notiz „Dieses Fach gibt es nicht mehr" — richtig, aber eine
+            // Sackgasse. Die Übersicht ist der Ort, an dem man nach dem Löschen
+            // ohnehin landen will.
+            if route.subjectIdentifier == deleted {
+                route = .dashboard
+            }
+        }
     }
 
     // MARK: - Kopf
@@ -130,11 +146,55 @@ struct PadSidebar: View {
         .scoreAnimation(ScoreMotion.backdrop, value: isSelected)
     }
 
+    // MARK: - Mündliche Prüfungsfächer
+
+    /// Der Einstieg in die Wahl der mündlichen Prüfungsfächer.
+    ///
+    /// Er steht bei den Fächern und nicht bei den festen Zielen oben: die Wahl
+    /// ist eine Aussage über die Fächer, keine eigene Abteilung der App. Die
+    /// Zeile nennt den Stand, damit man ohne Tippen sieht, ob die Angabe fehlt.
+    private var oralExamButton: some View {
+        let chosen = summaries.map(\.subject).filter(\.isOralExamSubject)
+
+        return Button {
+            route = .oralExamSubjects
+        } label: {
+            HStack(spacing: Self.iconGap) {
+                Image(systemName: "checkmark.seal")
+                    .font(.system(size: 12, weight: .medium))
+                    .frame(width: Self.iconSize, height: Self.iconSize)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Mündliche Prüfung")
+                        .font(ScoreTypography.publicSans(500, 12))
+                        .foregroundStyle(ScorePalette.ink)
+                    Text(verbatim: chosen.isEmpty
+                        ? ScoreNumberFormat.placeholder
+                        : chosen.map(\.name).joined(separator: " · "))
+                        .font(ScoreTypography.publicSans(400, 9.5))
+                        .foregroundStyle(ScorePalette.inkSecondary)
+                        .lineLimit(1)
+                }
+            }
+            .foregroundStyle(ScorePalette.ink)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, ScoreMetrics.Spacing.sm)
+            .padding(.vertical, 9)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(ScorePalette.line, lineWidth: 1)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Fächer
 
-    /// Die Design-Datei kennt nur Leistungs- und Basisfächer. Score hat drei
-    /// Typen, also bekommt jeder seinen eigenen Abschnitt — ein Kernfach unter
-    /// „Basisfächer" zu führen wäre falsch, es kann nicht herausfallen.
+    /// Die Design-Datei kennt nur Leistungs- und Basisfächer. Score trennt die
+    /// Basisfächer in Pflicht und Wahl, also bekommt jede Kategorie ihren
+    /// eigenen Abschnitt — ein Pflicht-Basisfach unter „Wahl-Basisfächer" zu
+    /// führen wäre falsch, es kann nicht herausfallen.
     private var subjectSections: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
@@ -148,6 +208,9 @@ struct PadSidebar: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .scrollIndicators(.hidden)
+        // Ein Tipp neben die Zeilen schliesst eine offene Zeile — wie in einer
+        // Systemliste.
+        .closesOpenSwipeRow()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
@@ -161,20 +224,32 @@ struct PadSidebar: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 ForEach(summaries) { summary in
-                    subjectRow(summary)
+                    // Wie auf dem iPhone: nach links wischen legt das Löschen
+                    // frei. Nur schmaler, weil die Sidebar-Zeile es ist.
+                    SwipeToDelete(
+                        cornerRadius: 10,
+                        actionWidth: 72,
+                        font: ScoreTypography.publicSans(500, 11.5),
+                        accessibilityLabel: Text("\(summary.subject.name) löschen"),
+                        onDelete: { pendingDeletion = SubjectDeletion.request(for: summary.subject) },
+                        onTap: { route = .subject(summary.subject.identifier) }
+                    ) {
+                        subjectRow(summary)
+                    }
                 }
             }
         }
     }
 
+    /// Eine Fachzeile der Sidebar.
+    ///
+    /// Reine Darstellung ohne eigenen Knopf: Das Antippen übernimmt die
+    /// Wisch-Hülle, sonst löste jeder Wisch am Ende auch die Auswahl aus.
     private func subjectRow(_ summary: SubjectSummary) -> some View {
         let subject = summary.subject
         let isSelected = route.subjectIdentifier == subject.identifier
 
-        return Button {
-            route = .subject(subject.identifier)
-        } label: {
-            HStack(spacing: 9) {
+        return HStack(spacing: 9) {
                 SubjectDot(color: subject.color, size: 14, cornerRadius: 5)
 
                 Text(verbatim: subject.name)
@@ -183,6 +258,10 @@ struct PadSidebar: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
+
+                if subject.isOralExamSubject {
+                    OralExamBadge(isCompact: true)
+                }
 
                 Text(ScoreNumberFormat.points(summary.result))
                     .font(ScoreTypography.publicSans(500, 11))
@@ -197,9 +276,7 @@ struct PadSidebar: View {
                     .fill(isSelected ? ScorePalette.surface : .clear)
             )
             .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .scoreAnimation(ScoreMotion.selection, value: isSelected)
+            .scoreAnimation(ScoreMotion.selection, value: isSelected)
     }
 }
 
@@ -211,8 +288,8 @@ extension SubjectKind {
     var sidebarSectionTitle: LocalizedStringKey {
         switch self {
         case .leistungsfach: "Leistungsfächer"
-        case .kernfach: "Kernfächer"
-        case .basisfach: "Basisfächer"
+        case .pflichtBasisfach: "Pflicht-Basisfächer"
+        case .wahlBasisfach: "Wahl-Basisfächer"
         }
     }
 }

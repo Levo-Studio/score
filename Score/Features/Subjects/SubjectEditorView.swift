@@ -226,6 +226,12 @@ struct SubjectEditorView: View {
                     }
                 }
             }
+
+            OralExamToggle(draft: $draft)
+                .padding(.top, ScoreMetrics.Spacing.xs)
+
+            ExamResultSection(draft: $draft)
+                .padding(.top, ScoreMetrics.Spacing.xs)
         }
     }
 
@@ -336,6 +342,53 @@ struct SubjectEditorView: View {
     }
 }
 
+// MARK: - Mündliches Prüfungsfach
+
+/// Der Schalter im Fach-Editor, mit dem ein Fach zum mündlichen Prüfungsfach wird.
+///
+/// Er steht direkt unter dem Fachtyp, weil er dieselbe Frage weiterführt: was
+/// dieses Fach für Block I bedeutet. Bei einem Leistungsfach entfällt er — in
+/// dem wird bereits schriftlich geprüft, ein zweites Kennzeichen wäre ein
+/// Widerspruch und kein Wahlrecht.
+///
+/// Denselben Bildschirm gibt es auch als Ganzes unter „Mündliche Prüfungsfächer"
+/// in der Fächerliste. Beide schreiben in dasselbe Feld; hier steht die Angabe,
+/// weil man beim Bearbeiten eines Fachs ohnehin über sie stolpert.
+struct OralExamToggle: View {
+
+    @Binding var draft: SubjectDraft
+
+    var body: some View {
+        if draft.kind != .leistungsfach {
+            HStack(alignment: .top, spacing: ScoreMetrics.Spacing.sm) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Mündliches Prüfungsfach")
+                        .font(.rowTitle)
+                        .foregroundStyle(ScorePalette.ink)
+
+                    note
+                        .font(.meta)
+                        .lineSpacing(4)
+                        .foregroundStyle(ScorePalette.inkSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 0)
+
+                ScoreSwitch(isOn: $draft.isOralExamSubject)
+            }
+            .scoreAnimation(ScoreMotion.toggle, value: draft.isOralExamSubject)
+            .accessibilityElement(children: .combine)
+        }
+    }
+
+    private var note: Text {
+        draft.isOralExamSubject
+            ? Text("Alle belegten Kurse zählen mit und lassen sich nicht klammern.")
+            : Text("Du wirst in zwei Fächern mündlich geprüft. Ihre Halbjahre sind anrechnungspflichtig.")
+    }
+}
+
 // MARK: - Hilfen
 
 extension SubjectEditorTarget {
@@ -355,8 +408,8 @@ extension SubjectKind {
     var editorLabel: LocalizedStringKey {
         switch self {
         case .leistungsfach: "Leistungsfach"
-        case .kernfach: "Kernfach"
-        case .basisfach: "Basisfach"
+        case .pflichtBasisfach: "Pflicht-Basisfach"
+        case .wahlBasisfach: "Wahl-Basisfach"
         }
     }
 }

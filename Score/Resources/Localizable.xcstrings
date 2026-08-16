@@ -1,103 +1,19 @@
 {
   "sourceLanguage" : "de",
   "strings" : {
-    "%lld Ergebnisse treten um %lld freie Plätze an. Die besten bekommen sie." : {
+    "%@ löschen" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$#@results@ um %2$#@slots@ an. Die besten bekommen sie."
-          },
-          "substitutions" : {
-            "results" : {
-              "argNum" : 1,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg Ergebnis tritt"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg Ergebnisse treten"
-                    }
-                  }
-                }
-              }
-            },
-            "slots" : {
-              "argNum" : 2,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg freien Platz"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg freie Plätze"
-                    }
-                  }
-                }
-              }
-            }
+            "value" : "%@ löschen"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$#@results@ for %2$#@slots@. The best ones get them."
-          },
-          "substitutions" : {
-            "results" : {
-              "argNum" : 1,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg result competes"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg results compete"
-                    }
-                  }
-                }
-              }
-            },
-            "slots" : {
-              "argNum" : 2,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg open slot"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg open slots"
-                    }
-                  }
-                }
-              }
-            }
+            "value" : "Delete %@"
           }
         }
       }
@@ -160,81 +76,6 @@
         }
       }
     },
-    "%lld fallen heraus." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld fällt heraus."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld fallen heraus."
-                }
-              }
-            }
-          }
-        },
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld drops out."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld drop out."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "%lld gewählt" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld gewählt"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld selected"
-          }
-        }
-      }
-    },
-    "%lld insgesamt" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld insgesamt"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld in total"
-          }
-        }
-      }
-    },
     "%lld Kurse" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -269,208 +110,6 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld courses"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "%lld Kurse aus %lld Basisfächern" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$#@courses@ aus %2$#@subjects@"
-          },
-          "substitutions" : {
-            "courses" : {
-              "argNum" : 1,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg Kurs"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg Kurse"
-                    }
-                  }
-                }
-              }
-            },
-            "subjects" : {
-              "argNum" : 2,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg Basisfach"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg Basisfächern"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$#@courses@ from %2$#@subjects@"
-          },
-          "substitutions" : {
-            "courses" : {
-              "argNum" : 1,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg course"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg courses"
-                    }
-                  }
-                }
-              }
-            },
-            "subjects" : {
-              "argNum" : 2,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg basic subject"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg basic subjects"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "%lld Kurse aus %lld Kernfächern" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$#@courses@ aus %2$#@subjects@"
-          },
-          "substitutions" : {
-            "courses" : {
-              "argNum" : 1,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg Kurs"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg Kurse"
-                    }
-                  }
-                }
-              }
-            },
-            "subjects" : {
-              "argNum" : 2,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg Kernfach"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg Kernfächern"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$#@courses@ from %2$#@subjects@"
-          },
-          "substitutions" : {
-            "courses" : {
-              "argNum" : 1,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg course"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg courses"
-                    }
-                  }
-                }
-              }
-            },
-            "subjects" : {
-              "argNum" : 2,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg core subject"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg core subjects"
-                    }
-                  }
                 }
               }
             }
@@ -570,6 +209,309 @@
                     "stringUnit" : {
                       "state" : "translated",
                       "value" : "%arg advanced subjects"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Kurse aus %lld Pflicht-Basisfächern" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@courses@ aus %2$#@subjects@"
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurs"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurse"
+                    }
+                  }
+                }
+              }
+            },
+            "subjects" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Pflicht-Basisfach"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Pflicht-Basisfächern"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@courses@ from %2$#@subjects@"
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg course"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg courses"
+                    }
+                  }
+                }
+              }
+            },
+            "subjects" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg required basic course"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg required basic courses"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Kurse aus %lld Wahl-Basisfächern" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@courses@ aus %2$#@subjects@"
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurs"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurse"
+                    }
+                  }
+                }
+              }
+            },
+            "subjects" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Wahl-Basisfach"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Wahl-Basisfächern"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@courses@ from %2$#@subjects@"
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg course"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg courses"
+                    }
+                  }
+                }
+              }
+            },
+            "subjects" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg basic subject"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg basic subjects"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Kurse stehen zur Klammerung, %lld davon bleiben drin. Score klammert von unten." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@courses@, %2$#@staying@ drin. Score klammert von unten."
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurs steht zur Klammerung"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurse stehen zur Klammerung"
+                    }
+                  }
+                }
+              }
+            },
+            "staying" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg davon bleibt"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg davon bleiben"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@courses@, %2$#@staying@. Score brackets from the bottom."
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg course is up for bracketing"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg courses are up for bracketing"
+                    }
+                  }
+                }
+              }
+            },
+            "staying" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg of them stays in"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg of them stay in"
                     }
                   }
                 }
@@ -702,6 +644,81 @@
         }
       }
     },
+    "%lld fallen heraus." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld fällt heraus."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld fallen heraus."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld drops out."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld drop out."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld gewählt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld gewählt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld selected"
+          }
+        }
+      }
+    },
+    "%lld insgesamt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld insgesamt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld in total"
+          }
+        }
+      }
+    },
     "%lld von %lld gewählt" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -715,210 +732,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$lld of %2$lld selected"
-          }
-        }
-      }
-    },
-    "Abi Planer · BW" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abi Planer · BW"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abitur planner · BW"
-          }
-        }
-      }
-    },
-    "Kein Account nötig — alles über iCloud." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kein Account nötig — alles über iCloud."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No account needed — everything via iCloud."
-          }
-        }
-      }
-    },
-    "offen" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "offen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "open"
-          }
-        }
-      }
-    },
-    "Start" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start"
-          }
-        }
-      }
-    },
-    "Willkommen bei Score" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Willkommen bei Score"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Welcome to Score"
-          }
-        }
-      }
-    },
-    "↑ besser" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "↑ besser"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "↑ better"
-          }
-        }
-      }
-    },
-    "＋ Eigenes Fach hinzufügen" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "＋ Eigenes Fach hinzufügen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "＋ Add your own subject"
-          }
-        }
-      }
-    },
-    "＋ Fach\nhinzufügen" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "＋ Fach\nhinzufügen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "＋ Add\nsubject"
-          }
-        }
-      }
-    },
-    "＋ Klassenarbeit oder Projekt" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "＋ Klassenarbeit oder Projekt"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "＋ Exam or project"
-          }
-        }
-      }
-    },
-    "＋ Klassenarbeit, Test oder Projekt" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "＋ Klassenarbeit, Test oder Projekt"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "＋ Exam, test or project"
-          }
-        }
-      }
-    },
-    "＋ Mündliche Note" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "＋ Mündliche Note"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "＋ Oral grade"
-          }
-        }
-      }
-    },
-    "＋ Neues Fach" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "＋ Neues Fach"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "＋ New subject"
           }
         }
       }
@@ -957,57 +770,77 @@
         }
       }
     },
-    "Ab hier reicht es nicht mehr" : {
+    "Ab hier wird geklammert" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ab hier reicht es nicht mehr"
+            "value" : "Ab hier wird geklammert"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "From here on it is not enough"
+            "value" : "Bracketing starts here"
           }
         }
       }
     },
-    "Ab hier reicht es nicht mehr · Grenze %lld Punkte" : {
+    "Ab hier wird geklammert · Grenze %lld Punkte" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Ab hier reicht es nicht mehr · Grenze %lld Punkt"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Ab hier reicht es nicht mehr · Grenze %lld Punkte"
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ab hier wird geklammert · Grenze %#@points@"
+          },
+          "substitutions" : {
+            "points" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Punkt"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Punkte"
+                    }
+                  }
                 }
               }
             }
           }
         },
         "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "From here on it is not enough · limit %lld point"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "From here on it is not enough · limit %lld points"
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bracketing starts here · cut-off %#@points@"
+          },
+          "substitutions" : {
+            "points" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg point"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg points"
+                    }
+                  }
                 }
               }
             }
@@ -1028,23 +861,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancel"
-          }
-        }
-      }
-    },
-    "Abgleich gestört" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abgleich gestört"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sync problem"
           }
         }
       }
@@ -1096,6 +912,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abitur planner"
+          }
+        }
+      }
+    },
+    "Abi Planer · BW" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abi Planer · BW"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abitur planner · BW"
           }
         }
       }
@@ -1168,6 +1001,23 @@
         }
       }
     },
+    "Abitur Baden-Württemberg" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abitur Baden-Württemberg"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abitur Baden-Württemberg"
+          }
+        }
+      }
+    },
     "Abitur im Jahr" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1185,6 +1035,23 @@
         }
       }
     },
+    "Abiturprüfung" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abiturprüfung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Final exams"
+          }
+        }
+      }
+    },
     "Aktuell" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1198,40 +1065,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Up to date"
-          }
-        }
-      }
-    },
-    "aktuell %@ der mündlichen Teilnote." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "aktuell %@ der mündlichen Teilnote."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "currently %@ of the oral component."
-          }
-        }
-      }
-    },
-    "aktuell %@ der schriftlichen Teilnote." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "aktuell %@ der schriftlichen Teilnote."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "currently %@ of the written component."
           }
         }
       }
@@ -1270,23 +1103,6 @@
         }
       }
     },
-    "Alle belegten Halbjahre gehen in Block I ein." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Alle belegten Halbjahre gehen in Block I ein."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Every semester you took counts towards block I."
-          }
-        }
-      }
-    },
     "Alle Daten löschen" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1300,6 +1116,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete all data"
+          }
+        }
+      }
+    },
+    "Alle belegten Kurse zählen mit und lassen sich nicht klammern." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle belegten Kurse zählen mit und lassen sich nicht klammern."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every course you took counts and cannot be bracketed."
+          }
+        }
+      }
+    },
+    "Alle belegten Kurse zählen mit." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle belegten Kurse zählen mit."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every course you took counts."
+          }
+        }
+      }
+    },
+    "Alle drei Bedingungen erfüllt. Das Abitur ist bestanden." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle drei Bedingungen erfüllt. Das Abitur ist bestanden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All three requirements met. The Abitur is passed."
           }
         }
       }
@@ -1334,6 +1201,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "All four semesters are under way"
+          }
+        }
+      }
+    },
+    "Alle vier Kurse dieses Fachs zählen zweimal. Setz genau zwei Leistungsfächer, sonst wählt Score die günstigste Kombination selbst." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle vier Kurse dieses Fachs zählen zweimal. Setz genau zwei Leistungsfächer, sonst wählt Score die günstigste Kombination selbst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All four courses of this subject count twice. Mark exactly two advanced subjects, otherwise Score picks the best combination itself."
           }
         }
       }
@@ -1423,23 +1307,6 @@
         }
       }
     },
-    "Änderungen sichern" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Änderungen sichern"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save changes"
-          }
-        }
-      }
-    },
     "Anteil an der Teilnote" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1474,6 +1341,23 @@
         }
       }
     },
+    "Auch sie zählen in deinen Schnitt. Fehlt eines, legst du es später in den Fächern nach." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auch sie zählen in deinen Schnitt. Fehlt eines, legst du es später in den Fächern nach."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "They count towards your average too. If one is missing, add it later under Subjects."
+          }
+        }
+      }
+    },
     "Auf einen Blick" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1487,23 +1371,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "At a glance"
-          }
-        }
-      }
-    },
-    "Aus diesen Fächern füllt Score die restlichen Plätze in Block I mit deinen besten Ergebnissen. Schwächere fallen heraus, sobald genug bessere da sind." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aus diesen Fächern füllt Score die restlichen Plätze in Block I mit deinen besten Ergebnissen. Schwächere fallen heraus, sobald genug bessere da sind."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Score fills the remaining Block I slots from these subjects, using your best results. Weaker ones drop out as soon as there are enough better ones."
           }
         }
       }
@@ -1525,53 +1392,114 @@
         }
       }
     },
-    "automatisch" : {
+    "Aus schriftlich und mündlich wird ein Ergebnis, und das zählt vierfach." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "automatisch"
+            "value" : "Aus schriftlich und mündlich wird ein Ergebnis, und das zählt vierfach."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "automatic"
+            "value" : "Written and oral become one result, and that counts fourfold."
           }
         }
       }
     },
-    "Basisfach" : {
+    "Ausgeschaltet" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Basisfach"
+            "value" : "Ausgeschaltet"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Basic course"
+            "value" : "Off"
           }
         }
       }
     },
-    "Basisfächer" : {
+    "Ausgesetzt" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Basisfächer"
+            "value" : "Ausgesetzt"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Basic courses"
+            "value" : "Paused"
+          }
+        }
+      }
+    },
+    "Automatisch geklammert: Es zählen nur %lld Kurse, und dieser gehört zu den schwächsten. Ab %lld Punkten bleibt ein Wahl-Basisfach-Kurs drin." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch geklammert: Es zählen nur %1$lld Kurse, und dieser gehört zu den schwächsten. Ab %2$#@points@ bleibt ein Wahl-Basisfach-Kurs drin."
+          },
+          "substitutions" : {
+            "points" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Punkt"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Punkten"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bracketed automatically: only %1$lld courses count, and this one is among the weakest. From %2$#@points@ upwards an elective basic course stays in."
+          },
+          "substitutions" : {
+            "points" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg point"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg points"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1593,6 +1521,23 @@
         }
       }
     },
+    "Beende Score und öffne es neu — dann beginnt die Synchronisierung." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beende Score und öffne es neu — dann beginnt die Synchronisierung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quit Score and open it again — then syncing begins."
+          }
+        }
+      }
+    },
     "Bekommt den ganzen Rest" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1606,6 +1551,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Takes the entire remainder"
+          }
+        }
+      }
+    },
+    "Belegen musst du mindestens 42 Kurse — zwölf in den Leistungsfächern und mindestens dreissig weitere. In den Schnitt gehen davon 40 ein." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belegen musst du mindestens 42 Kurse — zwölf in den Leistungsfächern und mindestens dreissig weitere. In den Schnitt gehen davon 40 ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have to take at least 42 courses — twelve in your advanced subjects and at least thirty more. Of those, 40 go into your average."
           }
         }
       }
@@ -1644,19 +1606,19 @@
         }
       }
     },
-    "Bestes Ergebnis" : {
+    "Bester Kurs" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bestes Ergebnis"
+            "value" : "Bester Kurs"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Best result"
+            "value" : "Best course"
           }
         }
       }
@@ -1674,40 +1636,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Best semester"
-          }
-        }
-      }
-    },
-    "BF" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "BF"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "BC"
-          }
-        }
-      }
-    },
-    "Bild ändern" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bild ändern"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Change picture"
           }
         }
       }
@@ -1763,84 +1691,33 @@
         }
       }
     },
-    "Block I" : {
+    "Bild ändern" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Block I"
+            "value" : "Bild ändern"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Block I"
+            "value" : "Change picture"
           }
         }
       }
     },
-    "Block I · Schnitt × 42" : {
+    "Bringt %lld von %lld Kursen ein" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Block I · Schnitt × 42"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I · average × 42"
-          }
-        }
-      }
-    },
-    "Block I besteht aus 42 Halbjahresergebnissen: 12 aus deinen drei Leistungsfächern plus 30 aus den Basisfächern. Kernfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I besteht aus 42 Halbjahresergebnissen: 12 aus deinen drei Leistungsfächern plus 30 aus den Basisfächern. Kernfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I is made up of 42 semester results: 12 from your three advanced courses plus 30 from the basic courses. Core subjects are fixed, and the rest is filled automatically from your best remaining courses."
-          }
-        }
-      }
-    },
-    "Block I fasst 42 Halbjahresergebnisse. Die zwölf Kurse der Leistungsfächer und alle Kernfächer sind gesetzt, die restlichen Plätze gehen an die besten Basisfach-Ergebnisse. Aus dem Punkteschnitt dieser Kurse folgt beides: Block I als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I fasst 42 Halbjahresergebnisse. Die zwölf Kurse der Leistungsfächer und alle Kernfächer sind gesetzt, die restlichen Plätze gehen an die besten Basisfach-Ergebnisse. Aus dem Punkteschnitt dieser Kurse folgt beides: Block I als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I holds 42 semester results. The twelve advanced courses and all core subjects are fixed; the remaining slots go to the best basic course results. The average points of those courses give you both: Block I as the average times 42, and the expected final grade through the conversion above."
-          }
-        }
-      }
-    },
-    "Bringt %lld von %lld Ergebnissen ein" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bringt %1$lld von %2$#@results@ ein"
+            "value" : "Bringt %1$lld von %2$#@courses@ ein"
           },
           "substitutions" : {
-            "results" : {
+            "courses" : {
               "argNum" : 2,
               "formatSpecifier" : "lld",
               "variations" : {
@@ -1848,13 +1725,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg Ergebnis"
+                      "value" : "%arg Kurs"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg Ergebnissen"
+                      "value" : "%arg Kursen"
                     }
                   }
                 }
@@ -1865,10 +1742,10 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Contributes %1$lld of %2$#@results@"
+            "value" : "Contributes %1$lld of %2$#@courses@"
           },
           "substitutions" : {
-            "results" : {
+            "courses" : {
               "argNum" : 2,
               "formatSpecifier" : "lld",
               "variations" : {
@@ -1876,13 +1753,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg result"
+                      "value" : "%arg course"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg results"
+                      "value" : "%arg courses"
                     }
                   }
                 }
@@ -1892,16 +1769,16 @@
         }
       }
     },
-    "Bringt %lld von %lld Ergebnissen ein · eigene Grenze %lld" : {
+    "Bringt %lld von %lld Kursen ein · eigene Grenze %lld" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bringt %1$lld von %2$#@results@ ein · eigene Grenze %3$lld"
+            "value" : "Bringt %1$lld von %2$#@courses@ ein · eigene Grenze %3$lld"
           },
           "substitutions" : {
-            "results" : {
+            "courses" : {
               "argNum" : 2,
               "formatSpecifier" : "lld",
               "variations" : {
@@ -1909,13 +1786,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg Ergebnis"
+                      "value" : "%arg Kurs"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg Ergebnissen"
+                      "value" : "%arg Kursen"
                     }
                   }
                 }
@@ -1926,10 +1803,10 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Contributes %1$lld of %2$#@results@ · own limit %3$lld"
+            "value" : "Contributes %1$lld of %2$#@courses@ · own limit %3$lld"
           },
           "substitutions" : {
-            "results" : {
+            "courses" : {
               "argNum" : 2,
               "formatSpecifier" : "lld",
               "variations" : {
@@ -1937,13 +1814,74 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg result"
+                      "value" : "%arg course"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg results"
+                      "value" : "%arg courses"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Bringt %lld von %lld Kursen ein · mündliches Prüfungsfach, nicht klammerbar" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bringt %1$lld von %2$#@courses@ ein · mündliches Prüfungsfach, nicht klammerbar"
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurs"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kursen"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contributes %1$lld of %2$#@courses@ · oral exam subject, cannot be bracketed"
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg course"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg courses"
                     }
                   }
                 }
@@ -1983,6 +1921,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Federal state and Abitur year"
+          }
+        }
+      }
+    },
+    "Da geht was, %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Da geht was, %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coming along, %@"
           }
         }
       }
@@ -2088,6 +2043,23 @@
         }
       }
     },
+    "Danach kommen die Basisfächer: erst die, die du belegen musst, dann die, die du frei dazuwählst." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Danach kommen die Basisfächer: erst die, die du belegen musst, dann die, die du frei dazuwählst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The basic courses come next: first the ones you have to take, then the ones you pick yourself."
+          }
+        }
+      }
+    },
     "Danach richtet sich, welche Halbjahre du eintragen kannst." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2156,6 +2128,40 @@
         }
       }
     },
+    "Das mündliche Ergebnis zählt vierfach. Solange es fehlt, rechnet Score die Prüfung auf deinem heutigen Stand hoch." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das mündliche Ergebnis zählt vierfach. Solange es fehlt, rechnet Score die Prüfung auf deinem heutigen Stand hoch."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The oral result counts fourfold. While it is missing, Score projects the exam from where you stand today."
+          }
+        }
+      }
+    },
+    "Das schriftliche Ergebnis zählt vierfach. Solange es fehlt, rechnet Score die Prüfung auf deinem heutigen Stand hoch." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das schriftliche Ergebnis zählt vierfach. Solange es fehlt, rechnet Score die Prüfung auf deinem heutigen Stand hoch."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The written result counts fourfold. While it is missing, Score projects the exam from where you stand today."
+          }
+        }
+      }
+    },
     "Daten exportieren" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2169,6 +2175,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Export data"
+          }
+        }
+      }
+    },
+    "Dazu deine mündlichen Prüfungsfächer: In den Kursen, in denen du geprüft wirst, sind alle Halbjahre anrechnungspflichtig. Sie lassen sich nicht klammern, auch nicht von Hand." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dazu deine mündlichen Prüfungsfächer: In den Kursen, in denen du geprüft wirst, sind alle Halbjahre anrechnungspflichtig. Sie lassen sich nicht klammern, auch nicht von Hand."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus your oral exam subjects: in the subjects you are examined in, every semester must be counted. They cannot be bracketed, not even by hand."
+          }
+        }
+      }
+    },
+    "Dazu kommen die fünf Abiturprüfungen, jede vierfach gewertet, höchstens 300 Punkte. Beides zusammen sind 300 bis 900 Punkte, und aus dieser Gesamtpunktzahl liest die amtliche Tabelle die Note ab — in Stufen von 18 Punkten, ab 823 Punkten steht 1,0. Score rechnet das nicht mit einer Formel nach, sondern schlägt in der Tabelle nach." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dazu kommen die fünf Abiturprüfungen, jede vierfach gewertet, höchstens 300 Punkte. Beides zusammen sind 300 bis 900 Punkte, und aus dieser Gesamtpunktzahl liest die amtliche Tabelle die Note ab — in Stufen von 18 Punkten, ab 823 Punkten steht 1,0. Score rechnet das nicht mit einer Formel nach, sondern schlägt in der Tabelle nach."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On top come the five Abitur exams, each counted fourfold, at most 300 points. Together that is 300 to 900 points, and the official table reads the grade off that total — in steps of 18 points, with 1.0 from 823 points on. Score does not reproduce this with a formula; it looks it up in the table."
           }
         }
       }
@@ -2190,19 +2230,36 @@
         }
       }
     },
-    "Deine Basisfächer" : {
+    "Deine Pflicht-Basisfächer" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deine Basisfächer"
+            "value" : "Deine Pflicht-Basisfächer"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Your basic courses"
+            "value" : "Your required basic courses"
+          }
+        }
+      }
+    },
+    "Deine Wahl-Basisfächer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Wahl-Basisfächer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your elective basic courses"
           }
         }
       }
@@ -2224,57 +2281,94 @@
         }
       }
     },
-    "Deine Kernfächer" : {
+    "Deine drei Leistungsfächer. Das steht in Baden-Württemberg fest und ist deshalb keine Auswahl." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deine Kernfächer"
+            "value" : "Deine drei Leistungsfächer. Das steht in Baden-Württemberg fest und ist deshalb keine Auswahl."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Your core subjects"
+            "value" : "Your three advanced subjects. In Baden-Württemberg that is fixed, so there is nothing to choose here."
           }
         }
       }
     },
-    "Der letzte vergebene Platz steht bei %lld Punkten." : {
+    "Der Speicher liess sich nicht neu öffnen. Deine Daten sind unverändert — versuch es gleich noch einmal." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Der letzte vergebene Platz steht bei %lld Punkt."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Der letzte vergebene Platz steht bei %lld Punkten."
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Speicher liess sich nicht neu öffnen. Deine Daten sind unverändert — versuch es gleich noch einmal."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The store could not be reopened. Your data is untouched — try again in a moment."
+          }
+        }
+      }
+    },
+    "Der schwächste Kurs, der noch drin ist, steht bei %lld Punkten." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der schwächste Kurs, der noch drin ist, steht bei %#@points@."
+          },
+          "substitutions" : {
+            "points" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Punkt"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Punkten"
+                    }
+                  }
                 }
               }
             }
           }
         },
         "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "The last slot filled sits at %lld point."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "The last slot filled sits at %lld points."
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The weakest course still counting sits at %#@points@."
+          },
+          "substitutions" : {
+            "points" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg point"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg points"
+                    }
+                  }
                 }
               }
             }
@@ -2316,6 +2410,74 @@
         }
       }
     },
+    "Die Basisfächer, die du zusätzlich frei gewählt hast — alles, was du sonst noch belegst." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Basisfächer, die du zusätzlich frei gewählt hast — alles, was du sonst noch belegst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The basic courses you picked on top — everything else you take."
+          }
+        }
+      }
+    },
+    "Die Synchronisierung ist abgeschaltet. Neue Noten bleiben auf diesem Gerät; was bereits in deiner iCloud liegt, bleibt dort unangetastet." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Synchronisierung ist abgeschaltet. Neue Noten bleiben auf diesem Gerät; was bereits in deiner iCloud liegt, bleibt dort unangetastet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syncing is off. New grades stay on this device; whatever is already in your iCloud stays there untouched."
+          }
+        }
+      }
+    },
+    "Die Synchronisierung ist nicht durchgelaufen. Versuch es später noch einmal." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Synchronisierung ist nicht durchgelaufen. Versuch es später noch einmal."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The sync did not finish. Try again later."
+          }
+        }
+      }
+    },
+    "Die Synchronisierung meldet sich nicht. Prüf deine Verbindung und versuch es später noch einmal." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Synchronisierung meldet sich nicht. Prüf deine Verbindung und versuch es später noch einmal."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The sync is not responding. Check your connection and try again later."
+          }
+        }
+      }
+    },
     "Die freien Plätze" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2329,6 +2491,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The open slots"
+          }
+        }
+      }
+    },
+    "Die fünf Prüfungen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die fünf Prüfungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The five exams"
+          }
+        }
+      }
+    },
+    "Die zweistündigen Fächer, die du belegen musst. Welche das sind, ergibt sich aus deinen Leistungsfächern — Score hat vorausgewählt, was dazu üblich ist." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die zweistündigen Fächer, die du belegen musst. Welche das sind, ergibt sich aus deinen Leistungsfächern — Score hat vorausgewählt, was dazu üblich ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The two-hour courses you have to take. Which ones they are follows from your advanced courses — Score has preselected the usual set."
+          }
+        }
+      }
+    },
+    "Diese Wahl hast du selbst getroffen. Score rechnet damit, auch wenn eine andere Kombination besser ausfiele. Nimm ein Kennzeichen weg, und Score wählt wieder von sich aus." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Wahl hast du selbst getroffen. Score rechnet damit, auch wenn eine andere Kombination besser ausfiele. Nimm ein Kennzeichen weg, und Score wählt wieder von sich aus."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You made this choice yourself. Score uses it, even if another combination would come out better. Remove one mark and Score chooses again on its own."
           }
         }
       }
@@ -2350,40 +2563,60 @@
         }
       }
     },
-    "Dieses Fach bringt nur %lld Ergebnisse ein. Score behält die besten und klammert diese hier aus." : {
+    "Dieses Fach bringt nur %lld Kurse ein. Score behält die besten und klammert diese hier." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Dieses Fach bringt nur %lld Ergebnis ein. Score behält das beste und klammert diese hier aus."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Dieses Fach bringt nur %lld Ergebnisse ein. Score behält die besten und klammert diese hier aus."
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Fach bringt nur %#@courses@ ein. Score behält die besten und klammert diese hier."
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurs"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurse"
+                    }
+                  }
                 }
               }
             }
           }
         },
         "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "This subject contributes only %lld result. Score keeps the best one and leaves these out."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "This subject contributes only %lld results. Score keeps the best ones and leaves these out."
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This subject only contributes %#@courses@. Score keeps the best ones and brackets these."
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg course"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg courses"
+                    }
+                  }
                 }
               }
             }
@@ -2408,6 +2641,23 @@
         }
       }
     },
+    "Doppelt gewertet" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doppelt gewertet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Counted twice"
+          }
+        }
+      }
+    },
     "Du kannst jede Angabe später in den Einstellungen ändern." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2421,6 +2671,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You can change any of this later in Settings."
+          }
+        }
+      }
+    },
+    "Du packst das, %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du packst das, %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You got this, %@"
+          }
+        }
+      }
+    },
+    "Du wirst in zwei Fächern mündlich geprüft. Ihre Halbjahre sind anrechnungspflichtig." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du wirst in zwei Fächern mündlich geprüft. Ihre Halbjahre sind anrechnungspflichtig."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You are examined orally in two subjects. Their semesters must be counted."
           }
         }
       }
@@ -2455,6 +2739,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Own subject"
+          }
+        }
+      }
+    },
+    "Eine der drei Bedingungen ist gerissen. Damit ist das Abitur nicht bestanden, unabhängig von der Gesamtpunktzahl." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine der drei Bedingungen ist gerissen. Damit ist das Abitur nicht bestanden, unabhängig von der Gesamtpunktzahl."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One of the three requirements is missed. The Abitur is not passed, whatever the total says."
           }
         }
       }
@@ -2527,53 +2828,19 @@
         }
       }
     },
-    "Ergebnis" : {
+    "Erst %lld von %lld Kursen haben eine Note. Score rechnet mit dem, was schon da ist." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ergebnis"
+            "value" : "Erst %lld von %lld Kursen haben eine Note. Score rechnet mit dem, was schon da ist."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Result"
-          }
-        }
-      }
-    },
-    "Ergebnis · Note %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ergebnis · Note %@"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Result · grade %@"
-          }
-        }
-      }
-    },
-    "Erst %lld von %lld Kursen haben ein Ergebnis. Score rechnet mit dem, was schon da ist." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erst %1$lld von %2$lld Kursen haben ein Ergebnis. Score rechnet mit dem, was schon da ist."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Only %1$lld of %2$lld courses have a result so far. Score works with what is already there."
+            "value" : "Only %1$lld of %2$lld courses have a grade so far. Score works with what is already there."
           }
         }
       }
@@ -2647,7 +2914,20 @@
       }
     },
     "Fach hinzufügen" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fach hinzufügen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add subject"
+          }
+        }
+      }
     },
     "Fach löschen" : {
       "extractionState" : "manual",
@@ -2666,19 +2946,19 @@
         }
       }
     },
-    "Fächer" : {
+    "Fach wirklich löschen?" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fächer"
+            "value" : "Fach wirklich löschen?"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Subjects"
+            "value" : "Delete this subject?"
           }
         }
       }
@@ -2730,23 +3010,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Subject type"
-          }
-        }
-      }
-    },
-    "fällt raus" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "fällt raus"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "drops out"
           }
         }
       }
@@ -2819,60 +3082,104 @@
         }
       }
     },
-    "Fünfstündig, zwölf Halbjahresergebnisse, größtes Gewicht im Schnitt." : {
+    "Fächer" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fünfstündig, zwölf Halbjahresergebnisse, größtes Gewicht im Schnitt."
+            "value" : "Fächer"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Five periods a week, twelve semester results, the largest weight in your average."
+            "value" : "Subjects"
           }
         }
       }
     },
-    "Für die %lld freien Plätze nimmt Score die besten Basisfach-Ergebnisse." : {
+    "Fünfstündig, zwölf Kurse, größtes Gewicht im Schnitt." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Für den einen freien Platz nimmt Score das beste Basisfach-Ergebnis."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Für die %lld freien Plätze nimmt Score die besten Basisfach-Ergebnisse."
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fünfstündig, zwölf Kurse, größtes Gewicht im Schnitt."
           }
         },
         "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "For the one open slot Score takes the best basic course result."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "For the %lld open slots Score takes the best basic course results."
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Five periods a week, twelve courses, the largest weight in your average."
+          }
+        }
+      }
+    },
+    "Geklammert. Dieser Kurs zählt nicht mit, egal wie gut er ist." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geklammert. Dieser Kurs zählt nicht mit, egal wie gut er ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bracketed. This course does not count, no matter how good it is."
+          }
+        }
+      }
+    },
+    "Geprüft wird in fünf Fächern: schriftlich in den drei Leistungsfächern, mündlich in zwei weiteren. Jedes Ergebnis zählt vierfach — höchstens 300 Punkte. Die Ergebnisse trägst du im jeweiligen Fach ein." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geprüft wird in fünf Fächern: schriftlich in den drei Leistungsfächern, mündlich in zwei weiteren. Jedes Ergebnis zählt vierfach — höchstens 300 Punkte. Die Ergebnisse trägst du im jeweiligen Fach ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Five subjects are examined: written in the three advanced subjects, oral in two more. Each result counts fourfold — at most 300 points. You enter the results in the subject itself."
+          }
+        }
+      }
+    },
+    "Gesamt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesamt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total"
+          }
+        }
+      }
+    },
+    "Gesamtpunktzahl in der amtlichen Notentabelle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesamtpunktzahl in der amtlichen Notentabelle"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total points in the official grade table"
           }
         }
       }
@@ -2894,23 +3201,6 @@
         }
       }
     },
-    "Gesetzt wie die Leistungsfächer, aber gegen die 30 Plätze der Nicht-Leistungsfächer gerechnet." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gesetzt wie die Leistungsfächer, aber gegen die 30 Plätze der Nicht-Leistungsfächer gerechnet."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fixed like the advanced subjects, but counted against the 30 slots of the non-advanced ones."
-          }
-        }
-      }
-    },
     "Geteilt durch die Zahl der Kurse" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2924,6 +3214,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Divided by the number of courses"
+          }
+        }
+      }
+    },
+    "Geteilt durch die Zahl der Wertungen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geteilt durch die Zahl der Wertungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Divided by the number of weightings"
           }
         }
       }
@@ -3020,19 +3327,53 @@
         }
       }
     },
-    "Haben zwei Basisfach-Ergebnisse dieselbe Punktzahl und ist nur noch ein Platz frei, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten." : {
+    "Gut unterwegs, %@" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Haben zwei Basisfach-Ergebnisse dieselbe Punktzahl und ist nur noch ein Platz frei, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten."
+            "value" : "Gut unterwegs, %@"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "If two basic course results have the same points and only one slot is left, the order of the subjects decides. Semesters without a grade and semesters you did not take count nowhere — they are not a course with zero points."
+            "value" : "On track, %@"
+          }
+        }
+      }
+    },
+    "HJ %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HJ %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem %@"
+          }
+        }
+      }
+    },
+    "Haben zwei Wahl-Basisfach-Kurse dieselbe Punktzahl und trifft es nur noch eines, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haben zwei Wahl-Basisfach-Kurse dieselbe Punktzahl und trifft es nur noch eines, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If two elective basic courses have the same score and only one of them gets bracketed, the order of the subjects decides. Semesters without a grade and semesters you did not take count nowhere — they are not a course worth zero points."
           }
         }
       }
@@ -3105,6 +3446,23 @@
         }
       }
     },
+    "Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 40 übrig sind. Zwei deiner drei Leistungsfächer zählen dabei doppelt — aus 40 Kursen werden so 48 Wertungen. Die Punktsumme über alle 48 geteilt durch 48 und mal 40 ergibt die Kurspunkte, höchstens 600." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 40 übrig sind. Zwei deiner drei Leistungsfächer zählen dabei doppelt — aus 40 Kursen werden so 48 Wertungen. Die Punktsumme über alle 48 geteilt durch 48 und mal 40 ergibt die Kurspunkte, höchstens 600."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If you have more, they get bracketed: first whatever you bracketed yourself, then the weakest ones from the bottom until 40 remain. Two of your three advanced subjects count double — so 40 courses become 48 weightings. The sum over all 48, divided by 48 and times 40, gives the course points, up to 600."
+          }
+        }
+      }
+    },
     "Hell" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3122,70 +3480,36 @@
         }
       }
     },
-    "HJ %@" : {
+    "Ihre Halbjahre sind anrechnungspflichtig — ohne die Angabe rechnet Score zu gut. Noch nicht entschieden? Dann später in der Fächerliste." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "HJ %@"
+            "value" : "Ihre Halbjahre sind anrechnungspflichtig — ohne die Angabe rechnet Score zu gut. Noch nicht entschieden? Dann später in der Fächerliste."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sem %@"
+            "value" : "Their semesters must be counted — without this, Score calculates too favourably. Not decided yet? Then do it later from the subject list."
           }
         }
       }
     },
-    "iCloud" : {
+    "In deinen Schnitt gehen 40 Kurse ein: 12 aus deinen drei Leistungsfächern plus 28 aus deinen Basisfächern. Zwei der drei Leistungsfächer zählen doppelt. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iCloud"
+            "value" : "In deinen Schnitt gehen 40 Kurse ein: 12 aus deinen drei Leistungsfächern plus 28 aus deinen Basisfächern. Zwei der drei Leistungsfächer zählen doppelt. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iCloud"
-          }
-        }
-      }
-    },
-    "iCloud eingeschränkt" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "iCloud eingeschränkt"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "iCloud restricted"
-          }
-        }
-      }
-    },
-    "iCloud ist auf diesem Gerät eingeschränkt. Prüf in den Systemeinstellungen, ob iCloud Drive für Score erlaubt ist." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "iCloud ist auf diesem Gerät eingeschränkt. Prüf in den Systemeinstellungen, ob iCloud Drive für Score erlaubt ist."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "iCloud is restricted on this device. Check in System Settings whether iCloud Drive is allowed for Score."
+            "value" : "40 courses go into your average: 12 from your three advanced subjects plus 28 from your basic subjects. Two of the three advanced subjects count twice. The required basic subjects are fixed, and the rest is filled automatically from your best remaining courses."
           }
         }
       }
@@ -3224,6 +3548,40 @@
         }
       }
     },
+    "In diesem Halbjahr nicht belegt — hier gibt es nichts zu klammern." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In diesem Halbjahr nicht belegt — hier gibt es nichts zu klammern."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not taken this semester — there is nothing to bracket here."
+          }
+        }
+      }
+    },
+    "In diesen beiden Fächern zählen alle belegten Kurse mit. Sie lassen sich nicht klammern." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In diesen beiden Fächern zählen alle belegten Kurse mit. Sie lassen sich nicht klammern."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In these two subjects every course you took counts. They cannot be bracketed."
+          }
+        }
+      }
+    },
     "In welcher Klasse bist du?" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3258,19 +3616,36 @@
         }
       }
     },
-    "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. Nicht gewertete Kurse rechnet Score automatisch raus, Kernfächer bleiben immer drin." : {
+    "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. In den Schnitt gehen 40 Kurse ein — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. Nicht gewertete Kurse rechnet Score automatisch raus, Kernfächer bleiben immer drin."
+            "value" : "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. In den Schnitt gehen 40 Kurse ein — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Every piece of work counts towards its partial grade with its own percentage. Score leaves out courses that do not count, and core subjects always stay in."
+            "value" : "Every grade counts towards its part-grade with its own percentage. 40 courses go into your average — if you have more, Score brackets the weakest from the bottom. Required basic subjects always stay in, and so do the courses of your exam subjects."
+          }
+        }
+      }
+    },
+    "Jetzt synchronisieren" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jetzt synchronisieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync now"
           }
         }
       }
@@ -3288,6 +3663,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No account needed — everything syncs through iCloud."
+          }
+        }
+      }
+    },
+    "Kein Account nötig — alles über iCloud." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Account nötig — alles über iCloud."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No account needed — everything via iCloud."
           }
         }
       }
@@ -3322,108 +3714,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No sign-up, no account. Your courses live in iCloud and stay in sync across iPhone and iPad."
-          }
-        }
-      }
-    },
-    "keine Note" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "keine Note"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "no grade yet"
-          }
-        }
-      }
-    },
-    "Kernfach" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kernfach"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Core subject"
-          }
-        }
-      }
-    },
-    "Kernfächer" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kernfächer"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Core subjects"
-          }
-        }
-      }
-    },
-    "Kernfächer sind nicht abwählbar und zählen immer — auch dann, wenn sie schlechter stehen als ein Basisfach. Score hat vorausgewählt, was üblich ist." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kernfächer sind nicht abwählbar und zählen immer — auch dann, wenn sie schlechter stehen als ein Basisfach. Score hat vorausgewählt, was üblich ist."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Core subjects cannot be dropped and always count — even when they stand worse than a basic course. Score has preselected the usual ones."
-          }
-        }
-      }
-    },
-    "Kernfächer zählen, wie sie stehen. Auch ein schwaches Ergebnis bleibt drin — abwählen geht hier nicht." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kernfächer zählen, wie sie stehen. Auch ein schwaches Ergebnis bleibt drin — abwählen geht hier nicht."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Core subjects count exactly as they stand. Even a weak result stays in — there is no dropping them."
-          }
-        }
-      }
-    },
-    "KF" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "KF"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "CS"
           }
         }
       }
@@ -3547,6 +3837,40 @@
         }
       }
     },
+    "Kommt sie hinzu, zählen schriftlich und mündlich im Verhältnis 2 : 1." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kommt sie hinzu, zählen schriftlich und mündlich im Verhältnis 2 : 1."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If it is added, written and oral count in a ratio of 2 : 1."
+          }
+        }
+      }
+    },
+    "Kurs" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurs"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Course"
+          }
+        }
+      }
+    },
     "Kurs für Kurs" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3560,6 +3884,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Course by course"
+          }
+        }
+      }
+    },
+    "Kurs klammern" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurs klammern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bracket course"
+          }
+        }
+      }
+    },
+    "Kurs · Note %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurs · Note %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Course · grade %@"
           }
         }
       }
@@ -3598,19 +3956,53 @@
         }
       }
     },
-    "Kurse in Block I" : {
+    "Kurse, die zählen" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kurse in Block I"
+            "value" : "Kurse, die zählen"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Courses in block I"
+            "value" : "Courses that count"
+          }
+        }
+      }
+    },
+    "Kurspunkte" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurspunkte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Course points"
+          }
+        }
+      }
+    },
+    "Kurspunkte · Schnitt × 40" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurspunkte · Schnitt × 40"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Course points · average × 40"
           }
         }
       }
@@ -3666,19 +4058,53 @@
         }
       }
     },
-    "Läuft bei dir, %@" : {
+    "LF" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Läuft bei dir, %@"
+            "value" : "LF"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Looking good, %@"
+            "value" : "AC"
+          }
+        }
+      }
+    },
+    "Leg los, %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leg los, %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Let’s go, %@"
+          }
+        }
+      }
+    },
+    "Leistung gelöscht" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leistung gelöscht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grade deleted"
           }
         }
       }
@@ -3700,36 +4126,19 @@
         }
       }
     },
-    "Leistungs- und Kernfächer stehen fest. Auch ein schwaches Ergebnis bleibt drin — hier wird nichts gestrichen und nichts verdrängt." : {
+    "Leistungs- und Pflicht-Basisfächer bringen alles ein, was sie haben. Auch ein schwacher Kurs bleibt drin — Score klammert hier nie von sich aus." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Leistungs- und Kernfächer stehen fest. Auch ein schwaches Ergebnis bleibt drin — hier wird nichts gestrichen und nichts verdrängt."
+            "value" : "Leistungs- und Pflicht-Basisfächer bringen alles ein, was sie haben. Auch ein schwacher Kurs bleibt drin — Score klammert hier nie von sich aus."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Advanced and core subjects are settled. Even a weak result stays in — nothing is dropped and nothing is displaced here."
-          }
-        }
-      }
-    },
-    "Leistungs- und Kernfächer zählen immer. Basisfächer treten gegeneinander an — nur die besten füllen die freien Plätze in Block I." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Leistungs- und Kernfächer zählen immer. Basisfächer treten gegeneinander an — nur die besten füllen die freien Plätze in Block I."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Advanced courses and core subjects always count. Basic courses compete with each other — only the best ones fill the free slots in Block I."
+            "value" : "Advanced and required basic courses contribute everything they have. Even a weak course stays in — Score never brackets here on its own."
           }
         }
       }
@@ -3768,40 +4177,6 @@
         }
       }
     },
-    "Leistungsfächer bringen immer alle vier Halbjahre ein." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Leistungsfächer bringen immer alle vier Halbjahre ein."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Advanced subjects always contribute all four semesters."
-          }
-        }
-      }
-    },
-    "LF" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "LF"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AC"
-          }
-        }
-      }
-    },
     "Los geht’s" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3815,6 +4190,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Let’s go"
+          }
+        }
+      }
+    },
+    "Läuft bei dir, %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Läuft bei dir, %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looking good, %@"
           }
         }
       }
@@ -3904,6 +4296,101 @@
         }
       }
     },
+    "Mindestbedingungen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mindestbedingungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimum requirements"
+          }
+        }
+      }
+    },
+    "Mindestens %lld Punkte" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mindestens %lld Punkte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At least %lld points"
+          }
+        }
+      }
+    },
+    "Mit %@ verschwinden alle Halbjahre und %lld erfasste Leistungen. Rückgängig machen lässt sich das nicht." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit %1$@ verschwinden alle Halbjahre und %2$#@entries@. Rückgängig machen lässt sich das nicht."
+          },
+          "substitutions" : {
+            "entries" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg erfasste Leistung"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg erfasste Leistungen"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleting %1$@ removes every semester and %2$#@entries@. This cannot be undone."
+          },
+          "substitutions" : {
+            "entries" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg recorded grade"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg recorded grades"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Mit einem belegten Halbjahr gibt es nichts auszuwählen." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3917,6 +4404,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "With a single semester taken there is nothing to choose."
+          }
+        }
+      }
+    },
+    "Mit iCloud synchronisieren" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit iCloud synchronisieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync with iCloud"
           }
         }
       }
@@ -3989,43 +4493,138 @@
         }
       }
     },
-    "Nach den gesetzten Kursen bleiben %lld Plätze. Sie gehen nach Punktzahl an die Basisfächer — hier stehen sie in genau der Reihenfolge, in der Score sie vergibt." : {
+    "Mündliche Prüfung" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Nach den gesetzten Kursen bleibt %lld Platz. Er geht nach Punktzahl an die Basisfächer — hier stehen sie in genau der Reihenfolge, in der Score sie vergibt."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Nach den gesetzten Kursen bleiben %lld Plätze. Sie gehen nach Punktzahl an die Basisfächer — hier stehen sie in genau der Reihenfolge, in der Score sie vergibt."
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mündliche Prüfung"
           }
         },
         "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "After the fixed courses %lld slot is left. It goes to the basic subjects by points — they are listed in exactly the order Score fills them."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "After the fixed courses %lld slots are left. They go to the basic subjects by points — they are listed in exactly the order Score fills them."
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oral exam"
+          }
+        }
+      }
+    },
+    "Mündliche Prüfung · %lld Punkte × 4" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mündliche Prüfung · %lld Punkte × 4"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oral exam · %lld points × 4"
+          }
+        }
+      }
+    },
+    "Mündliche Prüfung · noch nicht eingetragen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mündliche Prüfung · noch nicht eingetragen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oral exam · not entered yet"
+          }
+        }
+      }
+    },
+    "Mündliche Prüfungsfächer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mündliche Prüfungsfächer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oral exam subjects"
+          }
+        }
+      }
+    },
+    "Mündliche Prüfungsfächer ändern" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mündliche Prüfungsfächer ändern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change oral exam subjects"
+          }
+        }
+      }
+    },
+    "Mündliches Ergebnis" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mündliches Ergebnis"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oral result"
+          }
+        }
+      }
+    },
+    "Mündliches Prüfungsfach" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mündliches Prüfungsfach"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oral exam subject"
+          }
+        }
+      }
+    },
+    "Nach dem heutigen Stand ist alles erfüllt. Sicher ist es erst, wenn die Prüfungen geschrieben sind." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach dem heutigen Stand ist alles erfüllt. Sicher ist es erst, wenn die Prüfungen geschrieben sind."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As things stand today, everything is met. It is only certain once the exams are written."
           }
         }
       }
@@ -4098,19 +4697,19 @@
         }
       }
     },
-    "nicht belegt" : {
+    "Nicht abwählbar. Score klammert hier nie von sich aus — auch ein schwaches Pflicht-Basisfach bleibt drin." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "nicht belegt"
+            "value" : "Nicht abwählbar. Score klammert hier nie von sich aus — auch ein schwaches Pflicht-Basisfach bleibt drin."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "not taken"
+            "value" : "Cannot be dropped. Score never brackets here on its own — even a weak required basic course stays in."
           }
         }
       }
@@ -4132,19 +4731,87 @@
         }
       }
     },
-    "Nicht gewertete Kurse rechnet Score automatisch raus, Kernfächer bleiben immer drin." : {
+    "Nicht gewertete Kurse rechnet Score automatisch raus, Pflicht-Basisfächer bleiben immer drin." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nicht gewertete Kurse rechnet Score automatisch raus, Kernfächer bleiben immer drin."
+            "value" : "Nicht gewertete Kurse rechnet Score automatisch raus, Pflicht-Basisfächer bleiben immer drin."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Score automatically leaves out courses that do not count; core subjects always stay in."
+            "value" : "Score automatically leaves out courses that do not count; required basic courses always stay in."
+          }
+        }
+      }
+    },
+    "Nicht klammerbar" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht klammerbar"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cannot be bracketed"
+          }
+        }
+      }
+    },
+    "Nicht klammerbar sind die Kurse deiner Prüfungsfächer: die drei Leistungsfächer, in denen du schriftlich geprüft wirst, und deine beiden mündlichen Prüfungsfächer. Deren Halbjahre sind anrechnungspflichtig. Pflicht-Basisfächer klammert Score ebenfalls nie von sich aus." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht klammerbar sind die Kurse deiner Prüfungsfächer: die drei Leistungsfächer, in denen du schriftlich geprüft wirst, und deine beiden mündlichen Prüfungsfächer. Deren Halbjahre sind anrechnungspflichtig. Pflicht-Basisfächer klammert Score ebenfalls nie von sich aus."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The courses of your exam subjects cannot be bracketed: the three advanced subjects you sit written exams in, and your two oral exam subjects. Their semesters must be counted. Score never brackets required basic courses on its own either."
+          }
+        }
+      }
+    },
+    "Noch %lld von 5 Prüfungen offen. Score setzt sie mit %@ Punkten an — deinem heutigen Stand — und rechnet die Gesamtpunktzahl daraus hoch." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch %lld von 5 Prüfungen offen. Score setzt sie mit %@ Punkten an — deinem heutigen Stand — und rechnet die Gesamtpunktzahl daraus hoch."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of 5 exams still to come. Score assumes %2$@ points for them — where you stand today — and projects the total from that."
+          }
+        }
+      }
+    },
+    "Noch ein Fach fehlt. Score rechnet auch mit einem, weiss dann aber nur die Hälfte." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch ein Fach fehlt. Score rechnet auch mit einem, weiss dann aber nur die Hälfte."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One subject is still missing. Score works with one as well, but then it only knows half the picture."
           }
         }
       }
@@ -4166,6 +4833,57 @@
         }
       }
     },
+    "Noch nicht eingetragen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nicht eingetragen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not entered yet"
+          }
+        }
+      }
+    },
+    "Noch nicht gewählt. Ihre Halbjahre sind anrechnungspflichtig — ohne die Angabe rechnet Score zu gut." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nicht gewählt. Ihre Halbjahre sind anrechnungspflichtig — ohne die Angabe rechnet Score zu gut."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not chosen yet. Their semesters must be counted — without this, Score calculates too favourably."
+          }
+        }
+      }
+    },
+    "Noch nie" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nie"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Never"
+          }
+        }
+      }
+    },
     "Note %@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4183,19 +4901,19 @@
         }
       }
     },
-    "Nur belegte Halbjahre zählen für Block I. Abgewählte bleiben gespeichert, gehen aber nicht in den Schnitt ein." : {
+    "Nur belegte Kurse zählen mit. Abgewählte bleiben gespeichert, gehen aber nicht in den Schnitt ein." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nur belegte Halbjahre zählen für Block I. Abgewählte bleiben gespeichert, gehen aber nicht in den Schnitt ein."
+            "value" : "Nur belegte Kurse zählen mit. Abgewählte bleiben gespeichert, gehen aber nicht in den Schnitt ein."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Only semesters you have taken count towards Block I. Deselected ones stay saved but do not go into the average."
+            "value" : "Only courses you have taken count. Deselected ones stay saved but do not go into the average."
           }
         }
       }
@@ -4217,70 +4935,19 @@
         }
       }
     },
-    "Ø %@" : {
+    "OK" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ø %@"
+            "value" : "OK"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ø %@"
-          }
-        }
-      }
-    },
-    "Ø %@ gesamt · %lld:%lld" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ø %@ gesamt · %lld:%lld"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ø %@ overall · %lld:%lld"
-          }
-        }
-      }
-    },
-    "Ø %@ Punkte" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ø %@ Punkte"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ø %@ points"
-          }
-        }
-      }
-    },
-    "Ø Leistungsfächer" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ø Leistungsfächer"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ø advanced courses"
+            "value" : "OK"
           }
         }
       }
@@ -4319,19 +4986,36 @@
         }
       }
     },
-    "OK" : {
+    "Ohne angemeldetes iCloud-Konto gibt es nichts zu synchronisieren." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OK"
+            "value" : "Ohne angemeldetes iCloud-Konto gibt es nichts zu synchronisieren."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OK"
+            "value" : "Without a signed-in iCloud account there is nothing to sync."
+          }
+        }
+      }
+    },
+    "PBF" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PBF"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RBC"
           }
         }
       }
@@ -4349,6 +5033,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Does this look right?"
+          }
+        }
+      }
+    },
+    "Pflicht-Basisfach" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pflicht-Basisfach"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Required basic course"
+          }
+        }
+      }
+    },
+    "Pflicht-Basisfächer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pflicht-Basisfächer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Required basic courses"
+          }
+        }
+      }
+    },
+    "Pflicht-Basisfächer sind nicht abwählbar und zählen immer — auch dann, wenn sie schlechter stehen als ein Wahl-Basisfach. Score hat vorausgewählt, was üblich ist." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pflicht-Basisfächer sind nicht abwählbar und zählen immer — auch dann, wenn sie schlechter stehen als ein Wahl-Basisfach. Score hat vorausgewählt, was üblich ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Required basic courses cannot be dropped and always count — even when they stand worse than a elective basic course. Score has preselected the usual ones."
           }
         }
       }
@@ -4404,6 +5139,74 @@
         }
       }
     },
+    "Prüfungen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüfungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exams"
+          }
+        }
+      }
+    },
+    "Prüfungen · fünf Ergebnisse × 4" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüfungen · fünf Ergebnisse × 4"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exams · five results × 4"
+          }
+        }
+      }
+    },
+    "Prüfungsfach: Alle Halbjahre sind anrechnungspflichtig und lassen sich nicht klammern." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüfungsfach: Alle Halbjahre sind anrechnungspflichtig und lassen sich nicht klammern."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exam subject: every semester must be counted and cannot be bracketed."
+          }
+        }
+      }
+    },
+    "Prüfungsfächer bringen immer alle belegten Kurse ein — Leistungsfächer wie mündliche." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüfungsfächer bringen immer alle belegten Kurse ein — Leistungsfächer wie mündliche."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exam subjects always contribute every course you took — advanced and oral alike."
+          }
+        }
+      }
+    },
     "Punkte" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4455,6 +5258,23 @@
         }
       }
     },
+    "Punkteschnitt je Wertung" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Punkteschnitt je Wertung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average points per weighting"
+          }
+        }
+      }
+    },
     "Punktsumme der eingebrachten Kurse" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4468,6 +5288,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Points of the counted courses"
+          }
+        }
+      }
+    },
+    "Punktsumme über alle Wertungen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Punktsumme über alle Wertungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Points across all weightings"
+          }
+        }
+      }
+    },
+    "Rückgängig" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rückgängig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Undo"
           }
         }
       }
@@ -4502,47 +5356,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Checking whether you already exist …"
-          }
-        }
-      }
-    },
-    "Schlechter als die %lld besseren Basisfach-Ergebnisse, die die freien Plätze belegen." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Schlechter als das %lld bessere Basisfach-Ergebnis, das den freien Platz belegt."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Schlechter als die %lld besseren Basisfach-Ergebnisse, die die freien Plätze belegen."
-                }
-              }
-            }
-          }
-        },
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Worse than the %lld better basic-subject result taking the open slot."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Worse than the %lld better basic-subject results taking the open slots."
-                }
-              }
-            }
           }
         }
       }
@@ -4598,6 +5411,57 @@
         }
       }
     },
+    "Schriftlich %lld, mündlich %lld · (%lld × 2 + %lld) ÷ 3 × 4" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriftlich %lld, mündlich %lld · (%lld × 2 + %lld) ÷ 3 × 4"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Written %1$lld, oral %2$lld · (%3$lld × 2 + %4$lld) ÷ 3 × 4"
+          }
+        }
+      }
+    },
+    "Schriftlich geprüft" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriftlich geprüft"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Written exams"
+          }
+        }
+      }
+    },
+    "Schriftlich prüfst du deine drei Leistungsfächer, mündlich zwei weitere. Fehlt dir eins, leg es hier gleich an." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriftlich prüfst du deine drei Leistungsfächer, mündlich zwei weitere. Fehlt dir eins, leg es hier gleich an."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You sit written exams in your three advanced subjects and oral exams in two more. Missing one? Add it right here."
+          }
+        }
+      }
+    },
     "Schriftlich · %lld %%" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4628,6 +5492,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Written assessments"
+          }
+        }
+      }
+    },
+    "Schriftliche Prüfung" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriftliche Prüfung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Written exam"
+          }
+        }
+      }
+    },
+    "Schriftliche Prüfung · %lld Punkte × 4" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriftliche Prüfung · %lld Punkte × 4"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Written exam · %lld points × 4"
+          }
+        }
+      }
+    },
+    "Schriftliche Prüfung · noch nicht eingetragen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriftliche Prüfung · noch nicht eingetragen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Written exam · not entered yet"
           }
         }
       }
@@ -4683,24 +5598,24 @@
         }
       }
     },
-    "Score beginnt mit der Kursstufe — erst ab 11/1 zählen Halbjahresergebnisse für Block I." : {
+    "Score beginnt mit der Kursstufe — erst ab 11/1 zählen deine Kurse mit." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Score beginnt mit der Kursstufe — erst ab 11/1 zählen Halbjahresergebnisse für Block I."
+            "value" : "Score beginnt mit der Kursstufe — erst ab 11/1 zählen deine Kurse mit."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Score starts with upper secondary — semester results only count towards Block I from 11/1 onwards."
+            "value" : "Score starts with upper secondary — your courses only count from 11/1 onwards."
           }
         }
       }
     },
-    "Score nimmt die besten %lld Ergebnisse dieses Fachs, die übrigen bleiben aussen vor." : {
+    "Score nimmt die besten %lld Kurse dieses Fachs, die übrigen bleiben aussen vor." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
@@ -4709,13 +5624,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Score nimmt %lld Ergebnis dieses Fachs — das beste. Die übrigen bleiben aussen vor."
+                  "value" : "Score nimmt %lld Kurs dieses Fachs — den besten. Die übrigen bleiben aussen vor."
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Score nimmt die besten %lld Ergebnisse dieses Fachs, die übrigen bleiben aussen vor."
+                  "value" : "Score nimmt die besten %lld Kurse dieses Fachs, die übrigen bleiben aussen vor."
                 }
               }
             }
@@ -4727,13 +5642,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Score takes %lld result from this subject — the best one. The rest stay out."
+                  "value" : "Score takes %lld course from this subject — the best one. The rest stay out."
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Score takes the best %lld results from this subject, the rest stay out."
+                  "value" : "Score takes the best %lld courses from this subject, the rest stay out."
                 }
               }
             }
@@ -4758,6 +5673,23 @@
         }
       }
     },
+    "Score synchronisiert bis zum nächsten Start weiter. Beende die App und öffne sie neu, damit die Synchronisierung endet." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score synchronisiert bis zum nächsten Start weiter. Beende die App und öffne sie neu, damit die Synchronisierung endet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score keeps syncing until the next launch. Quit the app and open it again to stop it."
+          }
+        }
+      }
+    },
     "Score-Export" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4776,24 +5708,33 @@
       }
     },
     "Seitenleiste ausblenden" : {
-
-    },
-    "Seitenleiste einblenden" : {
-
-    },
-    "Sie bringen alle vier Halbjahre in Block I ein und lassen sich nicht abwählen. Genau drei müssen es sein." : {
-      "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sie bringen alle vier Halbjahre in Block I ein und lassen sich nicht abwählen. Genau drei müssen es sein."
+            "value" : "Seitenleiste ausblenden"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "They contribute all four semesters to Block I and cannot be dropped. It has to be exactly three."
+            "value" : "Hide sidebar"
+          }
+        }
+      }
+    },
+    "Seitenleiste einblenden" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seitenleiste einblenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show sidebar"
           }
         }
       }
@@ -4828,6 +5769,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "How Score calculates"
+          }
+        }
+      }
+    },
+    "So wie es heute steht, reicht es noch nicht. Die Prüfungen sind aber noch offen — das ist eine Hochrechnung und kein Ergebnis." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "So wie es heute steht, reicht es noch nicht. Die Prüfungen sind aber noch offen — das ist eine Hochrechnung und kein Ergebnis."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As things stand today, it is not enough yet. The exams are still ahead — this is a projection, not a result."
           }
         }
       }
@@ -4883,6 +5841,23 @@
         }
       }
     },
+    "Start" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        }
+      }
+    },
     "Steht nur auf deinem Dashboard, sonst nirgends." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4896,6 +5871,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "It only appears on your dashboard, nowhere else."
+          }
+        }
+      }
+    },
+    "Synchronisiert" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisiert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synced"
+          }
+        }
+      }
+    },
+    "Synchronisierung fehlgeschlagen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisierung fehlgeschlagen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync failed"
+          }
+        }
+      }
+    },
+    "Synchronisierung gestört" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisierung gestört"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync problem"
           }
         }
       }
@@ -5026,19 +6052,19 @@
         }
       }
     },
-    "Trag deine Halbjahresergebnisse ein, Score rechnet deinen Abischnitt mit. Ab der Kursstufe 1." : {
+    "Trag deine Kurse ein, Score rechnet deinen Abischnitt mit. Ab der Kursstufe 1." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trag deine Halbjahresergebnisse ein, Score rechnet deinen Abischnitt mit. Ab der Kursstufe 1."
+            "value" : "Trag deine Kurse ein, Score rechnet deinen Abischnitt mit. Ab der Kursstufe 1."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Enter your semester results and Score works out your final grade as you go. From upper secondary 1 onwards."
+            "value" : "Enter your courses and Score works out your final grade as you go. From upper secondary 1 onwards."
           }
         }
       }
@@ -5056,40 +6082,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trend"
-          }
-        }
-      }
-    },
-    "über Grenze" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "über Grenze"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "over limit"
-          }
-        }
-      }
-    },
-    "Übersicht" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Übersicht"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Overview"
           }
         }
       }
@@ -5128,6 +6120,40 @@
         }
       }
     },
+    "Von den 40 Kursen sind nach den nicht klammerbaren noch %lld offen. Score klammert von unten: hier stehen die Wahl-Basisfächer in genau der Reihenfolge, in der es sie trifft." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von den 40 Kursen sind nach den nicht klammerbaren noch %lld offen. Score klammert von unten: hier stehen die Wahl-Basisfächer in genau der Reihenfolge, in der es sie trifft."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Of the 40 courses, %lld are still open after the ones that cannot be bracketed. Score brackets from the bottom: the elective subjects stand here in exactly the order it hits them."
+          }
+        }
+      }
+    },
+    "Von dir geklammert. Dieser Kurs bleibt draussen, egal wie er ausfällt — du nimmst die Klammer in der Fachansicht wieder weg." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von dir geklammert. Dieser Kurs bleibt draussen, egal wie er ausfällt — du nimmst die Klammer in der Fachansicht wieder weg."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bracketed by you. This course stays out no matter how it turns out — remove the bracket again in the subject view."
+          }
+        }
+      }
+    },
     "Vorname" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5145,19 +6171,87 @@
         }
       }
     },
-    "Was herausfällt" : {
+    "WBF" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Was herausfällt"
+            "value" : "WBF"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "What drops out"
+            "value" : "EBC"
+          }
+        }
+      }
+    },
+    "Wahl-Basisfach" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wahl-Basisfach"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elective basic course"
+          }
+        }
+      }
+    },
+    "Wahl-Basisfächer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wahl-Basisfächer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elective basic courses"
+          }
+        }
+      }
+    },
+    "Was geklammert ist" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was geklammert ist"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What is bracketed"
+          }
+        }
+      }
+    },
+    "Was in deiner Kurswahl nicht als Pflicht steht, nimmst du hier heraus — es kommt im nächsten Schritt wieder." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was in deiner Kurswahl nicht als Pflicht steht, nimmst du hier heraus — es kommt im nächsten Schritt wieder."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anything your course selection does not require, take out here — it comes back in the next step."
           }
         }
       }
@@ -5213,19 +6307,19 @@
         }
       }
     },
-    "Wie viele Ergebnisse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift vor der Auswahl: Was ein Fach nicht einbringt, nimmt auch keinem anderen Kurs den Platz weg. Leistungsfächer bringen immer alle vier Halbjahre ein." : {
+    "Wie viele Kurse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift zuerst: Was ein Fach nicht einbringt, steht auch nicht mehr zur Klammerung." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wie viele Ergebnisse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift vor der Auswahl: Was ein Fach nicht einbringt, nimmt auch keinem anderen Kurs den Platz weg. Leistungsfächer bringen immer alle vier Halbjahre ein."
+            "value" : "Wie viele Kurse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift zuerst: Was ein Fach nicht einbringt, steht auch nicht mehr zur Klammerung."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "How many results a subject contributes at most is set in the subject editor. That limit applies before the selection: what a subject does not contribute takes no slot from another course either. Advanced subjects always contribute all four semesters."
+            "value" : "How many courses a subject contributes at most is set in the subject editor. That limit applies first: what a subject does not contribute is not up for bracketing either."
           }
         }
       }
@@ -5247,6 +6341,23 @@
         }
       }
     },
+    "Willkommen bei Score" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Willkommen bei Score"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome to Score"
+          }
+        }
+      }
+    },
     "Willkommen zurück" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5260,23 +6371,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Welcome back"
-          }
-        }
-      }
-    },
-    "Wird abgeglichen …" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wird abgeglichen …"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Syncing …"
           }
         }
       }
@@ -5298,19 +6392,19 @@
         }
       }
     },
-    "wird nicht gewertet" : {
+    "Wird synchronisiert …" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "wird nicht gewertet"
+            "value" : "Wird synchronisiert …"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "does not count"
+            "value" : "Syncing …"
           }
         }
       }
@@ -5328,6 +6422,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete everything?"
+          }
+        }
+      }
+    },
+    "Wo Score klammert" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wo Score klammert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where Score brackets"
           }
         }
       }
@@ -5383,6 +6494,142 @@
         }
       }
     },
+    "Worin wirst du mündlich geprüft?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Worin wirst du mündlich geprüft?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What are your oral exams in?"
+          }
+        }
+      }
+    },
+    "Zeigt, wie der Schnitt zustande kommt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeigt, wie der Schnitt zustande kommt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shows how the average adds up"
+          }
+        }
+      }
+    },
+    "Zuletzt synchronisiert" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuletzt synchronisiert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last synced"
+          }
+        }
+      }
+    },
+    "Zurück" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurück"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back"
+          }
+        }
+      }
+    },
+    "Zusätzliche mündliche Prüfung" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zusätzliche mündliche Prüfung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Additional oral exam"
+          }
+        }
+      }
+    },
+    "Zwei deiner drei Leistungsfächer zählen doppelt. Ohne eigene Wahl nimmt Score die Kombination, die am besten ausfällt." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwei deiner drei Leistungsfächer zählen doppelt. Ohne eigene Wahl nimmt Score die Kombination, die am besten ausfällt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Two of your three advanced subjects count twice. Without a choice of your own, Score takes the combination that comes out best."
+          }
+        }
+      }
+    },
+    "Zwei deiner drei Leistungsfächer zählen mit allen vier Kursen doppelt — welche zwei, entscheidest du. Score hat die günstigste Kombination gewählt. Im Fach-Editor kannst du sie selbst setzen." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwei deiner drei Leistungsfächer zählen mit allen vier Kursen doppelt — welche zwei, entscheidest du. Score hat die günstigste Kombination gewählt. Im Fach-Editor kannst du sie selbst setzen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Two of your three advanced courses count twice with all four courses — which two is your choice. Score picked the best combination. You can set it yourself in the subject editor."
+          }
+        }
+      }
+    },
+    "Zwölf Kurse: alle vier Halbjahre der drei Leistungsfächer. Sie sind gesetzt und lassen sich nicht abwählen." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwölf Kurse: alle vier Halbjahre der drei Leistungsfächer. Sie sind gesetzt und lassen sich nicht abwählen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Twelve courses: all four semesters of your three advanced courses. They are fixed and cannot be dropped."
+          }
+        }
+      }
+    },
     "Zählt in die mündliche Teilnote von %@." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5417,53 +6664,529 @@
         }
       }
     },
-    "Zeigt, wie der Schnitt zustande kommt" : {
+    "Zählt mit. Klammern nimmt den Kurs heraus, ohne die Noten zu löschen." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zeigt, wie der Schnitt zustande kommt"
+            "value" : "Zählt mit. Klammern nimmt den Kurs heraus, ohne die Noten zu löschen."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Shows how the average adds up"
+            "value" : "Counts towards your average. Bracketing takes it out without deleting any grades."
           }
         }
       }
     },
-    "Zurück" : {
+    "Zählt nicht mit: Dieses Fach bringt nur eine begrenzte Zahl seiner Kurse ein." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zurück"
+            "value" : "Zählt nicht mit: Dieses Fach bringt nur eine begrenzte Zahl seiner Kurse ein."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Back"
+            "value" : "Does not count: this subject only contributes a limited number of its courses."
           }
         }
       }
     },
-    "Zwölf Kurse: alle vier Halbjahre der drei Leistungsfächer. Sie sind gesetzt und lassen sich nicht abwählen." : {
+    "Zählt nicht mit: Score hat den Kurs automatisch geklammert, weil nur %lld Kurse zählen." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zwölf Kurse: alle vier Halbjahre der drei Leistungsfächer. Sie sind gesetzt und lassen sich nicht abwählen."
+            "value" : "Zählt nicht mit: Score hat den Kurs automatisch geklammert, weil nur %lld Kurse zählen."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Twelve courses: all four semesters of your three advanced courses. They are fixed and cannot be dropped."
+            "value" : "Does not count: Score bracketed this course automatically because only %lld courses count."
+          }
+        }
+      }
+    },
+    "aktuell %@ der mündlichen Teilnote." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aktuell %@ der mündlichen Teilnote."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "currently %@ of the oral component."
+          }
+        }
+      }
+    },
+    "aktuell %@ der schriftlichen Teilnote." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aktuell %@ der schriftlichen Teilnote."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "currently %@ of the written component."
+          }
+        }
+      }
+    },
+    "automatisch" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "automatisch"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "automatic"
+          }
+        }
+      }
+    },
+    "fällt raus" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "fällt raus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "drops out"
+          }
+        }
+      }
+    },
+    "geklammert" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "geklammert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bracketed"
+          }
+        }
+      }
+    },
+    "iCloud" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud"
+          }
+        }
+      }
+    },
+    "iCloud eingeschränkt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud eingeschränkt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud restricted"
+          }
+        }
+      }
+    },
+    "iCloud ist auf diesem Gerät eingeschränkt. Prüf in den Systemeinstellungen, ob iCloud Drive für Score erlaubt ist." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud ist auf diesem Gerät eingeschränkt. Prüf in den Systemeinstellungen, ob iCloud Drive für Score erlaubt ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud is restricted on this device. Check in System Settings whether iCloud Drive is allowed for Score."
+          }
+        }
+      }
+    },
+    "keine Note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keine Note"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no grade yet"
+          }
+        }
+      }
+    },
+    "nicht belegt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nicht belegt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "not taken"
+          }
+        }
+      }
+    },
+    "offen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "offen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "open"
+          }
+        }
+      }
+    },
+    "von dir" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "von dir"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "by you"
+          }
+        }
+      }
+    },
+    "von dir geklammert" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "von dir geklammert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bracketed by you"
+          }
+        }
+      }
+    },
+    "Änderungen sichern" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Änderungen sichern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save changes"
+          }
+        }
+      }
+    },
+    "Ø %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ø %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ø %@"
+          }
+        }
+      }
+    },
+    "Ø %@ Punkte" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ø %@ Punkte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ø %@ points"
+          }
+        }
+      }
+    },
+    "Ø %@ gesamt · %lld:%lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ø %@ gesamt · %lld:%lld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ø %@ overall · %lld:%lld"
+          }
+        }
+      }
+    },
+    "Ø Leistungsfächer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ø Leistungsfächer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ø advanced courses"
+          }
+        }
+      }
+    },
+    "Übersicht" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übersicht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Overview"
+          }
+        }
+      }
+    },
+    "über Grenze" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "über Grenze"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "over limit"
+          }
+        }
+      }
+    },
+    "über der Kursgrenze" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "über der Kursgrenze"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "over the course limit"
+          }
+        }
+      }
+    },
+    "↑ besser" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↑ besser"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↑ better"
+          }
+        }
+      }
+    },
+    "＋ Eigenes Fach hinzufügen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Eigenes Fach hinzufügen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Add your own subject"
+          }
+        }
+      }
+    },
+    "＋ Fach\nhinzufügen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Fach\nhinzufügen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Add\nsubject"
+          }
+        }
+      }
+    },
+    "＋ Klassenarbeit oder Projekt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Klassenarbeit oder Projekt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Exam or project"
+          }
+        }
+      }
+    },
+    "＋ Klassenarbeit, Test oder Projekt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Klassenarbeit, Test oder Projekt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Exam, test or project"
+          }
+        }
+      }
+    },
+    "＋ Mündliche Note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Mündliche Note"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Oral grade"
+          }
+        }
+      }
+    },
+    "＋ Neues Fach" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Neues Fach"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ New subject"
           }
         }
       }

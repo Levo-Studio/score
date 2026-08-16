@@ -13,6 +13,7 @@ import SwiftData
 /// welche Kurse nicht gewertet werden.
 struct PadDashboardView: View {
 
+    let profile: StudentProfile
     let subjects: [Subject]
 
     @Binding var semesterIndex: Int
@@ -39,6 +40,7 @@ struct PadDashboardView: View {
         GeometryReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
+                    greeting
                     topRow
                         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
                             topRowHeight = $0
@@ -57,6 +59,25 @@ struct PadDashboardView: View {
         }
     }
 
+    // MARK: - Begrüssung
+
+    /// Der Zuspruch über der Score-Karte, wie auf dem iPhone.
+    ///
+    /// Er steht bewusst hier und nicht in der Kopfleiste des iPads: Die Zeile
+    /// kommentiert den Schnitt, also gehört sie neben den Schnitt. In der
+    /// Kopfleiste stünde sie auch über den Einstellungen und dem Fach-Editor,
+    /// wo die Note gar nicht zu sehen ist — und ein Zuspruch, der immer da ist,
+    /// wird zur Tapete. Das Profilbild bleibt dagegen oben: es sagt nichts über
+    /// die Leistung, sondern wem die Daten gehören, und das gilt überall.
+    private var greeting: some View {
+        model.greetingText(firstName: profile.firstName)
+            .font(ScoreTypography.archivo(700, 22))
+            .tracking(em: -0.03, at: 22)
+            .foregroundStyle(ScorePalette.ink)
+            .contentTransition(.opacity)
+            .scoreAnimation(ScoreMotion.valueChange, value: model.greetingStage)
+    }
+
     // MARK: - Obere Reihe
 
     /// Die drei Karten stehen nebeneinander, solange sie das können. Wird es
@@ -68,15 +89,18 @@ struct PadDashboardView: View {
     /// gewonnene Fläche. Gleiche Höhe ohne Loch — die Zeilen atmen, statt oben
     /// zu kleben.
     ///
-    /// Die Breiten folgen dem Inhalt: „Halbjahre" hat vier kurze Zeilen aus
-    /// Kürzel, Balken und Zahl und braucht wenig, „Auf einen Blick" sechs Zeilen
-    /// mit ausgeschriebenen Werten und bekommt darum den Rest.
+    /// Die Breiten folgen dem Inhalt, aber nicht sklavisch: „Auf einen Blick"
+    /// hat zwar die längsten Zeilen, füllt seine Breite aber mit Leerraum
+    /// zwischen Bezeichnung und Wert. „Halbjahre" dagegen trägt vier Balken,
+    /// und ein Balken wird mit jeder gewonnenen Breite tatsächlich genauer
+    /// lesbar. Der mittleren Karte etwas mehr zu geben kostet die rechte also
+    /// nichts und bringt links etwas.
     private var topRow: some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .top, spacing: ScoreMetrics.Spacing.md) {
                 scoreCard.frame(width: 356)
-                semesterCard.frame(width: 212)
-                glanceCard.frame(minWidth: 340)
+                semesterCard.frame(width: 268)
+                glanceCard.frame(minWidth: 300)
             }
             .fixedSize(horizontal: false, vertical: true)
 
@@ -97,9 +121,9 @@ struct PadDashboardView: View {
             title: "Erwarteter Abischnitt",
             trend: model.trendText(for: semesterIndex),
             average: model.expectedGradeText,
-            averageValue: model.outcome.expectedGrade,
+            averageValue: model.expectedGrade,
             stats: [
-                ScoreStat(value: model.blockOneText, label: "Block I"),
+                ScoreStat(value: model.blockOneText, label: "Kurspunkte"),
                 ScoreStat(value: model.courseCountText, label: "Kurse"),
                 ScoreStat(
                     value: model.semesterAverageText(semesterIndex),
@@ -180,7 +204,7 @@ struct PadDashboardView: View {
     private var statistics: [Statistic] {
         [
             Statistic(label: "Ø Leistungsfächer", value: ScoreNumberFormat.points(advancedAverage)),
-            Statistic(label: "Bestes Ergebnis", value: text(for: bestCourse)),
+            Statistic(label: "Bester Kurs", value: text(for: bestCourse)),
             Statistic(label: "Schwächstes", value: text(for: weakestCourse)),
             Statistic(
                 label: "Nicht gewertet",

@@ -10,6 +10,22 @@ struct PadSettingsView: View {
 
     @Environment(AppSettings.self) private var settings
 
+    /// Zeigt, ob der iCloud-Abgleich tatsächlich läuft — dieselbe Auskunft wie
+    /// auf dem iPhone. Ein Schalter ohne Zustandsanzeige daneben liesse offen,
+    /// ob er gerade etwas bewirkt.
+    @State private var syncStatus: CloudSyncStatus
+
+    /// Die Synchronisierung von Hand. Dieselbe Instanz wie im iPhone-Layout —
+    /// ein Lauf gehört dem Gerät, nicht der Ansicht.
+    @State private var sync: ManualCloudSync
+
+    /// Beides kommt von aussen herein, damit Belegbilder die Zustände zeigen
+    /// können, die sich sonst nur bei echtem Netz und echtem Konto einstellen.
+    init(syncStatus: CloudSyncStatus = CloudSyncStatus(), sync: ManualCloudSync = .shared) {
+        _syncStatus = State(initialValue: syncStatus)
+        _sync = State(initialValue: sync)
+    }
+
     /// Es gibt genau ein Profil. Die Abfrage liefert trotzdem eine Liste, weil ein
     /// unterbrochener CloudKit-Erstabgleich theoretisch zwei anlegen kann; genutzt
     /// wird dann das erste.
@@ -48,6 +64,11 @@ struct PadSettingsView: View {
             .padding(.bottom, PadMetrics.contentPadding)
         }
         .scrollIndicators(.hidden)
+        .task {
+            // Der Kontostatus kann sich ändern, während die App läuft, deshalb
+            // bei jedem Öffnen der Einstellungen neu abfragen.
+            await syncStatus.refresh()
+        }
     }
 
     // MARK: - Profil
@@ -96,6 +117,51 @@ struct PadSettingsView: View {
                 .disabled(profile == nil)
             }
 
+            PadSettingsRow(title: "Mit iCloud synchronisieren", isFirst: false) {
+                ScoreSwitch(isOn: settings.isCloudSyncEnabled)
+            }
+
+            // Der Schalter verstellt den Speicher nicht — das kann er nicht,
+            // siehe `CloudSyncActivation`. Er sagt stattdessen, ab wann er gilt.
+            if let notice = CloudSyncActivation.restartNotice(desired: settings.wrappedValue.isCloudSyncEnabled) {
+                PadSettingsNote(text: Text(notice))
+            }
+
+            PadSettingsRow(title: "iCloud", isFirst: false) {
+                Text(syncStatus.state.title)
+                    .font(ScoreTypography.publicSans(500, 13.5))
+                    .foregroundStyle(
+                        syncStatus.state.needsAttention
+                            ? ScorePalette.warn
+                            : ScorePalette.inkSecondary
+                    )
+            }
+
+            if let explanation = syncStatus.state.explanation {
+                PadSettingsNote(text: explanation)
+            }
+
+            // Ein Knopf, kein Schalter: Der Schalter darüber sagt, ob ständig
+            // abgeglichen wird, dieser stösst einen Lauf an. Was er dabei
+            // wirklich tut, steht in `ManualCloudSync`.
+            Button {
+                sync.start()
+            } label: {
+                PadSettingsRow(title: "Jetzt synchronisieren", isFirst: false) {
+                    ManualCloudSyncIndicator(phase: sync.phase, size: 13.5)
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(!canSyncNow)
+
+            if let note = sync.phase.note {
+                PadSettingsNote(text: Text(note))
+            }
+
+            PadSettingsRow(title: "Zuletzt synchronisiert", isFirst: false) {
+                PadSettingsValue(text: lastSyncedText)
+            }
+
             // Nicht in der Design-Datei, aber auf dem iPhone vorhanden: einen
             // Export nur auf einem der beiden Geräte anzubieten wäre eine Falle.
             ShareLink(item: export, preview: SharePreview("Score-Export")) {
@@ -119,6 +185,27 @@ struct PadSettingsView: View {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .strokeBorder(ScorePalette.line, lineWidth: 1)
         )
+        // Der Hinweis unter dem Schalter kommt und geht mit ihm — die Karte
+        // wächst dabei, statt zu springen.
+        .scoreAnimation(ScoreMotion.valueChange, value: settings.wrappedValue.isCloudSyncEnabled)
+        // Dasselbe für die Erklärung unter „Jetzt synchronisieren".
+        .scoreAnimation(ScoreMotion.valueChange, value: sync.phase)
+    }
+
+    // MARK: - Abgleich von Hand
+
+    /// Ob sich der Abgleich gerade anstossen lässt.
+    private var canSyncNow: Bool {
+        sync.canStart && syncStatus.state.allowsSync
+    }
+
+    /// Was in der Zeile „Zuletzt synchronisiert" steht.
+    private var lastSyncedText: String {
+        ManualCloudSync.lastSyncedText(
+            date: sync.lastSyncedAt,
+            isActive: syncStatus.state.allowsSync,
+            locale: settings.locale
+        )
     }
 
     // MARK: - Erklärung
@@ -128,7 +215,7 @@ struct PadSettingsView: View {
             PadCard(horizontalPadding: ScoreMetrics.Spacing.lg, cornerRadius: 24) {
                 VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
                     PadCardTitle(title: "So rechnet Score")
-                    Text("Block I besteht aus 42 Halbjahresergebnissen: 12 aus deinen drei Leistungsfächern plus 30 aus den Basisfächern. Kernfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt.")
+                    Text("In deinen Schnitt gehen 40 Kurse ein: 12 aus deinen drei Leistungsfächern plus 28 aus deinen Basisfächern. Zwei der drei Leistungsfächer zählen doppelt. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt.")
                         .font(ScoreTypography.publicSans(400, 12))
                         .lineSpacing(5)
                         .foregroundStyle(ScorePalette.inkSecondary)
@@ -205,6 +292,25 @@ private struct PadSettingsRow<Accessory: View>: View {
                     .frame(height: 1)
             }
         }
+    }
+}
+
+/// Ein erklärender Satz unter der Zeile, zu der er gehört.
+///
+/// Keine eigene Zeile mit Trenner: Er gehört zu der darüber und würde als
+/// eigener Abschnitt so aussehen, als stünde er für sich.
+private struct PadSettingsNote: View {
+
+    let text: Text
+
+    var body: some View {
+        text
+            .font(.meta)
+            .foregroundStyle(ScorePalette.inkSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 18)
+            .padding(.bottom, 18)
     }
 }
 

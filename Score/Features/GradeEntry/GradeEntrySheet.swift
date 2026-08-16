@@ -9,6 +9,16 @@ import SwiftData
 ///
 /// Das Punkte-Pad ist die eigentliche Eingabe. Alles andere sind Feineinstellungen,
 /// die man selten anfasst — deshalb steht das Pad oben und bekommt den Platz.
+///
+/// ## Warum kein `.sheet` mehr
+///
+/// Die Vorlage zeigt das Eingabe-Sheet mittig auf abgedunkeltem Grund, 520 Punkt
+/// breit — nicht als Blatt, das von unten aufsteigt. Auf dem iPad wäre ein
+/// solches Blatt eine formblattgrosse Fläche mit eigener Systemkante, und die
+/// Fachansicht darunter verschwände; genau deshalb liegt dort auch die
+/// Aufschlüsselung von Block I schon als Überlagerung. Diese Ansicht ist deshalb
+/// nur noch der **Inhalt** einer Karte — Rahmen, Grund und Aufgang kommen von
+/// ``ScoreOverlaySheet``, für iPhone und iPad derselbe.
 struct GradeEntrySheet: View {
 
     @Bindable var entry: GradeEntry
@@ -22,39 +32,32 @@ struct GradeEntrySheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        ScrollView {
-            // Der Inhalt baut sich gestaffelt auf, nachdem das Sheet oben ist —
-            // der Vorlauf entspricht der Dauer von `scRise`.
-            VStack(alignment: .leading, spacing: 0) {
-                titleRow
-                    .sheetContentAppearance(index: 0)
-                categoryChips
-                    .sheetContentAppearance(index: 1)
-                kindChips
-                    .sheetContentAppearance(index: 2)
-                pointsPad
-                    .sheetContentAppearance(index: 3)
-                automaticShareRow
-                    .sheetContentAppearance(index: 4)
-                if !entry.usesAutomaticShare {
-                    manualShare
-                        .transition(.opacity.combined(with: .offset(y: ScoreMotion.rowOffset)))
-                }
-                footer
-                    .sheetContentAppearance(index: 5)
+        // Der Inhalt baut sich gestaffelt auf, nachdem das Blatt aufgegangen ist —
+        // der Vorlauf entspricht der Dauer von `scRise`.
+        VStack(alignment: .leading, spacing: 0) {
+            titleRow
+                .sheetContentAppearance(index: 0)
+            categoryChips
+                .sheetContentAppearance(index: 1)
+            kindChips
+                .sheetContentAppearance(index: 2)
+            pointsPad
+                .sheetContentAppearance(index: 3)
+            automaticShareRow
+                .sheetContentAppearance(index: 4)
+            if !entry.usesAutomaticShare {
+                manualShare
+                    .transition(.opacity.combined(with: .offset(y: ScoreMotion.rowOffset)))
             }
-            .scoreAnimation(ScoreMotion.rowIn, value: entry.usesAutomaticShare)
-            .padding(.horizontal, ScoreMetrics.Spacing.lg)
-            .padding(.top, 18)
-            .padding(.bottom, 28)
+            footer
+                .sheetContentAppearance(index: 5)
         }
-        .background(ScorePalette.surface)
-        // Der Inhalt ist kurz — auf halber Höhe bleibt die Fachansicht sichtbar
-        // und der Score bewegt sich beim Tippen im Blickfeld mit.
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
-        .presentationBackground(ScorePalette.surface)
-        .presentationCornerRadius(ScoreMetrics.Radius.sheet)
+        .scoreAnimation(ScoreMotion.rowIn, value: entry.usesAutomaticShare)
+        // Die Masse der Vorlage für die mittige Karte: 22 oben, 24 seitlich, 24
+        // unten.
+        .padding(.horizontal, 24)
+        .padding(.top, 22)
+        .padding(.bottom, 24)
     }
 
     // MARK: - Kopf

@@ -23,23 +23,90 @@ struct SubjectDraft {
     /// `nil` heisst „alle belegten".
     var maximumContributedCourses: Int?
 
+    /// Ob dieses Fach eines der beiden mündlichen Prüfungsfächer ist.
+    var isOralExamSubject: Bool
+
+    /// Ob dieses Leistungsfach doppelt gewertet wird.
+    var isDoubleWeighted: Bool
+
+    /// Das schriftliche Abiturprüfungsergebnis, 0 bis 15. `nil` heisst „noch
+    /// nicht geprüft".
+    var writtenExamPoints: Int?
+
+    /// Das mündliche Abiturprüfungsergebnis, 0 bis 15. `nil` heisst „noch nicht
+    /// geprüft".
+    var oralExamPoints: Int?
+
     init(subject: Subject?) {
         name = subject?.name ?? ""
         abbreviation = subject?.abbreviation ?? ""
         colorValue = subject?.colorValue ?? Int(ScorePalette.subjectColorValues[0])
-        kind = subject?.kind ?? .basisfach
+        kind = subject?.kind ?? .wahlBasisfach
         activeSemesters = Set(subject?.activeSemesters ?? Semester.allIndices)
         writtenShare = subject?.writtenShare ?? 50
         maximumContributedCourses = subject?.maximumContributedCourses
+        isOralExamSubject = subject?.isOralExamSubject ?? false
+        isDoubleWeighted = subject?.isDoubleWeighted ?? false
+        writtenExamPoints = subject?.writtenExamPoints
+        oralExamPoints = subject?.oralExamPoints
+    }
+
+    // MARK: - Abiturprüfung
+
+    /// Ob in diesem Fach schriftlich geprüft wird.
+    ///
+    /// Das sind in Baden-Württemberg genau die drei Leistungsfächer.
+    var hasWrittenExam: Bool { kind == .leistungsfach }
+
+    /// Ob in diesem Fach mündlich geprüft wird — als eigene Prüfung oder als
+    /// Zusatz zur schriftlichen.
+    var hasOralExam: Bool { resolvedOralExamSubject || hasWrittenExam }
+
+    /// Ob sich für dieses Fach die Doppelwertung setzen lässt.
+    var allowsDoubleWeighting: Bool { kind == .leistungsfach }
+
+    /// Die Doppelwertung, wie sie gespeichert wird.
+    ///
+    /// Bei allem, was kein Leistungsfach ist, immer `false`: doppelt gewertet
+    /// werden nur Leistungsfächer. Der Wert wird nicht gelöscht, sondern beim
+    /// Sichern ausgewertet — wer den Fachtyp kurz umstellt, findet seine Wahl
+    /// danach wieder vor.
+    var resolvedDoubleWeighted: Bool { allowsDoubleWeighting && isDoubleWeighted }
+
+    /// Das schriftliche Prüfungsergebnis, wie es gespeichert wird.
+    ///
+    /// Nur Leistungsfächer werden schriftlich geprüft; bei allen anderen bleibt
+    /// das Feld leer, damit kein Ergebnis stehen bleibt, das in die Rechnung
+    /// einginge, sobald das Fach wieder Leistungsfach wird.
+    var resolvedWrittenExamPoints: Int? {
+        hasWrittenExam ? writtenExamPoints.map(GradeEntry.clamp) : nil
+    }
+
+    /// Das mündliche Prüfungsergebnis, wie es gespeichert wird.
+    var resolvedOralExamPoints: Int? {
+        hasOralExam ? oralExamPoints.map(GradeEntry.clamp) : nil
     }
 
     // MARK: - Kursgrenze
 
     /// Ob sich für dieses Fach überhaupt eine Kursgrenze setzen lässt.
     ///
-    /// Leistungsfächer bringen immer alle vier Halbjahre ein — dort ist die
+    /// Prüfungsfächer bringen immer alle belegten Halbjahre ein — dort ist die
     /// Eingabe kein Wahlrecht, das gesperrt wäre, sondern schlicht keine Frage.
-    var allowsCourseLimit: Bool { kind != .leistungsfach }
+    var allowsCourseLimit: Bool { !isExamSubject }
+
+    /// Ob dieses Fach im Abitur geprüft wird — schriftlich oder mündlich.
+    ///
+    /// Ein Leistungsfach ist immer ein schriftliches Prüfungsfach; deshalb wird
+    /// die mündliche Angabe bei ihm ignoriert und nicht gelöscht. Wer den Fachtyp
+    /// nur kurz umstellt, findet seine Wahl danach wieder vor.
+    var isExamSubject: Bool { kind == .leistungsfach || resolvedOralExamSubject }
+
+    /// Die mündliche Prüfungsfach-Angabe, wie sie gespeichert wird.
+    ///
+    /// Bei einem Leistungsfach immer `false`: es wird bereits schriftlich
+    /// geprüft, und beide Kennzeichen zugleich wären ein Widerspruch im Datensatz.
+    var resolvedOralExamSubject: Bool { kind != .leistungsfach && isOralExamSubject }
 
     /// Die wählbaren Grenzen: von einem Kurs bis „alle".
     ///
@@ -136,6 +203,10 @@ struct SubjectDraft {
             subject.activeSemesters = semesters
             subject.writtenShare = writtenShare
             subject.maximumContributedCourses = resolvedCourseLimit
+            subject.isOralExamSubject = resolvedOralExamSubject
+            subject.isDoubleWeighted = resolvedDoubleWeighted
+            subject.writtenExamPoints = resolvedWrittenExamPoints
+            subject.oralExamPoints = resolvedOralExamPoints
             return subject
         }
 
@@ -148,6 +219,10 @@ struct SubjectDraft {
             writtenShare: writtenShare,
             activeSemesters: semesters,
             maximumContributedCourses: resolvedCourseLimit,
+            isOralExamSubject: resolvedOralExamSubject,
+            isDoubleWeighted: resolvedDoubleWeighted,
+            writtenExamPoints: resolvedWrittenExamPoints,
+            oralExamPoints: resolvedOralExamPoints,
             sortIndex: (existingSubjects.map(\.sortIndex).max() ?? -1) + 1
         )
         context.insert(subject)

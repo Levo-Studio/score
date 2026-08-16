@@ -189,6 +189,12 @@ struct PadSubjectEditorView: View {
                         }
                     }
                 }
+
+                OralExamToggle(draft: $draft)
+                    .padding(.top, ScoreMetrics.Spacing.xxs)
+
+                ExamResultSection(draft: $draft)
+                    .padding(.top, ScoreMetrics.Spacing.xxs)
             }
         }
     }
@@ -220,7 +226,7 @@ struct PadSubjectEditorView: View {
                     }
                 }
 
-                Text("Nur belegte Halbjahre zählen für Block I. Abgewählte bleiben gespeichert, gehen aber nicht in den Schnitt ein.")
+                Text("Nur belegte Kurse zählen mit. Abgewählte bleiben gespeichert, gehen aber nicht in den Schnitt ein.")
                     .font(ScoreTypography.publicSans(400, 11.5))
                     .foregroundStyle(ScorePalette.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)

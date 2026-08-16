@@ -47,7 +47,7 @@ final class Subject {
     /// SwiftData kann Enums direkt ablegen; hier steht bewusst der Rohwert, damit
     /// das CloudKit-Feld ein schlichter String bleibt und ein späteres Umbenennen
     /// eines Falls den Sync nicht bricht.
-    @Attribute(.allowsCloudEncryption) var kindRawValue: String = SubjectKind.basisfach.rawValue
+    @Attribute(.allowsCloudEncryption) var kindRawValue: String = SubjectKind.wahlBasisfach.rawValue
 
     /// Ob der Nutzer das Fach selbst angelegt hat.
     ///
@@ -83,6 +83,62 @@ final class Subject {
     /// Halbjahre ein, das ist die Regel und keine Einstellung.
     @Attribute(.allowsCloudEncryption) var maximumContributedCourses: Int?
 
+    /// Ob dieses Fach eines der beiden **mündlichen Prüfungsfächer** ist.
+    ///
+    /// ## Warum ein Kennzeichen am Fach und kein eigenes Modell
+    ///
+    /// „Mündliches Prüfungsfach" ist keine Sache für sich, sondern eine
+    /// Eigenschaft genau eines Fachs — wie `kind` auch. Ein eigenes `@Model`
+    /// müsste über eine Beziehung auf `Subject` zeigen, und Beziehungen sind die
+    /// einzige Stelle, die CloudKit unverschlüsselt als `CKReference` spiegelt.
+    /// Zwei Geräte, die gleichzeitig wählen, könnten ausserdem zwei Datensätze für
+    /// dasselbe Fach anlegen; das Kennzeichen dagegen ist ein einzelnes Feld, das
+    /// CloudKit nach dem üblichen „letzter Schreiber gewinnt" auflöst. Ein Fach
+    /// weiss damit selbst, ob es geprüft wird, und niemand muss zwei Datensätze
+    /// zusammenhalten.
+    ///
+    /// Die drei **schriftlichen** Prüfungsfächer werden nicht extra gespeichert:
+    /// das sind in Baden-Württemberg immer die drei Leistungsfächer, und die
+    /// stehen schon in `kind`.
+    ///
+    /// Was daraus für die Rechnung folgt, steht in ``BlockOneCalculator``.
+    @Attribute(.allowsCloudEncryption) var isOralExamSubject: Bool = false
+
+    /// Ob dieses Leistungsfach **doppelt gewertet** wird.
+    ///
+    /// Zwei der drei Leistungsfächer zählen im Kursblock doppelt, und welche zwei,
+    /// entscheidet der Schüler. Score wählt von sich aus die günstigste
+    /// Kombination; setzt der Nutzer **genau zwei** dieser Kennzeichen, gilt seine
+    /// Wahl.
+    ///
+    /// Das Kennzeichen sitzt am Fach und nicht als Liste am Profil — aus demselben
+    /// Grund wie bei ``isOralExamSubject``: ein einzelnes Feld je Fach löst
+    /// CloudKit nach „letzter Schreiber gewinnt" auf, eine Liste an einer Stelle
+    /// müsste zwischen zwei Geräten zusammengeführt werden. Dass dabei
+    /// vorübergehend drei Fächer gesetzt sein können, ist eingeplant: der
+    /// Rechenkern behandelt jede Zahl ausser zwei als „keine Wahl getroffen".
+    @Attribute(.allowsCloudEncryption) var isDoubleWeighted: Bool = false
+
+    /// Das schriftliche Abiturprüfungsergebnis, 0 bis 15 Punkte.
+    ///
+    /// Nur bei Leistungsfächern belegt — in Baden-Württemberg sind sie die drei
+    /// schriftlichen Prüfungsfächer. `nil` heisst **noch nicht geprüft** und ist
+    /// etwas anderes als 0 Punkte: eine fehlende Prüfung zieht den Schnitt nicht
+    /// nach unten, sie macht das Ergebnis zu einer Hochrechnung.
+    @Attribute(.allowsCloudEncryption) var writtenExamPoints: Int?
+
+    /// Das mündliche Abiturprüfungsergebnis, 0 bis 15 Punkte.
+    ///
+    /// Zwei Fälle, ein Feld: bei einem mündlichen Prüfungsfach ist das *die*
+    /// Prüfung, bei einem Leistungsfach die **zusätzliche** mündliche Prüfung, die
+    /// zur schriftlichen hinzukommen kann. Welcher Fall gilt, steht schon in
+    /// ``kind`` und ``isOralExamSubject``; ein zweites Feld wäre die gleiche
+    /// Angabe doppelt.
+    ///
+    /// `nil` heisst noch nicht geprüft. Wie beides verrechnet wird, steht in
+    /// ``BlockTwoCalculator``.
+    @Attribute(.allowsCloudEncryption) var oralExamPoints: Int?
+
     /// Position in der Fächerliste.
     @Attribute(.allowsCloudEncryption) var sortIndex: Int = 0
 
@@ -100,6 +156,10 @@ final class Subject {
         writtenShare: Int = 50,
         activeSemesters: [Int] = [0, 1, 2, 3],
         maximumContributedCourses: Int? = nil,
+        isOralExamSubject: Bool = false,
+        isDoubleWeighted: Bool = false,
+        writtenExamPoints: Int? = nil,
+        oralExamPoints: Int? = nil,
         sortIndex: Int = 0
     ) {
         self.identifier = identifier
@@ -111,6 +171,10 @@ final class Subject {
         self.writtenShare = writtenShare
         self.activeSemesters = activeSemesters
         self.maximumContributedCourses = maximumContributedCourses
+        self.isOralExamSubject = isOralExamSubject
+        self.isDoubleWeighted = isDoubleWeighted
+        self.writtenExamPoints = writtenExamPoints
+        self.oralExamPoints = oralExamPoints
         self.sortIndex = sortIndex
         self.semesters = []
     }
@@ -120,10 +184,10 @@ final class Subject {
 
 extension Subject {
 
-    /// Der Fachtyp. Fällt auf Basisfach zurück, falls ein unbekannter Rohwert
+    /// Der Fachtyp. Fällt auf Wahl-Basisfach zurück, falls ein unbekannter Rohwert
     /// ankommt — etwa aus einer neueren App-Version auf einem anderen Gerät.
     var kind: SubjectKind {
-        get { SubjectKind(rawValue: kindRawValue) ?? .basisfach }
+        get { SubjectKind(rawValue: kindRawValue) ?? .wahlBasisfach }
         set { kindRawValue = newValue.rawValue }
     }
 
@@ -144,12 +208,32 @@ extension Subject {
 
     /// Die Kursgrenze, wie der Rechenkern sie sieht.
     ///
-    /// Leistungsfächer haben nie eine: sie bringen alle vier Halbjahre ein. Ein
+    /// Prüfungsfächer haben nie eine: sie bringen alle belegten Halbjahre ein. Ein
     /// gespeicherter Wert bleibt trotzdem stehen — wer ein Fach vorübergehend zum
-    /// Leistungsfach macht, findet seine Einstellung danach wieder vor.
+    /// Prüfungsfach macht, findet seine Einstellung danach wieder vor.
     var effectiveCourseLimit: Int? {
-        guard kind != .leistungsfach, let limit = maximumContributedCourses else { return nil }
+        guard !isExamSubject, let limit = maximumContributedCourses else { return nil }
         return max(1, limit)
+    }
+
+    /// Ob dieses Fach im Abitur geprüft wird — schriftlich oder mündlich.
+    ///
+    /// Schriftlich sind die drei Leistungsfächer, mündlich die beiden Fächer mit
+    /// gesetztem ``isOralExamSubject``. Die Kurse aller fünf sind
+    /// anrechnungspflichtig und lassen sich deshalb nicht klammern.
+    var isExamSubject: Bool {
+        kind == .leistungsfach || isOralExamSubject
+    }
+
+    /// Ob sich dieses Fach als mündliches Prüfungsfach wählen lässt.
+    ///
+    /// Die Leistungsfächer sind bereits die drei schriftlichen Prüfungsfächer;
+    /// ein viertes Mal geprüft wird in ihnen nicht. Alles andere steht offen —
+    /// die AGVO nennt die Basisfächer des Pflichtbereichs und einige Fächer des
+    /// Wahlbereichs, und welches Fach in welchen Bereich fällt, weiss Score nicht
+    /// zuverlässiger als der Nutzer selbst.
+    var canBeOralExamSubject: Bool {
+        kind != .leistungsfach
     }
 
     /// Ob das Fach im angegebenen Halbjahr belegt ist.

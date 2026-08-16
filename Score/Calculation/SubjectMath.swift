@@ -114,7 +114,14 @@ enum SubjectMath {
 
     // MARK: - Punkte und Noten
 
-    /// Rechnet Punkte in eine Note um.
+    /// Rechnet die Punkte **eines Kurses oder eines Fachs** in eine Schulnote um.
+    ///
+    /// > Wichtig: Nicht für den Abischnitt. Der kommt aus ``AbiturGradeTable`` und
+    /// > aus der Gesamtpunktzahl beider Blöcke, nicht aus einem Punkteschnitt.
+    /// > Diese Gerade hier beantwortet eine andere Frage — „welche Note steht
+    /// > hinter 11,4 Punkten in Mathematik" —, und dafür ist sie richtig.
+    /// > Score hat den Abischnitt früher ebenfalls so gerechnet; das war der
+    /// > Fehler, den die amtliche Tabelle jetzt behebt.
     ///
     /// Verwendet die lineare Umrechnung `Note = 17/3 − Punkte/3`. Sie trifft die
     /// amtliche Notentabelle über den ganzen mittleren Bereich exakt: 14 Punkte
@@ -170,11 +177,24 @@ struct SemesterInput: Sendable, Equatable {
     var writtenShare: Int
     var entries: [GradeInput]
 
-    init(index: Int, isActive: Bool = true, writtenShare: Int = 50, entries: [GradeInput]) {
+    /// Ob der Nutzer diesen Kurs von Hand geklammert hat.
+    ///
+    /// Bei Prüfungsfächern bleibt der Wert wirkungslos — siehe
+    /// ``SubjectInput/allowsBracketing`` und ``BlockOneCalculator``.
+    var isManuallyBracketed: Bool
+
+    init(
+        index: Int,
+        isActive: Bool = true,
+        writtenShare: Int = 50,
+        entries: [GradeInput],
+        isManuallyBracketed: Bool = false
+    ) {
         self.index = index
         self.isActive = isActive
         self.writtenShare = writtenShare
         self.entries = entries
+        self.isManuallyBracketed = isManuallyBracketed
     }
 }
 
@@ -190,26 +210,70 @@ struct SubjectInput: Sendable, Equatable, Identifiable {
     /// Wert bleibt bei ihnen wirkungslos. Siehe ``effectiveCourseLimit``.
     var maximumContributedCourses: Int?
 
+    /// Ob dieses Fach eines der beiden mündlichen Prüfungsfächer ist.
+    var isOralExamSubject: Bool
+
+    /// Ob der Nutzer dieses Leistungsfach zur Doppelwertung bestimmt hat.
+    ///
+    /// Nur bei Leistungsfächern von Bedeutung, und nur, wenn **genau zwei** von
+    /// ihnen gesetzt sind. Sonst wählt Score selbst — siehe
+    /// ``BlockOneCalculator/doubleWeightedSubjects(in:among:)``.
+    var isDoubleWeighted: Bool
+
+    /// Das schriftliche Abiturprüfungsergebnis, 0 bis 15.
+    ///
+    /// Nur bei Leistungsfächern: sie sind in Baden-Württemberg die drei
+    /// schriftlichen Prüfungsfächer. `nil` heisst „noch nicht geprüft".
+    var writtenExamPoints: Int?
+
+    /// Das mündliche Abiturprüfungsergebnis, 0 bis 15.
+    ///
+    /// Bei einem mündlichen Prüfungsfach ist das die Prüfung, bei einem
+    /// Leistungsfach die zusätzliche mündliche Prüfung zur schriftlichen. `nil`
+    /// heisst „noch nicht geprüft".
+    var oralExamPoints: Int?
+
     init(
         id: String,
         kind: SubjectKind,
         semesters: [SemesterInput],
-        maximumContributedCourses: Int? = nil
+        maximumContributedCourses: Int? = nil,
+        isOralExamSubject: Bool = false,
+        isDoubleWeighted: Bool = false,
+        writtenExamPoints: Int? = nil,
+        oralExamPoints: Int? = nil
     ) {
         self.id = id
         self.kind = kind
         self.semesters = semesters
         self.maximumContributedCourses = maximumContributedCourses
+        self.isOralExamSubject = isOralExamSubject
+        self.isDoubleWeighted = isDoubleWeighted
+        self.writtenExamPoints = writtenExamPoints
+        self.oralExamPoints = oralExamPoints
     }
 
     /// Die Grenze, die der Rechenkern anwendet.
     ///
-    /// Bei Leistungsfächern immer `nil` — dass sie alle vier Halbjahre einbringen,
-    /// ist die Regel und keine Einstellung. Unter 1 wird nicht gegangen: ein Fach,
-    /// das gar nichts einbringt, wäre besser abgewählt.
+    /// Bei Prüfungsfächern immer `nil` — dass sie alle belegten Halbjahre
+    /// einbringen, ist die Regel und keine Einstellung. Unter 1 wird nicht
+    /// gegangen: ein Fach, das gar nichts einbringt, wäre besser abgewählt.
     var effectiveCourseLimit: Int? {
-        guard kind != .leistungsfach, let limit = maximumContributedCourses else { return nil }
+        guard !isExamSubject, let limit = maximumContributedCourses else { return nil }
         return max(1, limit)
+    }
+
+    /// Ob dieses Fach im Abitur geprüft wird — schriftlich oder mündlich.
+    var isExamSubject: Bool {
+        kind == .leistungsfach || isOralExamSubject
+    }
+
+    /// Ob sich die Kurse dieses Fachs überhaupt klammern lassen.
+    ///
+    /// Prüfungsfächer sind anrechnungspflichtig: weder von Hand noch automatisch
+    /// fällt dort ein Kurs heraus. Die Begründung steht in ``BlockOneCalculator``.
+    var allowsBracketing: Bool {
+        !isExamSubject
     }
 }
 
@@ -232,7 +296,8 @@ extension SemesterInput {
             index: semester.index,
             isActive: isActive,
             writtenShare: writtenShare,
-            entries: (semester.entries ?? []).map(GradeInput.init)
+            entries: (semester.entries ?? []).map(GradeInput.init),
+            isManuallyBracketed: semester.isManuallyBracketed
         )
     }
 }
@@ -248,10 +313,15 @@ extension SubjectInput {
                     index: index,
                     isActive: subject.isActive(in: index),
                     writtenShare: subject.writtenShare,
-                    entries: (semester?.entries ?? []).map(GradeInput.init)
+                    entries: (semester?.entries ?? []).map(GradeInput.init),
+                    isManuallyBracketed: semester?.isManuallyBracketed ?? false
                 )
             },
-            maximumContributedCourses: subject.maximumContributedCourses
+            maximumContributedCourses: subject.maximumContributedCourses,
+            isOralExamSubject: subject.isOralExamSubject,
+            isDoubleWeighted: subject.isDoubleWeighted,
+            writtenExamPoints: subject.writtenExamPoints,
+            oralExamPoints: subject.oralExamPoints
         )
     }
 }

@@ -22,6 +22,11 @@ struct PadSubjectDetailView: View {
 
     @State private var editedEntry: GradeEntry?
 
+    /// Die zuletzt gelöschte Leistung, solange sie sich zurückholen lässt.
+    @State private var pendingUndo: GradeEntryUndo?
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
@@ -34,7 +39,14 @@ struct PadSubjectDetailView: View {
             .padding(.bottom, PadMetrics.contentPadding)
         }
         .scrollIndicators(.hidden)
-        .sheet(item: $editedEntry) { entry in
+        // Ein Tipp neben die Zeilen schliesst eine offene Zeile — wie in einer
+        // Systemliste.
+        .closesOpenSwipeRow()
+        .overlay(alignment: .bottom) {
+            undoOverlay
+        }
+        // Mittig und nicht von unten: siehe ``ScoreOverlaySheet``.
+        .scoreOverlaySheet(item: $editedEntry) { entry in
             GradeEntrySheet(entry: entry, subject: subject) {
                 delete(entry)
             }
@@ -51,7 +63,7 @@ struct PadSubjectDetailView: View {
                 result: nil,
                 average: nil,
                 isActive: subject.isActive(in: semesterIndex),
-                isExcluded: false
+                bracketReason: nil
             )
     }
 
@@ -87,6 +99,10 @@ struct PadSubjectDetailView: View {
                 title: subject.kind.editorLabel,
                 isHighlighted: subject.kind == .leistungsfach
             )
+
+            if subject.isOralExamSubject {
+                OralExamBadge()
+            }
 
             Text("Ø \(ScoreNumberFormat.points(summary.average)) Punkte")
                 .font(ScoreTypography.publicSans(400, 12))
@@ -271,7 +287,7 @@ struct PadSubjectDetailView: View {
                     isFirst: false
                 )
                 semesterRow(
-                    label: Text("Ergebnis · Note \(ScoreNumberFormat.grade(summary.result.map { SubjectMath.grade(fromPoints: Double($0)) }))"),
+                    label: Text("Kurs · Note \(ScoreNumberFormat.grade(summary.result.map { SubjectMath.grade(fromPoints: Double($0)) }))"),
                     value: ScoreNumberFormat.points(summary.result),
                     isFirst: false,
                     isResult: true
@@ -281,9 +297,26 @@ struct PadSubjectDetailView: View {
                     value: String(currentSemester?.entries?.count ?? 0),
                     isFirst: false
                 )
+
+                CourseBracketRow(
+                    isBracketed: bracketBinding,
+                    allowsBracketing: summary.allowsBracketing,
+                    bracketReason: summary.bracketReason,
+                    isActive: summary.isActive
+                )
+                .padding(.top, ScoreMetrics.Spacing.xs)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
+    }
+
+    /// Die Klammer des gerade gewählten Halbjahres — dieselbe Bindung wie auf
+    /// dem iPhone, siehe `SubjectDetailView`.
+    private var bracketBinding: Binding<Bool> {
+        Binding(
+            get: { currentSemester?.isManuallyBracketed ?? false },
+            set: { currentSemester?.isManuallyBracketed = $0 }
+        )
     }
 
     private func semesterRow(
@@ -320,8 +353,12 @@ struct PadSubjectDetailView: View {
 
     private var semesterStateText: LocalizedStringKey? {
         if !summary.isActive { return "nicht belegt" }
-        if summary.isExcluded { return "wird nicht gewertet" }
-        return nil
+        switch summary.bracketReason {
+        case .manual: return "von dir geklammert"
+        case .automatic: return "geklammert"
+        case .beyondSubjectLimit: return "über der Kursgrenze"
+        case .none: return nil
+        }
     }
 
     // MARK: - Verlauf
@@ -385,6 +422,19 @@ struct PadSubjectDetailView: View {
         }
     }
 
+    /// Ab so vielen Leistungen läuft eine Spalte zweizügig.
+    ///
+    /// Bis hierher steht eine Leistung pro Zeile, so wie die Vorlage es zeigt.
+    /// Darüber hinaus reicht die Höhe des iPads nicht mehr: bei zwölf Leistungen
+    /// waren fünf zu sehen und der Rest lag unterhalb des Bildschirms, während
+    /// jede Zeile fast 600 Punkt breit war für zwei kurze Zeilen Text. Die
+    /// Breite ist da — genommen wird sie erst, wenn die Höhe knapp wird.
+    private static let entriesPerColumnBeforeSplit = 4
+
+    /// Schmaler wird eine Leistung nicht: darunter drängen sich Titel,
+    /// Meta-Zeile und Punktzahl.
+    private static let minimumEntryWidth: CGFloat = 240
+
     private func entryColumn(
         title: LocalizedStringKey,
         kind: GradeKind,
@@ -393,19 +443,37 @@ struct PadSubjectDetailView: View {
     ) -> some View {
         let list = entries(kind)
         let shares = SubjectMath.effectiveShares(for: list.map(GradeInput.init))
+        let isSplit = list.count > Self.entriesPerColumnBeforeSplit
 
         return VStack(alignment: .leading, spacing: 9) {
             Text(title)
                 .font(.micro)
                 .foregroundStyle(ScorePalette.inkSecondary)
 
-            ForEach(Array(zip(list, shares)), id: \.0.persistentModelID) { entry, share in
-                Button {
-                    editedEntry = entry
-                } label: {
-                    entryRow(entry, share: share)
+            // `adaptive` und nicht zwei feste Spalten: im Hochformat, und erst
+            // recht mit ausgeklappter Sidebar, bleibt für zwei Züge kein Platz —
+            // dann fällt das Raster von selbst auf einen zurück, statt die
+            // Zeilen zu quetschen.
+            LazyVGrid(
+                columns: [
+                    isSplit
+                        ? GridItem(.adaptive(minimum: Self.minimumEntryWidth), spacing: 9)
+                        : GridItem(.flexible(), spacing: 9)
+                ],
+                alignment: .leading,
+                spacing: 9
+            ) {
+                ForEach(Array(zip(list, shares)), id: \.0.persistentModelID) { entry, share in
+                    // Wie auf dem iPhone: der Wisch löscht sofort, der Streifen
+                    // unten nimmt es zurück.
+                    SwipeToDelete(
+                        accessibilityLabel: Text("\(entry.title) löschen"),
+                        onDelete: { delete(entry) },
+                        onTap: { editedEntry = entry }
+                    ) {
+                        entryRow(entry, share: share)
+                    }
                 }
-                .buttonStyle(.plain)
             }
 
             DashedButton(
@@ -472,8 +540,46 @@ struct PadSubjectDetailView: View {
         }
     }
 
+    /// Löscht eine Leistung sofort und bietet sie zur Rücknahme an — derselbe
+    /// Weg wie auf dem iPhone, auch für die Schaltfläche im Eingabe-Sheet.
     private func delete(_ entry: GradeEntry) {
+        let snapshot = GradeEntryUndo(of: entry)
         modelContext.delete(entry)
         editedEntry = nil
+
+        withAnimation(ScoreMotion.resolve(ScoreMotion.sheetRise, reduceMotion: reduceMotion)) {
+            pendingUndo = snapshot
+        }
+    }
+
+    private func undoDeletion(_ snapshot: GradeEntryUndo) {
+        snapshot.restore(to: subject, in: modelContext)
+        dismissUndo()
+    }
+
+    private func dismissUndo() {
+        withAnimation(ScoreMotion.resolve(ScoreMotion.backdrop, reduceMotion: reduceMotion)) {
+            pendingUndo = nil
+        }
+    }
+
+    // MARK: - Rücknahme
+
+    @ViewBuilder
+    private var undoOverlay: some View {
+        if let pendingUndo {
+            UndoBanner(
+                message: "Leistung gelöscht",
+                action: { undoDeletion(pendingUndo) },
+                onExpire: { dismissUndo() }
+            )
+            .id(pendingUndo.id)
+            // Auf dem iPad gibt es keine schwebende Leiste, der Streifen sitzt
+            // deshalb am Rand des Inhalts — und rechtsbündig, weil links die
+            // Sidebar steht.
+            .frame(maxWidth: 360)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(PadMetrics.contentPadding)
+        }
     }
 }

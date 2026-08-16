@@ -14,12 +14,31 @@ struct SubjectListView: View {
 
     @Environment(\.modelContext) private var modelContext
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @Query(sort: \Subject.sortIndex) private var subjects: [Subject]
 
     @AppStorage(SubjectPreference.selectedSemesterKey)
     private var semesterIndex = SubjectPreference.defaultSemesterIndex
 
     @State private var editorTarget: SubjectEditorTarget?
+
+    /// Ob die Wahl der mündlichen Prüfungsfächer gerade offen steht.
+    ///
+    /// Sie hängt an der Fächerliste und nicht an den Einstellungen: sie ist eine
+    /// Aussage über die Fächer, und man trifft sie, während man sie vor sich hat.
+    @State private var isOralExamPickerPresented = false
+
+    /// Das Fach, dessen Löschung nach einem Wisch zur Bestätigung ansteht.
+    @State private var pendingDeletion: SubjectDeletion.Request?
+
+    /// Das geöffnete Fach.
+    ///
+    /// Die Zeile trägt keinen `NavigationLink` mehr, seit sie sich wischen
+    /// lässt: ein Knopf im Inhalt löste am Ende jedes Wisches zusätzlich aus,
+    /// weil der Finger die Zeile dabei nie verlässt. Die Navigation hängt
+    /// deshalb an diesem Zustand, gesetzt vom Tipp der Hülle.
+    @State private var openedSubject: Subject?
 
     private var summaries: [SubjectSummary] {
         SubjectOverview.summaries(of: subjects, semesterIndex: semesterIndex)
@@ -35,20 +54,136 @@ struct SubjectListView: View {
                     DashedButton(title: "＋ Eigenes Fach hinzufügen") {
                         editorTarget = .new
                     }
+                    oralExamEntry
                 }
                 .padding(.horizontal, ScoreMetrics.screenPadding)
                 .padding(.top, 6)
                 .padding(.bottom, ScoreMetrics.tabBarClearance)
             }
             .background(ScorePalette.background)
+            // Ein Tipp neben die Zeilen schliesst eine offene Zeile — wie in
+            // einer Systemliste.
+            .closesOpenSwipeRow()
             .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(for: Subject.self) { subject in
+            .navigationDestination(item: $openedSubject) { subject in
                 SubjectDetailView(subject: subject)
             }
         }
         .sheet(item: $editorTarget) { target in
             SubjectEditorView(target: target)
         }
+        .sheet(isPresented: $isOralExamPickerPresented) {
+            OralExamSubjectSheet()
+        }
+        .subjectDeleteConfirmation($pendingDeletion, among: subjects)
+    }
+
+    // MARK: - Mündliche Prüfungsfächer
+
+    /// Ob beide mündlichen Prüfungsfächer gewählt sind.
+    private var isOralExamChoiceComplete: Bool {
+        subjects.count(where: \.isOralExamSubject) >= OralExamSubjectSelection.requiredCount
+    }
+
+    /// Der Einstieg in die Wahl der mündlichen Prüfungsfächer — als Karte,
+    /// solange die Angabe fehlt, danach als ruhige Zeile.
+    ///
+    /// Die Karte ist eine Aufforderung. Sie hat nichts mehr zu sagen, sobald
+    /// beide Fächer stehen: Eine offene Aufgabe, die erledigt ist, wird zur
+    /// Tapete und man liest über sie hinweg. Ändern lässt sich die Wahl
+    /// weiterhin — nur eben über einen Zugang statt über eine Mahnung. Welche
+    /// Fächer es sind, steht ab da an den Fächern selbst, als Siegel in ihrer
+    /// Zeile.
+    @ViewBuilder
+    private var oralExamEntry: some View {
+        Group {
+            if isOralExamChoiceComplete {
+                oralExamLink
+            } else {
+                oralExamCard
+            }
+        }
+        .transition(reduceMotion
+            ? .opacity
+            : .opacity.combined(with: .offset(y: -ScoreMotion.rowOffset)))
+        .scoreAnimation(ScoreMotion.rowIn, value: isOralExamChoiceComplete)
+    }
+
+    /// Der ruhige Zugang, wenn die Wahl steht.
+    private var oralExamLink: some View {
+        Button {
+            isOralExamPickerPresented = true
+        } label: {
+            HStack(spacing: 7) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 11, weight: .semibold))
+
+                Text("Mündliche Prüfungsfächer ändern")
+                    .font(.meta)
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+            }
+            .foregroundStyle(ScorePalette.inkSecondary)
+            .padding(.horizontal, 4)
+            .frame(maxWidth: .infinity, minHeight: ScoreMetrics.minimumTapTarget, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Die Karte, solange die Angabe fehlt.
+    ///
+    /// Sie nennt den Stand, bevor man sie antippt — schon gewählte Fächer und
+    /// wie viele noch fehlen. Ein blosser Knopf müsste erst geöffnet werden, um
+    /// das zu sagen.
+    private var oralExamCard: some View {
+        Button {
+            isOralExamPickerPresented = true
+        } label: {
+            ScoreCard {
+                HStack(alignment: .top, spacing: ScoreMetrics.Spacing.sm) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Mündliche Prüfungsfächer")
+                            .font(.cardTitle)
+                            .foregroundStyle(ScorePalette.ink)
+
+                        oralExamNote
+                            .font(.meta)
+                            .lineSpacing(4.5)
+                            .foregroundStyle(ScorePalette.inkSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Spacer(minLength: 0)
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(ScorePalette.inkSecondary)
+                        .padding(.top, 3)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Der Stand auf der Karte. Sie steht nur, solange die Wahl offen ist —
+    /// entweder fehlt sie ganz, oder es fehlt noch eins von beiden.
+    private var oralExamNote: Text {
+        let chosen = subjects.filter(\.isOralExamSubject)
+        guard !chosen.isEmpty else {
+            return Text("Noch nicht gewählt. Ihre Halbjahre sind anrechnungspflichtig — ohne die Angabe rechnet Score zu gut.")
+        }
+        return Text(
+            AttributedString(chosen.map(\.name).joined(separator: " · "))
+                + AttributedString(" · ")
+                + AttributedString.scoreLocalized(
+                    "\(chosen.count) von \(OralExamSubjectSelection.requiredCount) gewählt"
+                )
+        )
     }
 
     // MARK: - Kopf
@@ -72,10 +207,16 @@ struct SubjectListView: View {
     private var subjectRows: some View {
         VStack(spacing: ScoreMetrics.Spacing.xs) {
             ForEach(Array(summaries.enumerated()), id: \.element.id) { index, summary in
-                NavigationLink(value: summary.subject) {
+                // Nach links wischen legt das Löschen frei. Der Dialog danach
+                // hängt an der Ansicht und nicht an der Zeile — sonst
+                // verschwände er mit der Zeile, die er gerade betrifft.
+                SwipeToDelete(
+                    accessibilityLabel: Text("\(summary.subject.name) löschen"),
+                    onDelete: { pendingDeletion = SubjectDeletion.request(for: summary.subject) },
+                    onTap: { openedSubject = summary.subject }
+                ) {
                     SubjectListRow(summary: summary)
                 }
-                .buttonStyle(.plain)
                 // Die Zeilen fahren nacheinander ein; antippbar sind sie dabei
                 // die ganze Zeit, die Einblendung ändert nur Deckkraft und Lage.
                 .rowAppearance(index: index, base: 0.06)
@@ -117,6 +258,12 @@ private struct SubjectListRow: View {
                         title: subject.kind.badge,
                         isHighlighted: subject.kind == .leistungsfach
                     )
+                    // Gedrängt: In der Zeile steht nur das Siegel. Seit der
+                    // Hinweis unten verschwindet, sobald die Wahl steht, ist die
+                    // Liste der einzige Ort, an dem man sie im Vorbeigehen sieht.
+                    if subject.isOralExamSubject {
+                        OralExamBadge(isCompact: true)
+                    }
                 }
                 metaText
                     .font(.meta)

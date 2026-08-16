@@ -40,6 +40,9 @@ final class CloudSyncStatus {
         /// Dieser Build darf CloudKit gar nicht benutzen — er ist nicht signiert.
         /// Kommt beim Nutzer nie vor, nur in Entwicklungs- und CI-Builds.
         case unavailable
+        /// Der Nutzer hat den Abgleich abgeschaltet, und der Speicher dieser
+        /// Sitzung ist tatsächlich ohne CloudKit gestartet.
+        case off
     }
 
     private(set) var state: State = .unknown
@@ -54,8 +57,21 @@ final class CloudSyncStatus {
     /// `nonisolated(unsafe)` zu umgehen.
     private var observation: NotificationObservation?
 
-    init(containerIdentifier: String = "iCloud.levo-studio.Score") {
+    /// Ob der Kontostatus überhaupt abgefragt wird.
+    ///
+    /// Nur für Vorschauen und Belegbilder auf `false`: Dort soll der
+    /// mitgegebene Zustand stehen bleiben und nicht von der Wirklichkeit des
+    /// Testrechners überschrieben werden.
+    private let probesAccount: Bool
+
+    init(
+        containerIdentifier: String = "iCloud.levo-studio.Score",
+        state: State = .unknown,
+        probesAccount: Bool = true
+    ) {
         self.containerIdentifier = containerIdentifier
+        self.state = state
+        self.probesAccount = probesAccount
         observeMirroringEvents()
     }
 
@@ -67,11 +83,22 @@ final class CloudSyncStatus {
     /// jederzeit ändern — jemand meldet sich ab, während die App läuft — deshalb
     /// wird er nicht einmalig gecacht.
     func refresh() async {
+        guard probesAccount else { return }
+
         // Ohne Entitlement ist schon der Aufruf tödlich: `CKContainer` trapt beim
         // Anlegen, statt einen Fehler zu werfen. Genau derselbe Grund wie beim
         // Datenspeicher — der Absturz muss vermieden, nicht behandelt werden.
         guard CloudKitAvailability.isEntitled else {
             state = .unavailable
+            return
+        }
+
+        // Der Zustand richtet sich danach, was der laufende Speicher **tut**,
+        // nicht danach, was in den Einstellungen steht. Wer den Schalter gerade
+        // umgelegt hat, sieht hier deshalb weiter den echten Zustand — dass er
+        // erst nach einem Neustart gilt, sagt der Hinweis am Schalter.
+        guard CloudSyncActivation.isActiveInThisSession else {
+            state = .off
             return
         }
 
@@ -173,7 +200,10 @@ final class CloudSyncStatus {
 /// Abmeldung an ihre eigene Lebensdauer: Wer sie hält, ist angemeldet, wer sie
 /// freigibt, ist es nicht mehr. Sie trägt keine Isolation, ihr `deinit` darf
 /// also von jedem Kontext aus laufen.
-private nonisolated final class NotificationObservation {
+///
+/// Nicht mehr auf diese Datei beschränkt: ``ManualCloudSync`` hört auf dieselben
+/// Ereignisse und braucht dieselbe Abmeldung.
+nonisolated final class NotificationObservation {
 
     private let token: any NSObjectProtocol
 
@@ -195,12 +225,13 @@ extension CloudSyncStatus.State {
         switch self {
         case .unknown: "Wird geprüft …"
         case .ready: "Bereit"
-        case .syncing: "Wird abgeglichen …"
+        case .syncing: "Wird synchronisiert …"
         case .synced: "Aktuell"
         case .noAccount: "Kein iCloud-Konto"
+        case .off: "Ausgeschaltet"
         case .unavailable: "In diesem Build nicht verfügbar"
         case .restricted: "iCloud eingeschränkt"
-        case .failed: "Abgleich gestört"
+        case .failed: "Synchronisierung gestört"
         }
     }
 
@@ -213,6 +244,8 @@ extension CloudSyncStatus.State {
         switch self {
         case .unknown, .ready, .syncing, .synced:
             nil
+        case .off:
+            Text("Die Synchronisierung ist abgeschaltet. Neue Noten bleiben auf diesem Gerät; was bereits in deiner iCloud liegt, bleibt dort unangetastet.")
         case .unavailable:
             Text("Dieser Build ist nicht signiert und kann iCloud nicht nutzen. Deine Daten bleiben auf diesem Gerät.")
         case .noAccount:
@@ -224,11 +257,32 @@ extension CloudSyncStatus.State {
         }
     }
 
+    /// Ob in dieser Sitzung überhaupt etwas abzugleichen ist.
+    ///
+    /// Entscheidet zweierlei: ob „Jetzt synchronisieren" bedienbar ist, und ob
+    /// „Zuletzt synchronisiert" einen Zeitpunkt zeigen darf. Ist der Abgleich aus
+    /// oder kein Konto angemeldet, wäre ein Datum dort eine Behauptung über
+    /// einen Stand, den gerade niemand hält.
+    ///
+    /// `unknown` zählt als möglich: Der Kontostatus ist dann bloss noch nicht
+    /// zurück, und eine Zeile vorsorglich abzublenden, die gleich wieder
+    /// aufwacht, wäre unruhiger als ein Versuch, der ehrlich scheitert.
+    /// Ein stehengebliebener Abgleich (`failed`) zählt ebenfalls als möglich:
+    /// Genau dann ist ein neuer Versuch das Naheliegendste.
+    var allowsSync: Bool {
+        switch self {
+        case .off, .unavailable, .noAccount, .restricted: false
+        case .unknown, .ready, .syncing, .synced, .failed: true
+        }
+    }
+
     /// Ob der Zustand Aufmerksamkeit braucht.
     var needsAttention: Bool {
         switch self {
         case .noAccount, .restricted, .failed, .unavailable: true
-        case .unknown, .ready, .syncing, .synced: false
+        // „Ausgeschaltet" ist kein Problem, sondern eine Entscheidung — sie
+        // rot zu markieren würde sie als Fehler ausgeben.
+        case .unknown, .ready, .syncing, .synced, .off: false
         }
     }
 }

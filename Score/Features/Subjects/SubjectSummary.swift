@@ -23,8 +23,24 @@ struct SubjectSummary: Identifiable {
     /// Ob das Fach in diesem Halbjahr belegt ist.
     let isActive: Bool
 
+    /// Warum dieser Kurs nicht in Block I einfliesst, oder `nil`, wenn er es tut.
+    ///
+    /// Die Fachansicht braucht den Grund und nicht nur das Ob: „von dir
+    /// geklammert" wird anders angezeigt als „automatisch geklammert", und der
+    /// Schalter zum Klammern muss wissen, in welchem Zustand er steht.
+    let bracketReason: BlockOneCalculator.BracketReason?
+
     /// Ob der Kurs erfasst ist, aber nicht in Block I einfliesst.
-    let isExcluded: Bool
+    var isExcluded: Bool { bracketReason != nil }
+
+    /// Ob der Nutzer diesen Kurs selbst geklammert hat.
+    var isManuallyBracketed: Bool { bracketReason == .manual }
+
+    /// Ob sich dieser Kurs überhaupt klammern lässt.
+    ///
+    /// Prüfungsfächer nicht — dort steht der Schalter gesperrt, mit dem Grund
+    /// daneben. Ihn wegzulassen wäre schlechter: dann fehlte die Erklärung.
+    var allowsBracketing: Bool { !subject.isExamSubject }
 
     var id: PersistentIdentifier { subject.persistentModelID }
 }
@@ -39,7 +55,7 @@ enum SubjectOverview {
     /// pro Fach liesse sie sich nicht bestimmen.
     static func summaries(of subjects: [Subject], semesterIndex: Int) -> [SubjectSummary] {
         let inputs = subjects.map(SubjectInput.init)
-        let excluded = BlockOneCalculator.calculate(for: inputs).excludedCourses
+        let reasons = BlockOneCalculator.calculate(for: inputs).bracketReasons
 
         return zip(subjects, inputs).map { subject, input in
             let semester = input.semesters.first { $0.index == semesterIndex }
@@ -54,7 +70,7 @@ enum SubjectOverview {
                 result: semester.flatMap(SubjectMath.result(for:)),
                 average: SubjectMath.subjectAverage(for: input.semesters),
                 isActive: subject.isActive(in: semesterIndex),
-                isExcluded: excluded.contains(courseIdentifier)
+                bracketReason: reasons[courseIdentifier]
             )
         }
     }
@@ -73,7 +89,7 @@ enum SubjectOverview {
                 result: nil,
                 average: nil,
                 isActive: subject.isActive(in: semesterIndex),
-                isExcluded: false
+                bracketReason: nil
             )
     }
 }

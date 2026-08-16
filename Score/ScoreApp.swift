@@ -12,6 +12,16 @@ struct ScoreApp: App {
     /// `UIApplication` hängt und SwiftUI dafür keine eigene Entsprechung hat.
     @UIApplicationDelegateAdaptor(ScoreAppDelegate.self) private var appDelegate
 
+    init() {
+        // Der Speicher muss **hier** entstehen und nicht erst, wenn die
+        // Wurzelansicht ihn liest: `ScoreDataStore` hält fest, ob diese Sitzung
+        // an CloudKit hängt, und genau das fragt `ScoreAppDelegate` in
+        // `didFinishLaunching` ab — also vor der ersten Ansicht. Wird der
+        // Speicher später gebaut, meldet die App sich nie bei den stillen
+        // Push-Nachrichten an, und der Abgleich läuft nur noch beim Kaltstart.
+        _ = ScoreDataStore.shared
+    }
+
     var body: some Scene {
         WindowGroup {
             ScoreRoot()
@@ -22,7 +32,7 @@ struct ScoreApp: App {
 /// Die Wurzel der Ansichten — hier hängt der Speicher an der App.
 ///
 /// Der Container kommt aus ``ScoreDataStore`` und nicht aus einem `let` der
-/// Szene, weil „Jetzt abgleichen" ihn austauscht: Nur so beginnt die
+/// Szene, weil „Jetzt synchronisieren" ihn austauscht: Nur so beginnt die
 /// CloudKit-Spiegelung einen neuen Durchlauf, ohne dass die App neu startet.
 /// `.modelContainer(_:)` sitzt deshalb an einer **Ansicht** statt an der Szene —
 /// eine Ansicht beobachtet den Speicher und baut sich mit dem neuen Container

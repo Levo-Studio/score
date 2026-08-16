@@ -117,8 +117,8 @@ struct BlockOneBreakdownTests {
         #expect(states == [
             .included(points: 10),
             .included(points: 10),
-            .excluded(points: 3),
-            .excluded(points: 3)
+            .bracketed(points: 3, reason: .automatic),
+            .bracketed(points: 3, reason: .automatic)
         ])
     }
 
@@ -170,8 +170,8 @@ struct BlockOneBreakdownTests {
         #expect(entry?.courses.map(\.state) == [
             .included(points: 10),
             .included(points: 10),
-            .beyondLimit(points: 3),
-            .beyondLimit(points: 3)
+            .bracketed(points: 3, reason: .beyondSubjectLimit),
+            .bracketed(points: 3, reason: .beyondSubjectLimit)
         ])
         #expect(entry?.courseLimit == 2)
     }
@@ -186,7 +186,7 @@ struct BlockOneBreakdownTests {
         #expect(isClose(limited.outcome.averagePoints, plain.outcome.averagePoints))
     }
 
-    @Test("Kurse über der Grenze treten nicht um die freien Plätze an")
+    @Test("Kurse über der Grenze stehen nicht mehr zur Klammerung an")
     func cappedCoursesAreNoCandidates() {
         let limited = Self.limitedBreakdown
 
@@ -197,26 +197,106 @@ struct BlockOneBreakdownTests {
         #expect(limited.groups[2].includedCount == 18)
     }
 
-    @Test("Was herausfällt, steht nach Fach und Grund gebündelt da")
+    @Test("Was geklammert ist, steht nach Fach und Grund gebündelt da")
     func droppedGroupsCarryTheReason() {
         let groups = Self.limitedBreakdown.droppedGroups
 
-        // Erst die eigene Entscheidung, dann die Verdrängten.
+        // Erst die eigene Entscheidung, dann was Score selbst geklammert hat.
         #expect(groups.map(\.subjectID) == ["bf-e", "bf-f"])
-        #expect(groups.map(\.reason) == [.beyondSubjectLimit, .outranked])
+        #expect(groups.map(\.reason) == [.beyondSubjectLimit, .automatic])
         #expect(groups[0].courses.map(\.semesterIndex) == [2, 3])
         #expect(groups[0].courseLimit == 2)
         #expect(groups[1].courses.count == 4)
         #expect(Self.limitedBreakdown.hasSubjectLimits)
     }
 
-    @Test("Ohne Grenze fällt alles aus demselben Grund heraus")
-    func withoutLimitsEveryDropIsAnOutranking() {
+    @Test("Ohne Grenze klammert alles Score selbst")
+    func withoutLimitsEveryDropIsAutomatic() {
         let groups = Self.breakdown.droppedGroups
 
         #expect(groups.map(\.subjectID) == ["bf-e", "bf-f"])
-        #expect(groups.allSatisfy { $0.reason == .outranked })
+        #expect(groups.allSatisfy { $0.reason == .automatic })
         #expect(!Self.breakdown.hasSubjectLimits)
+        #expect(!Self.breakdown.hasManualBrackets)
+    }
+
+    // MARK: - Die drei Klammer-Gründe nebeneinander
+
+    /// Derselbe Jahrgang, aber mit allen drei Gründen zugleich: `bf-e` bringt nur
+    /// seine besten zwei ein, in `bf-d` ist ein Halbjahr von Hand geklammert, und
+    /// `bf-f` klammert Score selbst weg.
+    static let mixedPresentations: [BlockOneBreakdown.SubjectPresentation] = presentations.map {
+        switch $0.input.id {
+        case "bf-e":
+            var input = $0.input
+            input.maximumContributedCourses = 2
+            return BlockOneBreakdown.SubjectPresentation(name: $0.name, color: $0.color, input: input)
+        case "bf-d":
+            return presentation(subject("bf-d", .basisfach, allPoints: 11, bracketed: [3]))
+        default:
+            return $0
+        }
+    }
+
+    private static var mixedBreakdown: BlockOneBreakdown {
+        BlockOneBreakdown(presentations: mixedPresentations)
+    }
+
+    @Test("Alle drei Klammer-Gründe stehen nebeneinander")
+    func allThreeReasonsAppear() {
+        let groups = Self.mixedBreakdown.droppedGroups
+
+        // Erst die Hand des Nutzers, dann seine Kursgrenze, dann Score selbst.
+        #expect(groups.map(\.reason) == [.manual, .beyondSubjectLimit, .automatic])
+        #expect(groups[0].subjectID == "bf-d")
+        #expect(groups[0].courses.map(\.semesterIndex) == [3])
+        #expect(Self.mixedBreakdown.hasManualBrackets)
+        #expect(Self.mixedBreakdown.hasSubjectLimits)
+    }
+
+    @Test("Ein von Hand geklammerter Kurs trägt seinen eigenen Zustand")
+    func manualBracketHasItsOwnState() {
+        let entry = Self.mixedBreakdown.optionalSubjects.first { $0.id == "bf-d" }
+
+        #expect(entry?.courses.last?.state == .bracketed(points: 11, reason: .manual))
+        // Er tritt auch nicht mehr im Schnitt an, mit dem das Fach dasteht:
+        // über ihn ist bereits entschieden.
+        #expect(isClose(entry?.competingAverage ?? 0, 11))
+        #expect(isClose(entry?.recordedAverage ?? 0, 11))
+    }
+
+    // MARK: - Mündliche Prüfungsfächer
+
+    /// Derselbe Jahrgang, aber `bf-f` mit seinen zwei Punkten ist mündliches
+    /// Prüfungsfach — und damit anrechnungspflichtig.
+    static let oralExamPresentations: [BlockOneBreakdown.SubjectPresentation] = presentations.map {
+        guard $0.input.id == "bf-f" else { return $0 }
+        return presentation(subject("bf-f", .basisfach, allPoints: 2, isOralExam: true))
+    }
+
+    private static var oralExamBreakdown: BlockOneBreakdown {
+        BlockOneBreakdown(presentations: oralExamPresentations)
+    }
+
+    @Test("Ein mündliches Prüfungsfach steht nicht bei den klammerbaren Fächern")
+    func oralExamSubjectsAreNotBracketable() {
+        let breakdown = Self.oralExamBreakdown
+
+        #expect(breakdown.oralExamSubjects.map(\.id) == ["bf-f"])
+        #expect(!breakdown.bracketableSubjects.map(\.id).contains("bf-f"))
+        // In der Gruppenbilanz zählt es weiter als Basisfach — das ist es ja.
+        #expect(breakdown.optionalSubjects.count == 6)
+        #expect(breakdown.bracketableSubjects.count == 5)
+    }
+
+    @Test("Die anrechnungspflichtigen Kurse verkleinern, was offen bleibt")
+    func oralExamSubjectsShrinkTheOpenCourses() {
+        let breakdown = Self.oralExamBreakdown
+
+        // 12 Leistungsfach-, 12 Kernfach- und 4 Prüfungsfach-Kurse sind 28
+        // anrechnungspflichtige; von den 42 bleiben 14 offen.
+        #expect(breakdown.optionalSlotCount == 14)
+        #expect(breakdown.oralExamSubjects.allSatisfy { $0.includedCount == 4 })
     }
 
     @Test("Ein begrenztes Fach tritt mit dem Schnitt seiner besten Kurse an")

@@ -51,7 +51,7 @@ struct PadSubjectDetailView: View {
                 result: nil,
                 average: nil,
                 isActive: subject.isActive(in: semesterIndex),
-                isExcluded: false
+                bracketReason: nil
             )
     }
 

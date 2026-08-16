@@ -19,7 +19,7 @@ final class DashboardViewModel {
         blockOnePoints: 0,
         averagePoints: 0,
         includedCourses: [],
-        excludedCourses: [],
+        bracketReasons: [:],
         recordedCount: 0
     )
 

@@ -42,14 +42,14 @@ struct BlockOneCalculatorTests {
         #expect(outcome.excludedCourses.count == 6)
     }
 
-    @Test("Die schwächsten Basisfach-Kurse fallen heraus")
+    @Test("Die schwächsten Basisfach-Kurse werden automatisch geklammert")
     func fullYearDropsWeakestOptionalCourses() {
         let outcome = BlockOneCalculator.calculate(for: Self.fullYear)
 
-        // 30 Plätze minus 12 Kernfach-Kurse lassen 18 für die Basisfächer.
-        // Nach Physik, Chemie, Geografie und Sport (16 Kurse) bleiben zwei
-        // Plätze, die an die beiden ersten Religions-Halbjahre gehen.
-        #expect(outcome.excludedCourses == [
+        // 42 Kurse minus 12 Leistungs- und 12 Kernfach-Kurse lassen 18 für die
+        // Basisfächer. Nach Physik, Chemie, Geografie und Sport (16 Kurse) sind
+        // noch zwei offen, die an die beiden ersten Religions-Halbjahre gehen.
+        #expect(outcome.automaticallyBracketedCourses == [
             course("bf-religion", 2),
             course("bf-religion", 3),
             course("bf-musik", 0),
@@ -179,9 +179,10 @@ struct BlockOneCalculatorTests {
 
     // MARK: - Stabilität
 
-    @Test("Bei Gleichstand an der Auswahlgrenze bleibt die Auswahl stabil")
+    @Test("Bei Gleichstand an der Klammergrenze bleibt die Auswahl stabil")
     func selectionIsStableOnTies() {
-        // 29 Kernfach-Kurse lassen genau einen freien Platz.
+        // 12 Leistungsfach- und 29 Kernfach-Kurse sind 41 nicht klammerbare —
+        // von den 42 bleibt genau einer offen.
         let mandatory = (1...7).map { subject("kf-\($0)", .kernfach, allPoints: 10) }
             + [subject("kf-8", .kernfach, points: [10])]
         let optional = [
@@ -189,7 +190,8 @@ struct BlockOneCalculatorTests {
             subject("bf-beta", .basisfach, points: [10])
         ]
 
-        let subjects = [subject("lf-1", .leistungsfach, allPoints: 12)] + mandatory + optional
+        let advanced = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
+        let subjects = advanced + mandatory + optional
 
         let first = BlockOneCalculator.calculate(for: subjects)
         let second = BlockOneCalculator.calculate(for: subjects)
@@ -383,5 +385,313 @@ struct BlockOneCalculatorTests {
         #expect(outcome.recordedCount == 2)
         #expect(outcome.includedCount == 2)
         #expect(isClose(outcome.averagePoints, 12))
+    }
+}
+
+// MARK: - Klammern von Hand
+
+/// Die Handklammerung: der Nutzer nimmt einen Kurs selbst heraus.
+///
+/// Sie steht über der automatischen Auswahl — ein von Hand geklammerter Kurs
+/// geht nie ein, auch nicht mit 15 Punkten. Die einzige Grenze sind die
+/// Prüfungsfächer, deren Kurse anrechnungspflichtig sind.
+@Suite("Klammern von Hand")
+struct ManualBracketTests {
+
+    /// Drei Leistungsfächer und zwei Basisfächer. Von 42 Kursen sind nur 20
+    /// erfasst — es muss also nichts automatisch geklammert werden, und was hier
+    /// herausfällt, fällt allein durch die Hand des Nutzers heraus.
+    private static func scenario(bracketed: Set<Int>) -> [SubjectInput] {
+        (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
+            + [
+                subject("bf-sport", .basisfach, points: [15, 4, 9, 7], bracketed: bracketed),
+                subject("bf-musik", .basisfach, allPoints: 8)
+            ]
+    }
+
+    @Test("Ein von Hand geklammerter Kurs geht nicht ein")
+    func manualBracketRemovesTheCourse() {
+        let outcome = BlockOneCalculator.calculate(for: Self.scenario(bracketed: [1]))
+
+        #expect(outcome.manuallyBracketedCourses == [course("bf-sport", 1)])
+        #expect(!outcome.includedCourses.contains(course("bf-sport", 1)))
+        #expect(outcome.recordedCount == 20)
+        #expect(outcome.includedCount == 19)
+
+        // 12 · 12 + 15 + 9 + 7 + 4 · 8 = 207 auf 19 Kurse
+        #expect(isClose(outcome.averagePoints, 207.0 / 19.0))
+    }
+
+    @Test("Auch der beste Kurs geht nicht ein, wenn er geklammert ist")
+    func manualBracketBeatsTheBestResult() {
+        let outcome = BlockOneCalculator.calculate(for: Self.scenario(bracketed: [0]))
+
+        // 15 Punkte, und trotzdem draussen: die Entscheidung des Nutzers steht
+        // über allem, was Score von sich aus täte.
+        #expect(outcome.manuallyBracketedCourses == [course("bf-sport", 0)])
+        #expect(outcome.includedCount == 19)
+        // 12 · 12 + 4 + 9 + 7 + 4 · 8 = 196 auf 19 Kurse
+        #expect(isClose(outcome.averagePoints, 196.0 / 19.0))
+    }
+
+    @Test("Ohne Klammer bleibt alles wie bisher")
+    func withoutBracketsNothingChanges() {
+        let outcome = BlockOneCalculator.calculate(for: Self.scenario(bracketed: []))
+
+        #expect(outcome.excludedCourses.isEmpty)
+        #expect(outcome.includedCount == 20)
+    }
+
+    @Test("Mehrere Klammern in einem Fach greifen alle")
+    func severalBracketsInOneSubject() {
+        let outcome = BlockOneCalculator.calculate(for: Self.scenario(bracketed: [1, 3]))
+
+        #expect(outcome.manuallyBracketedCourses == [
+            course("bf-sport", 1), course("bf-sport", 3)
+        ])
+        #expect(outcome.includedCount == 18)
+    }
+
+    @Test("Kurse der Leistungsfächer lassen sich nicht klammern")
+    func advancedCoursesCannotBeBracketed() {
+        let subjects = [
+            subject("lf-deutsch", .leistungsfach, points: [15, 3, 3, 3], bracketed: [1, 2, 3])
+        ]
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        // Die Klammern bleiben wirkungslos: alle vier Halbjahre gehen ein.
+        #expect(outcome.excludedCourses.isEmpty)
+        #expect(outcome.includedCount == 4)
+        #expect(isClose(outcome.averagePoints, 6))
+    }
+
+    @Test("Ein Kernfach lässt sich von Hand klammern")
+    func mandatoryCoursesCanBeBracketedByHand() {
+        // Score selbst klammert an Kernfächern nie — der Nutzer darf es
+        // trotzdem, wenn er weiss, dass sein Kurs anders belegt ist.
+        let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
+            + [subject("kf-geschichte", .kernfach, points: [3, 10, 10, 10], bracketed: [0])]
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        #expect(outcome.manuallyBracketedCourses == [course("kf-geschichte", 0)])
+        #expect(outcome.includedCount == 15)
+        // 12 · 12 + 3 · 10 = 174 auf 15 Kurse
+        #expect(isClose(outcome.averagePoints, 174.0 / 15.0))
+    }
+
+    @Test("Die Handklammerung greift vor der automatischen")
+    func manualBracketsComeFirst() {
+        // 12 Leistungsfach- und 28 Kernfach-Kurse lassen zwei der 42 offen.
+        let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
+            + (1...7).map { subject("kf-\($0)", .kernfach, allPoints: 10) }
+            + [
+                subject("bf-alpha", .basisfach, allPoints: 15, bracketed: [0, 1]),
+                subject("bf-beta", .basisfach, allPoints: 8)
+            ]
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        // Ohne Klammern nähme Alpha mit viermal 15 beide offenen Kurse. Zwei
+        // seiner Halbjahre sind aber geklammert, also gehen die beiden anderen
+        // ein — und Beta bleibt trotzdem draussen, dafür automatisch.
+        #expect(outcome.manuallyBracketedCourses == [
+            course("bf-alpha", 0), course("bf-alpha", 1)
+        ])
+        #expect(outcome.includedCourses.contains(course("bf-alpha", 2)))
+        #expect(outcome.includedCourses.contains(course("bf-alpha", 3)))
+        #expect(outcome.automaticallyBracketedCourses.count == 4)
+        #expect(outcome.includedCount == 42)
+        // 12 · 12 + 28 · 10 + 2 · 15 = 454 auf 42 Kurse
+        #expect(isClose(outcome.averagePoints, 454.0 / 42.0))
+    }
+
+    @Test("Jeder geklammerte Kurs trägt genau einen Grund")
+    func everyBracketCarriesExactlyOneReason() {
+        let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
+            + (1...7).map { subject("kf-\($0)", .kernfach, allPoints: 10) }
+            + [
+                subject("bf-alpha", .basisfach, allPoints: 14, limit: 1, bracketed: [0]),
+                subject("bf-beta", .basisfach, allPoints: 5)
+            ]
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        // Alle drei Gründe kommen vor, und jeder Kurs steht in genau einem.
+        #expect(!outcome.manuallyBracketedCourses.isEmpty)
+        #expect(!outcome.coursesBeyondSubjectLimit.isEmpty)
+        #expect(!outcome.automaticallyBracketedCourses.isEmpty)
+        #expect(
+            outcome.manuallyBracketedCourses.count
+                + outcome.coursesBeyondSubjectLimit.count
+                + outcome.automaticallyBracketedCourses.count
+                == outcome.excludedCourses.count
+        )
+        #expect(outcome.includedCount + outcome.excludedCourses.count == outcome.recordedCount)
+    }
+
+    @Test("Die Kursgrenze greift vor der Handklammerung")
+    func subjectLimitComesBeforeManualBrackets() {
+        // Sport steht auf 4, 15, 9 und 7 mit Grenze 2 — die besten zwei sind
+        // HJ 2 und HJ 3. HJ 2 ist zusätzlich von Hand geklammert.
+        let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
+            + [subject("bf-sport", .basisfach, points: [4, 15, 9, 7], limit: 2, bracketed: [1])]
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        #expect(outcome.coursesBeyondSubjectLimit == [
+            course("bf-sport", 0), course("bf-sport", 3)
+        ])
+        #expect(outcome.manuallyBracketedCourses == [course("bf-sport", 1)])
+        #expect(outcome.includedCourses.contains(course("bf-sport", 2)))
+        #expect(outcome.includedCount == 13)
+    }
+
+    @Test("Die Klammerung ist bei gleicher Eingabe immer dieselbe")
+    func bracketingIsDeterministic() {
+        let subjects = Self.scenario(bracketed: [1, 2])
+
+        #expect(
+            BlockOneCalculator.calculate(for: subjects)
+                == BlockOneCalculator.calculate(for: subjects)
+        )
+    }
+}
+
+// MARK: - Mündliche Prüfungsfächer
+
+/// Die beiden mündlichen Prüfungsfächer und was aus ihnen für Block I folgt.
+///
+/// Die Regel steht in `BlockOneCalculator`: „Unter den anzurechnenden Kursen
+/// müssen sein: […] die Kurse in den mündlichen Prüfungsfächern, soweit nicht
+/// bereits berücksichtigt." Ihre Halbjahre sind damit anrechnungspflichtig und
+/// lassen sich weder von Hand noch automatisch klammern.
+@Suite("Mündliche Prüfungsfächer")
+struct OralExamSubjectTests {
+
+    /// Ein voller Jahrgang mit einem schwachen Basisfach, das Score ohne die
+    /// Angabe wegklammern würde: Musik steht auf 4 Punkten.
+    private static func scenario(musicIsOralExam: Bool) -> [SubjectInput] {
+        [
+            subject("lf-deutsch", .leistungsfach, allPoints: 12),
+            subject("lf-mathematik", .leistungsfach, allPoints: 11),
+            subject("lf-biologie", .leistungsfach, allPoints: 13),
+
+            subject("kf-englisch", .kernfach, allPoints: 10),
+            subject("kf-geschichte", .kernfach, allPoints: 9),
+            subject("kf-gemeinschaftskunde", .kernfach, allPoints: 11),
+
+            subject("bf-physik", .basisfach, allPoints: 14),
+            subject("bf-chemie", .basisfach, allPoints: 13),
+            subject("bf-geografie", .basisfach, allPoints: 12),
+            subject("bf-sport", .basisfach, allPoints: 11),
+            subject("bf-religion", .basisfach, allPoints: 5),
+            subject("bf-musik", .basisfach, allPoints: 4, isOralExam: musicIsOralExam)
+        ]
+    }
+
+    @Test("Ein mündliches Prüfungsfach wird nicht automatisch geklammert")
+    func oralExamCoursesSurviveTheAutomaticBracketing() {
+        let outcome = BlockOneCalculator.calculate(for: Self.scenario(musicIsOralExam: true))
+
+        for index in 0..<4 {
+            #expect(outcome.includedCourses.contains(course("bf-musik", index)))
+        }
+        #expect(outcome.includedCount == 42)
+    }
+
+    @Test("Ohne die Angabe rechnet Score zu gut")
+    func withoutTheAnswerTheResultIsTooGood() {
+        let without = BlockOneCalculator.calculate(for: Self.scenario(musicIsOralExam: false))
+        let with = BlockOneCalculator.calculate(for: Self.scenario(musicIsOralExam: true))
+
+        // Ohne die Angabe fliegen alle vier Musik-Kurse mit 4 Punkten heraus und
+        // Religion rückt nach — der Schnitt sieht besser aus, als er ist. Genau
+        // das war der Fehler, den die Prüfungsfächer beheben.
+        #expect(without.averagePoints > with.averagePoints)
+
+        // Mit Angabe sind 28 Kurse anrechnungspflichtig — 12 Leistungsfach-, 12
+        // Kernfach- und die vier von Musik —, offen bleiben 14. Die gehen an
+        // Physik, Chemie, Geografie und zwei Halbjahre Sport:
+        // 144 + 120 + (56 + 52 + 48 + 22) + 16 = 458 auf 42 Kurse.
+        #expect(isClose(with.averagePoints, 458.0 / 42.0))
+        #expect(with.blockOnePoints == 458)
+
+        // Ohne Angabe bleiben 18 offen, Musik fliegt ganz heraus und Sport und
+        // Religion rücken nach: 144 + 120 + (56 + 52 + 48 + 44 + 10) = 474.
+        #expect(isClose(without.averagePoints, 474.0 / 42.0))
+        #expect(without.blockOnePoints == 474)
+    }
+
+    @Test("Ein mündliches Prüfungsfach lässt sich nicht von Hand klammern")
+    func oralExamCoursesCannotBeBracketedByHand() {
+        let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
+            + [
+                subject(
+                    "bf-musik",
+                    .basisfach,
+                    allPoints: 4,
+                    bracketed: [0, 1, 2, 3],
+                    isOralExam: true
+                )
+            ]
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        #expect(outcome.excludedCourses.isEmpty)
+        #expect(outcome.includedCount == 16)
+        // 12 · 12 + 4 · 4 = 160 auf 16 Kurse
+        #expect(isClose(outcome.averagePoints, 10))
+    }
+
+    @Test("Die Kursgrenze greift bei einem mündlichen Prüfungsfach nicht")
+    func oralExamSubjectsIgnoreTheCourseLimit() {
+        let subjects = [
+            subject("bf-musik", .basisfach, points: [15, 4, 4, 4], limit: 1, isOralExam: true)
+        ]
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        #expect(outcome.excludedCourses.isEmpty)
+        #expect(outcome.includedCount == 4)
+        #expect(isClose(outcome.averagePoints, 6.75))
+    }
+
+    @Test("Ein mündliches Prüfungsfach verdrängt ein besseres Basisfach")
+    func oralExamSubjectsTakeTheSpotFromBetterCourses() {
+        // 12 Leistungsfach- und 28 Kernfach-Kurse lassen zwei der 42 offen.
+        let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
+            + (1...7).map { subject("kf-\($0)", .kernfach, allPoints: 10) }
+            + [
+                subject("bf-musik", .basisfach, points: [4, 4], isOralExam: true),
+                subject("bf-physik", .basisfach, allPoints: 15)
+            ]
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        // Musik ist anrechnungspflichtig und geht mit beiden Kursen ein. Für
+        // Physik ist danach nichts mehr offen — trotz 15 Punkten.
+        #expect(outcome.includedCourses.contains(course("bf-musik", 0)))
+        #expect(outcome.includedCourses.contains(course("bf-musik", 1)))
+        #expect(outcome.automaticallyBracketedCourses.count == 4)
+        #expect(outcome.includedCount == 42)
+        // 12 · 12 + 28 · 10 + 2 · 4 = 432 auf 42 Kurse
+        #expect(isClose(outcome.averagePoints, 432.0 / 42.0))
+    }
+
+    @Test("Ein Kernfach als mündliches Prüfungsfach ändert nichts")
+    func mandatorySubjectsAreAlreadyCovered() {
+        // Punkt 3 der Regel sagt „soweit nicht bereits berücksichtigt" — ein
+        // Kernfach ist es schon.
+        let plain = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
+            + [subject("kf-deutsch", .kernfach, allPoints: 5)]
+        let flagged = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
+            + [subject("kf-deutsch", .kernfach, allPoints: 5, isOralExam: true)]
+
+        #expect(
+            BlockOneCalculator.calculate(for: plain).includedCourses
+                == BlockOneCalculator.calculate(for: flagged).includedCourses
+        )
     }
 }

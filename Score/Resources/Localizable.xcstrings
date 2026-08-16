@@ -1137,19 +1137,19 @@
         }
       }
     },
-    "Alle belegten Kurse zählen mit und lassen sich nicht klammern." : {
+    "Alle belegten Kurse zählen mit und lassen sich nicht klammern. Das Ergebnis trägst du in der Fachansicht ein." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alle belegten Kurse zählen mit und lassen sich nicht klammern."
+            "value" : "Alle belegten Kurse zählen mit und lassen sich nicht klammern. Das Ergebnis trägst du in der Fachansicht ein."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Every course you took counts and cannot be bracketed."
+            "value" : "Every course you took counts and cannot be bracketed. You enter the result in the subject itself."
           }
         }
       }
@@ -2230,6 +2230,23 @@
         }
       }
     },
+    "Das mündliche Ergebnis zählt vierfach." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das mündliche Ergebnis zählt vierfach."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The oral result counts fourfold."
+          }
+        }
+      }
+    },
     "Das mündliche Ergebnis zählt vierfach. Solange es fehlt, rechnet Score die Prüfung auf deinem heutigen Stand hoch." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2243,6 +2260,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The oral result counts fourfold. While it is missing, Score projects the exam from where you stand today."
+          }
+        }
+      }
+    },
+    "Das schriftliche Ergebnis zählt vierfach. Kommt eine mündliche Nachprüfung hinzu, zählen beide im Verhältnis 2 : 1." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das schriftliche Ergebnis zählt vierfach. Kommt eine mündliche Nachprüfung hinzu, zählen beide im Verhältnis 2 : 1."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The written result counts fourfold. If an additional oral exam is added, the two count in a ratio of 2 : 1."
           }
         }
       }
@@ -3973,23 +4007,6 @@
         }
       }
     },
-    "Kommt sie hinzu, zählen schriftlich und mündlich im Verhältnis 2 : 1." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kommt sie hinzu, zählen schriftlich und mündlich im Verhältnis 2 : 1."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "If it is added, written and oral count in a ratio of 2 : 1."
-          }
-        }
-      }
-    },
     "Konto wechseln" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4544,6 +4561,40 @@
         }
       }
     },
+    "Mit dem schriftlichen Ergebnis im Verhältnis 2 : 1" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit dem schriftlichen Ergebnis im Verhältnis 2 : 1"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With the written result in a ratio of 2 : 1"
+          }
+        }
+      }
+    },
+    "Mit der Nachprüfung im Verhältnis 2 : 1" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit der Nachprüfung im Verhältnis 2 : 1"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With the additional oral exam in a ratio of 2 : 1"
+          }
+        }
+      }
+    },
     "Mit einem belegten Halbjahr gibt es nichts auszuwählen." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4625,6 +4676,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oral assessments"
+          }
+        }
+      }
+    },
+    "Mündliche Nachprüfung" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mündliche Nachprüfung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Additional oral exam"
           }
         }
       }
@@ -4727,23 +4795,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Change oral exam subjects"
-          }
-        }
-      }
-    },
-    "Mündliches Ergebnis" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mündliches Ergebnis"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oral result"
           }
         }
       }
@@ -6783,23 +6834,6 @@
         }
       }
     },
-    "Zusätzliche mündliche Prüfung" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zusätzliche mündliche Prüfung"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Additional oral exam"
-          }
-        }
-      }
-    },
     "Zwei Profile" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6949,6 +6983,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Does not count: Score bracketed this course automatically because only %lld courses count."
+          }
+        }
+      }
+    },
+    "Zählt vierfach" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zählt vierfach"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Counts fourfold"
           }
         }
       }
@@ -7429,6 +7480,23 @@
         }
       }
     },
+    "＋ Mündliche Nachprüfung" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Mündliche Nachprüfung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Additional oral exam"
+          }
+        }
+      }
+    },
     "＋ Mündliche Note" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -7446,6 +7514,23 @@
         }
       }
     },
+    "＋ Mündliches Ergebnis" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Mündliches Ergebnis"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Oral result"
+          }
+        }
+      }
+    },
     "＋ Neues Fach" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -7459,6 +7544,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "＋ New subject"
+          }
+        }
+      }
+    },
+    "＋ Schriftliches Ergebnis" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Schriftliches Ergebnis"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "＋ Written result"
           }
         }
       }

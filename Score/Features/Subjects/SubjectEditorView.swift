@@ -230,7 +230,7 @@ struct SubjectEditorView: View {
             OralExamToggle(draft: $draft)
                 .padding(.top, ScoreMetrics.Spacing.xs)
 
-            ExamResultSection(draft: $draft)
+            DoubleWeightingToggle(draft: $draft)
                 .padding(.top, ScoreMetrics.Spacing.xs)
         }
     }
@@ -354,6 +354,11 @@ struct SubjectEditorView: View {
 /// Denselben Bildschirm gibt es auch als Ganzes unter „Mündliche Prüfungsfächer"
 /// in der Fächerliste. Beide schreiben in dasselbe Feld; hier steht die Angabe,
 /// weil man beim Bearbeiten eines Fachs ohnehin über sie stolpert.
+///
+/// Es ist ein Schalter und mehr nicht. Das **Ergebnis** der Prüfung gehört nicht
+/// hierher: Beim Anlegen eines Fachs legt man fest, was das Fach ist, und eine
+/// Prüfungsnote entsteht Monate später. Eingetragen wird sie in der Fachansicht,
+/// siehe ``ExamResultSection``.
 struct OralExamToggle: View {
 
     @Binding var draft: SubjectDraft
@@ -382,10 +387,57 @@ struct OralExamToggle: View {
         }
     }
 
+    /// Was der Schalter bedeutet — und wo das Ergebnis hingehört, sobald geprüft
+    /// wurde. Der Satz steht hier, weil sonst niemand danach suchte; eingetragen
+    /// wird trotzdem dort und nicht hier.
     private var note: Text {
         draft.isOralExamSubject
-            ? Text("Alle belegten Kurse zählen mit und lassen sich nicht klammern.")
+            ? Text("Alle belegten Kurse zählen mit und lassen sich nicht klammern. Das Ergebnis trägst du in der Fachansicht ein.")
             : Text("Du wirst in zwei Fächern mündlich geprüft. Ihre Halbjahre sind anrechnungspflichtig.")
+    }
+}
+
+// MARK: - Doppelwertung
+
+/// Der Schalter, mit dem ein Leistungsfach doppelt gewertet wird.
+///
+/// Er stand bisher beim Prüfungsergebnis, weil beides dieselbe Frage
+/// weiterführte — was dieses Leistungsfach für das Abitur bedeutet. Das Ergebnis
+/// ist inzwischen in die Fachansicht gezogen; die Doppelwertung bleibt hier, denn
+/// sie ist keine Note, sondern eine Eigenschaft des Fachs, die von Anfang an
+/// feststeht.
+struct DoubleWeightingToggle: View {
+
+    @Binding var draft: SubjectDraft
+
+    var body: some View {
+        if draft.allowsDoubleWeighting {
+            HStack(alignment: .top, spacing: ScoreMetrics.Spacing.sm) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Doppelt gewertet")
+                        .font(.rowTitle)
+                        .foregroundStyle(ScorePalette.ink)
+
+                    note
+                        .font(.meta)
+                        .lineSpacing(4)
+                        .foregroundStyle(ScorePalette.inkSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 0)
+
+                ScoreSwitch(isOn: $draft.isDoubleWeighted)
+            }
+            .scoreAnimation(ScoreMotion.toggle, value: draft.isDoubleWeighted)
+            .accessibilityElement(children: .combine)
+        }
+    }
+
+    private var note: Text {
+        draft.isDoubleWeighted
+            ? Text("Alle vier Kurse dieses Fachs zählen zweimal. Setz genau zwei Leistungsfächer, sonst wählt Score die günstigste Kombination selbst.")
+            : Text("Zwei deiner drei Leistungsfächer zählen doppelt. Ohne eigene Wahl nimmt Score die Kombination, die am besten ausfällt.")
     }
 }
 

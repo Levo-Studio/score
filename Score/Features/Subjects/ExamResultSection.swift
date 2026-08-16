@@ -1,217 +1,359 @@
 import SwiftUI
+import SwiftData
 
-/// Die Eingabe der Abiturprüfungsergebnisse im Fach-Editor.
+/// Welches der beiden Prüfungsergebnisse gerade eingetragen wird.
+enum ExamResultSlot: String, Identifiable, Hashable {
+    case written
+    case oral
+
+    var id: String { rawValue }
+}
+
+/// Die Abiturprüfung eines Fachs — in der Fachansicht, unterhalb der Halbjahre.
 ///
-/// Der Abschnitt erscheint nur bei den fünf Prüfungsfächern — in einem Fach, in
-/// dem nicht geprüft wird, gäbe es nichts einzutragen, und ein leeres Feld dort
-/// wäre eine Frage ohne Antwort.
+/// ## Warum hier und nicht im Editor
 ///
-/// Was er zeigt, hängt an der Rolle des Fachs:
+/// Im Editor legt man fest, **was ein Fach ist**: Name, Farbe, Typ, belegte
+/// Halbjahre, und ob darin mündlich geprüft wird. Ein Prüfungsergebnis ist
+/// nichts davon — es entsteht Monate später und ist eine Leistung wie jede
+/// andere. Deshalb steht es dort, wo auch die Klassenarbeiten und die mündlichen
+/// Noten eingetragen werden, und in derselben Form: eine Zeile je Ergebnis, ein
+/// gestrichelter Knopf für das, was noch fehlt, und dahinter dasselbe
+/// Punkte-Pad.
 ///
-/// - **Leistungsfach** — ein Feld für die schriftliche Prüfung. Dazu ein
-///   Schalter für die **zusätzliche mündliche Prüfung**: kommt sie hinzu, zählen
-///   schriftlich und mündlich im Verhältnis 2 : 1. Ausserdem steht hier die
-///   Doppelwertung, weil sie dieselbe Frage weiterführt — was dieses
-///   Leistungsfach für das Abitur bedeutet.
-/// - **Mündliches Prüfungsfach** — ein Feld für das mündliche Ergebnis.
+/// Der Abschnitt gehört unter die Halbjahre und in keines hinein: eine
+/// Abiturprüfung hängt am Fach als Ganzem, nicht an 1/4 oder 4/4.
 ///
-/// Leer heisst **noch nicht geprüft** und nicht null Punkte. Deshalb ist die
-/// Bindung `Int?` und nicht `Int`, und deshalb steht unter jedem Feld, was gerade
-/// gilt, statt eine 0 anzuzeigen, die eine Aussage wäre.
+/// ## Was er zeigt
+///
+/// - **Leistungsfach** — das schriftliche Ergebnis. Steht es, kommt die
+///   Möglichkeit einer mündlichen Nachprüfung hinzu; dann gilt
+///   (schriftlich × 2 + mündlich) ÷ 3.
+/// - **Mündliches Prüfungsfach** — das mündliche Ergebnis.
+/// - **Alle anderen Fächer** — nichts. Wo nicht geprüft wird, gäbe es nichts
+///   einzutragen, und ein leeres Feld wäre eine Frage ohne Antwort.
+///
+/// Leer heisst **noch nicht geprüft** und nicht null Punkte. Deshalb steht
+/// dort, wo noch nichts ist, ein gestrichelter Knopf und keine 0 — und deshalb
+/// nennt der Hinweis darunter die Gesamtzahl weiterhin eine Hochrechnung.
 struct ExamResultSection: View {
 
-    @Binding var draft: SubjectDraft
+    let subject: Subject
+
+    /// Das Ergebnis, dessen Blatt gerade offen ist.
+    @State private var editedSlot: ExamResultSlot?
 
     var body: some View {
-        if draft.hasWrittenExam || draft.resolvedOralExamSubject {
-            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
+        if ExamResultCopy.hasWrittenExam(subject) || ExamResultCopy.hasOralExam(subject) {
+            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
                 Text("Abiturprüfung")
-                    .font(.meta)
+                    .font(.micro)
                     .foregroundStyle(ScorePalette.inkSecondary)
 
-                if draft.hasWrittenExam {
-                    ExamPointsField(
-                        title: Text("Schriftliche Prüfung"),
-                        points: $draft.writtenExamPoints
-                    )
-
-                    additionalOralToggle
-
-                    if draft.oralExamPoints != nil {
-                        // Die Beschriftung wiederholt nicht den Schalter darüber:
-                        // dort steht, *ob* es sie gab, hier *wie sie ausging*.
-                        ExamPointsField(
-                            title: Text("Mündliches Ergebnis"),
-                            points: $draft.oralExamPoints
-                        )
+                if ExamResultCopy.hasWrittenExam(subject) {
+                    slot(.written, index: 0)
+                    // Die Nachprüfung ist der Sonderfall und steht deshalb erst
+                    // da, wenn die Prüfung selbst geschrieben ist — oder wenn
+                    // bereits ein Ergebnis eingetragen wurde.
+                    if subject.writtenExamPoints != nil || subject.oralExamPoints != nil {
+                        slot(.oral, index: 1)
                     }
                 } else {
-                    ExamPointsField(
-                        title: Text("Mündliche Prüfung"),
-                        points: $draft.oralExamPoints
-                    )
+                    slot(.oral, index: 0)
                 }
 
-                note
-                    .font(.meta)
+                ExamResultCopy.note(for: subject)
+                    .font(.optionMeta)
                     .lineSpacing(5.5)
                     .foregroundStyle(ScorePalette.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
-
-                if draft.allowsDoubleWeighting {
-                    doubleWeightingToggle
-                        .padding(.top, ScoreMetrics.Spacing.xs)
-                }
+                    .padding(.top, ScoreMetrics.Spacing.xxs)
+                    .padding(.horizontal, ScoreMetrics.Spacing.xxs)
+            }
+            .scoreAnimation(ScoreMotion.rowIn, value: subject.writtenExamPoints)
+            .scoreAnimation(ScoreMotion.rowIn, value: subject.oralExamPoints)
+            .scoreOverlaySheet(item: $editedSlot) { slot in
+                ExamResultSheet(subject: subject, slot: slot)
             }
         }
     }
 
-    // MARK: - Zusätzliche mündliche Prüfung
+    // MARK: - Eine Zeile, oder der gestrichelte Knopf
 
-    /// Der Schalter, der den Sonderfall aufmacht.
+    /// Ein Ergebnis: eingetragen als Zeile, offen als gestrichelter Knopf.
     ///
-    /// Er hängt am Vorhandensein des Werts und nicht an einem eigenen Merker: Ein
-    /// Schalter, der „ja" sagt, während das Feld leer bleibt, wäre ein dritter
-    /// Zustand, den die Rechnung nicht kennt. Ausschalten löscht das Ergebnis —
-    /// das ist die ehrliche Bedeutung von „es gab keine mündliche Prüfung".
-    private var additionalOralToggle: some View {
-        HStack(alignment: .top, spacing: ScoreMetrics.Spacing.sm) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Zusätzliche mündliche Prüfung")
+    /// Genau der Aufbau der Leistungen darüber — Zeile antippen zum Ändern,
+    /// wischen zum Löschen, gestrichelter Knopf zum Anlegen.
+    @ViewBuilder
+    private func slot(_ slot: ExamResultSlot, index: Int) -> some View {
+        if let points = points(of: slot) {
+            // Ohne Rückfrage, wie bei einer Leistung: das Ergebnis ist mit einem
+            // Tipp wieder eingetragen.
+            SwipeToDelete(
+                accessibilityLabel: Text("\(ExamResultCopy.plainTitle(of: slot, in: subject)) löschen"),
+                onDelete: { setPoints(nil, of: slot) },
+                onTap: { editedSlot = slot }
+            ) {
+                row(slot, points: points)
+            }
+            .rowAppearance(index: index, base: 0.1)
+        } else {
+            DashedButton(
+                title: ExamResultCopy.addTitle(of: slot, in: subject),
+                cornerRadius: ScoreMetrics.Radius.group,
+                verticalPadding: 12,
+                font: .chipLabel
+            ) {
+                editedSlot = slot
+            }
+        }
+    }
+
+    private func row(_ slot: ExamResultSlot, points: Int) -> some View {
+        HStack(spacing: ScoreMetrics.Spacing.sm) {
+            VStack(alignment: .leading, spacing: 3) {
+                ExamResultCopy.title(of: slot, in: subject)
                     .font(.rowTitle)
                     .foregroundStyle(ScorePalette.ink)
-
-                Text("Kommt sie hinzu, zählen schriftlich und mündlich im Verhältnis 2 : 1.")
+                    .lineLimit(1)
+                ExamResultCopy.meta(of: slot, in: subject)
                     .font(.meta)
-                    .lineSpacing(4)
                     .foregroundStyle(ScorePalette.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(1)
             }
-
-            Spacer(minLength: 0)
-
-            ScoreSwitch(
-                isOn: Binding(
-                    get: { draft.oralExamPoints != nil },
-                    set: { draft.oralExamPoints = $0 ? 0 : nil }
-                )
-            )
+            Spacer(minLength: ScoreMetrics.Spacing.xs)
+            Text(verbatim: "\(points)")
+                .font(.rowValue)
+                .monospacedDigit()
+                .tracking(em: -0.03, at: 20)
+                .foregroundStyle(ScorePalette.ink)
+                .animatedValue(points)
         }
-        .scoreAnimation(ScoreMotion.toggle, value: draft.oralExamPoints != nil)
-        .accessibilityElement(children: .combine)
+        .padding(.horizontal, 15)
+        .padding(.vertical, 13)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(ScorePalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous)
+                .strokeBorder(ScorePalette.line, lineWidth: 1)
+        )
+        .contentShape(Rectangle())
     }
 
-    // MARK: - Doppelwertung
+    // MARK: - Lesen und Schreiben
 
-    private var doubleWeightingToggle: some View {
-        HStack(alignment: .top, spacing: ScoreMetrics.Spacing.sm) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Doppelt gewertet")
-                    .font(.rowTitle)
-                    .foregroundStyle(ScorePalette.ink)
-
-                doubleWeightingNote
-                    .font(.meta)
-                    .lineSpacing(4)
-                    .foregroundStyle(ScorePalette.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Spacer(minLength: 0)
-
-            ScoreSwitch(isOn: $draft.isDoubleWeighted)
+    private func points(of slot: ExamResultSlot) -> Int? {
+        switch slot {
+        case .written: subject.writtenExamPoints
+        case .oral: subject.oralExamPoints
         }
-        .scoreAnimation(ScoreMotion.toggle, value: draft.isDoubleWeighted)
-        .accessibilityElement(children: .combine)
     }
 
-    private var doubleWeightingNote: Text {
-        draft.isDoubleWeighted
-            ? Text("Alle vier Kurse dieses Fachs zählen zweimal. Setz genau zwei Leistungsfächer, sonst wählt Score die günstigste Kombination selbst.")
-            : Text("Zwei deiner drei Leistungsfächer zählen doppelt. Ohne eigene Wahl nimmt Score die Kombination, die am besten ausfällt.")
-    }
-
-    // MARK: - Hinweis
-
-    private var note: Text {
-        if draft.hasWrittenExam {
-            return draft.oralExamPoints == nil
-                ? Text("Das schriftliche Ergebnis zählt vierfach. Solange es fehlt, rechnet Score die Prüfung auf deinem heutigen Stand hoch.")
-                : Text("Aus schriftlich und mündlich wird ein Ergebnis, und das zählt vierfach.")
+    /// Schreibt direkt ins Modell, ohne Entwurf und ohne Sicherungsknopf — wie
+    /// die Klammer und wie das Eingabe-Blatt einer Leistung. Der Score bewegt
+    /// sich damit unter der Hand mit.
+    private func setPoints(_ value: Int?, of slot: ExamResultSlot) {
+        switch slot {
+        case .written: subject.writtenExamPoints = value.map(GradeEntry.clamp)
+        case .oral: subject.oralExamPoints = value.map(GradeEntry.clamp)
         }
-        return Text("Das mündliche Ergebnis zählt vierfach. Solange es fehlt, rechnet Score die Prüfung auf deinem heutigen Stand hoch.")
     }
 }
 
-// MARK: - Ein Punktefeld
+// MARK: - Das Eingabe-Blatt
 
-/// Ein Feld für eine Prüfungspunktzahl, 0 bis 15.
+/// Das Blatt, das ein Prüfungsergebnis aufnimmt.
 ///
-/// Dieselbe Spanne wie überall in der App. Leer ist ein eigener Zustand und
-/// nicht 0: `nil` heisst „noch nicht geprüft" und geht nirgends in die Rechnung
-/// ein.
-struct ExamPointsField: View {
+/// Derselbe Aufbau wie ``GradeEntrySheet``: Kopfzeile mit „Fertig", darunter das
+/// Punkte-Pad, darunter der Hinweis und das Löschen. Kein Titelfeld — wie die
+/// Prüfung heisst, steht fest.
+struct ExamResultSheet: View {
 
-    let title: Text
-    @Binding var points: Int?
+    let subject: Subject
+    let slot: ExamResultSlot
 
-    /// Die höchste erreichbare Punktzahl. Steht hier und nicht als Zahl im Text,
-    /// damit Feld und Beschriftung nicht auseinanderlaufen können.
-    private let maximum = GradeEntry.pointsRange.upperBound
+    @Environment(\.dismiss) private var dismiss
+
+    private var points: Int? {
+        switch slot {
+        case .written: subject.writtenExamPoints
+        case .oral: subject.oralExamPoints
+        }
+    }
 
     var body: some View {
-        HStack(alignment: .center, spacing: ScoreMetrics.Spacing.sm) {
-            title
-                .font(.rowTitle)
-                .foregroundStyle(ScorePalette.ink)
-                .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 0) {
+            titleRow
+                .sheetContentAppearance(index: 0)
+            PointsPad(selection: points) { setPoints($0) }
+                .padding(.top, 14)
+                .sheetContentAppearance(index: 1)
+            footer
+                .sheetContentAppearance(index: 2)
+        }
+        // Dieselben Masse wie beim Eingabe-Blatt einer Leistung.
+        .padding(.horizontal, 24)
+        .padding(.top, 22)
+        .padding(.bottom, 24)
+    }
+
+    private var titleRow: some View {
+        HStack(alignment: .firstTextBaseline, spacing: ScoreMetrics.Spacing.sm) {
+            VStack(alignment: .leading, spacing: 3) {
+                ExamResultCopy.title(of: slot, in: subject)
+                    .font(ScoreTypography.publicSans(600, 16))
+                    .foregroundStyle(ScorePalette.ink)
+                Text(verbatim: subject.name)
+                    .font(.meta)
+                    .foregroundStyle(ScorePalette.inkSecondary)
+            }
 
             Spacer(minLength: ScoreMetrics.Spacing.xs)
 
-            HStack(spacing: 2) {
-                stepper(-1)
-
-                Text(verbatim: ScoreNumberFormat.points(points))
-                    .font(.statValue)
-                    .monospacedDigit()
-                    .foregroundStyle(points == nil ? ScorePalette.inkSecondary : ScorePalette.ink)
-                    .frame(minWidth: 34)
-                    .animatedValue(Double(points ?? -1))
-
-                stepper(1)
-            }
-            .padding(.horizontal, 6)
-            .padding(.vertical, 4)
-            .background(ScorePalette.fill)
-            .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.chip, style: .continuous))
+            Button("Fertig") { dismiss() }
+                .font(.chipLabel)
+                .foregroundStyle(ScorePalette.accent)
         }
-        .frame(minHeight: ScoreMetrics.minimumTapTarget)
-        .accessibilityElement(children: .combine)
     }
 
-    /// Ein Schritt auf oder ab. Aus dem leeren Zustand heraus beginnt beides bei
-    /// 0 — es gibt keinen Wert, von dem aus man abwärts gehen könnte.
-    private func stepper(_ step: Int) -> some View {
-        Button {
-            points = GradeEntry.clamp((points ?? 0) + (points == nil ? 0 : step))
-        } label: {
-            Image(systemName: step > 0 ? "plus" : "minus")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(ScorePalette.accent)
-                .frame(width: 34, height: 34)
-                .contentShape(Rectangle())
+    private var footer: some View {
+        HStack(alignment: .firstTextBaseline, spacing: ScoreMetrics.Spacing.sm) {
+            ExamResultCopy.note(for: subject)
+                .font(.meta)
+                .lineSpacing(4)
+                .foregroundStyle(ScorePalette.inkSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 250, alignment: .leading)
+
+            Spacer(minLength: ScoreMetrics.Spacing.xs)
+
+            if points != nil {
+                Button(role: .destructive) {
+                    setPoints(nil)
+                    dismiss()
+                } label: {
+                    Text("Löschen")
+                        .font(.chipLabel)
+                        .foregroundStyle(ScorePalette.warn)
+                        .frame(minHeight: ScoreMetrics.minimumTapTarget)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
         }
-        .buttonStyle(.plain)
-        .disabled(step > 0 ? points == maximum : points == 0)
+        .padding(.top, 14)
+    }
+
+    private func setPoints(_ value: Int?) {
+        switch slot {
+        case .written: subject.writtenExamPoints = value.map(GradeEntry.clamp)
+        case .oral: subject.oralExamPoints = value.map(GradeEntry.clamp)
+        }
+    }
+}
+
+// MARK: - Die Texte
+
+/// Die Beschriftungen und Hinweise der Abiturprüfung.
+///
+/// Sie stehen einmal und werden von Abschnitt und Blatt gemeinsam benutzt — so
+/// kann der Hinweis im Blatt nicht etwas anderes sagen als der darunter in der
+/// Fachansicht.
+enum ExamResultCopy {
+
+    /// Ob in diesem Fach schriftlich geprüft wird — die drei Leistungsfächer.
+    static func hasWrittenExam(_ subject: Subject) -> Bool {
+        subject.kind == .leistungsfach
+    }
+
+    /// Ob dieses Fach eines der beiden mündlichen Prüfungsfächer ist.
+    ///
+    /// Bei einem Leistungsfach nie: dort ist das Mündliche eine Nachprüfung zur
+    /// schriftlichen und keine eigene Prüfung.
+    static func hasOralExam(_ subject: Subject) -> Bool {
+        subject.kind != .leistungsfach && subject.isOralExamSubject
+    }
+
+    static func title(of slot: ExamResultSlot, in subject: Subject) -> Text {
+        switch slot {
+        case .written: Text("Schriftliche Prüfung")
+        case .oral: hasWrittenExam(subject)
+            ? Text("Mündliche Nachprüfung")
+            : Text("Mündliche Prüfung")
+        }
+    }
+
+    /// Dieselbe Beschriftung als Zeichenkette — für die Sprachausgabe der
+    /// Löschfläche, die einen Namen und keinen `Text` einsetzt.
+    @MainActor
+    static func plainTitle(of slot: ExamResultSlot, in subject: Subject) -> String {
+        switch slot {
+        case .written: String.scoreLocalized("Schriftliche Prüfung")
+        case .oral: hasWrittenExam(subject)
+            ? String.scoreLocalized("Mündliche Nachprüfung")
+            : String.scoreLocalized("Mündliche Prüfung")
+        }
+    }
+
+    /// Die Zeile unter dem Titel: was dieses Ergebnis für das Abitur bedeutet.
+    static func meta(of slot: ExamResultSlot, in subject: Subject) -> Text {
+        switch slot {
+        case .written:
+            subject.oralExamPoints == nil
+                ? Text("Zählt vierfach")
+                : Text("Mit der Nachprüfung im Verhältnis 2 : 1")
+        case .oral:
+            hasWrittenExam(subject)
+                ? Text("Mit dem schriftlichen Ergebnis im Verhältnis 2 : 1")
+                : Text("Zählt vierfach")
+        }
+    }
+
+    /// Die Beschriftung des gestrichelten Knopfes.
+    static func addTitle(of slot: ExamResultSlot, in subject: Subject) -> LocalizedStringKey {
+        switch slot {
+        case .written: "＋ Schriftliches Ergebnis"
+        case .oral: hasWrittenExam(subject)
+            ? "＋ Mündliche Nachprüfung"
+            : "＋ Mündliches Ergebnis"
+        }
+    }
+
+    /// Der Hinweis unter dem Abschnitt.
+    ///
+    /// Solange ein Ergebnis fehlt, sagt er, dass die Gesamtpunktzahl eine
+    /// Hochrechnung ist — dieselbe Aussage, die die Aufschlüsselung von Block II
+    /// trifft, hier am Ort der Eingabe.
+    static func note(for subject: Subject) -> Text {
+        if hasWrittenExam(subject) {
+            if subject.oralExamPoints != nil {
+                return Text("Aus schriftlich und mündlich wird ein Ergebnis, und das zählt vierfach.")
+            }
+            if subject.writtenExamPoints == nil {
+                return Text("Das schriftliche Ergebnis zählt vierfach. Solange es fehlt, rechnet Score die Prüfung auf deinem heutigen Stand hoch.")
+            }
+            return Text("Das schriftliche Ergebnis zählt vierfach. Kommt eine mündliche Nachprüfung hinzu, zählen beide im Verhältnis 2 : 1.")
+        }
+        return subject.oralExamPoints == nil
+            ? Text("Das mündliche Ergebnis zählt vierfach. Solange es fehlt, rechnet Score die Prüfung auf deinem heutigen Stand hoch.")
+            : Text("Das mündliche Ergebnis zählt vierfach.")
     }
 }
 
 #Preview {
-    @Previewable @State var draft = SubjectDraft(subject: nil)
+    let subject = Subject(
+        name: "Mathematik",
+        abbreviation: "M",
+        colorValue: 0x1C6B6E,
+        kind: .leistungsfach,
+        writtenExamPoints: 11
+    )
 
     return ScrollView {
-        ExamResultSection(draft: $draft)
-            .padding()
+        ExamResultSection(subject: subject)
+            .padding(ScoreMetrics.screenPadding)
     }
     .background(ScorePalette.background)
+    .modelContainer(for: [Subject.self, SemesterResult.self, GradeEntry.self], inMemory: true)
 }

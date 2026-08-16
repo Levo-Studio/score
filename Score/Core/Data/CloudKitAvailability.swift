@@ -42,7 +42,7 @@ enum CloudKitAvailability {
     #if targetEnvironment(simulator)
     /// Liest die eingebettete Entitlements-Plist des eigenen Binaries.
     private static func embeddedEntitlementsAllowCloudKit() -> Bool {
-        guard let header = _dyld_get_image_header(0) else { return false }
+        guard let header = mainImageHeader() else { return false }
 
         var size: UInt = 0
         let pointer = header.withMemoryRebound(to: mach_header_64.self, capacity: 1) {
@@ -62,6 +62,34 @@ enum CloudKitAvailability {
             return false
         }
         return services.contains("CloudKit") || services.contains("CloudKit-Anonymous")
+    }
+
+    /// Der Mach-O-Kopf des eigenen Programms.
+    ///
+    /// Nicht einfach `_dyld_get_image_header(0)`: Index 0 ist zwar meistens das
+    /// Programm selbst, aber nicht verlässlich — unter der Oberflächen-Testhülle
+    /// werden Bibliotheken vorgeladen (`DYLD_INSERT_LIBRARIES`), und dann steht
+    /// dort eine davon. Die Entitlements-Sektion fehlt ihr, die Prüfung fiel
+    /// stillschweigend auf „kein CloudKit" zurück, und der Sync blieb im
+    /// Simulator aus, obwohl der Build signiert war.
+    ///
+    /// Gesucht wird deshalb über den Pfad: Genau ein geladenes Abbild trägt den
+    /// Pfad der ausführbaren Datei des Hauptbündels.
+    private static func mainImageHeader() -> UnsafePointer<mach_header>? {
+        guard let executable = Bundle.main.executableURL?.resolvingSymlinksInPath().path else {
+            return _dyld_get_image_header(0)
+        }
+
+        for index in 0..<_dyld_image_count() {
+            guard let name = _dyld_get_image_name(index) else { continue }
+            let path = URL(fileURLWithPath: String(cString: name))
+                .resolvingSymlinksInPath()
+                .path
+            if path == executable {
+                return _dyld_get_image_header(index)
+            }
+        }
+        return _dyld_get_image_header(0)
     }
     #endif
 }

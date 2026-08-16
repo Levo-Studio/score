@@ -185,7 +185,10 @@ final class CloudSyncStatus {
 /// Abmeldung an ihre eigene Lebensdauer: Wer sie hält, ist angemeldet, wer sie
 /// freigibt, ist es nicht mehr. Sie trägt keine Isolation, ihr `deinit` darf
 /// also von jedem Kontext aus laufen.
-private nonisolated final class NotificationObservation {
+///
+/// Nicht mehr auf diese Datei beschränkt: ``ManualCloudSync`` hört auf dieselben
+/// Ereignisse und braucht dieselbe Abmeldung.
+nonisolated final class NotificationObservation {
 
     private let token: any NSObjectProtocol
 
@@ -236,6 +239,25 @@ extension CloudSyncStatus.State {
             Text("iCloud ist auf diesem Gerät eingeschränkt. Prüf in den Systemeinstellungen, ob iCloud Drive für Score erlaubt ist.")
         case .failed(let message):
             Text(verbatim: message)
+        }
+    }
+
+    /// Ob in dieser Sitzung überhaupt etwas abzugleichen ist.
+    ///
+    /// Entscheidet zweierlei: ob „Jetzt abgleichen" bedienbar ist, und ob
+    /// „Zuletzt abgeglichen" einen Zeitpunkt zeigen darf. Ist der Abgleich aus
+    /// oder kein Konto angemeldet, wäre ein Datum dort eine Behauptung über
+    /// einen Stand, den gerade niemand hält.
+    ///
+    /// `unknown` zählt als möglich: Der Kontostatus ist dann bloss noch nicht
+    /// zurück, und eine Zeile vorsorglich abzublenden, die gleich wieder
+    /// aufwacht, wäre unruhiger als ein Versuch, der ehrlich scheitert.
+    /// Ein stehengebliebener Abgleich (`failed`) zählt ebenfalls als möglich:
+    /// Genau dann ist ein neuer Versuch das Naheliegendste.
+    var allowsSync: Bool {
+        switch self {
+        case .off, .unavailable, .noAccount, .restricted: false
+        case .unknown, .ready, .syncing, .synced, .failed: true
         }
     }
 

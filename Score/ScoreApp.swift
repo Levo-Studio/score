@@ -17,6 +17,14 @@ struct ScoreApp: App {
     /// nicht ihre Werte.
     private let modelContainer: ModelContainer
 
+    /// Meldet die App bei den stillen Push-Nachrichten von CloudKit an.
+    ///
+    /// Ohne diese Anmeldung importiert SwiftData Änderungen anderer Geräte erst
+    /// beim nächsten Kaltstart — siehe ``ScoreAppDelegate``. Der Umweg über
+    /// einen Delegaten ist nötig, weil `registerForRemoteNotifications()` an
+    /// `UIApplication` hängt und SwiftUI dafür keine eigene Entsprechung hat.
+    @UIApplicationDelegateAdaptor(ScoreAppDelegate.self) private var appDelegate
+
     init() {
         let schema = Schema([
             Subject.self,
@@ -25,10 +33,17 @@ struct ScoreApp: App {
             StudentProfile.self
         ])
 
-        modelContainer = Self.makeContainer(for: schema)
+        // Zwei Bedingungen, beide nur hier prüfbar: der Prozess muss CloudKit
+        // benutzen dürfen, und der Nutzer muss es wollen. Beides steht fest,
+        // sobald der Container gebaut ist — siehe `CloudSyncActivation`.
+        let usesCloudKit = CloudKitAvailability.isEntitled && AppSettings.shared.isCloudSyncEnabled
+        CloudSyncActivation.record(isActive: usesCloudKit)
+
+        modelContainer = Self.makeContainer(for: schema, usesCloudKit: usesCloudKit)
     }
 
-    /// Öffnet den Speicher — mit iCloud, wenn der Prozess das darf, sonst lokal.
+    /// Öffnet den Speicher — mit iCloud, wenn der Prozess das darf und der
+    /// Nutzer es will, sonst lokal.
     ///
     /// Die Prüfung auf das Entitlement ist kein Gürtel-und-Hosenträger, sondern
     /// notwendig: fehlt es, **stürzt CloudKit ab**, und zwar nicht beim Anlegen
@@ -40,10 +55,10 @@ struct ScoreApp: App {
     ///
     /// Praktisch trifft das jeden Build ohne Signierung: den Test-Host und CI.
     /// Ohne diese Prüfung stirbt die App dort vor dem ersten Test.
-    private static func makeContainer(for schema: Schema) -> ModelContainer {
+    private static func makeContainer(for schema: Schema, usesCloudKit: Bool) -> ModelContainer {
         let configuration = ModelConfiguration(
             schema: schema,
-            cloudKitDatabase: CloudKitAvailability.isEntitled
+            cloudKitDatabase: usesCloudKit
                 ? .private("iCloud.levo-studio.Score")
                 : .none
         )

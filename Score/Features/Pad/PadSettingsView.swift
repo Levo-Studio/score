@@ -10,6 +10,11 @@ struct PadSettingsView: View {
 
     @Environment(AppSettings.self) private var settings
 
+    /// Zeigt, ob der iCloud-Abgleich tatsächlich läuft — dieselbe Auskunft wie
+    /// auf dem iPhone. Ein Schalter ohne Zustandsanzeige daneben liesse offen,
+    /// ob er gerade etwas bewirkt.
+    @State private var syncStatus = CloudSyncStatus()
+
     /// Es gibt genau ein Profil. Die Abfrage liefert trotzdem eine Liste, weil ein
     /// unterbrochener CloudKit-Erstabgleich theoretisch zwei anlegen kann; genutzt
     /// wird dann das erste.
@@ -48,6 +53,11 @@ struct PadSettingsView: View {
             .padding(.bottom, PadMetrics.contentPadding)
         }
         .scrollIndicators(.hidden)
+        .task {
+            // Der Kontostatus kann sich ändern, während die App läuft, deshalb
+            // bei jedem Öffnen der Einstellungen neu abfragen.
+            await syncStatus.refresh()
+        }
     }
 
     // MARK: - Profil
@@ -96,6 +106,30 @@ struct PadSettingsView: View {
                 .disabled(profile == nil)
             }
 
+            PadSettingsRow(title: "Mit iCloud abgleichen", isFirst: false) {
+                ScoreSwitch(isOn: settings.isCloudSyncEnabled)
+            }
+
+            // Der Schalter verstellt den Speicher nicht — das kann er nicht,
+            // siehe `CloudSyncActivation`. Er sagt stattdessen, ab wann er gilt.
+            if let notice = CloudSyncActivation.restartNotice(desired: settings.wrappedValue.isCloudSyncEnabled) {
+                PadSettingsNote(text: Text(notice))
+            }
+
+            PadSettingsRow(title: "iCloud", isFirst: false) {
+                Text(syncStatus.state.title)
+                    .font(ScoreTypography.publicSans(500, 13.5))
+                    .foregroundStyle(
+                        syncStatus.state.needsAttention
+                            ? ScorePalette.warn
+                            : ScorePalette.inkSecondary
+                    )
+            }
+
+            if let explanation = syncStatus.state.explanation {
+                PadSettingsNote(text: explanation)
+            }
+
             // Nicht in der Design-Datei, aber auf dem iPhone vorhanden: einen
             // Export nur auf einem der beiden Geräte anzubieten wäre eine Falle.
             ShareLink(item: export, preview: SharePreview("Score-Export")) {
@@ -119,6 +153,9 @@ struct PadSettingsView: View {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .strokeBorder(ScorePalette.line, lineWidth: 1)
         )
+        // Der Hinweis unter dem Schalter kommt und geht mit ihm — die Karte
+        // wächst dabei, statt zu springen.
+        .scoreAnimation(ScoreMotion.valueChange, value: settings.wrappedValue.isCloudSyncEnabled)
     }
 
     // MARK: - Erklärung
@@ -205,6 +242,25 @@ private struct PadSettingsRow<Accessory: View>: View {
                     .frame(height: 1)
             }
         }
+    }
+}
+
+/// Ein erklärender Satz unter der Zeile, zu der er gehört.
+///
+/// Keine eigene Zeile mit Trenner: Er gehört zu der darüber und würde als
+/// eigener Abschnitt so aussehen, als stünde er für sich.
+private struct PadSettingsNote: View {
+
+    let text: Text
+
+    var body: some View {
+        text
+            .font(.meta)
+            .foregroundStyle(ScorePalette.inkSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 18)
+            .padding(.bottom, 18)
     }
 }
 

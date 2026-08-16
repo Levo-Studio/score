@@ -1,6 +1,23 @@
 {
   "sourceLanguage" : "de",
   "strings" : {
+    "%@ löschen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ löschen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete %@"
+          }
+        }
+      }
+    },
     "%lld Ergebnisse stehen zur Klammerung, %lld davon bleiben drin. Score klammert von unten." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1358,6 +1375,23 @@
         }
       }
     },
+    "Ausgeschaltet" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgeschaltet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off"
+          }
+        }
+      }
+    },
     "Automatisch geklammert: Block I fasst %lld Kurse, und dieser gehört zu den schwächsten. Ab %lld Punkten bleibt ein Wahl-Basisfach-Kurs drin." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1432,6 +1466,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Edit"
+          }
+        }
+      }
+    },
+    "Beende Score und öffne es neu — dann beginnt der Abgleich." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beende Score und öffne es neu — dann beginnt der Abgleich."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quit Score and open it again — then syncing begins."
           }
         }
       }
@@ -2213,6 +2264,23 @@
         }
       }
     },
+    "Der Abgleich ist abgeschaltet. Neue Noten bleiben auf diesem Gerät; was bereits in deiner iCloud liegt, bleibt dort unangetastet." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Abgleich ist abgeschaltet. Neue Noten bleiben auf diesem Gerät; was bereits in deiner iCloud liegt, bleibt dort unangetastet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syncing is off. New grades stay on this device; whatever is already in your iCloud stays there untouched."
+          }
+        }
+      }
+    },
     "Der schwächste Kurs, der noch drin ist, steht bei %lld Punkten." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2789,6 +2857,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete subject"
+          }
+        }
+      }
+    },
+    "Fach wirklich löschen?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fach wirklich löschen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this subject?"
           }
         }
       }
@@ -3759,6 +3844,23 @@
         }
       }
     },
+    "Leistung gelöscht" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leistung gelöscht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grade deleted"
+          }
+        }
+      }
+    },
     "Leistungen" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3980,6 +4082,67 @@
         }
       }
     },
+    "Mit %@ verschwinden alle Halbjahre und %lld erfasste Leistungen. Rückgängig machen lässt sich das nicht." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit %1$@ verschwinden alle Halbjahre und %2$#@entries@. Rückgängig machen lässt sich das nicht."
+          },
+          "substitutions" : {
+            "entries" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg erfasste Leistung"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg erfasste Leistungen"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleting %1$@ removes every semester and %2$#@entries@. This cannot be undone."
+          },
+          "substitutions" : {
+            "entries" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg recorded grade"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg recorded grades"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Mit einem belegten Halbjahr gibt es nichts auszuwählen." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3993,6 +4156,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "With a single semester taken there is nothing to choose."
+          }
+        }
+      }
+    },
+    "Mit iCloud abgleichen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit iCloud abgleichen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync with iCloud"
           }
         }
       }
@@ -4660,6 +4840,23 @@
         }
       }
     },
+    "Rückgängig" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rückgängig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Undo"
+          }
+        }
+      }
+    },
     "Same calculation, English wording" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4894,6 +5091,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Score starts with upper secondary — semester results only count towards Block I from 11/1 onwards."
+          }
+        }
+      }
+    },
+    "Score gleicht bis zum nächsten Start weiter ab. Beende die App und öffne sie neu, damit der Abgleich endet." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score gleicht bis zum nächsten Start weiter ab. Beende die App und öffne sie neu, damit der Abgleich endet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score keeps syncing until the next launch. Quit the app and open it again to stop it."
           }
         }
       }

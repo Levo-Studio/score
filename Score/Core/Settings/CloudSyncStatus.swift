@@ -40,6 +40,9 @@ final class CloudSyncStatus {
         /// Dieser Build darf CloudKit gar nicht benutzen — er ist nicht signiert.
         /// Kommt beim Nutzer nie vor, nur in Entwicklungs- und CI-Builds.
         case unavailable
+        /// Der Nutzer hat den Abgleich abgeschaltet, und der Speicher dieser
+        /// Sitzung ist tatsächlich ohne CloudKit gestartet.
+        case off
     }
 
     private(set) var state: State = .unknown
@@ -72,6 +75,15 @@ final class CloudSyncStatus {
         // Datenspeicher — der Absturz muss vermieden, nicht behandelt werden.
         guard CloudKitAvailability.isEntitled else {
             state = .unavailable
+            return
+        }
+
+        // Der Zustand richtet sich danach, was der laufende Speicher **tut**,
+        // nicht danach, was in den Einstellungen steht. Wer den Schalter gerade
+        // umgelegt hat, sieht hier deshalb weiter den echten Zustand — dass er
+        // erst nach einem Neustart gilt, sagt der Hinweis am Schalter.
+        guard CloudSyncActivation.isActiveInThisSession else {
+            state = .off
             return
         }
 
@@ -198,6 +210,7 @@ extension CloudSyncStatus.State {
         case .syncing: "Wird abgeglichen …"
         case .synced: "Aktuell"
         case .noAccount: "Kein iCloud-Konto"
+        case .off: "Ausgeschaltet"
         case .unavailable: "In diesem Build nicht verfügbar"
         case .restricted: "iCloud eingeschränkt"
         case .failed: "Abgleich gestört"
@@ -213,6 +226,8 @@ extension CloudSyncStatus.State {
         switch self {
         case .unknown, .ready, .syncing, .synced:
             nil
+        case .off:
+            Text("Der Abgleich ist abgeschaltet. Neue Noten bleiben auf diesem Gerät; was bereits in deiner iCloud liegt, bleibt dort unangetastet.")
         case .unavailable:
             Text("Dieser Build ist nicht signiert und kann iCloud nicht nutzen. Deine Daten bleiben auf diesem Gerät.")
         case .noAccount:
@@ -228,7 +243,9 @@ extension CloudSyncStatus.State {
     var needsAttention: Bool {
         switch self {
         case .noAccount, .restricted, .failed, .unavailable: true
-        case .unknown, .ready, .syncing, .synced: false
+        // „Ausgeschaltet" ist kein Problem, sondern eine Entscheidung — sie
+        // rot zu markieren würde sie als Fehler ausgeben.
+        case .unknown, .ready, .syncing, .synced, .off: false
         }
     }
 }

@@ -13,6 +13,9 @@ struct PadSidebar: View {
     /// Die Fächer samt ihren Kennzahlen für das gewählte Halbjahr.
     let summaries: [SubjectSummary]
 
+    /// Das Fach, dessen Löschung nach einem Wisch zur Bestätigung ansteht.
+    @State private var pendingDeletion: SubjectDeletion.Request?
+
     var body: some View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
             brand
@@ -62,6 +65,15 @@ struct PadSidebar: View {
                 .ignoresSafeArea(edges: .vertical)
         }
         .scrollContentBackground(.hidden)
+        .subjectDeleteConfirmation($pendingDeletion, among: summaries.map(\.subject)) { deleted in
+            // Stand der Detailbereich auf dem gelöschten Fach, zeigte er sonst
+            // die Notiz „Dieses Fach gibt es nicht mehr" — richtig, aber eine
+            // Sackgasse. Die Übersicht ist der Ort, an dem man nach dem Löschen
+            // ohnehin landen will.
+            if route.subjectIdentifier == deleted {
+                route = .dashboard
+            }
+        }
     }
 
     // MARK: - Kopf
@@ -209,20 +221,32 @@ struct PadSidebar: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 ForEach(summaries) { summary in
-                    subjectRow(summary)
+                    // Wie auf dem iPhone: nach links wischen legt das Löschen
+                    // frei. Nur schmaler, weil die Sidebar-Zeile es ist.
+                    SwipeToDelete(
+                        cornerRadius: 10,
+                        actionWidth: 72,
+                        font: ScoreTypography.publicSans(500, 11.5),
+                        accessibilityLabel: Text("\(summary.subject.name) löschen"),
+                        onDelete: { pendingDeletion = SubjectDeletion.request(for: summary.subject) },
+                        onTap: { route = .subject(summary.subject.identifier) }
+                    ) {
+                        subjectRow(summary)
+                    }
                 }
             }
         }
     }
 
+    /// Eine Fachzeile der Sidebar.
+    ///
+    /// Reine Darstellung ohne eigenen Knopf: Das Antippen übernimmt die
+    /// Wisch-Hülle, sonst löste jeder Wisch am Ende auch die Auswahl aus.
     private func subjectRow(_ summary: SubjectSummary) -> some View {
         let subject = summary.subject
         let isSelected = route.subjectIdentifier == subject.identifier
 
-        return Button {
-            route = .subject(subject.identifier)
-        } label: {
-            HStack(spacing: 9) {
+        return HStack(spacing: 9) {
                 SubjectDot(color: subject.color, size: 14, cornerRadius: 5)
 
                 Text(verbatim: subject.name)
@@ -245,9 +269,7 @@ struct PadSidebar: View {
                     .fill(isSelected ? ScorePalette.surface : .clear)
             )
             .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .scoreAnimation(ScoreMotion.selection, value: isSelected)
+            .scoreAnimation(ScoreMotion.selection, value: isSelected)
     }
 }
 

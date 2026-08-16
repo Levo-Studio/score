@@ -22,6 +22,11 @@ struct PadSubjectDetailView: View {
 
     @State private var editedEntry: GradeEntry?
 
+    /// Die zuletzt gelöschte Leistung, solange sie sich zurückholen lässt.
+    @State private var pendingUndo: GradeEntryUndo?
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
@@ -34,6 +39,9 @@ struct PadSubjectDetailView: View {
             .padding(.bottom, PadMetrics.contentPadding)
         }
         .scrollIndicators(.hidden)
+        .overlay(alignment: .bottom) {
+            undoOverlay
+        }
         .sheet(item: $editedEntry) { entry in
             GradeEntrySheet(entry: entry, subject: subject) {
                 delete(entry)
@@ -421,12 +429,15 @@ struct PadSubjectDetailView: View {
                 .foregroundStyle(ScorePalette.inkSecondary)
 
             ForEach(Array(zip(list, shares)), id: \.0.persistentModelID) { entry, share in
-                Button {
-                    editedEntry = entry
-                } label: {
+                // Wie auf dem iPhone: der Wisch löscht sofort, der Streifen
+                // unten nimmt es zurück.
+                SwipeToDelete(
+                    accessibilityLabel: Text("\(entry.title) löschen"),
+                    onDelete: { delete(entry) },
+                    onTap: { editedEntry = entry }
+                ) {
                     entryRow(entry, share: share)
                 }
-                .buttonStyle(.plain)
             }
 
             DashedButton(
@@ -493,8 +504,46 @@ struct PadSubjectDetailView: View {
         }
     }
 
+    /// Löscht eine Leistung sofort und bietet sie zur Rücknahme an — derselbe
+    /// Weg wie auf dem iPhone, auch für die Schaltfläche im Eingabe-Sheet.
     private func delete(_ entry: GradeEntry) {
+        let snapshot = GradeEntryUndo(of: entry)
         modelContext.delete(entry)
         editedEntry = nil
+
+        withAnimation(ScoreMotion.resolve(ScoreMotion.sheetRise, reduceMotion: reduceMotion)) {
+            pendingUndo = snapshot
+        }
+    }
+
+    private func undoDeletion(_ snapshot: GradeEntryUndo) {
+        snapshot.restore(to: subject, in: modelContext)
+        dismissUndo()
+    }
+
+    private func dismissUndo() {
+        withAnimation(ScoreMotion.resolve(ScoreMotion.backdrop, reduceMotion: reduceMotion)) {
+            pendingUndo = nil
+        }
+    }
+
+    // MARK: - Rücknahme
+
+    @ViewBuilder
+    private var undoOverlay: some View {
+        if let pendingUndo {
+            UndoBanner(
+                message: "Leistung gelöscht",
+                action: { undoDeletion(pendingUndo) },
+                onExpire: { dismissUndo() }
+            )
+            .id(pendingUndo.id)
+            // Auf dem iPad gibt es keine schwebende Leiste, der Streifen sitzt
+            // deshalb am Rand des Inhalts — und rechtsbündig, weil links die
+            // Sidebar steht.
+            .frame(maxWidth: 360)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(PadMetrics.contentPadding)
+        }
     }
 }

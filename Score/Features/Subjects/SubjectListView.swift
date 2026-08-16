@@ -27,6 +27,17 @@ struct SubjectListView: View {
     /// Aussage über die Fächer, und man trifft sie, während man sie vor sich hat.
     @State private var isOralExamPickerPresented = false
 
+    /// Das Fach, dessen Löschung nach einem Wisch zur Bestätigung ansteht.
+    @State private var pendingDeletion: SubjectDeletion.Request?
+
+    /// Das geöffnete Fach.
+    ///
+    /// Die Zeile trägt keinen `NavigationLink` mehr, seit sie sich wischen
+    /// lässt: ein Knopf im Inhalt löste am Ende jedes Wisches zusätzlich aus,
+    /// weil der Finger die Zeile dabei nie verlässt. Die Navigation hängt
+    /// deshalb an diesem Zustand, gesetzt vom Tipp der Hülle.
+    @State private var openedSubject: Subject?
+
     private var summaries: [SubjectSummary] {
         SubjectOverview.summaries(of: subjects, semesterIndex: semesterIndex)
     }
@@ -49,7 +60,7 @@ struct SubjectListView: View {
             }
             .background(ScorePalette.background)
             .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(for: Subject.self) { subject in
+            .navigationDestination(item: $openedSubject) { subject in
                 SubjectDetailView(subject: subject)
             }
         }
@@ -59,6 +70,7 @@ struct SubjectListView: View {
         .sheet(isPresented: $isOralExamPickerPresented) {
             OralExamSubjectSheet()
         }
+        .subjectDeleteConfirmation($pendingDeletion, among: subjects)
     }
 
     // MARK: - Mündliche Prüfungsfächer
@@ -128,10 +140,16 @@ struct SubjectListView: View {
     private var subjectRows: some View {
         VStack(spacing: ScoreMetrics.Spacing.xs) {
             ForEach(Array(summaries.enumerated()), id: \.element.id) { index, summary in
-                NavigationLink(value: summary.subject) {
+                // Nach links wischen legt das Löschen frei. Der Dialog danach
+                // hängt an der Ansicht und nicht an der Zeile — sonst
+                // verschwände er mit der Zeile, die er gerade betrifft.
+                SwipeToDelete(
+                    accessibilityLabel: Text("\(summary.subject.name) löschen"),
+                    onDelete: { pendingDeletion = SubjectDeletion.request(for: summary.subject) },
+                    onTap: { openedSubject = summary.subject }
+                ) {
                     SubjectListRow(summary: summary)
                 }
-                .buttonStyle(.plain)
                 // Die Zeilen fahren nacheinander ein; antippbar sind sie dabei
                 // die ganze Zeit, die Einblendung ändert nur Deckkraft und Lage.
                 .rowAppearance(index: index, base: 0.06)

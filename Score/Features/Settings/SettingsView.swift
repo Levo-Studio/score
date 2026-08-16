@@ -42,7 +42,7 @@ struct SettingsView: View {
 
                 appearanceCard(settings: $settings)
                     .rowAppearance(index: 1)
-                dataCard
+                dataCard(settings: $settings)
                     .rowAppearance(index: 2)
 
                 studioMark
@@ -91,9 +91,9 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Karte 2 — Bundesland, Export
+    // MARK: - Karte 2 — Bundesland, iCloud, Export
 
-    private var dataCard: some View {
+    private func dataCard(settings: Bindable<AppSettings>) -> some View {
         SettingsGroup {
             SettingsRow(title: "Bundesland") {
                 Menu {
@@ -109,6 +109,16 @@ struct SettingsView: View {
                 .disabled(profile == nil)
             }
 
+            SettingsRow(title: "Mit iCloud abgleichen") {
+                ScoreSwitch(isOn: settings.isCloudSyncEnabled)
+            }
+
+            // Der Schalter verstellt den Speicher nicht — das kann er nicht,
+            // siehe `CloudSyncActivation`. Er sagt stattdessen, ab wann er gilt.
+            if let notice = CloudSyncActivation.restartNotice(desired: settings.wrappedValue.isCloudSyncEnabled) {
+                cardNote(Text(notice))
+            }
+
             SettingsRow(title: "iCloud") {
                 SettingsValue(
                     key: syncStatus.state.title,
@@ -117,13 +127,7 @@ struct SettingsView: View {
             }
 
             if let explanation = syncStatus.state.explanation {
-                explanation
-                    .font(.meta)
-                    .foregroundStyle(ScorePalette.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, ScoreMetrics.Spacing.md)
-                    .padding(.bottom, ScoreMetrics.Spacing.md)
+                cardNote(explanation)
             }
 
             ShareLink(item: export, preview: SharePreview("Score-Export")) {
@@ -141,6 +145,20 @@ struct SettingsView: View {
                 }
             }
         }
+        // Der Hinweis unter dem Schalter kommt und geht mit ihm — die Karte
+        // wächst dabei, statt zu springen.
+        .scoreAnimation(ScoreMotion.valueChange, value: settings.wrappedValue.isCloudSyncEnabled)
+    }
+
+    /// Ein erklärender Satz innerhalb einer Karte, unter der Zeile, zu der er gehört.
+    private func cardNote(_ text: Text) -> some View {
+        text
+            .font(.meta)
+            .foregroundStyle(ScorePalette.inkSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, ScoreMetrics.Spacing.md)
+            .padding(.bottom, ScoreMetrics.Spacing.md)
     }
 
     // MARK: - Studio-Zeichen

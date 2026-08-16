@@ -53,6 +53,25 @@ final class AppSettings {
         Locale(identifier: language.localeIdentifier)
     }
 
+    // MARK: - iCloud
+
+    /// Ob Score seine Daten automatisch mit iCloud abgleichen soll.
+    ///
+    /// Wie Erscheinungsbild und Sprache liegt das in `UserDefaults` und **nicht**
+    /// im Datenmodell. Das ist kein Detail, sondern die einzige mögliche Stelle:
+    /// Ein Schalter, der den Sync abschaltet, kann nicht selbst synchronisiert
+    /// werden — er würde sich beim nächsten Abgleich vom anderen Gerät wieder
+    /// überschreiben. Ausserdem ist die Entscheidung eine über *dieses* Gerät;
+    /// ein iPad darf abgeglichen werden, während das iPhone es nicht wird.
+    ///
+    /// > Wichtig: Der Wert wirkt erst beim nächsten Start. SwiftData entscheidet
+    /// > beim Anlegen des `ModelContainer`, ob CloudKit angebunden wird, und ein
+    /// > laufender Store lässt sich nicht umhängen. Was daraus für die Oberfläche
+    /// > folgt, steht in ``CloudSyncActivation``.
+    var isCloudSyncEnabled: Bool {
+        didSet { defaults.set(isCloudSyncEnabled, forKey: Key.cloudSync) }
+    }
+
     // MARK: - Speicher
 
     private let defaults: UserDefaults
@@ -63,11 +82,15 @@ final class AppSettings {
             .flatMap(Appearance.init(rawValue:)) ?? .system
         self.language = defaults.string(forKey: Key.language)
             .flatMap(Language.init(rawValue:)) ?? Language.matchingSystem()
+        // Ohne Eintrag ist der Abgleich an: Score ist eine App ohne Konto, und
+        // dass die Noten auf dem zweiten Gerät stehen, ist der Normalfall.
+        self.isCloudSyncEnabled = defaults.object(forKey: Key.cloudSync) as? Bool ?? true
     }
 
     private enum Key {
         static let appearance = "settings.appearance"
         static let language = "settings.language"
+        static let cloudSync = "settings.cloudSyncEnabled"
     }
 
     /// Die Instanz, an der die App hängt.

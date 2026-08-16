@@ -270,7 +270,8 @@ struct AdvancedSubjectsStep: View {
                 isSelected: { model.advancedSubjects.contains($0) },
                 toggle: { model.toggleAdvancedSubject($0) },
                 draft: $model.customSubjectDraft,
-                onCommitCustom: { model.commitCustomSubject() }
+                onCommitCustom: { model.commitCustomSubject() },
+                note: "Danach kommen die Basisfächer: erst die, die du belegen musst, dann die, die du frei dazuwählst."
             )
         }
     }
@@ -287,7 +288,7 @@ struct RequiredBasicSubjectsStep: View {
             OnboardingHeader(
                 kicker: model.stepKicker,
                 title: "Deine Pflicht-Basisfächer",
-                text: "Pflicht-Basisfächer sind nicht abwählbar und zählen immer — auch dann, wenn sie schlechter stehen als ein Wahl-Basisfach. Score hat vorausgewählt, was üblich ist."
+                text: "Die zweistündigen Fächer, die du belegen musst. Welche das sind, ergibt sich aus deinen Leistungsfächern — Score hat vorausgewählt, was dazu üblich ist."
             )
 
             SubjectSelectionSection(
@@ -296,7 +297,8 @@ struct RequiredBasicSubjectsStep: View {
                 isSelected: { model.requiredBasicSubjects.contains($0) },
                 toggle: { model.toggleRequiredBasicSubject($0) },
                 draft: $model.customSubjectDraft,
-                onCommitCustom: { model.commitCustomSubject() }
+                onCommitCustom: { model.commitCustomSubject() },
+                note: "Was in deiner Kurswahl nicht als Pflicht steht, nimmst du hier heraus — es kommt im nächsten Schritt wieder."
             )
         }
     }
@@ -313,7 +315,7 @@ struct ElectiveBasicSubjectsStep: View {
             OnboardingHeader(
                 kicker: model.stepKicker,
                 title: "Deine Wahl-Basisfächer",
-                text: "Aus diesen Fächern füllt Score die restlichen Plätze in Block I mit deinen besten Ergebnissen. Schwächere fallen heraus, sobald genug bessere da sind."
+                text: "Die Basisfächer, die du zusätzlich frei gewählt hast — alles, was du sonst noch belegst."
             )
 
             SubjectSelectionSection(
@@ -322,7 +324,8 @@ struct ElectiveBasicSubjectsStep: View {
                 isSelected: { model.electiveBasicSubjects.contains($0) },
                 toggle: { model.toggleElectiveBasicSubject($0) },
                 draft: $model.customSubjectDraft,
-                onCommitCustom: { model.commitCustomSubject() }
+                onCommitCustom: { model.commitCustomSubject() },
+                note: "Auch sie zählen in deinen Schnitt. Fehlt eines, legst du es später in den Fächern nach."
             )
         }
     }
@@ -332,6 +335,11 @@ struct ElectiveBasicSubjectsStep: View {
 ///
 /// Das eigene Fach hängt als gestrichelter Tag hinten in der Wolke und nicht als
 /// eigene Zeile darunter: es ist eine weitere Wahlmöglichkeit, kein Formular.
+///
+/// Unter der Wolke steht dieselbe kleine Fussnote, die die Design-Datei schon im
+/// Klassenschritt führt. Hier trägt sie, was die Kategorie von der nächsten
+/// unterscheidet — die Überschrift sagt, was gemeint ist, die Fussnote, was das
+/// beim Zuordnen heisst.
 private struct SubjectSelectionSection: View {
 
     let counter: LocalizedStringKey
@@ -340,24 +348,36 @@ private struct SubjectSelectionSection: View {
     let toggle: (String) -> Void
     @Binding var draft: String
     let onCommitCustom: () -> Void
+    var note: LocalizedStringKey?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(counter)
-                .font(.fieldLabel)
-                .foregroundStyle(ScorePalette.inkSecondary)
+        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(counter)
+                    .font(.fieldLabel)
+                    .foregroundStyle(ScorePalette.inkSecondary)
 
-            ChipCloud(
-                items: options,
-                title: { $0 },
-                isSelected: isSelected,
-                toggle: toggle,
-                spacing: 9
-            ) {
-                DashedChip(title: "Eigenes Fach", text: $draft, onCommit: onCommitCustom)
+                ChipCloud(
+                    items: options,
+                    title: { $0 },
+                    isSelected: isSelected,
+                    toggle: toggle,
+                    spacing: 9
+                ) {
+                    DashedChip(title: "Eigenes Fach", text: $draft, onCommit: onCommitCustom)
+                }
+            }
+            .staggeredAppearance(index: 3)
+
+            if let note {
+                Text(note)
+                    .font(.optionMeta)
+                    .lineSpacing(5.5)
+                    .foregroundStyle(ScorePalette.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .staggeredAppearance(index: 4)
             }
         }
-        .staggeredAppearance(index: 3)
     }
 }
 

@@ -1236,6 +1236,23 @@
         }
       }
     },
+    "Auch sie zählen in deinen Schnitt. Fehlt eines, legst du es später in den Fächern nach." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auch sie zählen in deinen Schnitt. Fehlt eines, legst du es später in den Fächern nach."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "They count towards your average too. If one is missing, add it later under Subjects."
+          }
+        }
+      }
+    },
     "Auf einen Blick" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1249,23 +1266,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "At a glance"
-          }
-        }
-      }
-    },
-    "Aus diesen Fächern füllt Score die restlichen Plätze in Block I mit deinen besten Ergebnissen. Schwächere fallen heraus, sobald genug bessere da sind." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aus diesen Fächern füllt Score die restlichen Plätze in Block I mit deinen besten Ergebnissen. Schwächere fallen heraus, sobald genug bessere da sind."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Score fills the remaining Block I slots from these subjects, using your best results. Weaker ones drop out as soon as there are enough better ones."
           }
         }
       }
@@ -1474,19 +1474,19 @@
         }
       }
     },
-    "Block I besteht aus 42 Halbjahresergebnissen: 12 aus deinen drei Leistungsfächern plus 30 aus den Wahl-Basisfächern. Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt." : {
+    "Block I besteht aus 42 Halbjahresergebnissen: 12 aus deinen drei Leistungsfächern plus 30 aus deinen Basisfächern. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Block I besteht aus 42 Halbjahresergebnissen: 12 aus deinen drei Leistungsfächern plus 30 aus den Wahl-Basisfächern. Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt."
+            "value" : "Block I besteht aus 42 Halbjahresergebnissen: 12 aus deinen drei Leistungsfächern plus 30 aus deinen Basisfächern. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Block I is made up of 42 semester results: 12 from your three advanced courses plus 30 from the elective basic courses. Required basic courses are fixed, and the rest is filled automatically from your best remaining courses."
+            "value" : "Block I is made up of 42 semester results: 12 from your three advanced courses plus 30 from your basic courses. The required basic courses are fixed, and the rest is filled automatically from your best remaining courses."
           }
         }
       }
@@ -1782,6 +1782,23 @@
         }
       }
     },
+    "Danach kommen die Basisfächer: erst die, die du belegen musst, dann die, die du frei dazuwählst." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Danach kommen die Basisfächer: erst die, die du belegen musst, dann die, die du frei dazuwählst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The basic courses come next: first the ones you have to take, then the ones you pick yourself."
+          }
+        }
+      }
+    },
     "Danach richtet sich, welche Halbjahre du eintragen kannst." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2010,6 +2027,23 @@
         }
       }
     },
+    "Die Basisfächer, die du zusätzlich frei gewählt hast — alles, was du sonst noch belegst." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Basisfächer, die du zusätzlich frei gewählt hast — alles, was du sonst noch belegst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The basic courses you picked on top — everything else you take."
+          }
+        }
+      }
+    },
     "Die freien Plätze" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2023,6 +2057,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The open slots"
+          }
+        }
+      }
+    },
+    "Die zweistündigen Fächer, die du belegen musst. Welche das sind, ergibt sich aus deinen Leistungsfächern — Score hat vorausgewählt, was dazu üblich ist." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die zweistündigen Fächer, die du belegen musst. Welche das sind, ergibt sich aus deinen Leistungsfächern — Score hat vorausgewählt, was dazu üblich ist."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The two-hour courses you have to take. Which ones they are follows from your advanced courses — Score has preselected the usual set."
           }
         }
       }
@@ -3858,23 +3909,6 @@
         }
       }
     },
-    "Pflicht-Basisfächer sind nicht abwählbar und zählen immer — auch dann, wenn sie schlechter stehen als ein Wahl-Basisfach. Score hat vorausgewählt, was üblich ist." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pflicht-Basisfächer sind nicht abwählbar und zählen immer — auch dann, wenn sie schlechter stehen als ein Wahl-Basisfach. Score hat vorausgewählt, was üblich ist."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Required basic courses cannot be dropped and always count — even when they stand worse than an elective basic course. Score has preselected the usual ones."
-          }
-        }
-      }
-    },
     "Pflicht-Basisfächer zählen, wie sie stehen. Auch ein schwaches Ergebnis bleibt drin — abwählen geht hier nicht." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4727,6 +4761,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "What drops out"
+          }
+        }
+      }
+    },
+    "Was in deiner Kurswahl nicht als Pflicht steht, nimmst du hier heraus — es kommt im nächsten Schritt wieder." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was in deiner Kurswahl nicht als Pflicht steht, nimmst du hier heraus — es kommt im nächsten Schritt wieder."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anything your course selection does not require, take out here — it comes back in the next step."
           }
         }
       }

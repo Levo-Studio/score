@@ -5,37 +5,36 @@ import Testing
 import UIKit
 @testable import Score
 
-/// Die Fächerliste in einem echten Fenster, gescrollt mit einem gebauten Finger.
+/// Die Fächerliste in einem echten Fenster, bedient mit einem gebauten Finger.
 ///
 /// ## Warum diese Suite nötig ist
 ///
-/// „Auf dem iPhone kann man im Reiter Fächer nicht mehr scrollen." Dafür kommen
-/// zwei Ursachen in Frage, und sie liegen weit auseinander:
+/// „Auf dem iPhone kann man im Reiter Fächer nicht mehr scrollen." Der erste
+/// Anlauf hat daran vorbeigezielt, und zwar aus einem Grund, der hier
+/// festgehalten gehört: Der gebaute Finger erreicht die Erkenner von **UIKit**,
+/// aber nicht das eigene Ereignissystem von SwiftUI. Solange die Wischgeste eine
+/// `DragGesture` war, bekam sie aus diesen Berührungen nichts zu sehen — ein
+/// senkrechter Zug scrollte im Test also tadellos, während auf dem Gerät nichts
+/// ging. Der Test war grün und der Fehler blieb.
 ///
-/// 1. Die Liste hat ihre Höhe verloren — dann gäbe es schlicht nichts zu
-///    scrollen, und die Behebung läge im Layout.
-/// 2. Die Wischgeste der Zeile greift den Finger, bevor die `ScrollView` ihn
-///    bekommt — dann liegt die Behebung in der Geste.
+/// Genau das ist zugleich die Ursache. Eine `DragGesture` ist kein
+/// `UIGestureRecognizer`; der Pan der `ScrollView` ist einer. Zwischen den beiden
+/// gibt es niemanden, der „gleichzeitig" oder „muss scheitern" aushandeln
+/// könnte, und deshalb entschied der Zufall des Zugriffs. Seit Wisch und Tipp an
+/// ``SwipeRowGestureHost`` hängen, liegen beide Seiten im selben Baum — und
+/// derselbe gebaute Finger erreicht jetzt **beide**. Erst dadurch lässt sich das
+/// Zusammenspiel überhaupt messen, statt es zu behaupten.
 ///
-/// Diese Suite trennt die beiden. Sie hängt die echte `SubjectListView` mit mehr
-/// Fächern als Bildschirmhöhe in ein Fenster, sucht die `UIScrollView`, die
-/// SwiftUI daraus baut, und misst: wie hoch ist der Inhalt gegenüber dem
-/// Ausschnitt, und wohin wandert der Versatz, wenn ein Finger senkrecht über
-/// eine Zeile zieht. Beides sind Zahlen aus der laufenden Oberfläche, keine
-/// Behauptungen über eine Rechnung.
+/// ## Was hier gegen den alten Stand rot läuft
 ///
-/// ## Was sie nicht kann
-///
-/// Der gebaute Finger erreicht die Erkenner von UIKit — die `UIScrollView` und
-/// ihre `panGestureRecognizer` reagieren darauf —, aber **nicht** das eigene
-/// Ereignissystem von SwiftUI: eine `DragGesture` bekommt aus diesen Berührungen
-/// nichts zu sehen, weil SwiftUI seine Gesten nicht über sichtbare
-/// `UIGestureRecognizer` führt. Die Seite der Geste steht deshalb in
-/// ``SwipeRowGestureTests`` und hängt dort an
-/// ``SwipeRowGesture/minimumDragDistance`` — der Zahl, die entscheidet, ob der
-/// Finger überhaupt bei der Liste ankommt. Hier steht die andere Hälfte: dass
-/// unter der Geste eine Liste liegt, die zu scrollen ist.
-@Suite("Scrollen in der Fächerliste", .serialized)
+/// - ``theRowCarriesARealUIKitRecognizer()`` findet auf dem alten Stand keinen
+///   einzigen Erkenner: es gab schlicht keinen.
+/// - ``aVerticalDragMovesTheList()`` verlangt denselben Nachweis, bevor es misst.
+///   Ohne einen Erkenner an der Zeile ist ein grünes Scrollen nichts wert — es
+///   beweist nur, dass der Finger die Geste nicht erreicht hat.
+/// - ``aHorizontalDragOpensTheRow()`` lässt auf dem alten Stand keine Zeile
+///   aufgehen: die Berührungen kamen bei der `DragGesture` nie an.
+@Suite("Scrollen und Wischen in der Fächerliste", .serialized)
 @MainActor
 struct SwipeRowScrollTests {
 
@@ -58,11 +57,45 @@ struct SwipeRowScrollTests {
         }
     }
 
-    // MARK: - Der Versatz
+    // MARK: - Der gemeinsame Boden
+
+    @Test("Die Zeile trägt einen echten Erkenner, im selben Baum wie die Liste")
+    func theRowCarriesARealUIKitRecognizer() async throws {
+        try await withSubjectList { window, scrollView in
+            let pans = Self.recognizers(named: SwipeRowGestureHost.panName, in: window)
+
+            // Der Kern der Sache. Vorher stand hier null: die Wischgeste war eine
+            // `DragGesture` und tauchte im Baum überhaupt nicht auf. Ohne einen
+            // Erkenner auf dieser Seite gibt es nichts, was mit dem Pan der Liste
+            // verhandeln könnte — und ohne Verhandlung entscheidet der Zufall.
+            #expect(!pans.isEmpty, "Ohne Erkenner an der Zeile kann UIKit nichts aushandeln")
+            // Eine Zeile, ein Erkenner.
+            #expect(pans.count == Self.names.count)
+
+            // Und er sagt der Liste ausdrücklich zu, sich nicht in den Weg zu
+            // stellen.
+            let pan = try #require(pans.first)
+            let delegate = try #require(pan.delegate)
+            #expect(
+                delegate.gestureRecognizer?(pan, shouldRecognizeSimultaneouslyWith: scrollView.panGestureRecognizer) == true
+            )
+        }
+    }
+
+    // MARK: - Senkrecht: die Liste bewegt sich
 
     @Test("Ein senkrechter Zug über eine Zeile bewegt die Liste")
     func aVerticalDragMovesTheList() async throws {
         try await withSubjectList { window, scrollView in
+            // Erst der Nachweis, dass überhaupt etwas mit der Liste um den Finger
+            // konkurriert. Ohne ihn misst der Rest nur, dass der gebaute Finger
+            // die Geste nicht erreicht — und genau daran ist der erste Anlauf
+            // gescheitert.
+            #expect(
+                !Self.recognizers(named: SwipeRowGestureHost.panName, in: window).isEmpty,
+                "Ohne Erkenner an der Zeile beweist ein grünes Scrollen nichts"
+            )
+
             // Aufgesetzt wird mitten auf einer Zeile — genau dort, wo die
             // Wischgeste liegt und wo sich nichts mehr bewegte.
             let row = try #require(Self.frame(startingWith: "Biologie", in: window))
@@ -74,10 +107,11 @@ struct SwipeRowScrollTests {
                 in: window
             )
 
-            let after = scrollView.contentOffset.y
             // Nicht „irgendetwas hat sich geändert": die Liste muss die Strecke
             // auch wirklich zurückgelegt haben.
-            #expect(after > before + 180)
+            #expect(scrollView.contentOffset.y > before + 180)
+            // Und der senkrechte Zug darf keine Zeile aufziehen.
+            #expect(SwipeRowRegistry.shared.openRow == nil)
         }
     }
 
@@ -107,6 +141,67 @@ struct SwipeRowScrollTests {
         }
     }
 
+    // MARK: - Waagerecht: die Zeile bewegt sich
+
+    @Test("Ein waagerechter Zug legt die Löschfläche frei, ohne zu scrollen")
+    func aHorizontalDragOpensTheRow() async throws {
+        try await withSubjectList { window, scrollView in
+            let row = try #require(Self.frame(startingWith: "Biologie", in: window))
+            let scrolled = scrollView.contentOffset.y
+
+            try await SyntheticFinger.drag(
+                from: CGPoint(x: row.midX, y: row.midY),
+                by: CGSize(width: -140, height: 0),
+                in: window
+            )
+
+            // Auf dem alten Stand blieb hier nichts offen: die Berührungen kamen
+            // bei der `DragGesture` gar nicht erst an.
+            #expect(SwipeRowRegistry.shared.openRow != nil, "Der Wisch muss die Zeile aufziehen")
+            // Und die Liste hat sich dabei nicht gerührt.
+            #expect(abs(scrollView.contentOffset.y - scrolled) < 1)
+        }
+    }
+
+    @Test("Es steht immer nur eine Zeile offen")
+    func onlyOneRowStaysOpen() async throws {
+        try await withSubjectList { window, _ in
+            let first = try #require(Self.frame(startingWith: "Biologie", in: window))
+            try await SyntheticFinger.drag(
+                from: CGPoint(x: first.midX, y: first.midY),
+                by: CGSize(width: -140, height: 0),
+                in: window
+            )
+            let opened = try #require(SwipeRowRegistry.shared.openRow)
+
+            let second = try #require(Self.frame(startingWith: "Chemie", in: window))
+            try await SyntheticFinger.drag(
+                from: CGPoint(x: second.midX, y: second.midY),
+                by: CGSize(width: -140, height: 0),
+                in: window
+            )
+
+            let nowOpen = try #require(SwipeRowRegistry.shared.openRow)
+            #expect(nowOpen != opened, "Die zweite Zeile übernimmt, die erste schliesst")
+        }
+    }
+
+    @Test("Ein abgebrochener Wisch lässt nichts offen stehen")
+    func anAbortedSwipeSnapsBack() async throws {
+        try await withSubjectList { window, _ in
+            let row = try #require(Self.frame(startingWith: "Biologie", in: window))
+
+            // Nur ein kurzes Stück, weit unter der halben Löschfläche.
+            try await SyntheticFinger.drag(
+                from: CGPoint(x: row.midX, y: row.midY),
+                by: CGSize(width: -20, height: 0),
+                in: window
+            )
+
+            #expect(SwipeRowRegistry.shared.openRow == nil)
+        }
+    }
+
     // MARK: - Der Unterbau
 
     /// Hängt die Fächerliste in ein echtes Fenster und reicht sie mit ihrer
@@ -115,6 +210,8 @@ struct SwipeRowScrollTests {
         _ body: (UIWindow, UIScrollView) async throws -> Void
     ) async throws {
         AppSettings.shared.language = .german
+        // Der geteilte Stand überlebt sonst von einem Test zum nächsten.
+        SwipeRowRegistry.shared.closeAll()
 
         let container = try ModelContainer(
             for: Subject.self, SemesterResult.self, GradeEntry.self, StudentProfile.self,
@@ -157,6 +254,7 @@ struct SwipeRowScrollTests {
         defer {
             window.isHidden = true
             window.rootViewController = nil
+            SwipeRowRegistry.shared.closeAll()
         }
 
         // Ohne diesen Anstoss bleibt der Baum der Bedienungshilfen im
@@ -174,6 +272,21 @@ struct SwipeRowScrollTests {
         walk(window)
 
         try await body(window, try #require(found))
+    }
+
+    /// Alle Erkenner dieses Namens im Fensterbaum.
+    private static func recognizers(named name: String, in root: UIView) -> [UIGestureRecognizer] {
+        var found: [UIGestureRecognizer] = []
+
+        func walk(_ view: UIView) {
+            for recognizer in view.gestureRecognizers ?? [] where recognizer.name == name {
+                found.append(recognizer)
+            }
+            for sub in view.subviews { walk(sub) }
+        }
+
+        walk(root)
+        return found
     }
 
     // MARK: - Der Baum der Bedienungshilfen
@@ -207,10 +320,12 @@ struct SwipeRowScrollTests {
 ///
 /// Die Berührungen entstehen als `UITouch` und gehen über `sendEvent` in das
 /// Fenster — dieselbe Zustellung, die UIKit auch für einen echten Finger
-/// benutzt. Die Erkenner von UIKit sehen sie und reagieren; das eigene
-/// Ereignissystem von SwiftUI erreicht dieser Weg nicht, eine `DragGesture`
-/// bekommt aus ihnen also nichts zu sehen. Für alles, was an einer
-/// `UIScrollView` hängt — und das Scrollen hängt an ihr —, genügt er.
+/// benutzt. Alle Erkenner von UIKit sehen sie und reagieren darauf: der Pan der
+/// `UIScrollView` ebenso wie der der Zeile. SwiftUIs eigenes Ereignissystem
+/// erreicht dieser Weg nicht — eine `DragGesture` bekäme aus diesen Berührungen
+/// nichts zu sehen. Dass beide Seiten der Wischgeste hier ankommen, ist deshalb
+/// keine Nebensache, sondern der Grund, warum das Zusammenspiel überhaupt
+/// messbar ist.
 @MainActor
 enum SyntheticFinger {
 

@@ -89,15 +89,18 @@ struct PadDashboardView: View {
     /// gewonnene Fläche. Gleiche Höhe ohne Loch — die Zeilen atmen, statt oben
     /// zu kleben.
     ///
-    /// Die Breiten folgen dem Inhalt: „Halbjahre" hat vier kurze Zeilen aus
-    /// Kürzel, Balken und Zahl und braucht wenig, „Auf einen Blick" sechs Zeilen
-    /// mit ausgeschriebenen Werten und bekommt darum den Rest.
+    /// Die Breiten folgen dem Inhalt, aber nicht sklavisch: „Auf einen Blick"
+    /// hat zwar die längsten Zeilen, füllt seine Breite aber mit Leerraum
+    /// zwischen Bezeichnung und Wert. „Halbjahre" dagegen trägt vier Balken,
+    /// und ein Balken wird mit jeder gewonnenen Breite tatsächlich genauer
+    /// lesbar. Der mittleren Karte etwas mehr zu geben kostet die rechte also
+    /// nichts und bringt links etwas.
     private var topRow: some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .top, spacing: ScoreMetrics.Spacing.md) {
                 scoreCard.frame(width: 356)
-                semesterCard.frame(width: 212)
-                glanceCard.frame(minWidth: 340)
+                semesterCard.frame(width: 268)
+                glanceCard.frame(minWidth: 300)
             }
             .fixedSize(horizontal: false, vertical: true)
 

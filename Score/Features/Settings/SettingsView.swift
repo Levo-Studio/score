@@ -399,13 +399,11 @@ struct ScoreExport: Codable, Transferable {
         var kind: String
         var writtenShare: Int
         var activeSemesters: [Int]
-        var isOralExamSubject: Bool
         var semesters: [Semester]
     }
 
     struct Semester: Codable {
         var index: Int
-        var isManuallyBracketed: Bool
         var entries: [Entry]
     }
 
@@ -435,11 +433,9 @@ struct ScoreExport: Codable, Transferable {
                 kind: subject.kind.rawValue,
                 writtenShare: subject.writtenShare,
                 activeSemesters: subject.activeSemesters,
-                isOralExamSubject: subject.isOralExamSubject,
                 semesters: subject.orderedSemesters.map { semester in
                     Semester(
                         index: semester.index,
-                        isManuallyBracketed: semester.isManuallyBracketed,
                         entries: semester.orderedEntries.map { entry in
                             Entry(
                                 title: entry.title,

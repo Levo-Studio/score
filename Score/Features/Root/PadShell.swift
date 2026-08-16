@@ -204,6 +204,7 @@ struct PadShell: View {
             // Sollte sie es doch, steht die Übersicht darunter, und das ist genau
             // der Inhalt, den die Überlagerung erklärt.
             PadDashboardView(
+                profile: profile,
                 subjects: subjects,
                 semesterIndex: $semesterIndex,
                 route: navigation

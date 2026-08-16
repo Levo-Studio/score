@@ -56,11 +56,12 @@ struct ProfileSwitchSheet: View {
                 .padding(.top, 14)
                 .sheetContentAppearance(index: 3)
         }
-        // Die Masse der Vorlage für die mittige Karte: 22 oben, 24 seitlich, 24
-        // unten — dieselben wie beim Eingabe-Blatt.
-        .padding(.horizontal, 24)
-        .padding(.top, 22)
-        .padding(.bottom, 24)
+        // Dieselben Masse wie beim Bearbeiten des Profils: Die beiden Blätter
+        // kommen aus derselben Ecke der Einstellungen und gehen gleich auf, also
+        // dürfen sie ihren Inhalt nicht unterschiedlich einrücken.
+        .padding(.horizontal, ScoreMetrics.Spacing.lg)
+        .padding(.top, 18)
+        .padding(.bottom, 28)
     }
 
     // MARK: - Kopf
@@ -250,10 +251,16 @@ struct ProfileSwitchRequest: Identifiable {
 
 extension View {
 
-    /// Legt „Konto wechseln" als mittiges Blatt über den Bildschirm.
+    /// Lässt „Konto wechseln" von unten aufsteigen.
     ///
-    /// Dieselbe Präsentation wie beim Eingabe-Blatt für Leistungen — iPhone und
-    /// iPad teilen sie sich, damit es nicht zwei Sorten Blatt gibt.
+    /// Dieselbe Präsentation wie beim Bearbeiten des Profils — dort wählt man
+    /// sein Bild und seinen Namen, hier sein Konto. Beides sind Einstellungen zur
+    /// eigenen Person, beide kommen aus derselben Zeile der Einstellungen, also
+    /// dürfen sie nicht unterschiedlich aufgehen.
+    ///
+    /// Bewusst **kein** ``ScoreOverlaySheet``: Das mittige Blatt gehört zu dem,
+    /// was über einem Inhalt liegt und ihn erklärt — die Aufschlüsselung, das
+    /// Eintragen einer Leistung. Ein Kontowechsel steht für sich.
     func profileSwitchSheet(
         request: Binding<ProfileSwitchRequest?>,
         profiles: [StudentProfile],
@@ -261,13 +268,21 @@ extension View {
         onSelect: @escaping (StudentProfile) -> Void,
         onRegisterNew: (() -> Void)?
     ) -> some View {
-        scoreOverlaySheet(item: request, width: 420) { _ in
-            ProfileSwitchSheet(
-                profiles: profiles,
-                activeIdentifier: activeIdentifier,
-                onSelect: onSelect,
-                onRegisterNew: onRegisterNew
-            )
+        sheet(item: request) { _ in
+            ScrollView {
+                ProfileSwitchSheet(
+                    profiles: profiles,
+                    activeIdentifier: activeIdentifier,
+                    onSelect: onSelect,
+                    onRegisterNew: onRegisterNew
+                )
+            }
+            .background(ScorePalette.surface)
+            .scrollBounceBehavior(.basedOnSize)
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+            .presentationBackground(ScorePalette.surface)
+            .presentationCornerRadius(ScoreMetrics.Radius.sheet)
         }
     }
 }

@@ -78,6 +78,25 @@ final class DashboardViewModel {
         "\(outcome.includedCount)/\(BlockOneCalculator.totalCourseCount)"
     }
 
+    // MARK: - Begrüssung
+
+    /// Die Stufe, in der die Begrüssung gerade steht.
+    ///
+    /// Die Views hängen ihre Animation an diesen Wert und nicht an den Text: So
+    /// bewegt sich die Zeile nur, wenn sie wirklich eine andere wird, und nicht
+    /// bei jeder Nachkommastelle.
+    var greetingStage: DashboardGreeting.Stage {
+        DashboardGreeting.stage(
+            expectedGrade: outcome.expectedGrade,
+            recordedCount: outcome.recordedCount
+        )
+    }
+
+    /// Die fertige Begrüssung samt Vornamen.
+    func greetingText(firstName: String) -> String {
+        DashboardGreeting.text(for: greetingStage, firstName: firstName)
+    }
+
     // MARK: - Halbjahre
 
     /// Der Punkteschnitt aller Fächer in einem Halbjahr.

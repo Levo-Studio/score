@@ -68,7 +68,7 @@ struct SwipeRowScrollTests {
             let row = try #require(Self.frame(startingWith: "Biologie", in: window))
             let before = scrollView.contentOffset.y
 
-            try await Self.drag(
+            try await SyntheticFinger.drag(
                 from: CGPoint(x: row.midX, y: row.midY),
                 by: CGSize(width: 0, height: -240),
                 in: window
@@ -90,12 +90,12 @@ struct SwipeRowScrollTests {
             // Vorher steht das letzte Fach unter der Kante des Fensters.
             #expect(below.minY > window.bounds.maxY)
 
-            try await Self.drag(
+            try await SyntheticFinger.drag(
                 from: CGPoint(x: row.midX, y: row.midY),
                 by: CGSize(width: 0, height: -260),
                 in: window
             )
-            try await Self.drag(
+            try await SyntheticFinger.drag(
                 from: CGPoint(x: row.midX, y: row.midY),
                 by: CGSize(width: 0, height: -260),
                 in: window
@@ -176,14 +176,46 @@ struct SwipeRowScrollTests {
         try await body(window, try #require(found))
     }
 
-    // MARK: - Der gebaute Finger
+    // MARK: - Der Baum der Bedienungshilfen
+
+    /// Das Rechteck des ersten Elements, dessen Beschriftung so beginnt.
+    private static func frame(startingWith key: String.LocalizationValue, in root: UIView) -> CGRect? {
+        let wanted = String.scoreLocalized(key)
+        return all(in: root)
+            .first { ($0.accessibilityLabel ?? "").hasPrefix(wanted) }?
+            .accessibilityFrame
+    }
+
+    /// Alle Elemente des Baums — über `subviews` und `accessibilityElements`.
+    private static func all(in root: NSObject) -> [NSObject] {
+        var found: [NSObject] = []
+
+        func walk(_ node: NSObject) {
+            found.append(node)
+            for child in (node.accessibilityElements as? [NSObject]) ?? [] { walk(child) }
+            if let view = node as? UIView {
+                for subview in view.subviews { walk(subview) }
+            }
+        }
+
+        walk(root)
+        return found
+    }
+}
+
+/// Ein Finger, von Hand gebaut.
+///
+/// Die Berührungen entstehen als `UITouch` und gehen über `sendEvent` in das
+/// Fenster — dieselbe Zustellung, die UIKit auch für einen echten Finger
+/// benutzt. Die Erkenner von UIKit sehen sie und reagieren; das eigene
+/// Ereignissystem von SwiftUI erreicht dieser Weg nicht, eine `DragGesture`
+/// bekommt aus ihnen also nichts zu sehen. Für alles, was an einer
+/// `UIScrollView` hängt — und das Scrollen hängt an ihr —, genügt er.
+@MainActor
+enum SyntheticFinger {
 
     /// Zieht einen Finger von einem Punkt aus über eine Strecke.
-    ///
-    /// Die Berührungen werden von Hand gebaut und über `sendEvent` in das Fenster
-    /// gegeben — dieselbe Zustellung, die UIKit auch für einen echten Finger
-    /// benutzt. Deshalb sieht die `UIScrollView` sie und bewegt sich.
-    private static func drag(
+    static func drag(
         from start: CGPoint,
         by translation: CGSize,
         in window: UIWindow,
@@ -230,31 +262,5 @@ struct SwipeRowScrollTests {
         send(.ended, to: CGPoint(x: start.x + translation.width, y: start.y + translation.height))
         // Der Nachlauf der Liste braucht einen Moment, bis er ausgelaufen ist.
         try await Task.sleep(for: .milliseconds(600))
-    }
-
-    // MARK: - Der Baum der Bedienungshilfen
-
-    /// Das Rechteck des ersten Elements, dessen Beschriftung so beginnt.
-    private static func frame(startingWith key: String.LocalizationValue, in root: UIView) -> CGRect? {
-        let wanted = String.scoreLocalized(key)
-        return all(in: root)
-            .first { ($0.accessibilityLabel ?? "").hasPrefix(wanted) }?
-            .accessibilityFrame
-    }
-
-    /// Alle Elemente des Baums — über `subviews` und `accessibilityElements`.
-    private static func all(in root: NSObject) -> [NSObject] {
-        var found: [NSObject] = []
-
-        func walk(_ node: NSObject) {
-            found.append(node)
-            for child in (node.accessibilityElements as? [NSObject]) ?? [] { walk(child) }
-            if let view = node as? UIView {
-                for subview in view.subviews { walk(subview) }
-            }
-        }
-
-        walk(root)
-        return found
     }
 }

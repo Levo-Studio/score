@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Das Zeichen am rechten Rand der Zeile „Jetzt abgleichen".
+/// Das Zeichen am rechten Rand der Zeile „Jetzt synchronisieren".
 ///
 /// Vier Zustände, und jeder endet: Der Pfeil liegt ruhig, dreht sich, solange
 /// ein Lauf unterwegs ist, wird zum Haken, wenn er durch ist, und fällt danach

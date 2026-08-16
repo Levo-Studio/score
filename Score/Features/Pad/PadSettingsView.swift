@@ -110,7 +110,7 @@ struct PadSettingsView: View {
                 .disabled(profile == nil)
             }
 
-            PadSettingsRow(title: "Mit iCloud abgleichen", isFirst: false) {
+            PadSettingsRow(title: "Mit iCloud synchronisieren", isFirst: false) {
                 ScoreSwitch(isOn: settings.isCloudSyncEnabled)
             }
 
@@ -140,7 +140,7 @@ struct PadSettingsView: View {
             Button {
                 sync.start()
             } label: {
-                PadSettingsRow(title: "Jetzt abgleichen", isFirst: false) {
+                PadSettingsRow(title: "Jetzt synchronisieren", isFirst: false) {
                     ManualCloudSyncIndicator(phase: sync.phase, size: 13.5)
                 }
             }
@@ -151,7 +151,7 @@ struct PadSettingsView: View {
                 PadSettingsNote(text: Text(note))
             }
 
-            PadSettingsRow(title: "Zuletzt abgeglichen", isFirst: false) {
+            PadSettingsRow(title: "Zuletzt synchronisiert", isFirst: false) {
                 PadSettingsValue(text: lastSyncedText)
             }
 
@@ -181,7 +181,7 @@ struct PadSettingsView: View {
         // Der Hinweis unter dem Schalter kommt und geht mit ihm — die Karte
         // wächst dabei, statt zu springen.
         .scoreAnimation(ScoreMotion.valueChange, value: settings.wrappedValue.isCloudSyncEnabled)
-        // Dasselbe für die Erklärung unter „Jetzt abgleichen".
+        // Dasselbe für die Erklärung unter „Jetzt synchronisieren".
         .scoreAnimation(ScoreMotion.valueChange, value: sync.phase)
     }
 
@@ -192,7 +192,7 @@ struct PadSettingsView: View {
         sync.canStart && syncStatus.state.allowsSync
     }
 
-    /// Was in der Zeile „Zuletzt abgeglichen" steht.
+    /// Was in der Zeile „Zuletzt synchronisiert" steht.
     private var lastSyncedText: String {
         ManualCloudSync.lastSyncedText(
             date: sync.lastSyncedAt,

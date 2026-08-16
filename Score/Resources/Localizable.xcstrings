@@ -865,57 +865,6 @@
         }
       }
     },
-    "Abgeglichen" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abgeglichen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Synced"
-          }
-        }
-      }
-    },
-    "Abgleich fehlgeschlagen" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abgleich fehlgeschlagen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sync failed"
-          }
-        }
-      }
-    },
-    "Abgleich gestört" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Abgleich gestört"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sync problem"
-          }
-        }
-      }
-    },
     "Abi %@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1521,13 +1470,13 @@
         }
       }
     },
-    "Beende Score und öffne es neu — dann beginnt der Abgleich." : {
+    "Beende Score und öffne es neu — dann beginnt die Synchronisierung." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Beende Score und öffne es neu — dann beginnt der Abgleich."
+            "value" : "Beende Score und öffne es neu — dann beginnt die Synchronisierung."
           }
         },
         "en" : {
@@ -2315,57 +2264,6 @@
         }
       }
     },
-    "Der Abgleich ist abgeschaltet. Neue Noten bleiben auf diesem Gerät; was bereits in deiner iCloud liegt, bleibt dort unangetastet." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der Abgleich ist abgeschaltet. Neue Noten bleiben auf diesem Gerät; was bereits in deiner iCloud liegt, bleibt dort unangetastet."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Syncing is off. New grades stay on this device; whatever is already in your iCloud stays there untouched."
-          }
-        }
-      }
-    },
-    "Der Abgleich ist nicht durchgelaufen. Versuch es später noch einmal." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der Abgleich ist nicht durchgelaufen. Versuch es später noch einmal."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The sync did not finish. Try again later."
-          }
-        }
-      }
-    },
-    "Der Abgleich meldet sich nicht. Prüf deine Verbindung und versuch es später noch einmal." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der Abgleich meldet sich nicht. Prüf deine Verbindung und versuch es später noch einmal."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The sync is not responding. Check your connection and try again later."
-          }
-        }
-      }
-    },
     "Der Speicher liess sich nicht neu öffnen. Deine Daten sind unverändert — versuch es gleich noch einmal." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2491,6 +2389,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The basic courses you picked on top — everything else you take."
+          }
+        }
+      }
+    },
+    "Die Synchronisierung ist abgeschaltet. Neue Noten bleiben auf diesem Gerät; was bereits in deiner iCloud liegt, bleibt dort unangetastet." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Synchronisierung ist abgeschaltet. Neue Noten bleiben auf diesem Gerät; was bereits in deiner iCloud liegt, bleibt dort unangetastet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syncing is off. New grades stay on this device; whatever is already in your iCloud stays there untouched."
+          }
+        }
+      }
+    },
+    "Die Synchronisierung ist nicht durchgelaufen. Versuch es später noch einmal." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Synchronisierung ist nicht durchgelaufen. Versuch es später noch einmal."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The sync did not finish. Try again later."
+          }
+        }
+      }
+    },
+    "Die Synchronisierung meldet sich nicht. Prüf deine Verbindung und versuch es später noch einmal." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Synchronisierung meldet sich nicht. Prüf deine Verbindung und versuch es später noch einmal."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The sync is not responding. Check your connection and try again later."
           }
         }
       }
@@ -3572,13 +3521,13 @@
         }
       }
     },
-    "Jetzt abgleichen" : {
+    "Jetzt synchronisieren" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jetzt abgleichen"
+            "value" : "Jetzt synchronisieren"
           }
         },
         "en" : {
@@ -4262,13 +4211,13 @@
         }
       }
     },
-    "Mit iCloud abgleichen" : {
+    "Mit iCloud synchronisieren" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mit iCloud abgleichen"
+            "value" : "Mit iCloud synchronisieren"
           }
         },
         "en" : {
@@ -4721,13 +4670,13 @@
         }
       }
     },
-    "Ohne angemeldetes iCloud-Konto gibt es nichts abzugleichen." : {
+    "Ohne angemeldetes iCloud-Konto gibt es nichts zu synchronisieren." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ohne angemeldetes iCloud-Konto gibt es nichts abzugleichen."
+            "value" : "Ohne angemeldetes iCloud-Konto gibt es nichts zu synchronisieren."
           }
         },
         "en" : {
@@ -5214,23 +5163,6 @@
         }
       }
     },
-    "Score gleicht bis zum nächsten Start weiter ab. Beende die App und öffne sie neu, damit der Abgleich endet." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Score gleicht bis zum nächsten Start weiter ab. Beende die App und öffne sie neu, damit der Abgleich endet."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Score keeps syncing until the next launch. Quit the app and open it again to stop it."
-          }
-        }
-      }
-    },
     "Score nimmt die besten %lld Ergebnisse dieses Fachs, die übrigen bleiben aussen vor." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5285,6 +5217,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Score calculates according to Baden-Württemberg law. You can enter another state, the calculation stays the same."
+          }
+        }
+      }
+    },
+    "Score synchronisiert bis zum nächsten Start weiter. Beende die App und öffne sie neu, damit die Synchronisierung endet." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score synchronisiert bis zum nächsten Start weiter. Beende die App und öffne sie neu, damit die Synchronisierung endet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score keeps syncing until the next launch. Quit the app and open it again to stop it."
           }
         }
       }
@@ -5470,6 +5419,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "It only appears on your dashboard, nowhere else."
+          }
+        }
+      }
+    },
+    "Synchronisiert" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisiert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synced"
+          }
+        }
+      }
+    },
+    "Synchronisierung fehlgeschlagen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisierung fehlgeschlagen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync failed"
+          }
+        }
+      }
+    },
+    "Synchronisierung gestört" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisierung gestört"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync problem"
           }
         }
       }
@@ -5967,23 +5967,6 @@
         }
       }
     },
-    "Wird abgeglichen …" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wird abgeglichen …"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Syncing …"
-          }
-        }
-      }
-    },
     "Wird geprüft …" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5997,6 +5980,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Checking …"
+          }
+        }
+      }
+    },
+    "Wird synchronisiert …" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird synchronisiert …"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syncing …"
           }
         }
       }
@@ -6120,13 +6120,13 @@
         }
       }
     },
-    "Zuletzt abgeglichen" : {
+    "Zuletzt synchronisiert" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zuletzt abgeglichen"
+            "value" : "Zuletzt synchronisiert"
           }
         },
         "en" : {

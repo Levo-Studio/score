@@ -210,13 +210,13 @@ extension CloudSyncStatus.State {
         switch self {
         case .unknown: "Wird geprüft …"
         case .ready: "Bereit"
-        case .syncing: "Wird abgeglichen …"
+        case .syncing: "Wird synchronisiert …"
         case .synced: "Aktuell"
         case .noAccount: "Kein iCloud-Konto"
         case .off: "Ausgeschaltet"
         case .unavailable: "In diesem Build nicht verfügbar"
         case .restricted: "iCloud eingeschränkt"
-        case .failed: "Abgleich gestört"
+        case .failed: "Synchronisierung gestört"
         }
     }
 
@@ -230,7 +230,7 @@ extension CloudSyncStatus.State {
         case .unknown, .ready, .syncing, .synced:
             nil
         case .off:
-            Text("Der Abgleich ist abgeschaltet. Neue Noten bleiben auf diesem Gerät; was bereits in deiner iCloud liegt, bleibt dort unangetastet.")
+            Text("Die Synchronisierung ist abgeschaltet. Neue Noten bleiben auf diesem Gerät; was bereits in deiner iCloud liegt, bleibt dort unangetastet.")
         case .unavailable:
             Text("Dieser Build ist nicht signiert und kann iCloud nicht nutzen. Deine Daten bleiben auf diesem Gerät.")
         case .noAccount:
@@ -244,8 +244,8 @@ extension CloudSyncStatus.State {
 
     /// Ob in dieser Sitzung überhaupt etwas abzugleichen ist.
     ///
-    /// Entscheidet zweierlei: ob „Jetzt abgleichen" bedienbar ist, und ob
-    /// „Zuletzt abgeglichen" einen Zeitpunkt zeigen darf. Ist der Abgleich aus
+    /// Entscheidet zweierlei: ob „Jetzt synchronisieren" bedienbar ist, und ob
+    /// „Zuletzt synchronisiert" einen Zeitpunkt zeigen darf. Ist der Abgleich aus
     /// oder kein Konto angemeldet, wäre ein Datum dort eine Behauptung über
     /// einen Stand, den gerade niemand hält.
     ///

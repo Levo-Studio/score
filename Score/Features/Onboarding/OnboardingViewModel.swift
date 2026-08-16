@@ -335,7 +335,16 @@ final class OnboardingViewModel {
     /// Die Klassenstufe entscheidet nur, welche davon als belegt vorbelegt sind:
     /// wer in Kursstufe 1 einsteigt, hat 3/4 und 4/4 noch vor sich, soll sie aber
     /// später nicht neu anlegen müssen.
-    func finish(in context: ModelContext) {
+    ///
+    /// Fächer, die es unter diesem Namen schon gibt, werden übersprungen. Das
+    /// greift beim zweiten Durchlauf: Wer aus den Einstellungen heraus ein
+    /// weiteres Profil anlegt, bekommt kein zweites „Mathematik" daneben — die
+    /// Fächer hängen an der iCloud und nicht am Profil, sie sind also schon da.
+    ///
+    /// - Returns: Das angelegte Profil, damit die Aufrufstelle es zum aktiven
+    ///   Profil dieses Geräts machen kann.
+    @discardableResult
+    func finish(in context: ModelContext) -> StudentProfile {
         let profile = StudentProfile(
             firstName: firstName.trimmingCharacters(in: .whitespacesAndNewlines),
             classLevel: classLevel,
@@ -347,24 +356,35 @@ final class OnboardingViewModel {
 
         AppSettings.shared.language = language
 
+        // Einmal abgefragt und nicht je Fach: Ein `fetch` pro Fachname wären ein
+        // Dutzend Abfragen für eine Auskunft, die sich nicht ändert.
+        let existing = Set(
+            ((try? context.fetch(FetchDescriptor<Subject>())) ?? []).map(\.name)
+        )
+
         var sortIndex = 0
         for name in advancedSubjects {
-            insertSubject(named: name, kind: .leistungsfach, sortIndex: &sortIndex, in: context)
+            insertSubject(named: name, kind: .leistungsfach, sortIndex: &sortIndex, skipping: existing, in: context)
         }
         for name in sortedRequiredBasicSubjects {
-            insertSubject(named: name, kind: .pflichtBasisfach, sortIndex: &sortIndex, in: context)
+            insertSubject(named: name, kind: .pflichtBasisfach, sortIndex: &sortIndex, skipping: existing, in: context)
         }
         for name in sortedElectiveBasicSubjects {
-            insertSubject(named: name, kind: .wahlBasisfach, sortIndex: &sortIndex, in: context)
+            insertSubject(named: name, kind: .wahlBasisfach, sortIndex: &sortIndex, skipping: existing, in: context)
         }
+
+        return profile
     }
 
     private func insertSubject(
         named name: String,
         kind: SubjectKind,
         sortIndex: inout Int,
+        skipping existing: Set<String>,
         in context: ModelContext
     ) {
+        guard !existing.contains(name) else { return }
+
         let template = SubjectCatalog.template(named: name)
 
         let subject = Subject(

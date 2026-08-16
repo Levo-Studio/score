@@ -1052,6 +1052,23 @@
         }
       }
     },
+    "Aktiv" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktiv"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active"
+          }
+        }
+      }
+    },
     "Aktuell" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1534,6 +1551,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quit Score and open it again — then syncing begins."
+          }
+        }
+      }
+    },
+    "Beide behalten" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beide behalten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep both"
+          }
+        }
+      }
+    },
+    "Beim Einrichten lag schon ein Profil in iCloud — es kam erst an, als du längst dabei warst. Jetzt stehen zwei nebeneinander. Behalte eines davon oder führe beide weiter." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beim Einrichten lag schon ein Profil in iCloud — es kam erst an, als du längst dabei warst. Jetzt stehen zwei nebeneinander. Behalte eines davon oder führe beide weiter."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A profile was already in iCloud when you set things up — it only arrived once you were well underway. Now there are two side by side. Keep one of them, or carry on with both."
           }
         }
       }
@@ -2111,6 +2162,57 @@
         }
       }
     },
+    "Das Profil von %@ wird gelöscht — auch auf deinen anderen Geräten. Vorname, Bild, Klassenstufe, Jahrgang und Bundesland sind danach weg." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Profil von %@ wird gelöscht — auch auf deinen anderen Geräten. Vorname, Bild, Klassenstufe, Jahrgang und Bundesland sind danach weg."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@’s profile will be deleted — on your other devices too. First name, photo, year group, graduation year and state will be gone."
+          }
+        }
+      }
+    },
+    "Das andere Profil löschen?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das andere Profil löschen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete the other profile?"
+          }
+        }
+      }
+    },
+    "Das andere Profil wird gelöscht — auch auf deinen anderen Geräten." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das andere Profil wird gelöscht — auch auf deinen anderen Geräten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The other profile will be deleted — on your other devices too."
+          }
+        }
+      }
+    },
     "Das gefundene Profil und alle Kurse werden gelöscht — auch auf deinen anderen Geräten." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2389,6 +2491,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "German is the base language — that is how the upper secondary terms read on your report card, too."
+          }
+        }
+      }
+    },
+    "Dich gibt es zweimal" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dich gibt es zweimal"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There are two of you"
           }
         }
       }
@@ -3095,6 +3214,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Subjects"
+          }
+        }
+      }
+    },
+    "Fächer und Noten hängen an deiner iCloud, nicht am Profil. Beide Profile zeigen dieselben Kurse — egal, wofür du dich entscheidest." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fächer und Noten hängen an deiner iCloud, nicht am Profil. Beide Profile zeigen dieselben Kurse — egal, wofür du dich entscheidest."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subjects and grades belong to your iCloud, not to a profile. Both profiles show the same courses — whichever you choose."
           }
         }
       }
@@ -3850,6 +3986,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "If it is added, written and oral count in a ratio of 2 : 1."
+          }
+        }
+      }
+    },
+    "Konto wechseln" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konto wechseln"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch account"
           }
         }
       }
@@ -4680,6 +4833,23 @@
         }
       }
     },
+    "Neu registrieren" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neu registrieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Register new"
+          }
+        }
+      }
+    },
     "Neues Fach" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4901,6 +5071,23 @@
         }
       }
     },
+    "Nur %@ behalten" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur %@ behalten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep only %@"
+          }
+        }
+      }
+    },
     "Nur belegte Kurse zählen mit. Abgewählte bleiben gespeichert, gehen aber nicht in den Schnitt ein." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4931,6 +5118,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Just your first name, and only for the greeting. Score creates no account and sends nothing to a server."
+          }
+        }
+      }
+    },
+    "Nur dieses Profil behalten" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur dieses Profil behalten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep only this profile"
           }
         }
       }
@@ -5135,6 +5339,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Edit profile"
+          }
+        }
+      }
+    },
+    "Profil von %@ löschen?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil von %@ löschen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete %@’s profile?"
           }
         }
       }
@@ -6579,6 +6800,23 @@
         }
       }
     },
+    "Zwei Profile" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwei Profile"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Two profiles"
+          }
+        }
+      }
+    },
     "Zwei deiner drei Leistungsfächer zählen doppelt. Ohne eigene Wahl nimmt Score die Kombination, die am besten ausfällt." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6766,6 +7004,23 @@
         }
       }
     },
+    "bleiben. Sie hängen an deiner iCloud und gehörten nie nur einem der beiden Profile." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bleiben. Sie hängen an deiner iCloud und gehörten nie nur einem der beiden Profile."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "stay. They belong to your iCloud and never belonged to just one of the two profiles."
+          }
+        }
+      }
+    },
     "fällt raus" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6898,6 +7153,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "open"
+          }
+        }
+      }
+    },
+    "sie hängen an deiner iCloud und gehören allen Profilen gemeinsam. Ein Wechsel tauscht den Namen über den Kursen, nicht die Kurse." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sie hängen an deiner iCloud und gehören allen Profilen gemeinsam. Ein Wechsel tauscht den Namen über den Kursen, nicht die Kurse."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "they belong to your iCloud and are shared by every profile. Switching swaps the name above the courses, not the courses themselves."
           }
         }
       }

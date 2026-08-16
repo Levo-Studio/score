@@ -23,6 +23,14 @@ struct OnboardingView: View {
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
+    /// Das frisch angelegte Profil ist das, mit dem dieses Gerät weiterläuft.
+    ///
+    /// Ohne diese Zeile führe ein zweites, aus den Einstellungen heraus
+    /// angelegtes Profil ins Leere: Die App nähme weiterhin das erste der
+    /// Reihenfolge, und der Nutzer stünde nach der Einrichtung wieder unter dem
+    /// alten Namen.
+    @AppStorage(ActiveProfile.identifierKey) private var activeProfileIdentifier = ""
+
     var body: some View {
         ZStack {
             ScorePalette.background
@@ -121,7 +129,8 @@ struct OnboardingView: View {
         guard model.canAdvance else { return }
         if model.step == .summary {
             onWillFinish?()
-            model.finish(in: modelContext)
+            let profile = model.finish(in: modelContext)
+            activeProfileIdentifier = profile.identifier.uuidString
         } else {
             model.advance()
         }

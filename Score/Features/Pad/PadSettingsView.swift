@@ -26,14 +26,29 @@ struct PadSettingsView: View {
         _sync = State(initialValue: sync)
     }
 
-    /// Es gibt genau ein Profil. Die Abfrage liefert trotzdem eine Liste, weil ein
-    /// unterbrochener CloudKit-Erstabgleich theoretisch zwei anlegen kann; genutzt
-    /// wird dann das erste.
+    /// Meist gibt es genau ein Profil, aber nicht zwangsläufig: Wer zwei parallel
+    /// führt, hat hier zwei — und wechselt zwischen ihnen über das Blatt unten.
     @Query private var profiles: [StudentProfile]
 
     @Query(sort: \Subject.sortIndex) private var subjects: [Subject]
 
-    private var profile: StudentProfile? { profiles.first }
+    /// Welches Profil dieses Gerät führt. Gerätesache, deshalb `AppStorage`.
+    @AppStorage(ActiveProfile.identifierKey) private var activeProfileIdentifier = ""
+
+    /// Der Zustandsautomat der Wurzel, für „Neu registrieren". Optional, weil
+    /// Vorschauen und Belegbilder diesen Bildschirm ohne ihn zeigen.
+    @Environment(ProfileHandoffModel.self) private var handoff: ProfileHandoffModel?
+
+    @State private var switchRequest: ProfileSwitchRequest?
+
+    private var completedProfiles: [StudentProfile] {
+        ProfileRoster.sorted(profiles.filter(\.hasCompletedOnboarding))
+    }
+
+    private var profile: StudentProfile? {
+        ActiveProfile.resolve(from: completedProfiles, identifier: activeProfileIdentifier)
+            ?? profiles.first
+    }
 
     var body: some View {
         @Bindable var settings = settings
@@ -46,6 +61,7 @@ struct PadSettingsView: View {
                     // dem, was eingestellt wird.
                     VStack(spacing: ScoreMetrics.Spacing.md) {
                         profileCard
+                        accountCard
                         settingsCard(settings: $settings)
                     }
                     .frame(width: 452)
@@ -55,6 +71,7 @@ struct PadSettingsView: View {
 
                 VStack(spacing: ScoreMetrics.Spacing.lg) {
                     profileCard
+                    accountCard
                     settingsCard(settings: $settings)
                     explanationColumn
                 }
@@ -69,6 +86,13 @@ struct PadSettingsView: View {
             // bei jedem Öffnen der Einstellungen neu abfragen.
             await syncStatus.refresh()
         }
+        .profileSwitchSheet(
+            request: $switchRequest,
+            profiles: completedProfiles,
+            activeIdentifier: profile?.identifier,
+            onSelect: { activeProfileIdentifier = $0.identifier.uuidString },
+            onRegisterNew: handoff.map { model in { model.registerAdditionalProfile() } }
+        )
     }
 
     // MARK: - Profil
@@ -78,6 +102,36 @@ struct PadSettingsView: View {
         if let profile {
             ProfileCard(profile: profile)
         }
+    }
+
+    /// Der Wechsel zwischen mehreren Profilen — dieselbe Zeile wie auf dem
+    /// iPhone, nur in den Massen dieser Ansicht.
+    private var accountCard: some View {
+        VStack(spacing: 0) {
+            Button {
+                switchRequest = ProfileSwitchRequest()
+            } label: {
+                PadSettingsRow(title: "Konto wechseln", isFirst: true) {
+                    HStack(spacing: ScoreMetrics.Spacing.xs) {
+                        if completedProfiles.count > 1 {
+                            // Eine blanke Zahl, deshalb verbatim: `%lld` käme
+                            // gruppiert formatiert heraus.
+                            PadSettingsValue(text: String(completedProfiles.count))
+                        }
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(ScorePalette.inkSecondary)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+        }
+        .background(ScorePalette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .strokeBorder(ScorePalette.line, lineWidth: 1)
+        )
     }
 
     // MARK: - Schalter

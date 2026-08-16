@@ -33,8 +33,13 @@ final class StudentProfile {
     ///
     /// Wie bei `Subject` taugt die `persistentModelID` dafür nicht: sie ist
     /// lokal und wechselt, sobald ein Datensatz über CloudKit auf einem anderen
-    /// Gerät ankommt. `ProfileMerge` braucht aber ein Kriterium, das auf allen
-    /// Geräten dieselbe Antwort gibt, wenn es zwei Profile auseinanderhalten muss.
+    /// Gerät ankommt.
+    ///
+    /// Zwei Stellen hängen daran: ``ProfileRoster`` braucht ein Kriterium, das
+    /// auf allen Geräten dieselbe Antwort gibt, wenn es zwei Profile
+    /// auseinanderhalten muss. Und ``ActiveProfile`` merkt sich unter dieser UUID
+    /// in `UserDefaults`, welches Profil dieses Gerät führt — eine gemerkte
+    /// `persistentModelID` zeigte nach dem nächsten Abgleich ins Leere.
     @Attribute(.allowsCloudEncryption) var identifier: UUID = UUID()
 
     /// Der Vorname, wie er in der Begrüssung auftaucht.

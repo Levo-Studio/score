@@ -26,6 +26,14 @@ final class ProfileHandoffModel {
         case waitingForSync
         /// Ein fremdes Profil liegt vor und wird zur Übernahme angeboten.
         case offeringHandoff
+        /// Es liegen **mehrere** Profile vor, und der Nutzer entscheidet, was
+        /// damit geschieht.
+        ///
+        /// Der Unterschied zu ``offeringHandoff`` ist der Ausgangspunkt: Dort
+        /// hat dieses Gerät noch kein eigenes Profil und bekommt eines
+        /// angeboten. Hier gibt es zwei, und keines davon ist einfach das
+        /// richtige.
+        case choosingProfile
         /// Die Einrichtung läuft.
         case onboarding
         /// Das Profil gehört zu diesem Gerät, die App ist offen.
@@ -96,9 +104,41 @@ final class ProfileHandoffModel {
                 // seine bisherigen Eingaben unerklärt verschlucken.
                 stage = .offeringHandoff
             }
-        case .offeringHandoff, .ready:
+        case .offeringHandoff, .choosingProfile, .ready:
             break
         }
+    }
+
+    /// Es liegt mehr als ein abgeschlossenes Profil vor.
+    ///
+    /// Schlägt jeden anderen Zustand, auch ein laufendes Onboarding: Genau dann
+    /// ist die Frage am dringendsten — der Nutzer richtet sich gerade ein und
+    /// weiss noch nicht, dass es ihn schon gibt. Ihn stumm weiterlaufen zu
+    /// lassen führte zu dem Zustand, in dem früher `ProfileMerge` eines der
+    /// beiden Profile wegräumte.
+    ///
+    /// Ob die Frage überhaupt noch offen ist, entscheidet die Aufrufstelle: Wer
+    /// sich einmal für „beide behalten" entschieden hat, soll nicht bei jedem
+    /// Start erneut gefragt werden.
+    func duplicateProfilesDidAppear() {
+        guard stage != .choosingProfile else { return }
+        stage = .choosingProfile
+    }
+
+    /// Der Nutzer hat entschieden — eines behalten oder beide.
+    func profileChoiceDidResolve() {
+        stage = .ready
+    }
+
+    /// Der Nutzer legt aus den Einstellungen heraus ein **weiteres** Profil an.
+    ///
+    /// Anders als ``startFreshSetup()`` wird dabei nichts verworfen: Die
+    /// vorhandenen Profile bleiben stehen, es kommt eines dazu. Das Kennzeichen
+    /// muss trotzdem zurück — bis das Onboarding durch ist, ist auf diesem Gerät
+    /// wieder eine Einrichtung offen.
+    func registerAdditionalProfile() {
+        didCompleteOnboardingHere = false
+        stage = .onboarding
     }
 
     /// Die Wartezeit ist abgelaufen, ohne dass etwas angekommen ist.

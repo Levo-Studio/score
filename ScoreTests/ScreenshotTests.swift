@@ -789,10 +789,144 @@ struct ScreenshotTests {
     }
 
     /// Ein Profil, damit die Einstellungen ihre Karte oben zeigen.
-    private static func makeProfile(in context: ModelContext) {
+    @discardableResult
+    private static func makeProfile(in context: ModelContext) -> StudentProfile {
         let profile = StudentProfile(firstName: "Julius")
         profile.hasCompletedOnboarding = true
         context.insert(profile)
+        return profile
+    }
+
+    // MARK: - Zwei Profile
+
+    /// Die beiden Profile, zwischen denen entschieden wird.
+    ///
+    /// Feste UUIDs, damit die Reihenfolge in jedem Lauf dieselbe ist: Ohne sie
+    /// entschiede `ProfileRoster` nach zufälligen UUIDs, und Julius stünde mal
+    /// links, mal rechts. Ein Belegbild, das bei jedem Lauf anders aussieht,
+    /// belegt nichts.
+    private static func makeTwoProfiles(in context: ModelContext) -> (own: StudentProfile, arrived: StudentProfile) {
+        let own = StudentProfile(
+            identifier: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
+            firstName: "Julius",
+            classLevel: .kursstufe2,
+            federalState: "Baden-Württemberg",
+            graduationYear: 2027,
+            hasCompletedOnboarding: true
+        )
+        let arrived = StudentProfile(
+            identifier: UUID(uuidString: "FFFFFFFF-0000-0000-0000-000000000001")!,
+            firstName: "Jonas",
+            classLevel: .kursstufe1,
+            federalState: "Bayern",
+            graduationYear: 2028,
+            hasCompletedOnboarding: true
+        )
+        context.insert(own)
+        context.insert(arrived)
+        return (own, arrived)
+    }
+
+    /// Der Auswahlbildschirm mit beiden Konten — und die Warnung davor, eines
+    /// davon zu löschen.
+    ///
+    /// Die Warnung ist ein Zustand des Bildschirms und kein Systemdialog; sie
+    /// lässt sich deshalb genauso aufnehmen wie alles andere. Ausgelöst wird sie
+    /// über den Baum der Bedienungshilfen — also über denselben Weg, den auch
+    /// ein Finger nimmt, und nicht über einen Zustand, den nur der Test setzen kann.
+    @Test("Der Auswahlbildschirm mit zwei Konten, samt Warnung vor dem Löschen")
+    func profileChoice() async throws {
+        let context = try Self.makeContext()
+        _ = Self.makeSubjects(in: context)
+        let pair = Self.makeTwoProfiles(in: context)
+        try context.save()
+
+        let profiles = [pair.own, pair.arrived]
+
+        for scheme in ColorScheme.allCases {
+            for (name, size) in [("iphone", Device.phone), ("ipad", Device.pad)] {
+                try await capture("konten-auswahl-\(name)", scheme: scheme, size: size, context: context) {
+                    ProfileChoiceView(profiles: profiles, onKeepBoth: { _ in }, onKeepOne: { _ in })
+                }
+
+                try await capture(
+                    "konten-loeschwarnung-\(name)",
+                    scheme: scheme,
+                    size: size,
+                    context: context,
+                    beforeCapture: { window in
+                        try Self.tapKeepOnly(in: window)
+                    }
+                ) {
+                    ProfileChoiceView(profiles: profiles, onKeepBoth: { _ in }, onKeepOne: { _ in })
+                }
+            }
+        }
+    }
+
+    /// Tippt „Nur Julius behalten" an, damit die Warnung aufgeht.
+    ///
+    /// Über denselben Baum wie die übrigen Belegbilder, die einen Zustand erst
+    /// herstellen müssen — der Name steht als Platzhalter im Schlüssel und wird
+    /// deshalb genauso aufgelöst wie in der Ansicht selbst.
+    private static func tapKeepOnly(in window: UIWindow) throws {
+        let button = try #require(
+            node(labelled: "Nur \("Julius") behalten", in: window),
+            "Der Knopf zum Behalten eines Profils muss im Baum stehen"
+        )
+        _ = button.accessibilityActivate()
+    }
+
+    /// Das Blatt „Konto wechseln" über den Einstellungen.
+    @Test("Das Blatt zum Wechseln des Kontos")
+    func profileSwitchSheet() async throws {
+        let context = try Self.makeContext()
+        _ = Self.makeSubjects(in: context)
+        let pair = Self.makeTwoProfiles(in: context)
+        try context.save()
+
+        let profiles = [pair.own, pair.arrived]
+
+        for scheme in ColorScheme.allCases {
+            try await capture("konto-wechseln-iphone", scheme: scheme, size: Device.phone, context: context) {
+                ZStack {
+                    SettingsView(
+                        syncStatus: CloudSyncStatus(state: .ready, probesAccount: false),
+                        sync: .shared
+                    )
+                    .environment(AppSettings.shared)
+
+                    ScoreOverlaySheet(width: 420, onDismiss: {}) {
+                        ProfileSwitchSheet(
+                            profiles: profiles,
+                            activeIdentifier: pair.own.identifier,
+                            onSelect: { _ in },
+                            onRegisterNew: {}
+                        )
+                    }
+                }
+            }
+
+            try await capture("konto-wechseln-ipad", scheme: scheme, size: Device.pad, context: context) {
+                ZStack {
+                    PadSettingsView(
+                        syncStatus: CloudSyncStatus(state: .ready, probesAccount: false),
+                        sync: .shared
+                    )
+                    .environment(AppSettings.shared)
+                    .background(ScorePalette.background)
+
+                    ScoreOverlaySheet(width: 420, onDismiss: {}) {
+                        ProfileSwitchSheet(
+                            profiles: profiles,
+                            activeIdentifier: pair.own.identifier,
+                            onSelect: { _ in },
+                            onRegisterNew: {}
+                        )
+                    }
+                }
+            }
+        }
     }
 
     @Test("Die Fachansicht des iPads mit vielen Leistungen")

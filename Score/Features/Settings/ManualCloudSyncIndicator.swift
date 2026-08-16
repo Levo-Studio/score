@@ -48,8 +48,18 @@ struct ManualCloudSyncIndicator: View {
             .font(.system(size: size, weight: .semibold))
             .foregroundStyle(phase.isWarning ? ScorePalette.warn : ScorePalette.accent)
             .contentTransition(.symbolEffect(.replace))
-            .rotationEffect(.degrees(turns * 360))
             .scoreAnimation(ScoreMotion.tap, value: phase)
+            // Die Drehung steht bewusst **nach** `scoreAnimation` und hängt am
+            // laufenden Zustand. Zwei Gründe, beide aus einem Fehlerbild:
+            //
+            // Stünde sie davor, läge sie im Wirkungsbereich der Animation, die
+            // am Zustandswechsel hängt — das Zurückstellen auf 0 würde dann
+            // mitanimiert, und der Haken drehte sich beim Fertigwerden zurück.
+            //
+            // Und ohne die Abfrage trüge auch der Haken den zuletzt erreichten
+            // Winkel. Er stünde schief, und beim nächsten Lauf drehte er sich
+            // mit. Es dreht sich nur der Pfeil, und nur solange er unterwegs ist.
+            .rotationEffect(.degrees(isRunning ? turns * 360 : 0))
             .onChange(of: isRunning, initial: true) { _, running in
                 guard running, !reduceMotion else {
                     stopTurning()

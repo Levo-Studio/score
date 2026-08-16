@@ -45,7 +45,8 @@ struct PadSubjectDetailView: View {
         .overlay(alignment: .bottom) {
             undoOverlay
         }
-        .sheet(item: $editedEntry) { entry in
+        // Mittig und nicht von unten: siehe ``ScoreOverlaySheet``.
+        .scoreOverlaySheet(item: $editedEntry) { entry in
             GradeEntrySheet(entry: entry, subject: subject) {
                 delete(entry)
             }

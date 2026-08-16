@@ -66,7 +66,8 @@ struct SubjectDetailView: View {
         .sheet(isPresented: $isEditorPresented) {
             SubjectEditorView(target: .existing(subject)) { dismiss() }
         }
-        .sheet(item: $editedEntry) { entry in
+        // Mittig und nicht von unten: siehe ``ScoreOverlaySheet``.
+        .scoreOverlaySheet(item: $editedEntry) { entry in
             GradeEntrySheet(entry: entry, subject: subject) {
                 delete(entry)
             }

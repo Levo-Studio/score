@@ -324,6 +324,43 @@ struct ScreenshotTests {
         }
     }
 
+    @Test("Das Eingabe-Blatt einer Leistung, mittig über der Fachansicht")
+    func centeredEntrySheet() async throws {
+        let context = try Self.makeContext()
+        let subjects = Self.makeSubjects(in: context)
+        let physik = try #require(subjects.first { $0.name == "Physik" })
+        let created = Self.fillEntries(of: physik, semesterIndex: 3, written: 4, oral: 1, in: context)
+        let entry = try #require(created.first)
+
+        UserDefaults.standard.set(3, forKey: SubjectPreference.selectedSemesterKey)
+
+        for scheme in ColorScheme.allCases {
+            try await capture("eingabe-blatt-iphone", scheme: scheme, size: Device.phone, context: context) {
+                ZStack {
+                    NavigationStack { SubjectDetailView(subject: physik) }
+                    ScoreOverlaySheet(onDismiss: {}) {
+                        GradeEntrySheet(entry: entry, subject: physik) {}
+                    }
+                }
+            }
+
+            try await capture("eingabe-blatt-ipad", scheme: scheme, size: Device.pad, context: context) {
+                ZStack {
+                    PadSubjectDetailView(
+                        subject: physik,
+                        summaries: SubjectOverview.summaries(of: subjects, semesterIndex: 3),
+                        semesterIndex: .constant(3),
+                        route: .constant(.subject(physik.identifier))
+                    )
+                    .background(ScorePalette.background)
+                    ScoreOverlaySheet(onDismiss: {}) {
+                        GradeEntrySheet(entry: entry, subject: physik) {}
+                    }
+                }
+            }
+        }
+    }
+
     @Test("Die Fachansicht des iPads mit vielen Leistungen")
     func manyEntriesOnPad() async throws {
         let context = try Self.makeContext()
@@ -348,14 +385,16 @@ struct ScreenshotTests {
 
     /// Füllt ein Halbjahr mit ungleich vielen schriftlichen und mündlichen
     /// Leistungen — genau der Fall, in dem die beiden Spalten bündig stehen müssen.
+    @discardableResult
     private static func fillEntries(
         of subject: Subject,
         semesterIndex: Int,
         written: Int,
         oral: Int,
         in context: ModelContext
-    ) {
-        guard let semester = subject.semester(at: semesterIndex) else { return }
+    ) -> [GradeEntry] {
+        guard let semester = subject.semester(at: semesterIndex) else { return [] }
+        var created: [GradeEntry] = []
         for entry in semester.entries ?? [] { context.delete(entry) }
 
         for index in 0..<written {
@@ -364,6 +403,7 @@ struct ScreenshotTests {
             entry.kind = .written
             entry.semester = semester
             context.insert(entry)
+            created.append(entry)
         }
         for index in 0..<oral {
             let entry = GradeEntry(category: .other, title: "Mündliche Note \(index + 1)")
@@ -371,7 +411,9 @@ struct ScreenshotTests {
             entry.kind = .oral
             entry.semester = semester
             context.insert(entry)
+            created.append(entry)
         }
+        return created
     }
 
     /// Nur die drei Leistungsfächer — der Stand, in dem nichts zur Wahl steht.

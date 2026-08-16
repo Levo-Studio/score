@@ -344,9 +344,12 @@ struct ProfileChoiceView: View {
         return "Nur \(name) behalten"
     }
 
+    /// „Profil von Jonas löschen?" und nicht „Jonas löschen?" — Letzteres wäre
+    /// derselbe Symbolname wie der schon vorhandene Schlüssel „%@ löschen", und
+    /// die Erzeugung der Symbole aus dem Katalog bricht darüber ab.
     private var discardTitle: LocalizedStringKey {
         guard let name = discarded?.trimmedFirstName else { return "Das andere Profil löschen?" }
-        return "\(name) löschen?"
+        return "Profil von \(name) löschen?"
     }
 
     /// Was verschwindet — das Profil, und nur das.

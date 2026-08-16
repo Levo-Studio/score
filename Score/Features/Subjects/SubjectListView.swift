@@ -194,6 +194,12 @@ private struct SubjectListRow: View {
                         title: subject.kind.badge,
                         isHighlighted: subject.kind == .leistungsfach
                     )
+                    // Gedrängt: In der Zeile steht nur das Siegel. Seit der
+                    // Hinweis unten verschwindet, sobald die Wahl steht, ist die
+                    // Liste der einzige Ort, an dem man sie im Vorbeigehen sieht.
+                    if subject.isOralExamSubject {
+                        OralExamBadge(isCompact: true)
+                    }
                 }
                 metaText
                     .font(.meta)

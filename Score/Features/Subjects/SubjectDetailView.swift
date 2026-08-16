@@ -148,6 +148,9 @@ struct SubjectDetailView: View {
                         title: subject.kind.editorLabel,
                         isHighlighted: subject.kind == .leistungsfach
                     )
+                    if subject.isOralExamSubject {
+                        OralExamBadge()
+                    }
                     Text("Ø \(ScoreNumberFormat.points(summary.average)) Punkte")
                         .font(.optionMeta)
                         .foregroundStyle(ScorePalette.inkSecondary)

@@ -100,6 +100,10 @@ struct PadSubjectDetailView: View {
                 isHighlighted: subject.kind == .leistungsfach
             )
 
+            if subject.isOralExamSubject {
+                OralExamBadge()
+            }
+
             Text("Ø \(ScoreNumberFormat.points(summary.average)) Punkte")
                 .font(ScoreTypography.publicSans(400, 12))
                 .foregroundStyle(ScorePalette.inkSecondary)

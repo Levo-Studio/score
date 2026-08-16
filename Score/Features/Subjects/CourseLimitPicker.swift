@@ -25,7 +25,7 @@ struct CourseLimitPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Kurse in Block I")
+            Text("Kurse, die zählen")
                 .font(.meta)
                 .foregroundStyle(ScorePalette.inkSecondary)
 
@@ -64,9 +64,9 @@ struct CourseLimitPicker: View {
             return Text("Mit einem belegten Halbjahr gibt es nichts auszuwählen.")
         }
         guard let limit else {
-            return Text("Alle belegten Halbjahre gehen in Block I ein.")
+            return Text("Alle belegten Kurse zählen mit.")
         }
-        return Text("Score nimmt die besten \(limit) Ergebnisse dieses Fachs, die übrigen bleiben aussen vor.")
+        return Text("Score nimmt die besten \(limit) Kurse dieses Fachs, die übrigen bleiben aussen vor.")
     }
 }
 

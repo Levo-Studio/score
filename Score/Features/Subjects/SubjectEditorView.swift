@@ -381,7 +381,7 @@ struct OralExamToggle: View {
 
     private var note: Text {
         draft.isOralExamSubject
-            ? Text("Alle belegten Halbjahre gehen in Block I ein und lassen sich nicht klammern.")
+            ? Text("Alle belegten Kurse zählen mit und lassen sich nicht klammern.")
             : Text("Du wirst in zwei Fächern mündlich geprüft. Ihre Halbjahre sind anrechnungspflichtig.")
     }
 }

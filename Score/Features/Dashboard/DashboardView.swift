@@ -60,7 +60,7 @@ struct DashboardView: View {
                     average: model.expectedGradeText,
                     averageValue: model.outcome.expectedGrade,
                     stats: [
-                        ScoreStat(value: model.blockOneText, label: "Block I"),
+                        ScoreStat(value: model.blockOneText, label: "Kurspunkte"),
                         ScoreStat(value: model.courseCountText, label: "Kurse"),
                         ScoreStat(
                             value: model.semesterAverageText(selectedSemester),

@@ -96,7 +96,7 @@ struct OralExamSubjectSelection: View {
     /// Der Satz unter der Wolke sagt, was gerade gilt — und was daraus folgt.
     private var note: Text {
         if selection.count >= Self.requiredCount {
-            return Text("In diesen beiden Fächern gehen alle belegten Halbjahre in Block I ein. Sie lassen sich nicht klammern.")
+            return Text("In diesen beiden Fächern zählen alle belegten Kurse mit. Sie lassen sich nicht klammern.")
         }
         if selection.isEmpty {
             // Der Kopftext sagt schon, dass zwei Fächer mündlich geprüft

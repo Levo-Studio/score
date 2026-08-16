@@ -283,7 +283,7 @@ struct PadSubjectDetailView: View {
                     isFirst: false
                 )
                 semesterRow(
-                    label: Text("Ergebnis · Note \(ScoreNumberFormat.grade(summary.result.map { SubjectMath.grade(fromPoints: Double($0)) }))"),
+                    label: Text("Kurs · Note \(ScoreNumberFormat.grade(summary.result.map { SubjectMath.grade(fromPoints: Double($0)) }))"),
                     value: ScoreNumberFormat.points(summary.result),
                     isFirst: false,
                     isResult: true

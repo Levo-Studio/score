@@ -110,21 +110,67 @@ extension View {
     /// Sie hängt an einer leeren Fläche im Hintergrund, damit
     /// `disablesAnimations` nur die Präsentation trifft: an den Bildschirm selbst
     /// gehängt nähme es auch ihm jede Bewegung.
+    /// Auf dem iPhone steigt es stattdessen von unten auf — siehe
+    /// ``ScoreEntrySheetModifier``.
     func scoreOverlaySheet<Item: Identifiable, Sheet: View>(
         item: Binding<Item?>,
         width: CGFloat = ScoreMetrics.overlaySheetWidth,
         @ViewBuilder content: @escaping (Item) -> Sheet
     ) -> some View {
-        background {
-            Color.clear
-                .fullScreenCover(item: item) { value in
-                    ScoreOverlaySheet(width: width, onDismiss: { item.wrappedValue = nil }) {
-                        content(value)
-                    }
-                    .presentationBackground(.clear)
+        modifier(ScoreEntrySheetModifier(item: item, width: width, sheet: content))
+    }
+}
+
+/// Entscheidet, wie ein Eingabe-Blatt aufgeht: auf dem iPhone von unten, auf dem
+/// iPad mittig.
+///
+/// Beides ist dieselbe Sache in zwei Formaten. Ein mittiges Blatt braucht Fläche
+/// um sich herum, damit es als eigene Ebene liest — die hat das iPad und das
+/// iPhone nicht. Dort ist das aufsteigende Blatt die vertraute Form, dieselbe wie
+/// beim Bearbeiten des Profils und beim Wechseln des Kontos.
+///
+/// Der Inhalt ist in beiden Fällen derselbe; nur der Rahmen unterscheidet sich.
+private struct ScoreEntrySheetModifier<Item: Identifiable, Sheet: View>: ViewModifier {
+
+    @Binding var item: Item?
+    let width: CGFloat
+    @ViewBuilder let sheet: (Item) -> Sheet
+
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    func body(content: Content) -> some View {
+        if horizontalSizeClass == .compact {
+            content.sheet(item: $item) { value in
+                ScrollView {
+                    sheet(value)
                 }
-                // Ohne das schöbe die Präsentation das Blatt von unten herein.
-                .transaction { $0.disablesAnimations = true }
+                .background(ScorePalette.surface)
+                .scrollBounceBehavior(.basedOnSize)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(ScorePalette.surface)
+                .presentationCornerRadius(ScoreMetrics.Radius.sheet)
+            }
+        } else {
+            // Über eine Präsentation und nicht als `overlay`: auf dem iPhone
+            // schwebt die Tab-Bar in einer Ebene über dem Inhalt, und eine
+            // Überlagerung des Inhalts läge darunter — der abgedunkelte Grund
+            // endete an der Leiste, und die Reiter blieben antippbar.
+            //
+            // Sie hängt an einer leeren Fläche im Hintergrund, damit
+            // `disablesAnimations` nur die Präsentation trifft: an den Bildschirm
+            // gehängt nähme es auch ihm jede Bewegung.
+            content.background {
+                Color.clear
+                    .fullScreenCover(item: $item) { value in
+                        ScoreOverlaySheet(width: width, onDismiss: { item = nil }) {
+                            sheet(value)
+                        }
+                        .presentationBackground(.clear)
+                    }
+                    // Ohne das schöbe die Präsentation das Blatt von unten herein.
+                    .transaction { $0.disablesAnimations = true }
+            }
         }
     }
 }

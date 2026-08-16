@@ -361,6 +361,57 @@ struct ScreenshotTests {
         }
     }
 
+    // MARK: - Die Synchronisierung von Hand
+
+    /// Die vier Zustände der Schaltfläche „Jetzt synchronisieren" samt der Zeile
+    /// darunter — auf beiden Geräten, in beiden Erscheinungsbildern.
+    ///
+    /// Zustand und Zeitpunkt kommen von aussen herein. Anders wären genau die
+    /// Bilder nicht zu bekommen, um die es geht: Ein laufender oder gescheiterter
+    /// Lauf hängt sonst an echtem Netz, echtem Konto und echtem Zufall.
+    @Test("Die Zustände der Synchronisierung von Hand")
+    func manualSyncStates() async throws {
+        let context = try Self.makeContext()
+        _ = Self.makeSubjects(in: context)
+        Self.makeProfile(in: context)
+
+        for state in ManualSyncScreenshotState.allCases {
+            for scheme in ColorScheme.allCases {
+                let phone = try await ManualSyncScreenshotState.makeSync(for: state)
+                try await capture(
+                    "synchronisieren-\(state.rawValue)-iphone",
+                    scheme: scheme,
+                    size: CGSize(width: Device.phone.width, height: 1400),
+                    context: context
+                ) {
+                    // Nur das Objekt, nicht `scoreAppSettings()`: Farbschema
+                    // und Sprache setzt die Aufnahme selbst.
+                    SettingsView(syncStatus: state.status, sync: phone)
+                        .environment(AppSettings.shared)
+                }
+
+                let pad = try await ManualSyncScreenshotState.makeSync(for: state)
+                try await capture(
+                    "synchronisieren-\(state.rawValue)-ipad",
+                    scheme: scheme,
+                    size: Device.pad,
+                    context: context
+                ) {
+                    PadSettingsView(syncStatus: state.status, sync: pad)
+                        .environment(AppSettings.shared)
+                        .background(ScorePalette.background)
+                }
+            }
+        }
+    }
+
+    /// Ein Profil, damit die Einstellungen ihre Karte oben zeigen.
+    private static func makeProfile(in context: ModelContext) {
+        let profile = StudentProfile(firstName: "Julius")
+        profile.hasCompletedOnboarding = true
+        context.insert(profile)
+    }
+
     @Test("Die Fachansicht des iPads mit vielen Leistungen")
     func manyEntriesOnPad() async throws {
         let context = try Self.makeContext()
@@ -574,5 +625,82 @@ struct ScreenshotTests {
 
         let cropped = cgImage.cropping(to: CGRect(x: 0, y: 0, width: width, height: bottom))
         return cropped.map { UIImage(cgImage: $0, scale: image.scale, orientation: .up) } ?? image
+    }
+}
+
+// MARK: - Die Zustände der Synchronisierung
+
+/// Die Zustände, die von „Jetzt synchronisieren" aufgenommen werden.
+@MainActor
+enum ManualSyncScreenshotState: String, CaseIterable {
+    /// Bereit, mit einem Zeitpunkt von vor zwei Minuten.
+    case ruhe
+    /// Bereit, aber noch nie synchronisiert.
+    case nie
+    /// Ein Lauf ist unterwegs.
+    case laeuft
+    /// Der Lauf ist durch.
+    case fertig
+    /// Der Lauf ist nicht durchgekommen.
+    case fehler
+    /// Die Synchronisierung ist abgeschaltet — dann gilt kein alter Stand.
+    case ausgesetzt
+
+    /// Der iCloud-Zustand daneben. Er entscheidet mit, ob die Zeile darunter
+    /// einen Zeitpunkt zeigen darf.
+    var status: CloudSyncStatus {
+        CloudSyncStatus(state: self == .ausgesetzt ? .off : .ready, probesAccount: false)
+    }
+
+    /// Baut eine Synchronisierung, die in diesem Zustand steht.
+    ///
+    /// Über die gewöhnlichen Wege: `start()` und die Ereignisse der Spiegelung.
+    /// Ein Zustand, den nur ein Test setzen kann, wäre kein Beleg.
+    static func makeSync(for state: ManualSyncScreenshotState) async throws -> ManualCloudSync {
+        let name = "screenshot.manualSync.\(state.rawValue).\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        defaults.removePersistentDomain(forName: name)
+
+        if state != .nie {
+            defaults.set(Date.now.addingTimeInterval(-120), forKey: "sync.lastSyncedAt")
+        }
+
+        let sync = ManualCloudSync(
+            defaults: defaults,
+            observesEvents: false,
+            // Der Haken muss das Bild noch stehen, wenn es aufgenommen wird.
+            successDuration: .seconds(60),
+            saveAndReopen: { try await Task.sleep(for: .seconds(600)) },
+            isAvailable: { state != .ausgesetzt }
+        )
+
+        switch state {
+        case .ruhe, .nie, .ausgesetzt:
+            break
+        case .laeuft:
+            sync.start()
+        case .fertig:
+            sync.start()
+            sync.apply(
+                ManualCloudSync.Event(
+                    isImportOrExport: true,
+                    endDate: .now.addingTimeInterval(-120),
+                    hasFailed: false,
+                    isNoAccount: false
+                )
+            )
+        case .fehler:
+            sync.start()
+            sync.apply(
+                ManualCloudSync.Event(
+                    isImportOrExport: true,
+                    endDate: .now,
+                    hasFailed: true,
+                    isNoAccount: false
+                )
+            )
+        }
+
+        return sync
     }
 }

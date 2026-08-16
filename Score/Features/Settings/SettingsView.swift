@@ -13,11 +13,18 @@ struct SettingsView: View {
 
     /// Zeigt, ob der iCloud-Abgleich tatsächlich läuft. Ohne Konto und ohne
     /// Anmeldung gäbe es sonst keine Rückmeldung, wenn der Sync klemmt.
-    @State private var syncStatus = CloudSyncStatus()
+    @State private var syncStatus: CloudSyncStatus
 
-    /// Der Abgleich von Hand. Geteilt mit dem iPad-Layout, damit ein Lauf nicht
-    /// je nach Ansicht anders dasteht.
-    @State private var sync = ManualCloudSync.shared
+    /// Die Synchronisierung von Hand. Geteilt mit dem iPad-Layout, damit ein
+    /// Lauf nicht je nach Ansicht anders dasteht.
+    @State private var sync: ManualCloudSync
+
+    /// Beides kommt von aussen herein, damit Belegbilder die Zustände zeigen
+    /// können, die sich sonst nur bei echtem Netz und echtem Konto einstellen.
+    init(syncStatus: CloudSyncStatus = CloudSyncStatus(), sync: ManualCloudSync = .shared) {
+        _syncStatus = State(initialValue: syncStatus)
+        _sync = State(initialValue: sync)
+    }
 
     @Environment(\.modelContext) private var modelContext
 

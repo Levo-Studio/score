@@ -57,8 +57,21 @@ final class CloudSyncStatus {
     /// `nonisolated(unsafe)` zu umgehen.
     private var observation: NotificationObservation?
 
-    init(containerIdentifier: String = "iCloud.levo-studio.Score") {
+    /// Ob der Kontostatus überhaupt abgefragt wird.
+    ///
+    /// Nur für Vorschauen und Belegbilder auf `false`: Dort soll der
+    /// mitgegebene Zustand stehen bleiben und nicht von der Wirklichkeit des
+    /// Testrechners überschrieben werden.
+    private let probesAccount: Bool
+
+    init(
+        containerIdentifier: String = "iCloud.levo-studio.Score",
+        state: State = .unknown,
+        probesAccount: Bool = true
+    ) {
         self.containerIdentifier = containerIdentifier
+        self.state = state
+        self.probesAccount = probesAccount
         observeMirroringEvents()
     }
 
@@ -70,6 +83,8 @@ final class CloudSyncStatus {
     /// jederzeit ändern — jemand meldet sich ab, während die App läuft — deshalb
     /// wird er nicht einmalig gecacht.
     func refresh() async {
+        guard probesAccount else { return }
+
         // Ohne Entitlement ist schon der Aufruf tödlich: `CKContainer` trapt beim
         // Anlegen, statt einen Fehler zu werfen. Genau derselbe Grund wie beim
         // Datenspeicher — der Absturz muss vermieden, nicht behandelt werden.

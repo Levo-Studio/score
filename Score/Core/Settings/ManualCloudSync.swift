@@ -91,7 +91,11 @@ final class ManualCloudSync {
     /// Wie lange der Haken stehen bleibt, bevor die Schaltfläche in den
     /// Ruhezustand zurückfällt. Der Zustand endet also — ein Ring, der sich nie
     /// beruhigt, wäre keine Rückmeldung, sondern ein Dauerzustand.
-    static let successDuration: Duration = .seconds(2.5)
+    static let defaultSuccessDuration: Duration = .seconds(2.5)
+
+    /// Dieselbe Dauer für diese Instanz. Belegbilder setzen sie länger, damit
+    /// der Haken das Bild noch steht, wenn es aufgenommen wird.
+    let successDuration: Duration
 
     private let defaults: UserDefaults
     private let saveAndReopen: @MainActor () async throws -> Void
@@ -114,12 +118,14 @@ final class ManualCloudSync {
     init(
         defaults: UserDefaults = .standard,
         observesEvents: Bool = true,
+        successDuration: Duration = defaultSuccessDuration,
         saveAndReopen: @escaping @MainActor () async throws -> Void = ScoreDataStore.saveAndReopen,
         isAvailable: @escaping @MainActor () -> Bool = {
             CloudKitAvailability.isEntitled && CloudSyncActivation.isActiveInThisSession
         }
     ) {
         self.defaults = defaults
+        self.successDuration = successDuration
         self.saveAndReopen = saveAndReopen
         self.isAvailable = isAvailable
         self.lastSyncedAt = defaults.object(forKey: Key.lastSyncedAt) as? Date
@@ -233,7 +239,7 @@ final class ManualCloudSync {
         // Der Erfolg endet von selbst. Ein Fehler bleibt stehen, bis es jemand
         // erneut versucht — sonst verschwände die Erklärung vor dem Lesen.
         reset = Task { [weak self] in
-            try? await Task.sleep(for: Self.successDuration)
+            try? await Task.sleep(for: self?.successDuration ?? Self.defaultSuccessDuration)
             guard !Task.isCancelled else { return }
             self?.returnToIdle()
         }

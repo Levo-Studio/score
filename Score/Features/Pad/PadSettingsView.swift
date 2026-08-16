@@ -13,11 +13,18 @@ struct PadSettingsView: View {
     /// Zeigt, ob der iCloud-Abgleich tatsächlich läuft — dieselbe Auskunft wie
     /// auf dem iPhone. Ein Schalter ohne Zustandsanzeige daneben liesse offen,
     /// ob er gerade etwas bewirkt.
-    @State private var syncStatus = CloudSyncStatus()
+    @State private var syncStatus: CloudSyncStatus
 
-    /// Der Abgleich von Hand. Dieselbe Instanz wie auf dem iPhone-Layout — ein
-    /// Lauf gehört dem Gerät, nicht der Ansicht.
-    @State private var sync = ManualCloudSync.shared
+    /// Die Synchronisierung von Hand. Dieselbe Instanz wie im iPhone-Layout —
+    /// ein Lauf gehört dem Gerät, nicht der Ansicht.
+    @State private var sync: ManualCloudSync
+
+    /// Beides kommt von aussen herein, damit Belegbilder die Zustände zeigen
+    /// können, die sich sonst nur bei echtem Netz und echtem Konto einstellen.
+    init(syncStatus: CloudSyncStatus = CloudSyncStatus(), sync: ManualCloudSync = .shared) {
+        _syncStatus = State(initialValue: syncStatus)
+        _sync = State(initialValue: sync)
+    }
 
     /// Es gibt genau ein Profil. Die Abfrage liefert trotzdem eine Liste, weil ein
     /// unterbrochener CloudKit-Erstabgleich theoretisch zwei anlegen kann; genutzt

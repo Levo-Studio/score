@@ -149,7 +149,7 @@ struct ScreenshotTests {
             try await capture(
                 "aufschluesselung-ipad",
                 scheme: scheme,
-                size: CGSize(width: 640, height: 3600),
+                size: CGSize(width: 640, height: 5400),
                 context: context
             ) {
                 BlockOneBreakdownView(subjects: subjects, layout: .padSheet) {}
@@ -339,10 +339,15 @@ struct ScreenshotTests {
             return pixels[start..<(start + 4)]
         }
 
-        let background = pixel(0, height - 1)
+        // Die Probe wird in der Mitte genommen und die Ränder werden übersprungen:
+        // Die Aufschlüsselung liegt auf dem iPad in einer Karte mit runden Ecken,
+        // und an den Ecken ist die Fläche durchsichtig. Von ganz links gelesen
+        // wäre schon die vorletzte Zeile „anders" und es würde nie geschnitten.
+        let margin = width / 10
+        let background = pixel(width / 2, height - 1)
         var lastContentRow = height - 1
         rows: for y in stride(from: height - 1, through: 0, by: -1) {
-            for x in stride(from: 0, to: width, by: 4) where pixel(x, y) != background {
+            for x in stride(from: margin, to: width - margin, by: 4) where pixel(x, y) != background {
                 lastContentRow = y
                 break rows
             }

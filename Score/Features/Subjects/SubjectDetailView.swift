@@ -21,6 +21,11 @@ struct SubjectDetailView: View {
     @State private var isEditorPresented = false
     @State private var editedEntry: GradeEntry?
 
+    /// Die zuletzt gelöschte Leistung, solange sie sich zurückholen lässt.
+    @State private var pendingUndo: GradeEntryUndo?
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
@@ -48,6 +53,12 @@ struct SubjectDetailView: View {
             .padding(.bottom, 170)
         }
         .background(ScorePalette.background)
+        // Der Streifen liegt über dem Inhalt, aber unter der schwebenden
+        // Tab-Bar — sonst verdeckte die Leiste genau die Schaltfläche, die er
+        // anbietet.
+        .overlay(alignment: .bottom) {
+            undoOverlay
+        }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $isEditorPresented) {
             SubjectEditorView(target: .existing(subject)) { dismiss() }
@@ -348,12 +359,19 @@ struct SubjectDetailView: View {
 
             ForEach(Array(zip(list, shares).enumerated()), id: \.element.0.persistentModelID) { index, pair in
                 let (entry, share) = pair
-                Button {
-                    editedEntry = entry
-                } label: {
-                    entryRow(entry, share: share)
+                // Ohne Rückfrage: eine einzelne Leistung ist schnell wieder
+                // eingetragen, und der Streifen unten nimmt den Fehlgriff zurück.
+                SwipeToDelete(
+                    accessibilityLabel: Text("\(entry.title) löschen"),
+                    action: { delete(entry) }
+                ) {
+                    Button {
+                        editedEntry = entry
+                    } label: {
+                        entryRow(entry, share: share)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
                 .rowAppearance(index: index, base: 0.1)
             }
 
@@ -436,9 +454,49 @@ struct SubjectDetailView: View {
         }
     }
 
+    /// Löscht eine Leistung sofort und bietet sie zur Rücknahme an.
+    ///
+    /// Denselben Weg nimmt auch die Schaltfläche „Löschen" im Eingabe-Sheet —
+    /// zwei Wege zum selben Ziel dürfen sich nicht unterschiedlich verhalten.
     private func delete(_ entry: GradeEntry) {
+        let snapshot = GradeEntryUndo(of: entry)
         modelContext.delete(entry)
         editedEntry = nil
+
+        withAnimation(ScoreMotion.resolve(ScoreMotion.sheetRise, reduceMotion: reduceMotion)) {
+            pendingUndo = snapshot
+        }
+    }
+
+    private func undoDeletion(_ snapshot: GradeEntryUndo) {
+        snapshot.restore(to: subject, in: modelContext)
+        dismissUndo()
+    }
+
+    private func dismissUndo() {
+        withAnimation(ScoreMotion.resolve(ScoreMotion.backdrop, reduceMotion: reduceMotion)) {
+            pendingUndo = nil
+        }
+    }
+
+    // MARK: - Rücknahme
+
+    /// Der Abstand, den die schwebende Tab-Bar für sich braucht: 62 Punkt Höhe,
+    /// 8 Punkt Bodenabstand, dazu die Lücke zum Streifen.
+    private static let undoBannerClearance: CGFloat = 82
+
+    @ViewBuilder
+    private var undoOverlay: some View {
+        if let pendingUndo {
+            UndoBanner(
+                message: "Leistung gelöscht",
+                action: { undoDeletion(pendingUndo) },
+                onExpire: { dismissUndo() }
+            )
+            .id(pendingUndo.id)
+            .padding(.horizontal, ScoreMetrics.screenPadding)
+            .padding(.bottom, Self.undoBannerClearance)
+        }
     }
 }
 

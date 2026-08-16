@@ -324,6 +324,28 @@ struct ScreenshotTests {
         }
     }
 
+    @Test("Die Fachansicht des iPads mit vielen Leistungen")
+    func manyEntriesOnPad() async throws {
+        let context = try Self.makeContext()
+        let subjects = Self.makeSubjects(in: context)
+        let chemie = try #require(subjects.first { $0.name == "Chemie" })
+        Self.fillEntries(of: chemie, semesterIndex: 3, written: 7, oral: 5, in: context)
+
+        UserDefaults.standard.set(3, forKey: SubjectPreference.selectedSemesterKey)
+
+        for scheme in ColorScheme.allCases {
+            try await capture("viele-leistungen-ipad", scheme: scheme, size: Device.pad, context: context) {
+                PadSubjectDetailView(
+                    subject: chemie,
+                    summaries: SubjectOverview.summaries(of: subjects, semesterIndex: 3),
+                    semesterIndex: .constant(3),
+                    route: .constant(.subject(chemie.identifier))
+                )
+                .background(ScorePalette.background)
+            }
+        }
+    }
+
     /// Füllt ein Halbjahr mit ungleich vielen schriftlichen und mündlichen
     /// Leistungen — genau der Fall, in dem die beiden Spalten bündig stehen müssen.
     private static func fillEntries(

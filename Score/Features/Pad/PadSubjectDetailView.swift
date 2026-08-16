@@ -417,6 +417,19 @@ struct PadSubjectDetailView: View {
         }
     }
 
+    /// Ab so vielen Leistungen läuft eine Spalte zweizügig.
+    ///
+    /// Bis hierher steht eine Leistung pro Zeile, so wie die Vorlage es zeigt.
+    /// Darüber hinaus reicht die Höhe des iPads nicht mehr: bei zwölf Leistungen
+    /// waren fünf zu sehen und der Rest lag unterhalb des Bildschirms, während
+    /// jede Zeile fast 600 Punkt breit war für zwei kurze Zeilen Text. Die
+    /// Breite ist da — genommen wird sie erst, wenn die Höhe knapp wird.
+    private static let entriesPerColumnBeforeSplit = 4
+
+    /// Schmaler wird eine Leistung nicht: darunter drängen sich Titel,
+    /// Meta-Zeile und Punktzahl.
+    private static let minimumEntryWidth: CGFloat = 240
+
     private func entryColumn(
         title: LocalizedStringKey,
         kind: GradeKind,
@@ -425,21 +438,36 @@ struct PadSubjectDetailView: View {
     ) -> some View {
         let list = entries(kind)
         let shares = SubjectMath.effectiveShares(for: list.map(GradeInput.init))
+        let isSplit = list.count > Self.entriesPerColumnBeforeSplit
 
         return VStack(alignment: .leading, spacing: 9) {
             Text(title)
                 .font(.micro)
                 .foregroundStyle(ScorePalette.inkSecondary)
 
-            ForEach(Array(zip(list, shares)), id: \.0.persistentModelID) { entry, share in
-                // Wie auf dem iPhone: der Wisch löscht sofort, der Streifen
-                // unten nimmt es zurück.
-                SwipeToDelete(
-                    accessibilityLabel: Text("\(entry.title) löschen"),
-                    onDelete: { delete(entry) },
-                    onTap: { editedEntry = entry }
-                ) {
-                    entryRow(entry, share: share)
+            // `adaptive` und nicht zwei feste Spalten: im Hochformat, und erst
+            // recht mit ausgeklappter Sidebar, bleibt für zwei Züge kein Platz —
+            // dann fällt das Raster von selbst auf einen zurück, statt die
+            // Zeilen zu quetschen.
+            LazyVGrid(
+                columns: [
+                    isSplit
+                        ? GridItem(.adaptive(minimum: Self.minimumEntryWidth), spacing: 9)
+                        : GridItem(.flexible(), spacing: 9)
+                ],
+                alignment: .leading,
+                spacing: 9
+            ) {
+                ForEach(Array(zip(list, shares)), id: \.0.persistentModelID) { entry, share in
+                    // Wie auf dem iPhone: der Wisch löscht sofort, der Streifen
+                    // unten nimmt es zurück.
+                    SwipeToDelete(
+                        accessibilityLabel: Text("\(entry.title) löschen"),
+                        onDelete: { delete(entry) },
+                        onTap: { editedEntry = entry }
+                    ) {
+                        entryRow(entry, share: share)
+                    }
                 }
             }
 

@@ -960,7 +960,13 @@ struct BlockOneBreakdownView: View {
 
     private var explanation: some View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
-            Text("In deinen Schnitt gehen 40 Kurse ein. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 40 übrig sind. Zwei deiner drei Leistungsfächer zählen dabei doppelt — aus 40 Kursen werden so 48 Wertungen. Die Punktsumme über alle 48 geteilt durch 48 und mal 40 ergibt die Kurspunkte, höchstens 600.")
+            // Der erste Satz räumt eine Verwechslung aus, die in der Schule
+            // regelmässig passiert: 42 ist die Zahl der Kurse, die man belegen
+            // MUSS, 40 die Zahl derer, die gewertet werden. Wer nur die 42 kennt,
+            // hält das Klammern für eine Eigenart der App statt für die Regel.
+            Text("Belegen musst du mindestens 42 Kurse — zwölf in den Leistungsfächern und mindestens dreissig weitere. In den Schnitt gehen davon 40 ein.")
+
+            Text("Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 40 übrig sind. Zwei deiner drei Leistungsfächer zählen dabei doppelt — aus 40 Kursen werden so 48 Wertungen. Die Punktsumme über alle 48 geteilt durch 48 und mal 40 ergibt die Kurspunkte, höchstens 600.")
 
             Text("Dazu kommen die fünf Abiturprüfungen, jede vierfach gewertet, höchstens 300 Punkte. Beides zusammen sind 300 bis 900 Punkte, und aus dieser Gesamtpunktzahl liest die amtliche Tabelle die Note ab — in Stufen von 18 Punkten, ab 823 Punkten steht 1,0. Score rechnet das nicht mit einer Formel nach, sondern schlägt in der Tabelle nach.")
 

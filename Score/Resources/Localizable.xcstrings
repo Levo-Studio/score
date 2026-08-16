@@ -1555,6 +1555,23 @@
         }
       }
     },
+    "Belegen musst du mindestens 42 Kurse — zwölf in den Leistungsfächern und mindestens dreissig weitere. In den Schnitt gehen davon 40 ein." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Belegen musst du mindestens 42 Kurse — zwölf in den Leistungsfächern und mindestens dreissig weitere. In den Schnitt gehen davon 40 ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have to take at least 42 courses — twelve in your advanced subjects and at least thirty more. Of those, 40 go into your average."
+          }
+        }
+      }
+    },
     "Belegte Halbjahre" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3429,6 +3446,23 @@
         }
       }
     },
+    "Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 40 übrig sind. Zwei deiner drei Leistungsfächer zählen dabei doppelt — aus 40 Kursen werden so 48 Wertungen. Die Punktsumme über alle 48 geteilt durch 48 und mal 40 ergibt die Kurspunkte, höchstens 600." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 40 übrig sind. Zwei deiner drei Leistungsfächer zählen dabei doppelt — aus 40 Kursen werden so 48 Wertungen. Die Punktsumme über alle 48 geteilt durch 48 und mal 40 ergibt die Kurspunkte, höchstens 600."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If you have more, they get bracketed: first whatever you bracketed yourself, then the weakest ones from the bottom until 40 remain. Two of your three advanced subjects count double — so 40 courses become 48 weightings. The sum over all 48, divided by 48 and times 40, gives the course points, up to 600."
+          }
+        }
+      }
+    },
     "Hell" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3459,23 +3493,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Their semesters must be counted — without this, Score calculates too favourably. Not decided yet? Then do it later from the subject list."
-          }
-        }
-      }
-    },
-    "In deinen Schnitt gehen 40 Kurse ein. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 40 übrig sind. Zwei deiner drei Leistungsfächer zählen dabei doppelt — aus 40 Kursen werden so 48 Wertungen. Die Punktsumme über alle 48 geteilt durch 48 und mal 40 ergibt die Kurspunkte, höchstens 600." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In deinen Schnitt gehen 40 Kurse ein. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 40 übrig sind. Zwei deiner drei Leistungsfächer zählen dabei doppelt — aus 40 Kursen werden so 48 Wertungen. Die Punktsumme über alle 48 geteilt durch 48 und mal 40 ergibt die Kurspunkte, höchstens 600."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "40 courses go into your average. If you have more, they get bracketed: first whatever you bracketed yourself, then the weakest ones from the bottom until 40 remain. Two of your three advanced subjects count twice — 40 courses thus become 48 weightings. The points across all 48, divided by 48 and multiplied by 40, give the course points, at most 600."
           }
         }
       }

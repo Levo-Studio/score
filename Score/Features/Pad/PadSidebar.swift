@@ -132,9 +132,10 @@ struct PadSidebar: View {
 
     // MARK: - Fächer
 
-    /// Die Design-Datei kennt nur Leistungs- und Basisfächer. Score hat drei
-    /// Typen, also bekommt jeder seinen eigenen Abschnitt — ein Kernfach unter
-    /// „Basisfächer" zu führen wäre falsch, es kann nicht herausfallen.
+    /// Die Design-Datei kennt nur Leistungs- und Basisfächer. Score trennt die
+    /// Basisfächer in Pflicht und Wahl, also bekommt jede Kategorie ihren
+    /// eigenen Abschnitt — ein Pflicht-Basisfach unter „Wahl-Basisfächer" zu
+    /// führen wäre falsch, es kann nicht herausfallen.
     private var subjectSections: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
@@ -211,8 +212,8 @@ extension SubjectKind {
     var sidebarSectionTitle: LocalizedStringKey {
         switch self {
         case .leistungsfach: "Leistungsfächer"
-        case .pflichtBasisfach: "Kernfächer"
-        case .wahlBasisfach: "Basisfächer"
+        case .pflichtBasisfach: "Pflicht-Basisfächer"
+        case .wahlBasisfach: "Wahl-Basisfächer"
         }
     }
 }

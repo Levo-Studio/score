@@ -355,8 +355,8 @@ extension SubjectKind {
     var editorLabel: LocalizedStringKey {
         switch self {
         case .leistungsfach: "Leistungsfach"
-        case .pflichtBasisfach: "Kernfach"
-        case .wahlBasisfach: "Basisfach"
+        case .pflichtBasisfach: "Pflicht-Basisfach"
+        case .wahlBasisfach: "Wahl-Basisfach"
         }
     }
 }

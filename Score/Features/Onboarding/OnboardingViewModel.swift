@@ -78,7 +78,7 @@ final class OnboardingViewModel {
         SubjectCatalog.all.map(\.name) + customAdvancedNames
     }
 
-    /// Die Kernfächer, ohne die bereits als Leistungsfach gewählten.
+    /// Die Pflicht-Basisfächer, ohne die bereits als Leistungsfach gewählten.
     var requiredBasicOptions: [String] {
         SubjectCatalog.all
             .map(\.name)
@@ -86,7 +86,7 @@ final class OnboardingViewModel {
             + customRequiredBasicNames
     }
 
-    /// Alles, was weder Leistungs- noch gewähltes Kernfach ist.
+    /// Alles, was weder Leistungs- noch gewähltes Pflicht-Basisfach ist.
     var electiveBasicOptions: [String] {
         SubjectCatalog.all
             .map(\.name)
@@ -94,9 +94,9 @@ final class OnboardingViewModel {
             + customElectiveBasicNames
     }
 
-    /// Die Kernfächer, die Score von sich aus vorschlägt.
+    /// Die Pflicht-Basisfächer, die Score von sich aus vorschlägt.
     ///
-    /// Alles, was der Katalog als Kernfach führt und nicht schon Leistungsfach
+    /// Alles, was der Katalog als Pflicht-Basisfach führt und nicht schon Leistungsfach
     /// ist. Sprachen sind bewusst alle dabei — wer Latein nicht belegt, nimmt es
     /// mit einem Tipp wieder heraus, das ist schneller als jede Rückfrage.
     private var suggestedRequiredBasicSubjects: Set<String> {
@@ -140,7 +140,7 @@ final class OnboardingViewModel {
     func advance() {
         guard let next = OnboardingStep(rawValue: step.rawValue + 1) else { return }
 
-        // Die Kernfächer hängen von den Leistungsfächern ab, deshalb wird ihre
+        // Die Pflicht-Basisfächer hängen von den Leistungsfächern ab, deshalb wird ihre
         // Vorauswahl erst gesetzt, wenn die Leistungsfächer feststehen.
         if next == .requiredBasicSubjects, requiredBasicSubjects.isEmpty {
             requiredBasicSubjects = suggestedRequiredBasicSubjects

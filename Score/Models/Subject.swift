@@ -120,7 +120,7 @@ final class Subject {
 
 extension Subject {
 
-    /// Der Fachtyp. Fällt auf Basisfach zurück, falls ein unbekannter Rohwert
+    /// Der Fachtyp. Fällt auf Wahl-Basisfach zurück, falls ein unbekannter Rohwert
     /// ankommt — etwa aus einer neueren App-Version auf einem anderen Gerät.
     var kind: SubjectKind {
         get { SubjectKind(rawValue: kindRawValue) ?? .wahlBasisfach }

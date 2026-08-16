@@ -210,8 +210,8 @@ private struct SubjectRow: View {
     private var kindTitle: String.LocalizationValue {
         switch subject.kind {
         case .leistungsfach: "Leistungsfach"
-        case .pflichtBasisfach: "Kernfach"
-        case .wahlBasisfach: "Basisfach"
+        case .pflichtBasisfach: "Pflicht-Basisfach"
+        case .wahlBasisfach: "Wahl-Basisfach"
         }
     }
 

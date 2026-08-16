@@ -6,33 +6,33 @@ import Testing
 ///
 /// Die Erwartungswerte sind von Hand ausgerechnet und stehen als Literale im
 /// Test. Sie prüfen genau das, was auf dem Bildschirm steht — Punktsumme,
-/// Schnitt, Gruppenbilanz, Reihenfolge der Basisfächer und die Linie, ab der es
+/// Schnitt, Gruppenbilanz, Reihenfolge der Wahl-Basisfächer und die Linie, ab der es
 /// nicht mehr reicht.
 @Suite("BlockOneBreakdown")
 struct BlockOneBreakdownTests {
 
     /// Ein Jahrgang mit 48 verfügbaren Kursen — sechs mehr, als Block I fasst.
     ///
-    /// Leistungsfächer 13/12/11, Kernfächer 10/9/8, dazu sechs Basisfächer. Nach
-    /// den zwölf Kernfach-Kursen bleiben 18 Plätze für die 24 Basisfach-Kurse:
-    /// 14, 13, 12 und 11 füllen sechzehn davon, die beiden Zehner aus `bf-e` die
-    /// restlichen zwei. Heraus fallen die beiden Dreier aus `bf-e` und alle vier
-    /// Kurse von `bf-f`.
+    /// Leistungsfächer 13/12/11, Pflicht-Basisfächer 10/9/8, dazu sechs Wahl-Basisfächer. Nach
+    /// den zwölf Pflicht-Basisfach-Kursen bleiben 18 Plätze für die 24 Wahl-Basisfach-Kurse:
+    /// 14, 13, 12 und 11 füllen sechzehn davon, die beiden Zehner aus `wbf-e` die
+    /// restlichen zwei. Heraus fallen die beiden Dreier aus `wbf-e` und alle vier
+    /// Kurse von `wbf-f`.
     static let presentations: [BlockOneBreakdown.SubjectPresentation] = [
         presentation(subject("lf-a", .leistungsfach, allPoints: 13)),
         presentation(subject("lf-b", .leistungsfach, allPoints: 12)),
         presentation(subject("lf-c", .leistungsfach, allPoints: 11)),
 
-        presentation(subject("kf-a", .pflichtBasisfach, allPoints: 10)),
-        presentation(subject("kf-b", .pflichtBasisfach, allPoints: 9)),
-        presentation(subject("kf-c", .pflichtBasisfach, allPoints: 8)),
+        presentation(subject("pbf-a", .pflichtBasisfach, allPoints: 10)),
+        presentation(subject("pbf-b", .pflichtBasisfach, allPoints: 9)),
+        presentation(subject("pbf-c", .pflichtBasisfach, allPoints: 8)),
 
-        presentation(subject("bf-f", .wahlBasisfach, allPoints: 2)),
-        presentation(subject("bf-d", .wahlBasisfach, allPoints: 11)),
-        presentation(subject("bf-a", .wahlBasisfach, allPoints: 14)),
-        presentation(subject("bf-e", .wahlBasisfach, points: [10, 10, 3, 3])),
-        presentation(subject("bf-c", .wahlBasisfach, allPoints: 12)),
-        presentation(subject("bf-b", .wahlBasisfach, allPoints: 13))
+        presentation(subject("wbf-f", .wahlBasisfach, allPoints: 2)),
+        presentation(subject("wbf-d", .wahlBasisfach, allPoints: 11)),
+        presentation(subject("wbf-a", .wahlBasisfach, allPoints: 14)),
+        presentation(subject("wbf-e", .wahlBasisfach, points: [10, 10, 3, 3])),
+        presentation(subject("wbf-c", .wahlBasisfach, allPoints: 12)),
+        presentation(subject("wbf-b", .wahlBasisfach, allPoints: 13))
     ]
 
     private static var breakdown: BlockOneBreakdown {
@@ -45,8 +45,8 @@ struct BlockOneBreakdownTests {
     func includedPointsTotal() {
         let breakdown = Self.breakdown
 
-        // Leistungsfächer 4 · (13 + 12 + 11) = 144, Kernfächer 4 · (10 + 9 + 8) = 108,
-        // Basisfächer 4 · (14 + 13 + 12 + 11) + 10 + 10 = 220.
+        // Leistungsfächer 4 · (13 + 12 + 11) = 144, Pflicht-Basisfächer 4 · (10 + 9 + 8) = 108,
+        // Wahl-Basisfächer 4 · (14 + 13 + 12 + 11) + 10 + 10 = 220.
         #expect(breakdown.includedPointsTotal == 472)
         #expect(breakdown.outcome.includedCount == 42)
     }
@@ -77,7 +77,7 @@ struct BlockOneBreakdownTests {
         #expect(groups[2].excludedCount == 6)
     }
 
-    @Test("Die freien Plätze sind die 30 minus die Kernfach-Kurse")
+    @Test("Die freien Plätze sind die 30 minus die Pflicht-Basisfach-Kurse")
     func optionalSlots() {
         let breakdown = Self.breakdown
 
@@ -85,18 +85,18 @@ struct BlockOneBreakdownTests {
         #expect(breakdown.optionalCandidateCount == 24)
     }
 
-    // MARK: - Die Reihenfolge der Basisfächer
+    // MARK: - Die Reihenfolge der Wahl-Basisfächer
 
-    @Test("Basisfächer stehen absteigend nach ihrem Schnitt")
+    @Test("Wahl-Basisfächer stehen absteigend nach ihrem Schnitt")
     func optionalOrder() {
-        #expect(Self.breakdown.optionalSubjects.map(\.id) == ["bf-a", "bf-b", "bf-c", "bf-d", "bf-e", "bf-f"])
+        #expect(Self.breakdown.optionalSubjects.map(\.id) == ["wbf-a", "wbf-b", "wbf-c", "wbf-d", "wbf-e", "wbf-f"])
     }
 
     @Test("Die Trennlinie steht hinter dem letzten Fach, das noch etwas einbringt")
     func cutLine() {
         let breakdown = Self.breakdown
 
-        // bf-e bringt zwei seiner vier Kurse ein, bf-f gar keinen mehr.
+        // wbf-e bringt zwei seiner vier Kurse ein, wbf-f gar keinen mehr.
         #expect(breakdown.optionalCutIndex == 4)
         #expect(breakdown.optionalThreshold == 10)
     }
@@ -111,7 +111,7 @@ struct BlockOneBreakdownTests {
 
     @Test("Ein Fach kann teils eingebracht, teils gestrichen sein")
     func splitSubject() {
-        let entry = Self.breakdown.optionalSubjects.first { $0.id == "bf-e" }
+        let entry = Self.breakdown.optionalSubjects.first { $0.id == "wbf-e" }
         let states = entry?.courses.map(\.state)
 
         #expect(states == [
@@ -127,7 +127,7 @@ struct BlockOneBreakdownTests {
     @Test("Nicht belegt und ohne Note sind zwei verschiedene Zustände")
     func missingCourses() {
         let input = SubjectInput(
-            id: "bf-lücke",
+            id: "wbf-lücke",
             kind: .wahlBasisfach,
             semesters: [
                 semester(0, points: 9),
@@ -147,13 +147,13 @@ struct BlockOneBreakdownTests {
 
     // MARK: - Kursgrenze eines Fachs
 
-    /// Derselbe Jahrgang, aber `bf-e` bringt nur seine besten zwei Ergebnisse ein.
+    /// Derselbe Jahrgang, aber `wbf-e` bringt nur seine besten zwei Ergebnisse ein.
     ///
-    /// Am Ergebnis ändert das nichts — die beiden Dreier von `bf-e` fielen schon
+    /// Am Ergebnis ändert das nichts — die beiden Dreier von `wbf-e` fielen schon
     /// vorher heraus. Was sich ändert, ist der **Grund**: sie sind jetzt über der
     /// eigenen Grenze und nicht mehr von besseren Kursen verdrängt.
     static let limitedPresentations: [BlockOneBreakdown.SubjectPresentation] = presentations.map {
-        guard $0.input.id == "bf-e" else { return $0 }
+        guard $0.input.id == "wbf-e" else { return $0 }
         var input = $0.input
         input.maximumContributedCourses = 2
         return BlockOneBreakdown.SubjectPresentation(name: $0.name, color: $0.color, input: input)
@@ -165,7 +165,7 @@ struct BlockOneBreakdownTests {
 
     @Test("Kurse über der Kursgrenze tragen einen eigenen Zustand")
     func coursesBeyondTheLimitAreMarked() {
-        let entry = Self.limitedBreakdown.optionalSubjects.first { $0.id == "bf-e" }
+        let entry = Self.limitedBreakdown.optionalSubjects.first { $0.id == "wbf-e" }
 
         #expect(entry?.courses.map(\.state) == [
             .included(points: 10),
@@ -190,7 +190,7 @@ struct BlockOneBreakdownTests {
     func cappedCoursesAreNoCandidates() {
         let limited = Self.limitedBreakdown
 
-        // 24 erfasste Basisfach-Kurse, zwei davon über der Grenze von bf-e.
+        // 24 erfasste Wahl-Basisfach-Kurse, zwei davon über der Grenze von wbf-e.
         #expect(limited.optionalCandidateCount == 22)
         #expect(limited.optionalSlotCount == 18)
         #expect(limited.groups[2].recordedCount == 24)
@@ -202,7 +202,7 @@ struct BlockOneBreakdownTests {
         let groups = Self.limitedBreakdown.droppedGroups
 
         // Erst die eigene Entscheidung, dann die Verdrängten.
-        #expect(groups.map(\.subjectID) == ["bf-e", "bf-f"])
+        #expect(groups.map(\.subjectID) == ["wbf-e", "wbf-f"])
         #expect(groups.map(\.reason) == [.beyondSubjectLimit, .outranked])
         #expect(groups[0].courses.map(\.semesterIndex) == [2, 3])
         #expect(groups[0].courseLimit == 2)
@@ -214,14 +214,14 @@ struct BlockOneBreakdownTests {
     func withoutLimitsEveryDropIsAnOutranking() {
         let groups = Self.breakdown.droppedGroups
 
-        #expect(groups.map(\.subjectID) == ["bf-e", "bf-f"])
+        #expect(groups.map(\.subjectID) == ["wbf-e", "wbf-f"])
         #expect(groups.allSatisfy { $0.reason == .outranked })
         #expect(!Self.breakdown.hasSubjectLimits)
     }
 
     @Test("Ein begrenztes Fach tritt mit dem Schnitt seiner besten Kurse an")
     func competingAverageIgnoresCappedCourses() {
-        let entry = Self.limitedBreakdown.optionalSubjects.first { $0.id == "bf-e" }
+        let entry = Self.limitedBreakdown.optionalSubjects.first { $0.id == "wbf-e" }
 
         // Erfasst sind 10, 10, 3 und 3 — antreten tun nur die beiden Zehner.
         #expect(isClose(entry?.recordedAverage ?? 0, 6.5))

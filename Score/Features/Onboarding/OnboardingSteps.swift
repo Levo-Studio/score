@@ -276,7 +276,7 @@ struct AdvancedSubjectsStep: View {
     }
 }
 
-// MARK: - Kernfächer
+// MARK: - Pflicht-Basisfächer
 
 struct RequiredBasicSubjectsStep: View {
 
@@ -286,8 +286,8 @@ struct RequiredBasicSubjectsStep: View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
             OnboardingHeader(
                 kicker: model.stepKicker,
-                title: "Deine Kernfächer",
-                text: "Kernfächer sind nicht abwählbar und zählen immer — auch dann, wenn sie schlechter stehen als ein Basisfach. Score hat vorausgewählt, was üblich ist."
+                title: "Deine Pflicht-Basisfächer",
+                text: "Pflicht-Basisfächer sind nicht abwählbar und zählen immer — auch dann, wenn sie schlechter stehen als ein Wahl-Basisfach. Score hat vorausgewählt, was üblich ist."
             )
 
             SubjectSelectionSection(
@@ -302,7 +302,7 @@ struct RequiredBasicSubjectsStep: View {
     }
 }
 
-// MARK: - Basisfächer
+// MARK: - Wahl-Basisfächer
 
 struct ElectiveBasicSubjectsStep: View {
 
@@ -312,7 +312,7 @@ struct ElectiveBasicSubjectsStep: View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
             OnboardingHeader(
                 kicker: model.stepKicker,
-                title: "Deine Basisfächer",
+                title: "Deine Wahl-Basisfächer",
                 text: "Aus diesen Fächern füllt Score die restlichen Plätze in Block I mit deinen besten Ergebnissen. Schwächere fallen heraus, sobald genug bessere da sind."
             )
 
@@ -412,8 +412,8 @@ struct SummaryStep: View {
                     SummaryRow(label: "Bundesland", value: Text(verbatim: model.federalState))
                     SummaryRow(label: "Abitur", value: Text(verbatim: String(model.graduationYear)))
                     SummaryRow(label: "Leistungsfächer", value: Text(verbatim: model.summaryList(model.advancedSubjects)))
-                    SummaryRow(label: "Kernfächer", value: Text(verbatim: model.summaryList(model.sortedRequiredBasicSubjects)))
-                    SummaryRow(label: "Basisfächer", value: Text(verbatim: model.summaryList(model.sortedElectiveBasicSubjects)))
+                    SummaryRow(label: "Pflicht-Basisfächer", value: Text(verbatim: model.summaryList(model.sortedRequiredBasicSubjects)))
+                    SummaryRow(label: "Wahl-Basisfächer", value: Text(verbatim: model.summaryList(model.sortedElectiveBasicSubjects)))
                     SummaryRow(label: "Sprache", value: Text(model.summaryLanguage))
                 }
             }

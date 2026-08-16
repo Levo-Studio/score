@@ -7,8 +7,8 @@ import SwiftUI
 /// Der Bildschirm zeigt nichts, was er selbst ausrechnet. Alles kommt aus
 /// `BlockOneCalculator.calculate(for:)` — diese Struktur ordnet das Ergebnis nur
 /// so, dass man es lesen kann: nach Fachtyp gruppiert, je Fach die vier
-/// Halbjahre, und bei den Basisfächern in der Reihenfolge, in der sie um die
-/// freien Plätze konkurrieren.
+/// Halbjahre, und bei den Wahl-Basisfächern in der Reihenfolge, in der sie um
+/// die freien Plätze konkurrieren.
 ///
 /// Sie liegt bewusst neben dem Rechenkern und nicht darin: der Kern beantwortet
 /// „welche Kurse zählen", diese Struktur beantwortet „wie erzählt man das".
@@ -23,7 +23,8 @@ struct BlockOneBreakdown {
     /// läuft, hat aber noch keine Note.
     enum CourseState: Equatable {
         case included(points: Int)
-        /// Von besseren Basisfach-Ergebnissen aus den freien Plätzen verdrängt.
+        /// Von besseren Wahl-Basisfach-Ergebnissen aus den freien Plätzen
+        /// verdrängt.
         case excluded(points: Int)
         /// Über der Kursgrenze, die für dieses Fach gesetzt ist. Dieser Kurs ist
         /// nie in den Wettbewerb gegangen — der Grund ist ein anderer, und der
@@ -64,7 +65,7 @@ struct BlockOneBreakdown {
 
     /// Warum ein erfasster Kurs nicht in Block I eingeht.
     enum ExclusionReason: Equatable, Hashable {
-        /// Es gab bessere Basisfach-Ergebnisse für die freien Plätze.
+        /// Es gab bessere Wahl-Basisfach-Ergebnisse für die freien Plätze.
         case outranked
         /// Das Fach bringt nur eine bestimmte Zahl seiner Ergebnisse ein.
         case beyondSubjectLimit
@@ -118,7 +119,7 @@ struct BlockOneBreakdown {
 
         /// Der Schnitt über die Halbjahre mit Ergebnis.
         ///
-        /// Nach ihm sind die Basisfächer sortiert — er ist die beste Antwort auf
+        /// Nach ihm sind die Wahl-Basisfächer sortiert — er ist die beste Antwort
         /// „warum steht dieses Fach weiter unten als jenes".
         var recordedAverage: Double? {
             Self.average(of: courses.compactMap { $0.state.points })
@@ -193,24 +194,25 @@ struct BlockOneBreakdown {
     let advancedSubjects: [SubjectEntry]
     let mandatorySubjects: [SubjectEntry]
 
-    /// Die Basisfächer, nach Punktschnitt absteigend — die Reihenfolge, in der
-    /// sie um die freien Plätze antreten.
+    /// Die Wahl-Basisfächer, nach Punktschnitt absteigend — die Reihenfolge, in
+    /// der sie um die freien Plätze antreten.
     let optionalSubjects: [SubjectEntry]
 
-    /// Nach welchem Basisfach nichts mehr eingebracht wird.
+    /// Nach welchem Wahl-Basisfach nichts mehr eingebracht wird.
     ///
     /// Alles ab dem folgenden Fach fällt vollständig heraus. `nil`, wenn es
-    /// nichts zu trennen gibt — weil kein Basisfach eingebracht wird oder weil
-    /// alle Platz gefunden haben.
+    /// nichts zu trennen gibt — weil kein Wahl-Basisfach eingebracht wird oder
+    /// weil alle Platz gefunden haben.
     let optionalCutIndex: Int?
 
     /// Die niedrigste Punktzahl, die es noch in Block I geschafft hat.
     let optionalThreshold: Int?
 
-    /// Wie viele Basisfach-Ergebnisse um die freien Plätze konkurrieren.
+    /// Wie viele Wahl-Basisfach-Ergebnisse um die freien Plätze konkurrieren.
     let optionalCandidateCount: Int
 
-    /// Wie viele Plätze nach den Leistungs- und Kernfächern übrig bleiben.
+    /// Wie viele Plätze nach den Leistungs- und Pflicht-Basisfächern übrig
+    /// bleiben.
     let optionalSlotCount: Int
 
     /// Alles, was herausfällt — nach Fach und Grund gebündelt.

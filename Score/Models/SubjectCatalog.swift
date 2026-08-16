@@ -17,12 +17,12 @@ enum SubjectCatalog {
         let defaultKind: SubjectKind
     }
 
-    /// Die Fächer, die in Baden-Württemberg als Kernfächer gelten.
+    /// Die Fächer, die in Baden-Württemberg als Pflicht-Basisfächer gelten.
     ///
     /// Deutsch, Mathematik, die Fremdsprache, Geschichte, Gemeinschaftskunde und
     /// eine Naturwissenschaft sind nicht abwählbar und fliessen immer in Block I
-    /// ein — auch dann, wenn sie schlechter stehen als ein Basisfach, das dadurch
-    /// herausfällt.
+    /// ein — auch dann, wenn sie schlechter stehen als ein Wahl-Basisfach, das
+    /// dadurch herausfällt.
     static let requiredBasicSubjectNames: Set<String> = [
         "Deutsch", "Mathematik", "Englisch", "Französisch", "Spanisch", "Latein",
         "Italienisch", "Russisch", "Geschichte", "Gemeinschaftskunde",
@@ -62,7 +62,7 @@ enum SubjectCatalog {
         all.first { $0.name == name }
     }
 
-    /// Ob ein Fachname als Kernfach zählt.
+    /// Ob ein Fachname als Pflicht-Basisfach zählt.
     static func isRequiredBasicSubject(_ name: String) -> Bool {
         requiredBasicSubjectNames.contains(name)
     }

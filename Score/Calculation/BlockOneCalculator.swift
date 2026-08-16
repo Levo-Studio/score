@@ -12,20 +12,20 @@ import Foundation
 ///
 /// - **12 aus den drei Leistungsfächern.** Jedes Leistungsfach bringt alle vier
 ///   Halbjahre mit. Sie sind gesetzt und lassen sich nicht abwählen.
-/// - **30 aus den übrigen Fächern.** Davon sind die Kernfächer — Deutsch,
-///   Mathematik, die Fremdsprache, Geschichte, Gemeinschaftskunde und eine
-///   Naturwissenschaft — nicht ausschliessbar. Sie zählen, wie sie stehen.
+/// - **30 aus den übrigen Fächern.** Davon sind die Pflicht-Basisfächer —
+///   Deutsch, Mathematik, die Fremdsprache, Geschichte, Gemeinschaftskunde und
+///   eine Naturwissenschaft — nicht ausschliessbar. Sie zählen, wie sie stehen.
 ///
-/// Die Plätze, die nach den Kernfächern übrig bleiben, füllt Score mit den
-/// **besten verfügbaren Basisfach-Ergebnissen**. Wer mehr belegt hat als nötig,
-/// wird die schwächsten Kurse los — genau das ist der Sinn der Regel.
+/// Die Plätze, die nach den Pflicht-Basisfächern übrig bleiben, füllt Score mit
+/// den **besten verfügbaren Wahl-Basisfach-Ergebnissen**. Wer mehr belegt hat
+/// als nötig, wird die schwächsten Kurse los — genau das ist der Sinn der Regel.
 ///
 /// ## Warum die Auswahl das eigentliche Problem ist
 ///
 /// Die Rechnung selbst ist ein Mittelwert. Interessant ist, *welche* Kurse
-/// hineingehen. Ein sehr gutes Basisfach kann ein schwaches verdrängen, ein
-/// schwaches Kernfach dagegen nie — deshalb sind Kernfächer und Basisfächer im
-/// Datenmodell zwei verschiedene Typen und nicht bloss ein Namensabgleich.
+/// hineingehen. Ein sehr gutes Wahl-Basisfach kann ein schwaches verdrängen, ein
+/// schwaches Pflicht-Basisfach dagegen nie — deshalb sind die beiden im
+/// Datenmodell zwei verschiedene Kategorien und nicht bloss ein Namensabgleich.
 ///
 /// ## Wie viele Kurse ein Fach einbringt
 ///
@@ -36,8 +36,8 @@ import Foundation
 ///
 /// Die Grenze gilt nicht für Leistungsfächer: sie bringen immer alle vier
 /// Halbjahre ein. Und sie ersetzt die Auswahl nicht, sondern kommt ihr zuvor —
-/// ein Basisfach, das seine zwei besten Kurse einbringt, muss mit diesen zwei
-/// immer noch gut genug für einen freien Platz sein.
+/// ein Wahl-Basisfach, das seine zwei besten Kurse einbringt, muss mit diesen
+/// zwei immer noch gut genug für einen freien Platz sein.
 ///
 /// ## Abweichung von der amtlichen Regel
 ///
@@ -116,10 +116,12 @@ enum BlockOneCalculator {
         // Leistungsfächer sind gesetzt, alle zwölf Kurse.
         let advanced = courses.filter { $0.kind == .leistungsfach }
 
-        // Kernfächer sind ebenfalls gesetzt, zählen aber gegen die 30 Plätze.
+        // Pflicht-Basisfächer sind ebenfalls gesetzt, zählen aber gegen die 30
+        // Plätze.
         let mandatory = courses.filter { $0.kind == .pflichtBasisfach }
 
-        // Basisfächer konkurrieren um die restlichen Plätze — bestes Ergebnis zuerst.
+        // Wahl-Basisfächer konkurrieren um die restlichen Plätze — bestes
+        // Ergebnis zuerst.
         // Bei Gleichstand entscheidet die Kennung, damit die Auswahl stabil bleibt
         // und nicht bei jedem Aufruf zwischen zwei gleich guten Kursen springt.
         let optional = courses
@@ -189,7 +191,7 @@ enum BlockOneCalculator {
         }
 
         // `Dictionary(grouping:)` liefert keine feste Reihenfolge. Für die Auswahl
-        // ist sie gleichgültig — die Basisfächer werden ohnehin sortiert —, für
+        // ist sie gleichgültig — die Wahl-Basisfächer werden ohnehin sortiert —, für
         // reproduzierbare Ergebnisse aber nicht.
         return (within.sorted(by: isOrderedBefore), beyond.sorted(by: isOrderedBefore))
     }

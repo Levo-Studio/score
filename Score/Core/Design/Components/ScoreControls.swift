@@ -59,7 +59,7 @@ struct ScoreChip: View {
                 .font(.chipLabel)
                 .padding(.horizontal, 15)
                 .padding(.vertical, 11)
-                .frame(minHeight: ScoreMetrics.minimumTapTarget)
+                .frame(minHeight: ScoreMetrics.chipHeight)
                 .foregroundStyle(isSelected ? ScorePalette.accentInk : ScorePalette.inkSecondary)
                 .background(isSelected ? ScorePalette.accent : ScorePalette.surface)
                 .clipShape(Capsule())

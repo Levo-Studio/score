@@ -2861,47 +2861,6 @@
         }
       }
     },
-    "Für die %lld freien Plätze nimmt Score die besten Wahl-Basisfach-Ergebnisse." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Für den einen freien Platz nimmt Score das beste Wahl-Basisfach-Ergebnis."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Für die %lld freien Plätze nimmt Score die besten Wahl-Basisfach-Ergebnisse."
-                }
-              }
-            }
-          }
-        },
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "For the one open slot Score takes the best elective basic course result."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "For the %lld open slots Score takes the best elective basic course results."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "Geklammert. Dieser Kurs zählt nicht mit, egal wie gut er ist." : {
       "extractionState" : "manual",
       "localizations" : {

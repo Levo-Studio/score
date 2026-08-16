@@ -14,6 +14,12 @@ enum OnboardingStep: Int, CaseIterable {
     case advancedSubjects
     case requiredBasicSubjects
     case electiveBasicSubjects
+    /// Die beiden mündlichen Prüfungsfächer — der letzte Schritt der Fächerwahl.
+    ///
+    /// Er steht hier und nicht früher, weil man aus den Wahl-Basisfächern wählt: erst
+    /// wenn sie stehen, ist die Frage überhaupt beantwortbar. Überspringen ist
+    /// erlaubt, wer in Kursstufe 1 einsteigt, weiss es noch nicht.
+    case oralExamSubjects
     case language
     case summary
 
@@ -55,13 +61,20 @@ final class OnboardingViewModel {
     var requiredBasicSubjects: Set<String> = []
     var electiveBasicSubjects: Set<String> = []
 
+    /// Die beiden mündlichen Prüfungsfächer, über ihren Fachnamen.
+    ///
+    /// Im Onboarding gibt es die Fächer noch nicht als Datensatz — sie entstehen
+    /// erst in `finish(in:)`. Deshalb steht hier der Name und nicht die Kennung,
+    /// wie bei den drei anderen Auswahlen auch.
+    var oralExamSubjects: Set<String> = []
+
     /// Fächer, die der Nutzer selbst eingetippt hat, je Schritt getrennt.
     ///
     /// Sie stehen in der Wolke ganz hinten und verhalten sich sonst wie
     /// Katalogfächer.
     var customAdvancedNames: [String] = []
-    var customRequiredBasicNames: [String] = []
-    var customElectiveBasicNames: [String] = []
+    var customCoreNames: [String] = []
+    var customBasicNames: [String] = []
 
     /// Der Text im Eingabefeld für ein eigenes Fach.
     var customSubjectDraft = ""
@@ -83,7 +96,7 @@ final class OnboardingViewModel {
         SubjectCatalog.all
             .map(\.name)
             .filter { SubjectCatalog.isRequiredBasicSubject($0) && !advancedSubjects.contains($0) }
-            + customRequiredBasicNames
+            + customCoreNames
     }
 
     /// Alles, was weder Leistungs- noch gewähltes Pflicht-Basisfach ist.
@@ -91,7 +104,16 @@ final class OnboardingViewModel {
         SubjectCatalog.all
             .map(\.name)
             .filter { !advancedSubjects.contains($0) && !requiredBasicSubjects.contains($0) }
-            + customElectiveBasicNames
+            + customBasicNames
+    }
+
+    /// Die Fächer, die als mündliches Prüfungsfach in Frage kommen.
+    ///
+    /// Alles Gewählte ausser den Leistungsfächern — in denen wird bereits
+    /// schriftlich geprüft. Die Reihenfolge ist die der Fächerliste danach:
+    /// erst die Pflicht-Basisfächer, dann die Wahl-Basisfächer.
+    var oralExamOptions: [String] {
+        sortedRequiredBasicSubjects + sortedElectiveBasicSubjects
     }
 
     /// Die Pflicht-Basisfächer, die Score von sich aus vorschlägt.
@@ -146,6 +168,12 @@ final class OnboardingViewModel {
             requiredBasicSubjects = suggestedRequiredBasicSubjects
         }
 
+        // Wer zurückgeht und ein Fach wieder abwählt, darf es nicht als
+        // Prüfungsfach zurücklassen — es gäbe das Fach dann gar nicht mehr.
+        if next == .oralExamSubjects {
+            oralExamSubjects.formIntersection(oralExamOptions)
+        }
+
         customSubjectDraft = ""
         step = next
     }
@@ -187,6 +215,23 @@ final class OnboardingViewModel {
         }
     }
 
+    /// Wählt ein mündliches Prüfungsfach an oder ab.
+    ///
+    /// Über zwei hinaus wird nicht gewählt — wie bei den Leistungsfächern wird
+    /// die dritte Wahl ignoriert, statt still die erste zu verdrängen.
+    func toggleOralExamSubject(_ name: String) {
+        if oralExamSubjects.contains(name) {
+            oralExamSubjects.remove(name)
+        } else if oralExamSubjects.count < OralExamSubjectSelection.requiredCount {
+            oralExamSubjects.insert(name)
+        }
+    }
+
+    /// Die gewählten Prüfungsfächer in der Reihenfolge der Fächerliste.
+    var sortedOralExamSubjects: [String] {
+        oralExamOptions.filter { oralExamSubjects.contains($0) }
+    }
+
     /// Übernimmt das eingetippte Fach in den Schritt, in dem es eingegeben wurde,
     /// und wählt es gleich aus.
     func commitCustomSubject() {
@@ -195,18 +240,18 @@ final class OnboardingViewModel {
 
         let isKnown = SubjectCatalog.template(named: name) != nil
             || customAdvancedNames.contains(name)
-            || customRequiredBasicNames.contains(name)
-            || customElectiveBasicNames.contains(name)
+            || customCoreNames.contains(name)
+            || customBasicNames.contains(name)
 
         switch step {
         case .advancedSubjects:
             if !isKnown { customAdvancedNames.append(name) }
             toggleAdvancedSubject(name)
         case .requiredBasicSubjects:
-            if !isKnown { customRequiredBasicNames.append(name) }
+            if !isKnown { customCoreNames.append(name) }
             requiredBasicSubjects.insert(name)
         case .electiveBasicSubjects:
-            if !isKnown { customElectiveBasicNames.append(name) }
+            if !isKnown { customBasicNames.append(name) }
             electiveBasicSubjects.insert(name)
         default:
             break
@@ -298,6 +343,10 @@ final class OnboardingViewModel {
             kind: kind,
             isCustom: template == nil,
             activeSemesters: classLevel.availableSemesters,
+            // Ein Leistungsfach wird bereits schriftlich geprüft; die Angabe
+            // hätte dort keine Bedeutung und bliebe im Datensatz als Widerspruch
+            // stehen.
+            isOralExamSubject: kind != .leistungsfach && oralExamSubjects.contains(name),
             sortIndex: sortIndex
         )
         context.insert(subject)

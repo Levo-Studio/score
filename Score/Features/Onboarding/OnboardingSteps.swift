@@ -331,6 +331,37 @@ struct ElectiveBasicSubjectsStep: View {
     }
 }
 
+// MARK: - Mündliche Prüfungsfächer
+
+/// Der letzte Schritt der Fächerwahl: worin wird mündlich geprüft?
+///
+/// Er kommt nach den Wahl-Basisfächern, weil man aus ihnen wählt. Wer die Antwort
+/// noch nicht kennt, geht ohne Auswahl weiter — der Schritt hält niemanden auf,
+/// und die Wahl steht später in der Fächerliste.
+struct OralExamSubjectsStep: View {
+
+    @Bindable var model: OnboardingViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
+            OnboardingHeader(
+                kicker: model.stepKicker,
+                title: "Worin wirst du mündlich geprüft?",
+                text: "Schriftlich prüfst du deine drei Leistungsfächer, mündlich zwei weitere. Deren Halbjahre muss Score vollständig einrechnen — sie lassen sich nicht klammern."
+            )
+
+            OralExamSubjectSelection(
+                options: model.oralExamOptions.map {
+                    OralExamSubjectSelection.Option(id: $0, name: $0, color: ScorePalette.accent)
+                },
+                selection: model.oralExamSubjects,
+                toggle: { model.toggleOralExamSubject($0) }
+            )
+            .staggeredAppearance(index: 3)
+        }
+    }
+}
+
 /// Chip-Wolke mit Zähler — der gemeinsame Unterbau der drei Fächerschritte.
 ///
 /// Das eigene Fach hängt als gestrichelter Tag hinten in der Wolke und nicht als
@@ -434,6 +465,7 @@ struct SummaryStep: View {
                     SummaryRow(label: "Leistungsfächer", value: Text(verbatim: model.summaryList(model.advancedSubjects)))
                     SummaryRow(label: "Pflicht-Basisfächer", value: Text(verbatim: model.summaryList(model.sortedRequiredBasicSubjects)))
                     SummaryRow(label: "Wahl-Basisfächer", value: Text(verbatim: model.summaryList(model.sortedElectiveBasicSubjects)))
+                    SummaryRow(label: "Mündliche Prüfung", value: Text(verbatim: model.summaryList(model.sortedOralExamSubjects)))
                     SummaryRow(label: "Sprache", value: Text(model.summaryLanguage))
                 }
             }

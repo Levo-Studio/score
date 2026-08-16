@@ -21,6 +21,12 @@ struct SubjectListView: View {
 
     @State private var editorTarget: SubjectEditorTarget?
 
+    /// Ob die Wahl der mündlichen Prüfungsfächer gerade offen steht.
+    ///
+    /// Sie hängt an der Fächerliste und nicht an den Einstellungen: sie ist eine
+    /// Aussage über die Fächer, und man trifft sie, während man sie vor sich hat.
+    @State private var isOralExamPickerPresented = false
+
     private var summaries: [SubjectSummary] {
         SubjectOverview.summaries(of: subjects, semesterIndex: semesterIndex)
     }
@@ -35,6 +41,7 @@ struct SubjectListView: View {
                     DashedButton(title: "＋ Eigenes Fach hinzufügen") {
                         editorTarget = .new
                     }
+                    oralExamCard
                 }
                 .padding(.horizontal, ScoreMetrics.screenPadding)
                 .padding(.top, 6)
@@ -49,6 +56,55 @@ struct SubjectListView: View {
         .sheet(item: $editorTarget) { target in
             SubjectEditorView(target: target)
         }
+        .sheet(isPresented: $isOralExamPickerPresented) {
+            OralExamSubjectSheet()
+        }
+    }
+
+    // MARK: - Mündliche Prüfungsfächer
+
+    /// Der Einstieg in die Wahl der mündlichen Prüfungsfächer.
+    ///
+    /// Die Karte nennt den Stand, bevor man sie antippt — steht die Wahl, liest
+    /// man die beiden Fächer, sonst den Hinweis, dass ohne sie zu gut gerechnet
+    /// wird. Ein blosser Knopf müsste erst geöffnet werden, um das zu sagen.
+    private var oralExamCard: some View {
+        Button {
+            isOralExamPickerPresented = true
+        } label: {
+            ScoreCard {
+                HStack(alignment: .top, spacing: ScoreMetrics.Spacing.sm) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Mündliche Prüfungsfächer")
+                            .font(.cardTitle)
+                            .foregroundStyle(ScorePalette.ink)
+
+                        oralExamNote
+                            .font(.meta)
+                            .lineSpacing(4.5)
+                            .foregroundStyle(ScorePalette.inkSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Spacer(minLength: 0)
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(ScorePalette.inkSecondary)
+                        .padding(.top, 3)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var oralExamNote: Text {
+        let chosen = subjects.filter(\.isOralExamSubject)
+        guard !chosen.isEmpty else {
+            return Text("Noch nicht gewählt. Ihre Halbjahre sind anrechnungspflichtig — ohne die Angabe rechnet Score zu gut.")
+        }
+        return Text(verbatim: chosen.map(\.name).joined(separator: " · "))
     }
 
     // MARK: - Kopf

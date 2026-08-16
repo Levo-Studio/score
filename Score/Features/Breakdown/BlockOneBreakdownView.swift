@@ -8,13 +8,13 @@ import SwiftUI
 /// 1. **Die Rechnung** — Punktsumme, Kurszahl, Schnitt, Umrechnung in die Note.
 /// 2. **Woher die Kurse kommen** — wie viele aus Leistungs-, Pflicht- und
 ///    Wahl-Basisfächern, als Balken und in Worten.
-/// 3. **Was gesetzt ist** — Leistungs- und Pflicht-Basisfächer, mit ihren
-///    Kursen.
-/// 4. **Wer die freien Plätze bekommt** — die Wahl-Basisfächer in der
-///    Reihenfolge, in der sie antreten, und die Grenze, ab der es nicht mehr
-///    reicht.
-/// 5. **Was herausfällt und warum** — mit dem Grund ausgeschrieben, getrennt
-///    nach „von besseren verdrängt" und „über der eigenen Kursgrenze".
+/// 3. **Was sich nicht klammern lässt** — Leistungs- und Pflicht-Basisfächer sowie die
+///    mündlichen Prüfungsfächer, mit ihren Kursen.
+/// 4. **Wo Score klammert** — die Wahl-Basisfächer in der Reihenfolge, in der Score
+///    von unten her klammert, und die Punktzahl, ab der es nicht mehr reicht.
+/// 5. **Was geklammert ist und warum** — mit dem Grund ausgeschrieben, getrennt
+///    nach „von Hand geklammert", „über der eigenen Kursgrenze" und
+///    „automatisch geklammert".
 ///
 /// Nichts davon rechnet er selbst: alles kommt aus `BlockOneBreakdown` und damit
 /// aus `BlockOneCalculator`. Weichen Anzeige und Rechnung auseinander, ist das
@@ -332,8 +332,7 @@ struct BlockOneBreakdownView: View {
         }
     }
 
-    /// „18 Kurse aus 6 Pflicht-Basisfächern" — die Zahl, um die es geht,
-    /// steht vorn.
+    /// „18 Kurse aus 6 Pflicht-Basisfächern" — die Zahl, um die es geht, steht vorn.
     private func originHeadline(_ group: BlockOneBreakdown.Group) -> Text {
         switch group.kind {
         case .leistungsfach:
@@ -353,25 +352,24 @@ struct BlockOneBreakdownView: View {
         case .leistungsfach:
             Text("Alle vier Halbjahre jedes Leistungsfachs. Gesetzt, nicht abwählbar.")
         case .pflichtBasisfach:
-            Text("Gesetzt wie die Leistungsfächer, aber gegen die 30 Plätze der Nicht-Leistungsfächer gerechnet.")
+            Text("Nicht abwählbar. Score klammert hier nie von sich aus — auch ein schwaches Pflicht-Basisfach bleibt drin.")
         case .wahlBasisfach:
-            Text("\(breakdown.optionalCandidateCount) Ergebnisse treten um \(breakdown.optionalSlotCount) freie Plätze an. Die besten bekommen sie.")
+            Text("\(breakdown.optionalCandidateCount) Ergebnisse stehen zur Klammerung, \(breakdown.optionalSlotCount) davon bleiben drin. Score klammert von unten.")
         }
     }
 
-    // MARK: - 3. Was gesetzt ist
+    // MARK: - 3. Was sich nicht klammern lässt
 
     @ViewBuilder
     private func fixedSection(_ breakdown: BlockOneBreakdown) -> some View {
-        let entries = breakdown.advancedSubjects + breakdown.mandatorySubjects
+        // Ein mündliches Prüfungsfach ist meist ein Wahl-Basisfach und stünde sonst
+        // weiter unten zwischen den klammerbaren — es gehört aber hierher.
+        let mandatoryOral = breakdown.oralExamSubjects.filter { $0.kind == .wahlBasisfach }
+        let entries = breakdown.advancedSubjects + breakdown.mandatorySubjects + mandatoryOral
 
         if !entries.isEmpty {
-            section("Gesetzt") {
-                Text("Leistungs- und Pflicht-Basisfächer stehen fest. Auch ein schwaches Ergebnis bleibt drin — hier wird nichts gestrichen und nichts verdrängt.")
-                    .font(.optionMeta)
-                    .lineSpacing(4.5)
-                    .foregroundStyle(ScorePalette.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+            section("Nicht klammerbar") {
+                fixedIntro(breakdown)
 
                 ForEach(entries) { entry in
                     subjectCard(entry, rank: nil)
@@ -380,14 +378,32 @@ struct BlockOneBreakdownView: View {
         }
     }
 
-    // MARK: - 4. Wer die freien Plätze bekommt
+    /// Warum diese Fächer draussen bleiben müssen — und zwar mit der Regel, aus
+    /// der es folgt, nicht bloss mit der Behauptung.
+    private func fixedIntro(_ breakdown: BlockOneBreakdown) -> some View {
+        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
+            Text("Leistungs- und Pflicht-Basisfächer bringen alles ein, was sie haben. Auch ein schwaches Ergebnis bleibt drin — Score klammert hier nie von sich aus.")
+
+            if !breakdown.oralExamSubjects.isEmpty {
+                Text("Dazu deine mündlichen Prüfungsfächer: In den Kursen, in denen du geprüft wirst, sind alle Halbjahre anrechnungspflichtig. Sie lassen sich nicht klammern, auch nicht von Hand.")
+            }
+        }
+        .font(.optionMeta)
+        .lineSpacing(4.5)
+        .foregroundStyle(ScorePalette.inkSecondary)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    // MARK: - 4. Wo Score klammert
 
     @ViewBuilder
     private func competitionSection(_ breakdown: BlockOneBreakdown) -> some View {
-        let entries = breakdown.optionalSubjects
+        // Die mündlichen Prüfungsfächer stehen schon oben — hier wären sie
+        // falsch, an ihnen klammert Score nichts.
+        let entries = breakdown.bracketableSubjects
 
         if !entries.isEmpty {
-            section("Die freien Plätze") {
+            section("Wo Score klammert") {
                 competitionIntro(breakdown)
 
                 ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
@@ -403,7 +419,7 @@ struct BlockOneBreakdownView: View {
 
     private func competitionIntro(_ breakdown: BlockOneBreakdown) -> some View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
-            Text("Nach den gesetzten Kursen bleiben \(breakdown.optionalSlotCount) Plätze. Sie gehen nach Punktzahl an die Wahl-Basisfächer — hier stehen sie in genau der Reihenfolge, in der Score sie vergibt.")
+            Text("Von den 42 Kursen sind nach den nicht klammerbaren noch \(breakdown.optionalSlotCount) offen. Score klammert von unten: hier stehen die Wahl-Basisfächer in genau der Reihenfolge, in der es sie trifft.")
                 .font(.optionMeta)
                 .lineSpacing(4.5)
                 .foregroundStyle(ScorePalette.inkSecondary)
@@ -411,7 +427,7 @@ struct BlockOneBreakdownView: View {
 
             if let threshold = breakdown.optionalThreshold,
                breakdown.optionalCandidateCount > breakdown.optionalSlotCount {
-                Text("Der letzte vergebene Platz steht bei \(threshold) Punkten.")
+                Text("Der schwächste Kurs, der noch drin ist, steht bei \(threshold) Punkten.")
                     .font(.optionMeta)
                     .lineSpacing(4.5)
                     .foregroundStyle(ScorePalette.accent)
@@ -437,17 +453,17 @@ struct BlockOneBreakdownView: View {
 
     private func cutLabel(_ breakdown: BlockOneBreakdown) -> Text {
         guard let threshold = breakdown.optionalThreshold else {
-            return Text("Ab hier reicht es nicht mehr")
+            return Text("Ab hier wird geklammert")
         }
-        return Text("Ab hier reicht es nicht mehr · Grenze \(threshold) Punkte")
+        return Text("Ab hier wird geklammert · Grenze \(threshold) Punkte")
     }
 
-    // MARK: - 5. Was herausfällt
+    // MARK: - 5. Was geklammert ist
 
     @ViewBuilder
     private func droppedSection(_ breakdown: BlockOneBreakdown) -> some View {
         if !breakdown.droppedGroups.isEmpty {
-            section("Was herausfällt") {
+            section("Was geklammert ist") {
                 ForEach(breakdown.droppedGroups) { group in
                     droppedCard(group, in: breakdown)
                 }
@@ -494,27 +510,26 @@ struct BlockOneBreakdownView: View {
             .joined(separator: "   ")
     }
 
-    /// Der Grund, ausgeschrieben. „Fällt raus" allein erklärt nichts.
+    /// Der Grund, ausgeschrieben. „Geklammert" allein erklärt nichts.
     private func droppedReason(
         _ group: BlockOneBreakdown.DroppedGroup,
         in breakdown: BlockOneBreakdown
     ) -> Text {
         switch group.reason {
+        case .manual:
+            return Text("Von dir geklammert. Dieser Kurs bleibt draussen, egal wie er ausfällt — du nimmst die Klammer in der Fachansicht wieder weg.")
         case .beyondSubjectLimit:
             let limit = group.courseLimit ?? group.courses.count
-            return Text("Dieses Fach bringt nur \(limit) Ergebnisse ein. Score behält die besten und klammert diese hier aus.")
-        case .outranked:
-            let occupied = breakdown.groups
-                .first { $0.kind == .wahlBasisfach }?
-                .includedCount ?? breakdown.optionalSlotCount
-            return Text("Schlechter als die \(occupied) besseren Wahl-Basisfach-Ergebnisse, die die freien Plätze belegen.")
+            return Text("Dieses Fach bringt nur \(limit) Ergebnisse ein. Score behält die besten und klammert diese hier.")
+        case .automatic:
+            return Text("Automatisch geklammert: Block I fasst \(BlockOneCalculator.totalCourseCount) Kurse, und dieser gehört zu den schwächsten. Ab \(breakdown.optionalThreshold ?? 0) Punkten bleibt ein Wahl-Basisfach-Kurs drin.")
         }
     }
 
     // MARK: - Ein Fach mit seinen vier Halbjahren
 
-    /// - Parameter rank: Der Platz in der Rangfolge der Wahl-Basisfächer, oder
-    ///   `nil` bei den gesetzten Fächern — dort gibt es keine Rangfolge.
+    /// - Parameter rank: Der Platz in der Rangfolge der Wahl-Basisfächer, oder `nil`
+    ///   bei den gesetzten Fächern — dort gibt es keine Rangfolge.
     private func subjectCard(_ entry: BlockOneBreakdown.SubjectEntry, rank: Int?) -> some View {
         ScoreCard(padding: 14, cornerRadius: layout.cardRadius) {
             VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
@@ -563,6 +578,9 @@ struct BlockOneBreakdownView: View {
 
     /// Die Bilanz eines Fachs in einer Zeile: wie viele seiner Ergebnisse zählen.
     private func subjectBalance(_ entry: BlockOneBreakdown.SubjectEntry) -> Text {
+        if entry.isOralExamSubject {
+            return Text("Bringt \(entry.includedCount) von \(entry.recordedCount) Ergebnissen ein · mündliches Prüfungsfach, nicht klammerbar")
+        }
         if let limit = entry.courseLimit, limit < entry.recordedCount {
             return Text("Bringt \(entry.includedCount) von \(entry.recordedCount) Ergebnissen ein · eigene Grenze \(limit)")
         }
@@ -605,18 +623,24 @@ struct BlockOneBreakdownView: View {
             // Die eingebrachten Kurse tragen kein Etikett — sie sind der Normalfall.
             // Die Fläche bleibt trotzdem stehen, damit alle Kacheln gleich hoch sind.
             Color.clear
-        case .excluded:
-            ScoreBadge(title: "fällt raus")
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        case .beyondLimit:
-            ScoreBadge(title: "über Grenze")
+        case .bracketed(_, let reason):
+            ScoreBadge(title: markerTitle(for: reason))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         case .notTaken:
             markerLabel("nicht belegt")
         case .notRecorded:
             markerLabel("keine Note")
+        }
+    }
+
+    /// Das Etikett auf der Kachel — kurz genug für eine Kachelbreite, aber immer
+    /// mit dem Grund darin. „Geklammert" allein liesse offen, wer geklammert hat.
+    private func markerTitle(for reason: BlockOneBreakdown.ExclusionReason) -> LocalizedStringKey {
+        switch reason {
+        case .manual: "von dir"
+        case .automatic: "geklammert"
+        case .beyondSubjectLimit: "über Grenze"
         }
     }
 
@@ -650,11 +674,13 @@ struct BlockOneBreakdownView: View {
 
     private var explanation: some View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
-            Text("Block I fasst 42 Halbjahresergebnisse. Die zwölf Kurse der Leistungsfächer und alle Pflicht-Basisfächer sind gesetzt, die restlichen Plätze gehen an die besten Wahl-Basisfach-Ergebnisse. Aus dem Punkteschnitt dieser Kurse folgt beides: Block I als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben.")
+            Text("Block I fasst 42 Halbjahresergebnisse. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 42 übrig sind. Aus dem Punkteschnitt dieser Kurse folgt beides — Block I als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben.")
 
-            Text("Wie viele Ergebnisse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift vor der Auswahl: Was ein Fach nicht einbringt, nimmt auch keinem anderen Kurs den Platz weg. Leistungsfächer bringen immer alle vier Halbjahre ein.")
+            Text("Nicht klammerbar sind die Kurse deiner Prüfungsfächer: die drei Leistungsfächer, in denen du schriftlich geprüft wirst, und deine beiden mündlichen Prüfungsfächer. Deren Halbjahre sind anrechnungspflichtig. Pflicht-Basisfächer klammert Score ebenfalls nie von sich aus.")
 
-            Text("Haben zwei Wahl-Basisfach-Ergebnisse dieselbe Punktzahl und ist nur noch ein Platz frei, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten.")
+            Text("Wie viele Ergebnisse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift zuerst: Was ein Fach nicht einbringt, steht auch nicht mehr zur Klammerung.")
+
+            Text("Haben zwei Wahl-Basisfach-Ergebnisse dieselbe Punktzahl und trifft es nur noch eines, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten.")
         }
         .font(.optionMeta)
         .lineSpacing(5.5)

@@ -7,8 +7,8 @@ import SwiftUI
 /// Der Bildschirm zeigt nichts, was er selbst ausrechnet. Alles kommt aus
 /// `BlockOneCalculator.calculate(for:)` — diese Struktur ordnet das Ergebnis nur
 /// so, dass man es lesen kann: nach Fachtyp gruppiert, je Fach die vier
-/// Halbjahre, und bei den Wahl-Basisfächern in der Reihenfolge, in der sie um
-/// die freien Plätze konkurrieren.
+/// Halbjahre, und bei den klammerbaren Fächern in der Reihenfolge, in der Score
+/// von unten her klammert.
 ///
 /// Sie liegt bewusst neben dem Rechenkern und nicht darin: der Kern beantwortet
 /// „welche Kurse zählen", diese Struktur beantwortet „wie erzählt man das".
@@ -23,19 +23,14 @@ struct BlockOneBreakdown {
     /// läuft, hat aber noch keine Note.
     enum CourseState: Equatable {
         case included(points: Int)
-        /// Von besseren Wahl-Basisfach-Ergebnissen aus den freien Plätzen
-        /// verdrängt.
-        case excluded(points: Int)
-        /// Über der Kursgrenze, die für dieses Fach gesetzt ist. Dieser Kurs ist
-        /// nie in den Wettbewerb gegangen — der Grund ist ein anderer, und der
-        /// Bildschirm muss ihn anders benennen.
-        case beyondLimit(points: Int)
+        /// Geklammert — mit dem Grund, aus dem es geschah.
+        case bracketed(points: Int, reason: ExclusionReason)
         case notTaken
         case notRecorded
 
         var points: Int? {
             switch self {
-            case .included(let points), .excluded(let points), .beyondLimit(let points): points
+            case .included(let points), .bracketed(let points, _): points
             case .notTaken, .notRecorded: nil
             }
         }
@@ -47,29 +42,24 @@ struct BlockOneBreakdown {
 
         /// Erfasst, aber nicht gezählt — gleich aus welchem Grund.
         var isExcluded: Bool {
-            switch self {
-            case .excluded, .beyondLimit: true
-            case .included, .notTaken, .notRecorded: false
-            }
+            exclusionReason != nil
         }
 
         /// Warum dieser Kurs nicht zählt, sofern er erfasst ist und nicht zählt.
         var exclusionReason: ExclusionReason? {
             switch self {
-            case .excluded: .outranked
-            case .beyondLimit: .beyondSubjectLimit
+            case .bracketed(_, let reason): reason
             case .included, .notTaken, .notRecorded: nil
             }
         }
     }
 
     /// Warum ein erfasster Kurs nicht in Block I eingeht.
-    enum ExclusionReason: Equatable, Hashable {
-        /// Es gab bessere Wahl-Basisfach-Ergebnisse für die freien Plätze.
-        case outranked
-        /// Das Fach bringt nur eine bestimmte Zahl seiner Ergebnisse ein.
-        case beyondSubjectLimit
-    }
+    ///
+    /// Dieselben drei Gründe wie im Rechenkern, hier nur in der Reihenfolge, in
+    /// der der Bildschirm sie erzählt: erst die Entscheidungen des Nutzers, dann
+    /// die von Score.
+    typealias ExclusionReason = BlockOneCalculator.BracketReason
 
     /// Ein Halbjahr eines Fachs, so wie es auf dem Bildschirm steht.
     struct Course: Identifiable {
@@ -111,6 +101,12 @@ struct BlockOneBreakdown {
         /// Die gesetzte Kursgrenze dieses Fachs, sofern sie greift.
         let courseLimit: Int?
 
+        /// Ob dieses Fach eines der beiden mündlichen Prüfungsfächer ist.
+        let isOralExamSubject: Bool
+
+        /// Ob sich die Kurse dieses Fachs überhaupt klammern lassen.
+        let allowsBracketing: Bool
+
         var includedCount: Int { courses.count { $0.state.isIncluded } }
         var excludedCount: Int { courses.count { $0.state.isExcluded } }
 
@@ -119,21 +115,26 @@ struct BlockOneBreakdown {
 
         /// Der Schnitt über die Halbjahre mit Ergebnis.
         ///
-        /// Nach ihm sind die Wahl-Basisfächer sortiert — er ist die beste Antwort
-        /// „warum steht dieses Fach weiter unten als jenes".
+        /// Nach ihm sind die klammerbaren Fächer sortiert — er ist die beste
+        /// Antwort auf „warum steht dieses Fach weiter unten als jenes".
         var recordedAverage: Double? {
             Self.average(of: courses.compactMap { $0.state.points })
         }
 
-        /// Der Schnitt der Kurse, die tatsächlich um einen Platz antreten.
+        /// Der Schnitt der Kurse, die überhaupt noch zur Klammerung anstehen.
         ///
         /// Bringt ein Fach nur seine besten zwei ein, ist es mit diesen zwei
-        /// stärker, als sein Gesamtschnitt vermuten lässt — und genau so tritt es
-        /// gegen die anderen an. Nach diesem Wert ist die Liste sortiert.
+        /// stärker, als sein Gesamtschnitt vermuten lässt — und genau so steht es
+        /// da, wenn Score von unten her klammert. Nach diesem Wert ist die Liste
+        /// sortiert. Von Hand geklammerte Kurse zählen hier ebenfalls nicht mit:
+        /// über sie ist bereits entschieden.
         var competingAverage: Double? {
             Self.average(
                 of: courses.compactMap { course in
-                    course.state.exclusionReason == .beyondSubjectLimit ? nil : course.state.points
+                    switch course.state.exclusionReason {
+                    case .beyondSubjectLimit, .manual: nil
+                    case .automatic, .none: course.state.points
+                    }
                 }
             )
         }
@@ -161,8 +162,8 @@ struct BlockOneBreakdown {
 
     /// Ein Fach mit den Kursen, die aus demselben Grund herausfallen.
     ///
-    /// Ein Fach kann in beiden Gründen auftauchen: zwei Kurse über der eigenen
-    /// Grenze, ein dritter zu schwach für die letzten freien Plätze. Deshalb ist
+    /// Ein Fach kann in mehreren Gründen auftauchen: zwei Kurse über der eigenen
+    /// Grenze, einer von Hand geklammert, ein vierter automatisch. Deshalb ist
     /// der Grund Teil der Identität und nicht nur ein Merkmal.
     struct DroppedGroup: Identifiable {
         let subjectID: String
@@ -177,7 +178,7 @@ struct BlockOneBreakdown {
         var id: String { "\(subjectID)-\(reason)" }
 
         /// Die höchste Punktzahl, die hier herausfällt — die Zahl, an der man
-        /// den Abstand zur Grenze abliest.
+        /// den Abstand zur Klammergrenze abliest.
         var bestPoints: Int? { courses.compactMap { $0.state.points }.max() }
     }
 
@@ -188,43 +189,61 @@ struct BlockOneBreakdown {
     /// Die Punktsumme der eingebrachten Kurse — der Zähler der Rechnung.
     let includedPointsTotal: Int
 
-    /// Die drei Gruppen in der Reihenfolge, in der sie die Plätze belegen.
+    /// Die drei Gruppen in der Reihenfolge, in der sie Block I füllen.
     let groups: [Group]
 
     let advancedSubjects: [SubjectEntry]
     let mandatorySubjects: [SubjectEntry]
 
-    /// Die Wahl-Basisfächer, nach Punktschnitt absteigend — die Reihenfolge, in
-    /// der sie um die freien Plätze antreten.
+    /// Die Wahl-Basisfächer, nach Punktschnitt absteigend — die Reihenfolge, in der
+    /// Score von unten her klammert.
     let optionalSubjects: [SubjectEntry]
 
-    /// Nach welchem Wahl-Basisfach nichts mehr eingebracht wird.
+    /// Die mündlichen Prüfungsfächer, in der Reihenfolge der Fächerliste.
     ///
-    /// Alles ab dem folgenden Fach fällt vollständig heraus. `nil`, wenn es
-    /// nichts zu trennen gibt — weil kein Wahl-Basisfach eingebracht wird oder
-    /// weil alle Platz gefunden haben.
+    /// Sie stehen zusätzlich in `mandatorySubjects` beziehungsweise
+    /// `optionalSubjects` — hier gebündelt, weil der Bildschirm ihre besondere
+    /// Stellung eigens erklärt.
+    let oralExamSubjects: [SubjectEntry]
+
+    /// Die Wahl-Basisfächer, an denen Score überhaupt klammern darf.
+    ///
+    /// Also `optionalSubjects` ohne die mündlichen Prüfungsfächer. An denen ist
+    /// nichts zu klammern; sie stehen im Bildschirm bei den festen Fächern.
+    /// ``optionalCutIndex`` zählt in diese Liste, nicht in `optionalSubjects`.
+    let bracketableSubjects: [SubjectEntry]
+
+    /// Nach welchem klammerbaren Fach nichts mehr eingebracht wird.
+    ///
+    /// Alles ab dem folgenden Fach ist vollständig geklammert. `nil`, wenn es
+    /// nichts zu trennen gibt — weil kein Wahl-Basisfach eingebracht wird oder weil
+    /// nichts geklammert werden musste.
     let optionalCutIndex: Int?
 
     /// Die niedrigste Punktzahl, die es noch in Block I geschafft hat.
     let optionalThreshold: Int?
 
-    /// Wie viele Wahl-Basisfach-Ergebnisse um die freien Plätze konkurrieren.
+    /// Wie viele Wahl-Basisfach-Ergebnisse überhaupt noch zur Klammerung anstehen.
     let optionalCandidateCount: Int
 
-    /// Wie viele Plätze nach den Leistungs- und Pflicht-Basisfächern übrig
-    /// bleiben.
+    /// Wie viele der 42 Kurse nach den anrechnungspflichtigen noch offen sind.
     let optionalSlotCount: Int
 
-    /// Alles, was herausfällt — nach Fach und Grund gebündelt.
+    /// Alles, was geklammert ist — nach Fach und Grund gebündelt.
     ///
-    /// Die Reihenfolge ist die des Bildschirms: erst die Kurse, die eine gesetzte
-    /// Kursgrenze ausklammert (die Entscheidung des Nutzers), danach die, denen
-    /// bessere Ergebnisse den Platz genommen haben.
+    /// Die Reihenfolge ist die des Bildschirms: erst die Entscheidungen des
+    /// Nutzers — von Hand geklammert, dann über die eigene Kursgrenze —, danach
+    /// das, was Score von sich aus geklammert hat.
     let droppedGroups: [DroppedGroup]
 
     /// Ob überhaupt ein Fach eine Kursgrenze gesetzt hat.
     var hasSubjectLimits: Bool {
         droppedGroups.contains { $0.reason == .beyondSubjectLimit }
+    }
+
+    /// Ob überhaupt ein Kurs von Hand geklammert ist.
+    var hasManualBrackets: Bool {
+        droppedGroups.contains { $0.reason == .manual }
     }
 
     // MARK: - Aufbau
@@ -237,7 +256,7 @@ struct BlockOneBreakdown {
         let inputs = presentations.map(\.input)
         let outcome = BlockOneCalculator.calculate(for: inputs)
         let included = Set(outcome.includedCourses)
-        let beyondLimit = outcome.coursesBeyondSubjectLimit
+        let reasons = outcome.bracketReasons
         let pointsByCourse = Dictionary(
             uniqueKeysWithValues: BlockOneCalculator.availableCourses(in: inputs).map { ($0.id, $0.points) }
         )
@@ -262,21 +281,24 @@ struct BlockOneBreakdown {
                         state: Self.state(
                             points: pointsByCourse[identifier],
                             isIncluded: included.contains(identifier),
-                            isBeyondLimit: beyondLimit.contains(identifier),
+                            reason: reasons[identifier],
                             isActive: input.semesters.first { $0.index == index }?.isActive ?? false
                         )
                     )
                 },
-                courseLimit: input.effectiveCourseLimit
+                courseLimit: input.effectiveCourseLimit,
+                isOralExamSubject: input.isOralExamSubject,
+                allowsBracketing: input.allowsBracketing
             )
         }
 
         advancedSubjects = entries.filter { $0.kind == .leistungsfach }
         mandatorySubjects = entries.filter { $0.kind == .pflichtBasisfach }
+        oralExamSubjects = entries.filter(\.isOralExamSubject)
 
         // Absteigend nach Schnitt, bei Gleichstand nach Name: die Liste liest sich
-        // von „reicht sicher" nach „reicht nicht mehr". Fächer ganz ohne Ergebnis
-        // stehen am Ende, sie treten gar nicht erst an.
+        // von „bleibt sicher drin" nach „wird geklammert". Fächer ganz ohne
+        // Ergebnis stehen am Ende, bei ihnen ist nichts zu klammern.
         optionalSubjects = entries
             .filter { $0.kind == .wahlBasisfach }
             .sorted { left, right in
@@ -292,34 +314,42 @@ struct BlockOneBreakdown {
             Self.group(.wahlBasisfach, in: optionalSubjects)
         ]
 
+        bracketableSubjects = optionalSubjects.filter(\.allowsBracketing)
+
         // Die Trennlinie sitzt hinter dem letzten Fach, das noch etwas einbringt.
-        // Damit gilt für alles darunter ohne Ausnahme: fällt heraus.
-        let lastIncluded = optionalSubjects.lastIndex { $0.includedCount > 0 }
-        if let lastIncluded, lastIncluded < optionalSubjects.count - 1 {
+        // Damit gilt für alles darunter ohne Ausnahme: vollständig geklammert.
+        let lastIncluded = bracketableSubjects.lastIndex { $0.includedCount > 0 }
+        if let lastIncluded, lastIncluded < bracketableSubjects.count - 1 {
             optionalCutIndex = lastIncluded
         } else {
             optionalCutIndex = nil
         }
 
-        optionalThreshold = optionalSubjects
+        optionalThreshold = bracketableSubjects
             .flatMap(\.courses)
             .compactMap { $0.state.isIncluded ? $0.state.points : nil }
             .min()
 
-        // Kurse über einer gesetzten Kursgrenze treten gar nicht erst an — sie
-        // zählen deshalb auch nicht als Bewerber um die freien Plätze.
-        optionalCandidateCount = optionalSubjects.reduce(0) { total, entry in
-            total + entry.courses.count {
-                $0.state.points != nil && $0.state.exclusionReason != .beyondSubjectLimit
+        // Kurse über einer gesetzten Kursgrenze und von Hand geklammerte stehen
+        // gar nicht mehr zur Klammerung an — über sie ist entschieden.
+        optionalCandidateCount = bracketableSubjects.reduce(0) { total, entry in
+            total + entry.courses.count { course in
+                guard course.state.points != nil else { return false }
+                switch course.state.exclusionReason {
+                case .beyondSubjectLimit, .manual: return false
+                case .automatic, .none: return true
+                }
             }
         }
 
-        let mandatoryIncluded = mandatorySubjects.reduce(0) { $0 + $1.includedCount }
-        optionalSlotCount = max(0, BlockOneCalculator.nonAdvancedCourseCount - mandatoryIncluded)
+        // Was nach den anrechnungspflichtigen Kursen von den 42 übrig ist. Die
+        // Zahl kommt aus dem Ergebnis und nicht aus einer zweiten Rechnung: alles
+        // Eingebrachte, das nicht aus einem klammerbaren Wahl-Basisfach stammt.
+        let protectedIncluded = entries
+            .filter { !($0.kind == .wahlBasisfach && $0.allowsBracketing) }
+            .reduce(0) { $0 + $1.includedCount }
+        optionalSlotCount = max(0, BlockOneCalculator.totalCourseCount - protectedIncluded)
 
-        // Erst die Kurse, die eine gesetzte Grenze ausklammert, dann die
-        // verdrängten: Der Nutzer soll seine eigene Entscheidung zuerst
-        // wiederfinden und danach lesen, was die Rechnung von sich aus streicht.
         droppedGroups = Self.droppedGroups(
             in: advancedSubjects + mandatorySubjects + optionalSubjects
         )
@@ -330,12 +360,14 @@ struct BlockOneBreakdown {
     private static func state(
         points: Int?,
         isIncluded: Bool,
-        isBeyondLimit: Bool,
+        reason: ExclusionReason?,
         isActive: Bool
     ) -> CourseState {
         guard let points else { return isActive ? .notRecorded : .notTaken }
         if isIncluded { return .included(points: points) }
-        return isBeyondLimit ? .beyondLimit(points: points) : .excluded(points: points)
+        // Ohne Grund kann ein erfasster Kurs nicht draussen sein. Sollte es doch
+        // je vorkommen, ist „Score hat geklammert" die ehrlichste Auskunft.
+        return .bracketed(points: points, reason: reason ?? .automatic)
     }
 
     private static func group(_ kind: SubjectKind, in entries: [SubjectEntry]) -> Group {
@@ -347,9 +379,11 @@ struct BlockOneBreakdown {
         )
     }
 
-    /// Bündelt alle nicht gezählten Kurse nach Fach und Grund.
+    /// Bündelt alle geklammerten Kurse nach Fach und Grund.
     private static func droppedGroups(in entries: [SubjectEntry]) -> [DroppedGroup] {
-        let reasons: [ExclusionReason] = [.beyondSubjectLimit, .outranked]
+        // Erst die Entscheidungen des Nutzers, dann die von Score: Wer die Liste
+        // liest, soll zuerst wiederfinden, was er selbst getan hat.
+        let reasons: [ExclusionReason] = [.manual, .beyondSubjectLimit, .automatic]
 
         return reasons.flatMap { reason in
             entries.compactMap { entry -> DroppedGroup? in

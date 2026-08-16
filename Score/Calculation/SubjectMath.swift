@@ -170,11 +170,24 @@ struct SemesterInput: Sendable, Equatable {
     var writtenShare: Int
     var entries: [GradeInput]
 
-    init(index: Int, isActive: Bool = true, writtenShare: Int = 50, entries: [GradeInput]) {
+    /// Ob der Nutzer diesen Kurs von Hand geklammert hat.
+    ///
+    /// Bei Prüfungsfächern bleibt der Wert wirkungslos — siehe
+    /// ``SubjectInput/allowsBracketing`` und ``BlockOneCalculator``.
+    var isManuallyBracketed: Bool
+
+    init(
+        index: Int,
+        isActive: Bool = true,
+        writtenShare: Int = 50,
+        entries: [GradeInput],
+        isManuallyBracketed: Bool = false
+    ) {
         self.index = index
         self.isActive = isActive
         self.writtenShare = writtenShare
         self.entries = entries
+        self.isManuallyBracketed = isManuallyBracketed
     }
 }
 
@@ -190,26 +203,44 @@ struct SubjectInput: Sendable, Equatable, Identifiable {
     /// Wert bleibt bei ihnen wirkungslos. Siehe ``effectiveCourseLimit``.
     var maximumContributedCourses: Int?
 
+    /// Ob dieses Fach eines der beiden mündlichen Prüfungsfächer ist.
+    var isOralExamSubject: Bool
+
     init(
         id: String,
         kind: SubjectKind,
         semesters: [SemesterInput],
-        maximumContributedCourses: Int? = nil
+        maximumContributedCourses: Int? = nil,
+        isOralExamSubject: Bool = false
     ) {
         self.id = id
         self.kind = kind
         self.semesters = semesters
         self.maximumContributedCourses = maximumContributedCourses
+        self.isOralExamSubject = isOralExamSubject
     }
 
     /// Die Grenze, die der Rechenkern anwendet.
     ///
-    /// Bei Leistungsfächern immer `nil` — dass sie alle vier Halbjahre einbringen,
-    /// ist die Regel und keine Einstellung. Unter 1 wird nicht gegangen: ein Fach,
-    /// das gar nichts einbringt, wäre besser abgewählt.
+    /// Bei Prüfungsfächern immer `nil` — dass sie alle belegten Halbjahre
+    /// einbringen, ist die Regel und keine Einstellung. Unter 1 wird nicht
+    /// gegangen: ein Fach, das gar nichts einbringt, wäre besser abgewählt.
     var effectiveCourseLimit: Int? {
-        guard kind != .leistungsfach, let limit = maximumContributedCourses else { return nil }
+        guard !isExamSubject, let limit = maximumContributedCourses else { return nil }
         return max(1, limit)
+    }
+
+    /// Ob dieses Fach im Abitur geprüft wird — schriftlich oder mündlich.
+    var isExamSubject: Bool {
+        kind == .leistungsfach || isOralExamSubject
+    }
+
+    /// Ob sich die Kurse dieses Fachs überhaupt klammern lassen.
+    ///
+    /// Prüfungsfächer sind anrechnungspflichtig: weder von Hand noch automatisch
+    /// fällt dort ein Kurs heraus. Die Begründung steht in ``BlockOneCalculator``.
+    var allowsBracketing: Bool {
+        !isExamSubject
     }
 }
 
@@ -232,7 +263,8 @@ extension SemesterInput {
             index: semester.index,
             isActive: isActive,
             writtenShare: writtenShare,
-            entries: (semester.entries ?? []).map(GradeInput.init)
+            entries: (semester.entries ?? []).map(GradeInput.init),
+            isManuallyBracketed: semester.isManuallyBracketed
         )
     }
 }
@@ -248,10 +280,12 @@ extension SubjectInput {
                     index: index,
                     isActive: subject.isActive(in: index),
                     writtenShare: subject.writtenShare,
-                    entries: (semester?.entries ?? []).map(GradeInput.init)
+                    entries: (semester?.entries ?? []).map(GradeInput.init),
+                    isManuallyBracketed: semester?.isManuallyBracketed ?? false
                 )
             },
-            maximumContributedCourses: subject.maximumContributedCourses
+            maximumContributedCourses: subject.maximumContributedCourses,
+            isOralExamSubject: subject.isOralExamSubject
         )
     }
 }

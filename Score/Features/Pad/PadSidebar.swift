@@ -18,13 +18,17 @@ struct PadSidebar: View {
             brand
             navigation
             subjectSections
-            DashedButton(
-                title: "＋ Neues Fach",
-                cornerRadius: 14,
-                verticalPadding: 11,
-                font: ScoreTypography.publicSans(500, 12)
-            ) {
-                route = .newSubject
+            VStack(spacing: ScoreMetrics.Spacing.xs) {
+                DashedButton(
+                    title: "＋ Neues Fach",
+                    cornerRadius: 14,
+                    verticalPadding: 11,
+                    font: ScoreTypography.publicSans(500, 12)
+                ) {
+                    route = .newSubject
+                }
+
+                oralExamButton
             }
             Text("Product by Levo Studio")
                 .font(ScoreTypography.publicSans(400, 9.5))
@@ -128,6 +132,49 @@ struct PadSidebar: View {
         }
         .buttonStyle(.plain)
         .scoreAnimation(ScoreMotion.backdrop, value: isSelected)
+    }
+
+    // MARK: - Mündliche Prüfungsfächer
+
+    /// Der Einstieg in die Wahl der mündlichen Prüfungsfächer.
+    ///
+    /// Er steht bei den Fächern und nicht bei den festen Zielen oben: die Wahl
+    /// ist eine Aussage über die Fächer, keine eigene Abteilung der App. Die
+    /// Zeile nennt den Stand, damit man ohne Tippen sieht, ob die Angabe fehlt.
+    private var oralExamButton: some View {
+        let chosen = summaries.map(\.subject).filter(\.isOralExamSubject)
+
+        return Button {
+            route = .oralExamSubjects
+        } label: {
+            HStack(spacing: Self.iconGap) {
+                Image(systemName: "checkmark.seal")
+                    .font(.system(size: 12, weight: .medium))
+                    .frame(width: Self.iconSize, height: Self.iconSize)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Mündliche Prüfung")
+                        .font(ScoreTypography.publicSans(500, 12))
+                        .foregroundStyle(ScorePalette.ink)
+                    Text(verbatim: chosen.isEmpty
+                        ? ScoreNumberFormat.placeholder
+                        : chosen.map(\.name).joined(separator: " · "))
+                        .font(ScoreTypography.publicSans(400, 9.5))
+                        .foregroundStyle(ScorePalette.inkSecondary)
+                        .lineLimit(1)
+                }
+            }
+            .foregroundStyle(ScorePalette.ink)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, ScoreMetrics.Spacing.sm)
+            .padding(.vertical, 9)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(ScorePalette.line, lineWidth: 1)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Fächer

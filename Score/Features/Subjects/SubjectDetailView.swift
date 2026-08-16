@@ -276,8 +276,28 @@ struct SubjectDetailView: View {
                         isAccented: true
                     )
                 }
+
+                CourseBracketRow(
+                    isBracketed: bracketBinding,
+                    allowsBracketing: summary.allowsBracketing,
+                    bracketReason: summary.bracketReason,
+                    isActive: summary.isActive
+                )
             }
         }
+    }
+
+    /// Die Klammer des gerade gewählten Halbjahres.
+    ///
+    /// Schreibt direkt ins Modell: Klammern ist eine einzelne, sofort sichtbare
+    /// Entscheidung und kein Formular, das man abbricht. Fehlt der Halbjahres-
+    /// Datensatz — was nach dem Anlegen eines Fachs nie vorkommt —, bleibt der
+    /// Schalter wirkungslos, statt still einen neuen anzulegen.
+    private var bracketBinding: Binding<Bool> {
+        Binding(
+            get: { currentSemester?.isManuallyBracketed ?? false },
+            set: { currentSemester?.isManuallyBracketed = $0 }
+        )
     }
 
     /// Die Beschriftung einer Anteils-Kachel: „Schriftlich · 60 %".
@@ -296,8 +316,12 @@ struct SubjectDetailView: View {
     /// Problem, das gelöst werden müsste.
     private var semesterStateText: LocalizedStringKey? {
         if !summary.isActive { return "nicht belegt" }
-        if summary.isExcluded { return "wird nicht gewertet" }
-        return nil
+        switch summary.bracketReason {
+        case .manual: return "von dir geklammert"
+        case .automatic: return "geklammert"
+        case .beyondSubjectLimit: return "über der Kursgrenze"
+        case .none: return nil
+        }
     }
 
     /// Eine der drei Kacheln: Beschriftung oben, Wert darunter.
@@ -403,7 +427,7 @@ struct SubjectDetailView: View {
     // MARK: - Erklärung
 
     private var blockOneNote: some View {
-        Text("Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. Nicht gewertete Kurse rechnet Score automatisch raus, Pflicht-Basisfächer bleiben immer drin.")
+        Text("Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. Block I fasst 42 Kurse — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso.")
             .font(.optionMeta)
             .lineSpacing(5.5)
             .foregroundStyle(ScorePalette.inkSecondary)

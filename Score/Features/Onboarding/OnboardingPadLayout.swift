@@ -84,6 +84,8 @@ struct OnboardingPadLayout: View {
             RequiredBasicSubjectsStep(model: model)
         case .electiveBasicSubjects:
             ElectiveBasicSubjectsStep(model: model)
+        case .oralExamSubjects:
+            OralExamSubjectsStep(model: model)
         case .language:
             LanguageStep(model: model)
         case .summary:
@@ -308,6 +310,11 @@ struct OnboardingPreviewColumn: View {
         let advanced = model.advancedSubjects.isEmpty
             ? nil
             : model.advancedSubjects.joined(separator: ", ")
+        // Erst ab dem Schritt selbst: „noch keins gewählt" und „übersprungen"
+        // sehen gleich aus, und vorher wäre die leere Zeile eine Behauptung.
+        let oral = hasReached(.oralExamSubjects) && !model.sortedOralExamSubjects.isEmpty
+            ? model.sortedOralExamSubjects.joined(separator: ", ")
+            : nil
 
         return [
             PreviewRow(
@@ -339,6 +346,12 @@ struct OnboardingPreviewColumn: View {
                 label: "Leistungsfächer",
                 value: advanced.map { Text(verbatim: $0) },
                 changeKey: advanced
+            ),
+            PreviewRow(
+                id: "oral",
+                label: "Mündliche Prüfung",
+                value: oral.map { Text(verbatim: $0) },
+                changeKey: oral
             )
         ]
     }

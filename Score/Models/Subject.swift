@@ -47,7 +47,7 @@ final class Subject {
     /// SwiftData kann Enums direkt ablegen; hier steht bewusst der Rohwert, damit
     /// das CloudKit-Feld ein schlichter String bleibt und ein späteres Umbenennen
     /// eines Falls den Sync nicht bricht.
-    @Attribute(.allowsCloudEncryption) var kindRawValue: String = SubjectKind.basisfach.rawValue
+    @Attribute(.allowsCloudEncryption) var kindRawValue: String = SubjectKind.wahlBasisfach.rawValue
 
     /// Ob der Nutzer das Fach selbst angelegt hat.
     ///
@@ -120,10 +120,10 @@ final class Subject {
 
 extension Subject {
 
-    /// Der Fachtyp. Fällt auf Basisfach zurück, falls ein unbekannter Rohwert
+    /// Der Fachtyp. Fällt auf Wahl-Basisfach zurück, falls ein unbekannter Rohwert
     /// ankommt — etwa aus einer neueren App-Version auf einem anderen Gerät.
     var kind: SubjectKind {
-        get { SubjectKind(rawValue: kindRawValue) ?? .basisfach }
+        get { SubjectKind(rawValue: kindRawValue) ?? .wahlBasisfach }
         set { kindRawValue = newValue.rawValue }
     }
 

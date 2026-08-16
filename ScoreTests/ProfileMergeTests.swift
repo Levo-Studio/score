@@ -147,7 +147,7 @@ struct ProfileMergeTests {
                 name: name,
                 abbreviation: String(name.prefix(2)),
                 colorValue: 0x1C6B6E,
-                kind: .basisfach,
+                kind: .wahlBasisfach,
                 sortIndex: index
             )
             context.insert(subject)

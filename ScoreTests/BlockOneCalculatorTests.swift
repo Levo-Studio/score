@@ -12,25 +12,25 @@ struct BlockOneCalculatorTests {
     // MARK: - Vollständiger Jahrgang
 
     /// Ein Jahrgang, wie er typischerweise aussieht: drei Leistungsfächer, drei
-    /// Kernfächer neben den Leistungsfächern und sechs Basisfächer.
+    /// Pflicht-Basisfächer neben den Leistungsfächern und sechs Wahl-Basisfächer.
     ///
-    /// Verfügbar sind 48 Kurse, eingebracht werden 42 — sechs Basisfach-Kurse
+    /// Verfügbar sind 48 Kurse, eingebracht werden 42 — sechs Wahl-Basisfach-Kurse
     /// fallen heraus.
     static let fullYear: [SubjectInput] = [
         subject("lf-deutsch", .leistungsfach, allPoints: 12),
         subject("lf-mathematik", .leistungsfach, allPoints: 11),
         subject("lf-biologie", .leistungsfach, allPoints: 13),
 
-        subject("kf-englisch", .kernfach, allPoints: 10),
-        subject("kf-geschichte", .kernfach, allPoints: 9),
-        subject("kf-gemeinschaftskunde", .kernfach, allPoints: 11),
+        subject("pbf-englisch", .pflichtBasisfach, allPoints: 10),
+        subject("pbf-geschichte", .pflichtBasisfach, allPoints: 9),
+        subject("pbf-gemeinschaftskunde", .pflichtBasisfach, allPoints: 11),
 
-        subject("bf-physik", .basisfach, allPoints: 14),
-        subject("bf-chemie", .basisfach, allPoints: 13),
-        subject("bf-geografie", .basisfach, allPoints: 12),
-        subject("bf-sport", .basisfach, allPoints: 11),
-        subject("bf-religion", .basisfach, allPoints: 5),
-        subject("bf-musik", .basisfach, allPoints: 4)
+        subject("wbf-physik", .wahlBasisfach, allPoints: 14),
+        subject("wbf-chemie", .wahlBasisfach, allPoints: 13),
+        subject("wbf-geografie", .wahlBasisfach, allPoints: 12),
+        subject("wbf-sport", .wahlBasisfach, allPoints: 11),
+        subject("wbf-religion", .wahlBasisfach, allPoints: 5),
+        subject("wbf-musik", .wahlBasisfach, allPoints: 4)
     ]
 
     @Test("Ein voller Jahrgang bringt genau 42 Kurse ein")
@@ -42,29 +42,29 @@ struct BlockOneCalculatorTests {
         #expect(outcome.excludedCourses.count == 6)
     }
 
-    @Test("Die schwächsten Basisfach-Kurse fallen heraus")
+    @Test("Die schwächsten Wahl-Basisfach-Kurse fallen heraus")
     func fullYearDropsWeakestOptionalCourses() {
         let outcome = BlockOneCalculator.calculate(for: Self.fullYear)
 
-        // 30 Plätze minus 12 Kernfach-Kurse lassen 18 für die Basisfächer.
+        // 30 Plätze minus 12 Pflicht-Basisfach-Kurse lassen 18 für die Wahl-Basisfächer.
         // Nach Physik, Chemie, Geografie und Sport (16 Kurse) bleiben zwei
         // Plätze, die an die beiden ersten Religions-Halbjahre gehen.
         #expect(outcome.excludedCourses == [
-            course("bf-religion", 2),
-            course("bf-religion", 3),
-            course("bf-musik", 0),
-            course("bf-musik", 1),
-            course("bf-musik", 2),
-            course("bf-musik", 3)
+            course("wbf-religion", 2),
+            course("wbf-religion", 3),
+            course("wbf-musik", 0),
+            course("wbf-musik", 1),
+            course("wbf-musik", 2),
+            course("wbf-musik", 3)
         ])
     }
 
-    @Test("Leistungs- und Kernfächer fallen nie heraus")
+    @Test("Leistungs- und Pflicht-Basisfächer fallen nie heraus")
     func fullYearNeverDropsMandatoryCourses() {
         let outcome = BlockOneCalculator.calculate(for: Self.fullYear)
 
         let mandatoryIDs = Self.fullYear
-            .filter { $0.kind != .basisfach }
+            .filter { $0.kind != .wahlBasisfach }
             .flatMap { subject in subject.semesters.map { course(subject.id, $0.index) } }
 
         #expect(mandatoryIDs.count == 24)
@@ -79,8 +79,8 @@ struct BlockOneCalculatorTests {
         let outcome = BlockOneCalculator.calculate(for: Self.fullYear)
 
         // Leistungsfächer (12+11+13)*4 = 144
-        // Kernfächer     (10+ 9+11)*4 = 120
-        // Basisfächer    (14+13+12+11)*4 + 5*2 = 210
+        // Pflicht-Basisfächer     (10+ 9+11)*4 = 120
+        // Wahl-Basisfächer    (14+13+12+11)*4 + 5*2 = 210
         // Summe 474 auf 42 Kurse
         #expect(isClose(outcome.averagePoints, 11.2857, tolerance: 0.001))
         #expect(outcome.blockOnePoints == 474)
@@ -89,24 +89,24 @@ struct BlockOneCalculatorTests {
 
     // MARK: - Die eigentliche Regel
 
-    @Test("Ein schwaches Kernfach wird nicht von einem starken Basisfach verdrängt")
+    @Test("Ein schwaches Pflicht-Basisfach wird nicht von einem starken Wahl-Basisfach verdrängt")
     func weakMandatorySubjectSurvives() {
         var subjects = Self.fullYear
-        // Geschichte steht auf 3 Punkten — schlechter als jedes Basisfach.
-        subjects[4] = subject("kf-geschichte", .kernfach, allPoints: 3)
+        // Geschichte steht auf 3 Punkten — schlechter als jedes Wahl-Basisfach.
+        subjects[4] = subject("pbf-geschichte", .pflichtBasisfach, allPoints: 3)
 
         let outcome = BlockOneCalculator.calculate(for: subjects)
 
         for index in 0..<4 {
-            #expect(outcome.includedCourses.contains(course("kf-geschichte", index)))
-            #expect(!outcome.excludedCourses.contains(course("kf-geschichte", index)))
+            #expect(outcome.includedCourses.contains(course("pbf-geschichte", index)))
+            #expect(!outcome.excludedCourses.contains(course("pbf-geschichte", index)))
         }
 
         // Gleichzeitig fliegt Musik mit 4 Punkten heraus, obwohl es besser
-        // dasteht als Geschichte. Genau das ist der Sinn der Regel: Kernfächer
-        // sind gesetzt, Basisfächer konkurrieren.
-        #expect(outcome.excludedCourses.contains(course("bf-musik", 0)))
-        #expect(outcome.includedCourses.contains(course("bf-physik", 0)))
+        // dasteht als Geschichte. Genau das ist der Sinn der Regel: Pflicht-Basisfächer
+        // sind gesetzt, Wahl-Basisfächer konkurrieren.
+        #expect(outcome.excludedCourses.contains(course("wbf-musik", 0)))
+        #expect(outcome.includedCourses.contains(course("wbf-physik", 0)))
         #expect(outcome.includedCount == 42)
     }
 
@@ -119,22 +119,22 @@ struct BlockOneCalculatorTests {
             subject("lf-mathematik", .leistungsfach, points: [12, 12]),
             subject("lf-biologie", .leistungsfach, points: [11, 11]),
 
-            subject("kf-englisch", .kernfach, points: [10, 10]),
-            subject("kf-geschichte", .kernfach, points: [9, 9]),
-            subject("kf-gemeinschaftskunde", .kernfach, points: [14, 14]),
+            subject("pbf-englisch", .pflichtBasisfach, points: [10, 10]),
+            subject("pbf-geschichte", .pflichtBasisfach, points: [9, 9]),
+            subject("pbf-gemeinschaftskunde", .pflichtBasisfach, points: [14, 14]),
 
-            subject("bf-physik", .basisfach, points: [12, 12]),
-            subject("bf-chemie", .basisfach, points: [8, 8]),
-            subject("bf-geografie", .basisfach, points: [7, 7]),
-            subject("bf-sport", .basisfach, points: [15, 15]),
-            subject("bf-religion", .basisfach, points: [10, 10]),
-            subject("bf-musik", .basisfach, points: [6, 6])
+            subject("wbf-physik", .wahlBasisfach, points: [12, 12]),
+            subject("wbf-chemie", .wahlBasisfach, points: [8, 8]),
+            subject("wbf-geografie", .wahlBasisfach, points: [7, 7]),
+            subject("wbf-sport", .wahlBasisfach, points: [15, 15]),
+            subject("wbf-religion", .wahlBasisfach, points: [10, 10]),
+            subject("wbf-musik", .wahlBasisfach, points: [6, 6])
         ]
 
         let outcome = BlockOneCalculator.calculate(for: subjects)
 
-        // 24 Kurse, davon 6 aus Kernfächern — die 24 freien Plätze reichen für
-        // alle zwölf Basisfach-Kurse. Es fällt nichts heraus.
+        // 24 Kurse, davon 6 aus Pflicht-Basisfächern — die 24 freien Plätze reichen für
+        // alle zwölf Wahl-Basisfach-Kurse. Es fällt nichts heraus.
         #expect(outcome.includedCount == 24)
         #expect(outcome.includedCount < BlockOneCalculator.totalCourseCount)
         #expect(outcome.excludedCourses.isEmpty)
@@ -147,24 +147,24 @@ struct BlockOneCalculatorTests {
         #expect(outcome.blockOnePoints == 445)
     }
 
-    // MARK: - Mehr Kernfächer als Plätze
+    // MARK: - Mehr Pflicht-Basisfächer als Plätze
 
-    @Test("Belegen die Kernfächer alle 30 Plätze, bleibt für Basisfächer nichts")
+    @Test("Belegen die Pflicht-Basisfächer alle 30 Plätze, bleibt für Wahl-Basisfächer nichts")
     func mandatorySubjectsFillEverySlot() {
         let advanced = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
-        // Acht Kernfächer sind mehr, als die Prüfungsordnung vorsieht — der
+        // Acht Pflicht-Basisfächer sind mehr, als die Prüfungsordnung vorsieht — der
         // Rechenkern muss den Fall trotzdem sauber behandeln.
-        let mandatory = (1...8).map { subject("kf-\($0)", .kernfach, allPoints: 10) }
-        let optional = (1...2).map { subject("bf-\($0)", .basisfach, allPoints: 15) }
+        let mandatory = (1...8).map { subject("pbf-\($0)", .pflichtBasisfach, allPoints: 10) }
+        let optional = (1...2).map { subject("wbf-\($0)", .wahlBasisfach, allPoints: 15) }
 
         let outcome = BlockOneCalculator.calculate(for: advanced + mandatory + optional)
 
-        // 32 Kernfach-Kurse auf 30 Plätze: kein freier Platz, alle acht
-        // Basisfach-Kurse fallen heraus — auch die mit 15 Punkten.
+        // 32 Pflicht-Basisfach-Kurse auf 30 Plätze: kein freier Platz, alle acht
+        // Wahl-Basisfach-Kurse fallen heraus — auch die mit 15 Punkten.
         #expect(outcome.excludedCourses.count == 8)
         for index in 1...2 {
             for semesterIndex in 0..<4 {
-                #expect(outcome.excludedCourses.contains(course("bf-\(index)", semesterIndex)))
+                #expect(outcome.excludedCourses.contains(course("wbf-\(index)", semesterIndex)))
             }
         }
 
@@ -181,12 +181,12 @@ struct BlockOneCalculatorTests {
 
     @Test("Bei Gleichstand an der Auswahlgrenze bleibt die Auswahl stabil")
     func selectionIsStableOnTies() {
-        // 29 Kernfach-Kurse lassen genau einen freien Platz.
-        let mandatory = (1...7).map { subject("kf-\($0)", .kernfach, allPoints: 10) }
-            + [subject("kf-8", .kernfach, points: [10])]
+        // 29 Pflicht-Basisfach-Kurse lassen genau einen freien Platz.
+        let mandatory = (1...7).map { subject("pbf-\($0)", .pflichtBasisfach, allPoints: 10) }
+            + [subject("pbf-8", .pflichtBasisfach, points: [10])]
         let optional = [
-            subject("bf-alpha", .basisfach, points: [10, 10]),
-            subject("bf-beta", .basisfach, points: [10])
+            subject("wbf-alpha", .wahlBasisfach, points: [10, 10]),
+            subject("wbf-beta", .wahlBasisfach, points: [10])
         ]
 
         let subjects = [subject("lf-1", .leistungsfach, allPoints: 12)] + mandatory + optional
@@ -198,8 +198,8 @@ struct BlockOneCalculatorTests {
 
         // Drei gleich gute Kurse auf einen Platz: es gewinnt die kleinere
         // Fachkennung, bei gleicher Kennung das frühere Halbjahr.
-        #expect(first.includedCourses.contains(course("bf-alpha", 0)))
-        #expect(first.excludedCourses == [course("bf-alpha", 1), course("bf-beta", 0)])
+        #expect(first.includedCourses.contains(course("wbf-alpha", 0)))
+        #expect(first.excludedCourses == [course("wbf-alpha", 1), course("wbf-beta", 0)])
     }
 
     // MARK: - Punktsumme und Note
@@ -207,7 +207,7 @@ struct BlockOneCalculatorTests {
     @Test("Die Block-I-Punkte sind der Schnitt auf 42 Kurse hochgerechnet")
     func blockOnePointsFromAverage() {
         let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 11) }
-            + (1...2).map { subject("kf-\($0)", .kernfach, allPoints: 8) }
+            + (1...2).map { subject("pbf-\($0)", .pflichtBasisfach, allPoints: 8) }
 
         let outcome = BlockOneCalculator.calculate(for: subjects)
 
@@ -222,7 +222,7 @@ struct BlockOneCalculatorTests {
     @Test("Der erwartete Schnitt ist nach unten auf 4,0 gedeckelt")
     func expectedGradeIsCappedAtFour() {
         let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 0) }
-            + (1...3).map { subject("kf-\($0)", .kernfach, allPoints: 0) }
+            + (1...3).map { subject("pbf-\($0)", .pflichtBasisfach, allPoints: 0) }
 
         let outcome = BlockOneCalculator.calculate(for: subjects)
 
@@ -235,7 +235,7 @@ struct BlockOneCalculatorTests {
     @Test("Der erwartete Schnitt ist nach oben auf 1,0 gedeckelt")
     func expectedGradeIsCappedAtOne() {
         let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 15) }
-            + (1...3).map { subject("kf-\($0)", .kernfach, allPoints: 15) }
+            + (1...3).map { subject("pbf-\($0)", .pflichtBasisfach, allPoints: 15) }
 
         let outcome = BlockOneCalculator.calculate(for: subjects)
 
@@ -248,11 +248,11 @@ struct BlockOneCalculatorTests {
 
     // MARK: - Kursgrenze eines Fachs
 
-    /// Drei Leistungsfächer und ein einzelnes Basisfach. Plätze sind reichlich da —
+    /// Drei Leistungsfächer und ein einzelnes Wahl-Basisfach. Plätze sind reichlich da —
     /// was hier herausfällt, fällt allein wegen der Kursgrenze heraus.
     private static func limitScenario(_ limit: Int?) -> [SubjectInput] {
         (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
-            + [subject("bf-sport", .basisfach, points: [4, 15, 9, 7], limit: limit)]
+            + [subject("wbf-sport", .wahlBasisfach, points: [4, 15, 9, 7], limit: limit)]
     }
 
     @Test("Mit Grenze 2 bringt ein Fach seine besten zwei Ergebnisse ein")
@@ -260,10 +260,10 @@ struct BlockOneCalculatorTests {
         let outcome = BlockOneCalculator.calculate(for: Self.limitScenario(2))
 
         // Sport steht auf 4, 15, 9 und 7 — die besten zwei sind HJ 2 und HJ 3.
-        #expect(outcome.includedCourses.contains(course("bf-sport", 1)))
-        #expect(outcome.includedCourses.contains(course("bf-sport", 2)))
-        #expect(outcome.excludedCourses == [course("bf-sport", 0), course("bf-sport", 3)])
-        #expect(outcome.coursesBeyondSubjectLimit == [course("bf-sport", 0), course("bf-sport", 3)])
+        #expect(outcome.includedCourses.contains(course("wbf-sport", 1)))
+        #expect(outcome.includedCourses.contains(course("wbf-sport", 2)))
+        #expect(outcome.excludedCourses == [course("wbf-sport", 0), course("wbf-sport", 3)])
+        #expect(outcome.coursesBeyondSubjectLimit == [course("wbf-sport", 0), course("wbf-sport", 3)])
 
         // Alle vier Halbjahre sind erfasst, eingebracht werden 12 + 2.
         #expect(outcome.recordedCount == 16)
@@ -300,22 +300,22 @@ struct BlockOneCalculatorTests {
 
     @Test("Bei Gleichstand innerhalb eines Fachs gewinnt das frühere Halbjahr")
     func limitPrefersEarlierSemesterOnTies() {
-        let subjects = [subject("bf-musik", .basisfach, points: [9, 9, 9, 4], limit: 2)]
+        let subjects = [subject("wbf-musik", .wahlBasisfach, points: [9, 9, 9, 4], limit: 2)]
 
         let outcome = BlockOneCalculator.calculate(for: subjects)
 
-        #expect(outcome.includedCourses == [course("bf-musik", 0), course("bf-musik", 1)])
-        #expect(outcome.coursesBeyondSubjectLimit == [course("bf-musik", 2), course("bf-musik", 3)])
+        #expect(outcome.includedCourses == [course("wbf-musik", 0), course("wbf-musik", 1)])
+        #expect(outcome.coursesBeyondSubjectLimit == [course("wbf-musik", 2), course("wbf-musik", 3)])
     }
 
     @Test("Die Grenze greift vor dem Wettbewerb um die freien Plätze")
     func limitAppliesBeforeCompetition() {
-        // Sieben Kernfächer belegen 28 der 30 Plätze — es bleiben genau zwei.
+        // Sieben Pflicht-Basisfächer belegen 28 der 30 Plätze — es bleiben genau zwei.
         let subjects = (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
-            + (1...7).map { subject("kf-\($0)", .kernfach, allPoints: 10) }
+            + (1...7).map { subject("pbf-\($0)", .pflichtBasisfach, allPoints: 10) }
             + [
-                subject("bf-alpha", .basisfach, allPoints: 15, limit: 1),
-                subject("bf-beta", .basisfach, allPoints: 8)
+                subject("wbf-alpha", .wahlBasisfach, allPoints: 15, limit: 1),
+                subject("wbf-beta", .wahlBasisfach, allPoints: 8)
             ]
 
         let outcome = BlockOneCalculator.calculate(for: subjects)
@@ -323,10 +323,10 @@ struct BlockOneCalculatorTests {
         // Ohne Grenze nähme Alpha mit zweimal 15 beide Plätze. Mit Grenze 1 bringt
         // es nur einen Kurs mit, der zweite Platz geht an Beta — obwohl Beta
         // schlechter dasteht.
-        #expect(outcome.includedCourses.contains(course("bf-alpha", 0)))
-        #expect(outcome.includedCourses.contains(course("bf-beta", 0)))
+        #expect(outcome.includedCourses.contains(course("wbf-alpha", 0)))
+        #expect(outcome.includedCourses.contains(course("wbf-beta", 0)))
         #expect(outcome.coursesBeyondSubjectLimit == [
-            course("bf-alpha", 1), course("bf-alpha", 2), course("bf-alpha", 3)
+            course("wbf-alpha", 1), course("wbf-alpha", 2), course("wbf-alpha", 3)
         ])
         #expect(outcome.excludedCourses.count == 6)
 
@@ -369,8 +369,8 @@ struct BlockOneCalculatorTests {
         let subjects = [
             subject("lf-deutsch", .leistungsfach, points: [12, 12]),
             SubjectInput(
-                id: "bf-musik",
-                kind: .basisfach,
+                id: "wbf-musik",
+                kind: .wahlBasisfach,
                 semesters: [
                     SemesterInput(index: 0, entries: []),
                     SemesterInput(index: 1, isActive: false, entries: [GradeInput(points: 3, kind: .written)])

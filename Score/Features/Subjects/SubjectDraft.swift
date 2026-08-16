@@ -27,7 +27,7 @@ struct SubjectDraft {
         name = subject?.name ?? ""
         abbreviation = subject?.abbreviation ?? ""
         colorValue = subject?.colorValue ?? Int(ScorePalette.subjectColorValues[0])
-        kind = subject?.kind ?? .basisfach
+        kind = subject?.kind ?? .wahlBasisfach
         activeSemesters = Set(subject?.activeSemesters ?? Semester.allIndices)
         writtenShare = subject?.writtenShare ?? 50
         maximumContributedCourses = subject?.maximumContributedCourses

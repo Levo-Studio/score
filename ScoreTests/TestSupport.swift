@@ -49,7 +49,7 @@ func subject(
 }
 
 extension BlockOneCalculator.CourseIdentifier {
-    /// Kurzschreibweise für Erwartungen wie `course("bf-b", 2)`.
+    /// Kurzschreibweise für Erwartungen wie `course("wbf-b", 2)`.
     init(_ subjectID: String, _ semesterIndex: Int) {
         self.init(subjectID: subjectID, semesterIndex: semesterIndex)
     }

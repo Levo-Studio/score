@@ -403,7 +403,7 @@ struct SubjectDetailView: View {
     // MARK: - Erklärung
 
     private var blockOneNote: some View {
-        Text("Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. Nicht gewertete Kurse rechnet Score automatisch raus, Kernfächer bleiben immer drin.")
+        Text("Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. Nicht gewertete Kurse rechnet Score automatisch raus, Pflicht-Basisfächer bleiben immer drin.")
             .font(.optionMeta)
             .lineSpacing(5.5)
             .foregroundStyle(ScorePalette.inkSecondary)

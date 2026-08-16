@@ -80,10 +80,10 @@ struct OnboardingPadLayout: View {
             RegionStep(model: model)
         case .advancedSubjects:
             AdvancedSubjectsStep(model: model)
-        case .coreSubjects:
-            CoreSubjectsStep(model: model)
-        case .basicSubjects:
-            BasicSubjectsStep(model: model)
+        case .requiredBasicSubjects:
+            RequiredBasicSubjectsStep(model: model)
+        case .electiveBasicSubjects:
+            ElectiveBasicSubjectsStep(model: model)
         case .language:
             LanguageStep(model: model)
         case .summary:

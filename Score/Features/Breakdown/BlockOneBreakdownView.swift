@@ -6,11 +6,13 @@ import SwiftUI
 /// beantwortet sie als Erzählung statt als Liste:
 ///
 /// 1. **Die Rechnung** — Punktsumme, Kurszahl, Schnitt, Umrechnung in die Note.
-/// 2. **Woher die Kurse kommen** — wie viele aus Leistungs-, Kern- und
-///    Basisfächern, als Balken und in Worten.
-/// 3. **Was gesetzt ist** — Leistungs- und Kernfächer, mit ihren Kursen.
-/// 4. **Wer die freien Plätze bekommt** — die Basisfächer in der Reihenfolge, in
-///    der sie antreten, und die Grenze, ab der es nicht mehr reicht.
+/// 2. **Woher die Kurse kommen** — wie viele aus Leistungs-, Pflicht- und
+///    Wahl-Basisfächern, als Balken und in Worten.
+/// 3. **Was gesetzt ist** — Leistungs- und Pflicht-Basisfächer, mit ihren
+///    Kursen.
+/// 4. **Wer die freien Plätze bekommt** — die Wahl-Basisfächer in der
+///    Reihenfolge, in der sie antreten, und die Grenze, ab der es nicht mehr
+///    reicht.
 /// 5. **Was herausfällt und warum** — mit dem Grund ausgeschrieben, getrennt
 ///    nach „von besseren verdrängt" und „über der eigenen Kursgrenze".
 ///
@@ -298,8 +300,8 @@ struct BlockOneBreakdownView: View {
     private func barOpacity(_ kind: SubjectKind) -> Double {
         switch kind {
         case .leistungsfach: 1
-        case .kernfach: 0.6
-        case .basisfach: 0.32
+        case .pflichtBasisfach: 0.6
+        case .wahlBasisfach: 0.32
         }
     }
 
@@ -330,15 +332,16 @@ struct BlockOneBreakdownView: View {
         }
     }
 
-    /// „18 Kurse aus 6 Kernfächern" — die Zahl, um die es geht, steht vorn.
+    /// „18 Kurse aus 6 Pflicht-Basisfächern" — die Zahl, um die es geht,
+    /// steht vorn.
     private func originHeadline(_ group: BlockOneBreakdown.Group) -> Text {
         switch group.kind {
         case .leistungsfach:
             Text("\(group.includedCount) Kurse aus \(group.subjectCount) Leistungsfächern")
-        case .kernfach:
-            Text("\(group.includedCount) Kurse aus \(group.subjectCount) Kernfächern")
-        case .basisfach:
-            Text("\(group.includedCount) Kurse aus \(group.subjectCount) Basisfächern")
+        case .pflichtBasisfach:
+            Text("\(group.includedCount) Kurse aus \(group.subjectCount) Pflicht-Basisfächern")
+        case .wahlBasisfach:
+            Text("\(group.includedCount) Kurse aus \(group.subjectCount) Wahl-Basisfächern")
         }
     }
 
@@ -349,9 +352,9 @@ struct BlockOneBreakdownView: View {
         switch group.kind {
         case .leistungsfach:
             Text("Alle vier Halbjahre jedes Leistungsfachs. Gesetzt, nicht abwählbar.")
-        case .kernfach:
+        case .pflichtBasisfach:
             Text("Gesetzt wie die Leistungsfächer, aber gegen die 30 Plätze der Nicht-Leistungsfächer gerechnet.")
-        case .basisfach:
+        case .wahlBasisfach:
             Text("\(breakdown.optionalCandidateCount) Ergebnisse treten um \(breakdown.optionalSlotCount) freie Plätze an. Die besten bekommen sie.")
         }
     }
@@ -364,7 +367,7 @@ struct BlockOneBreakdownView: View {
 
         if !entries.isEmpty {
             section("Gesetzt") {
-                Text("Leistungs- und Kernfächer stehen fest. Auch ein schwaches Ergebnis bleibt drin — hier wird nichts gestrichen und nichts verdrängt.")
+                Text("Leistungs- und Pflicht-Basisfächer stehen fest. Auch ein schwaches Ergebnis bleibt drin — hier wird nichts gestrichen und nichts verdrängt.")
                     .font(.optionMeta)
                     .lineSpacing(4.5)
                     .foregroundStyle(ScorePalette.inkSecondary)
@@ -400,7 +403,7 @@ struct BlockOneBreakdownView: View {
 
     private func competitionIntro(_ breakdown: BlockOneBreakdown) -> some View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
-            Text("Nach den gesetzten Kursen bleiben \(breakdown.optionalSlotCount) Plätze. Sie gehen nach Punktzahl an die Basisfächer — hier stehen sie in genau der Reihenfolge, in der Score sie vergibt.")
+            Text("Nach den gesetzten Kursen bleiben \(breakdown.optionalSlotCount) Plätze. Sie gehen nach Punktzahl an die Wahl-Basisfächer — hier stehen sie in genau der Reihenfolge, in der Score sie vergibt.")
                 .font(.optionMeta)
                 .lineSpacing(4.5)
                 .foregroundStyle(ScorePalette.inkSecondary)
@@ -502,16 +505,16 @@ struct BlockOneBreakdownView: View {
             return Text("Dieses Fach bringt nur \(limit) Ergebnisse ein. Score behält die besten und klammert diese hier aus.")
         case .outranked:
             let occupied = breakdown.groups
-                .first { $0.kind == .basisfach }?
+                .first { $0.kind == .wahlBasisfach }?
                 .includedCount ?? breakdown.optionalSlotCount
-            return Text("Schlechter als die \(occupied) besseren Basisfach-Ergebnisse, die die freien Plätze belegen.")
+            return Text("Schlechter als die \(occupied) besseren Wahl-Basisfach-Ergebnisse, die die freien Plätze belegen.")
         }
     }
 
     // MARK: - Ein Fach mit seinen vier Halbjahren
 
-    /// - Parameter rank: Der Platz in der Rangfolge der Basisfächer, oder `nil`
-    ///   bei den gesetzten Fächern — dort gibt es keine Rangfolge.
+    /// - Parameter rank: Der Platz in der Rangfolge der Wahl-Basisfächer, oder
+    ///   `nil` bei den gesetzten Fächern — dort gibt es keine Rangfolge.
     private func subjectCard(_ entry: BlockOneBreakdown.SubjectEntry, rank: Int?) -> some View {
         ScoreCard(padding: 14, cornerRadius: layout.cardRadius) {
             VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
@@ -647,11 +650,11 @@ struct BlockOneBreakdownView: View {
 
     private var explanation: some View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
-            Text("Block I fasst 42 Halbjahresergebnisse. Die zwölf Kurse der Leistungsfächer und alle Kernfächer sind gesetzt, die restlichen Plätze gehen an die besten Basisfach-Ergebnisse. Aus dem Punkteschnitt dieser Kurse folgt beides: Block I als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben.")
+            Text("Block I fasst 42 Halbjahresergebnisse. Die zwölf Kurse der Leistungsfächer und alle Pflicht-Basisfächer sind gesetzt, die restlichen Plätze gehen an die besten Wahl-Basisfach-Ergebnisse. Aus dem Punkteschnitt dieser Kurse folgt beides: Block I als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben.")
 
             Text("Wie viele Ergebnisse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift vor der Auswahl: Was ein Fach nicht einbringt, nimmt auch keinem anderen Kurs den Platz weg. Leistungsfächer bringen immer alle vier Halbjahre ein.")
 
-            Text("Haben zwei Basisfach-Ergebnisse dieselbe Punktzahl und ist nur noch ein Platz frei, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten.")
+            Text("Haben zwei Wahl-Basisfach-Ergebnisse dieselbe Punktzahl und ist nur noch ein Platz frei, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten.")
         }
         .font(.optionMeta)
         .lineSpacing(5.5)

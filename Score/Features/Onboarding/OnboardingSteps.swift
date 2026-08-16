@@ -270,15 +270,16 @@ struct AdvancedSubjectsStep: View {
                 isSelected: { model.advancedSubjects.contains($0) },
                 toggle: { model.toggleAdvancedSubject($0) },
                 draft: $model.customSubjectDraft,
-                onCommitCustom: { model.commitCustomSubject() }
+                onCommitCustom: { model.commitCustomSubject() },
+                note: "Danach kommen die Basisfächer: erst die, die du belegen musst, dann die, die du frei dazuwählst."
             )
         }
     }
 }
 
-// MARK: - Kernfächer
+// MARK: - Pflicht-Basisfächer
 
-struct CoreSubjectsStep: View {
+struct RequiredBasicSubjectsStep: View {
 
     @Bindable var model: OnboardingViewModel
 
@@ -286,25 +287,26 @@ struct CoreSubjectsStep: View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
             OnboardingHeader(
                 kicker: model.stepKicker,
-                title: "Deine Kernfächer",
-                text: "Kernfächer sind nicht abwählbar und zählen immer — auch dann, wenn sie schlechter stehen als ein Basisfach. Score hat vorausgewählt, was üblich ist."
+                title: "Deine Pflicht-Basisfächer",
+                text: "Die zweistündigen Fächer, die du belegen musst. Welche das sind, ergibt sich aus deinen Leistungsfächern — Score hat vorausgewählt, was dazu üblich ist."
             )
 
             SubjectSelectionSection(
-                counter: "\(model.coreSubjects.count) gewählt",
-                options: model.coreOptions,
-                isSelected: { model.coreSubjects.contains($0) },
-                toggle: { model.toggleCoreSubject($0) },
+                counter: "\(model.requiredBasicSubjects.count) gewählt",
+                options: model.requiredBasicOptions,
+                isSelected: { model.requiredBasicSubjects.contains($0) },
+                toggle: { model.toggleRequiredBasicSubject($0) },
                 draft: $model.customSubjectDraft,
-                onCommitCustom: { model.commitCustomSubject() }
+                onCommitCustom: { model.commitCustomSubject() },
+                note: "Was in deiner Kurswahl nicht als Pflicht steht, nimmst du hier heraus — es kommt im nächsten Schritt wieder."
             )
         }
     }
 }
 
-// MARK: - Basisfächer
+// MARK: - Wahl-Basisfächer
 
-struct BasicSubjectsStep: View {
+struct ElectiveBasicSubjectsStep: View {
 
     @Bindable var model: OnboardingViewModel
 
@@ -312,17 +314,18 @@ struct BasicSubjectsStep: View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
             OnboardingHeader(
                 kicker: model.stepKicker,
-                title: "Deine Basisfächer",
-                text: "Aus diesen Fächern füllt Score die restlichen Plätze in Block I mit deinen besten Ergebnissen. Schwächere fallen heraus, sobald genug bessere da sind."
+                title: "Deine Wahl-Basisfächer",
+                text: "Die Basisfächer, die du zusätzlich frei gewählt hast — alles, was du sonst noch belegst."
             )
 
             SubjectSelectionSection(
-                counter: "\(model.basicSubjects.count) gewählt",
-                options: model.basicOptions,
-                isSelected: { model.basicSubjects.contains($0) },
-                toggle: { model.toggleBasicSubject($0) },
+                counter: "\(model.electiveBasicSubjects.count) gewählt",
+                options: model.electiveBasicOptions,
+                isSelected: { model.electiveBasicSubjects.contains($0) },
+                toggle: { model.toggleElectiveBasicSubject($0) },
                 draft: $model.customSubjectDraft,
-                onCommitCustom: { model.commitCustomSubject() }
+                onCommitCustom: { model.commitCustomSubject() },
+                note: "Auch sie zählen in deinen Schnitt. Fehlt eines, legst du es später in den Fächern nach."
             )
         }
     }
@@ -332,6 +335,11 @@ struct BasicSubjectsStep: View {
 ///
 /// Das eigene Fach hängt als gestrichelter Tag hinten in der Wolke und nicht als
 /// eigene Zeile darunter: es ist eine weitere Wahlmöglichkeit, kein Formular.
+///
+/// Unter der Wolke steht dieselbe kleine Fussnote, die die Design-Datei schon im
+/// Klassenschritt führt. Hier trägt sie, was die Kategorie von der nächsten
+/// unterscheidet — die Überschrift sagt, was gemeint ist, die Fussnote, was das
+/// beim Zuordnen heisst.
 private struct SubjectSelectionSection: View {
 
     let counter: LocalizedStringKey
@@ -340,24 +348,36 @@ private struct SubjectSelectionSection: View {
     let toggle: (String) -> Void
     @Binding var draft: String
     let onCommitCustom: () -> Void
+    var note: LocalizedStringKey?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(counter)
-                .font(.fieldLabel)
-                .foregroundStyle(ScorePalette.inkSecondary)
+        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(counter)
+                    .font(.fieldLabel)
+                    .foregroundStyle(ScorePalette.inkSecondary)
 
-            ChipCloud(
-                items: options,
-                title: { $0 },
-                isSelected: isSelected,
-                toggle: toggle,
-                spacing: 9
-            ) {
-                DashedChip(title: "Eigenes Fach", text: $draft, onCommit: onCommitCustom)
+                ChipCloud(
+                    items: options,
+                    title: { $0 },
+                    isSelected: isSelected,
+                    toggle: toggle,
+                    spacing: 9
+                ) {
+                    DashedChip(title: "Eigenes Fach", text: $draft, onCommit: onCommitCustom)
+                }
+            }
+            .staggeredAppearance(index: 3)
+
+            if let note {
+                Text(note)
+                    .font(.optionMeta)
+                    .lineSpacing(5.5)
+                    .foregroundStyle(ScorePalette.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .staggeredAppearance(index: 4)
             }
         }
-        .staggeredAppearance(index: 3)
     }
 }
 
@@ -412,8 +432,8 @@ struct SummaryStep: View {
                     SummaryRow(label: "Bundesland", value: Text(verbatim: model.federalState))
                     SummaryRow(label: "Abitur", value: Text(verbatim: String(model.graduationYear)))
                     SummaryRow(label: "Leistungsfächer", value: Text(verbatim: model.summaryList(model.advancedSubjects)))
-                    SummaryRow(label: "Kernfächer", value: Text(verbatim: model.summaryList(model.sortedCoreSubjects)))
-                    SummaryRow(label: "Basisfächer", value: Text(verbatim: model.summaryList(model.sortedBasicSubjects)))
+                    SummaryRow(label: "Pflicht-Basisfächer", value: Text(verbatim: model.summaryList(model.sortedRequiredBasicSubjects)))
+                    SummaryRow(label: "Wahl-Basisfächer", value: Text(verbatim: model.summaryList(model.sortedElectiveBasicSubjects)))
                     SummaryRow(label: "Sprache", value: Text(model.summaryLanguage))
                 }
             }

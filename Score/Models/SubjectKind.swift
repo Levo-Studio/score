@@ -1,29 +1,31 @@
 import Foundation
 import SwiftUI
 
-/// Die drei Fachtypen der Kursstufe.
+/// Die drei Fachkategorien der Kursstufe.
 ///
-/// Der Typ entscheidet, wie ein Fach in Block I einfliesst:
+/// Die Kategorie ordnet ein Fach ein — danach wird es sortiert und gruppiert,
+/// in Listen, in der Sidebar und in der Herleitung von Block I:
 ///
-/// - `leistungsfach` — fünfstündig. Alle vier Halbjahresergebnisse sind gesetzt.
-/// - `kernfach` — zweistündig, aber nicht abwählbar. Deutsch, Mathematik, die
-///   Fremdsprache, Geschichte, Gemeinschaftskunde und eine Naturwissenschaft
-///   müssen eingebracht werden, egal wie gut oder schlecht sie stehen.
-/// - `basisfach` — zweistündig und ersetzbar. Aus diesen Fächern füllt Score die
-///   restlichen Plätze mit den besten verfügbaren Ergebnissen auf; schwächere
-///   fallen heraus, sobald genug bessere da sind.
+/// - `leistungsfach` — fünfstündig. Drei Stück, alle vier Halbjahre gesetzt.
+/// - `pflichtBasisfach` — ein Basisfach, das belegt werden muss. Welche das
+///   sind, ergibt sich aus der Wahl der Leistungsfächer.
+/// - `wahlBasisfach` — ein Basisfach, das zusätzlich frei gewählt wurde.
+///
+/// Die `rawValue`s sind bewusst die alten: sie stehen so in SwiftData und in
+/// iCloud, ein Umbenennen dort würde jeden bestehenden Datensatz verlieren.
 enum SubjectKind: String, Codable, CaseIterable, Sendable {
     case leistungsfach
-    case kernfach
-    case basisfach
+    case pflichtBasisfach = "kernfach"
+    case wahlBasisfach = "basisfach"
 
     /// Ob das Fach zwingend in Block I einfliesst.
     ///
-    /// Leistungs- und Kernfächer sind gesetzt, nur Basisfächer stehen zur Auswahl.
+    /// Leistungs- und Pflicht-Basisfächer sind gesetzt, nur Wahl-Basisfächer
+    /// stehen zur Auswahl.
     nonisolated var isMandatory: Bool {
         switch self {
-        case .leistungsfach, .kernfach: true
-        case .basisfach: false
+        case .leistungsfach, .pflichtBasisfach: true
+        case .wahlBasisfach: false
         }
     }
 
@@ -34,8 +36,8 @@ enum SubjectKind: String, Codable, CaseIterable, Sendable {
     nonisolated var badge: LocalizedStringKey {
         switch self {
         case .leistungsfach: "LF"
-        case .kernfach: "KF"
-        case .basisfach: "BF"
+        case .pflichtBasisfach: "PBF"
+        case .wahlBasisfach: "WBF"
         }
     }
 }

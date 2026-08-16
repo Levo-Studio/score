@@ -349,6 +349,93 @@ struct ScreenshotTests {
         }
     }
 
+    /// Das Blatt hinter dem gestrichelten Knopf: dasselbe Punkte-Pad, mit dem
+    /// auch eine Klassenarbeit eingetragen wird.
+    @Test("Das Eingabe-Blatt eines Prüfungsergebnisses")
+    func examResultSheet() async throws {
+        let container = try Self.makeStoredSubjects()
+        let context = container.mainContext
+        let subjects = try context.fetch(FetchDescriptor<Subject>())
+        Self.recordExams(in: subjects)
+        let mathematik = try #require(subjects.first { $0.name == "Mathematik" })
+
+        UserDefaults.standard.set(3, forKey: SubjectPreference.selectedSemesterKey)
+
+        for scheme in ColorScheme.allCases {
+            try await capture(
+                "pruefung-blatt-iphone",
+                scheme: scheme,
+                size: Device.phone,
+                context: context
+            ) {
+                ZStack {
+                    NavigationStack { SubjectDetailView(subject: mathematik) }
+                    ScoreOverlaySheet(onDismiss: {}) {
+                        ExamResultSheet(subject: mathematik, slot: .written)
+                    }
+                }
+            }
+
+            try await capture(
+                "pruefung-blatt-ipad",
+                scheme: scheme,
+                size: Device.pad,
+                context: context
+            ) {
+                ZStack {
+                    PadSubjectDetailView(
+                        subject: mathematik,
+                        summaries: SubjectOverview.summaries(of: subjects, semesterIndex: 3),
+                        semesterIndex: .constant(3),
+                        route: .constant(.subject(mathematik.identifier))
+                    )
+                    .background(ScorePalette.background)
+                    ScoreOverlaySheet(onDismiss: {}) {
+                        ExamResultSheet(subject: mathematik, slot: .written)
+                    }
+                }
+            }
+        }
+    }
+
+    /// Derselbe Abschnitt, solange nichts eingetragen ist: der gestrichelte
+    /// Knopf, und darunter der Hinweis, dass Score bis dahin hochrechnet.
+    @Test("Ein Leistungsfach vor der Prüfung")
+    func examResultStillMissing() async throws {
+        let container = try Self.makeStoredSubjects()
+        let context = container.mainContext
+        let subjects = try context.fetch(FetchDescriptor<Subject>())
+        let mathematik = try #require(subjects.first { $0.name == "Mathematik" })
+
+        UserDefaults.standard.set(3, forKey: SubjectPreference.selectedSemesterKey)
+
+        for scheme in ColorScheme.allCases {
+            try await capture(
+                "pruefung-offen-iphone",
+                scheme: scheme,
+                size: CGSize(width: Device.phone.width, height: 1500),
+                context: context
+            ) {
+                NavigationStack { SubjectDetailView(subject: mathematik) }
+            }
+
+            try await capture(
+                "pruefung-offen-ipad",
+                scheme: scheme,
+                size: Device.pad,
+                context: context
+            ) {
+                PadSubjectDetailView(
+                    subject: mathematik,
+                    summaries: SubjectOverview.summaries(of: subjects, semesterIndex: 3),
+                    semesterIndex: .constant(3),
+                    route: .constant(.subject(mathematik.identifier))
+                )
+                .background(ScorePalette.background)
+            }
+        }
+    }
+
     /// Der Fach-Editor, in dem von der Prüfung nur noch der Schalter steht.
     @Test("Der Fach-Editor mit dem blossen Schalter")
     func subjectEditorKeepsOnlyTheSwitch() async throws {

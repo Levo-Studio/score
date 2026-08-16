@@ -6,8 +6,14 @@ import UIKit
 
 /// Ein Behälter für die gezeichnete Kapsel, den die Sonde befüllt.
 @MainActor
+@Observable
 private final class DashedChipMeasurements {
+    /// Der eingetippte Name. Liegt hier, damit der Test den Eingabezustand von
+    /// aussen füllen kann — ohne Text erscheint kein „OK".
+    var draft: String = ""
     var capsule: CGRect = .zero
+    /// Die gezeichnete Fläche eines gewöhnlichen, gefüllten Chips daneben.
+    var plainChip: CGRect = .zero
 }
 
 /// Der gestrichelte „Eigenes Fach"-Tag, durch die echte Oberfläche bedient.
@@ -63,6 +69,46 @@ struct DashedChipHitTests {
             // Vor der Behebung waren es 15,3 Punkt.
             #expect(button.accessibilityFrame.height >= ScoreMetrics.minimumTapTarget)
             #expect(button.accessibilityFrame.width >= ScoreMetrics.minimumTapTarget)
+        }
+    }
+
+    // MARK: - Die Höhe
+
+    @Test("Der Eingabezustand ist genau so hoch wie ein gefüllter Chip daneben")
+    func theEditorIsAsTallAsAPlainChip() async throws {
+        let measurements = DashedChipMeasurements()
+
+        try await withProbe(DashedChipProbe(measurements: measurements)) { window in
+            let plain = measurements.plainChip
+            #expect(!plain.isEmpty)
+
+            // Erst der ruhige Tag: er stimmte schon vorher.
+            #expect(abs(measurements.capsule.height - plain.height) <= 0.5)
+
+            // Dann der Eingabezustand. Vorher standen hier 58 Punkt gegen 44 —
+            // die Hülle polsterte senkrecht, und das „OK" polsterte darin noch
+            // einmal, sodass der Tag über und unter der Kante des Nachbar-Chips
+            // hinausstand.
+            let tag = try #require(Self.node(labelled: "Eigenes Fach", in: window))
+            #expect(tag.accessibilityActivate())
+            try await Self.settle()
+            measurements.draft = "Astronomie"
+            try await Self.settle()
+
+            let editor = measurements.capsule
+            #expect(abs(editor.height - plain.height) <= 0.5)
+            #expect(abs(editor.height - ScoreMetrics.chipHeight) <= 0.5)
+            // Gleiche Grundlinie: der Tag sitzt in der Zeile wie sein Nachbar.
+            #expect(abs(editor.minY - plain.minY) <= 0.5)
+            #expect(abs(editor.maxY - plain.maxY) <= 0.5)
+            // Nur die Breite darf sich ändern — sie tut es auch.
+            #expect(editor.width > plain.width)
+
+            // Und trotz der kleineren Höhe bleibt die Trefferfläche des „OK"
+            // über der ganzen sichtbaren Fläche des Tags.
+            let ok = try #require(Self.node(labelled: "OK", in: window))
+            #expect(ok.accessibilityFrame.height >= ScoreMetrics.minimumTapTarget - 0.5)
+            #expect(ok.accessibilityFrame.height <= editor.height + 0.5)
         }
     }
 
@@ -232,24 +278,31 @@ struct DashedChipHitTests {
     }
 }
 
-/// Der Tag allein, in einer Ansicht, die seine gezeichnete Kapsel ausmisst.
+/// Der Tag neben einem gewöhnlichen Chip, in einer Ansicht, die beide ausmisst.
+///
+/// Beide stehen in derselben Zeile, weil es genau darum geht: der Beleg des
+/// Nutzers zeigt den Eingabezustand über und unter der Kante des Nachbar-Chips.
+/// Gemessen wird fortlaufend und nicht nur beim Erscheinen — der Tag wechselt
+/// im Test seinen Zustand, und die Höhe danach ist die interessante.
 private struct DashedChipProbe: View {
 
-    let measurements: DashedChipMeasurements
-
-    @State private var draft = ""
+    @Bindable var measurements: DashedChipMeasurements
 
     var body: some View {
-        DashedChip(title: "Eigenes Fach", text: $draft) {}
-            .background {
-                GeometryReader { proxy in
-                    let frame = proxy.frame(in: .global)
-                    Color.clear.onAppear { measurements.capsule = frame }
+        HStack(spacing: ScoreMetrics.Spacing.xs) {
+            ScoreChip(verbatimTitle: "Psychologie", isSelected: true) {}
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+                    measurements.plainChip = $0
                 }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .padding(ScoreMetrics.screenPadding)
-            .background(ScorePalette.background)
+
+            DashedChip(title: "Eigenes Fach", text: $measurements.draft) {}
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+                    measurements.capsule = $0
+                }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(ScoreMetrics.screenPadding)
+        .background(ScorePalette.background)
     }
 }
 

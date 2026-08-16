@@ -46,6 +46,15 @@ enum ScoreMetrics {
     /// Mindestgrösse einer Tap-Fläche.
     static let minimumTapTarget: CGFloat = 44
 
+    /// Die Höhe eines Chips.
+    ///
+    /// Ein gefüllter Chip trägt 11 Punkt Polsterung über und unter seiner 12,5er
+    /// Zeile; das ergibt weniger als die Mindest-Tap-Fläche, und die hebt ihn auf
+    /// dieses Mass. Der Wert steht hier, weil ihn nicht nur `ScoreChip` braucht:
+    /// Der gestrichelte „Eigenes Fach"-Tag muss in **jedem** Zustand genau so
+    /// hoch sein, auch wenn in ihm ein Textfeld und ein „OK" stehen.
+    static let chipHeight: CGFloat = minimumTapTarget
+
     /// Die Breite eines mittigen Blattes.
     ///
     /// Die Vorlage setzt für das Eingabe-Sheet 520 Punkt. Auf dem iPhone bleibt

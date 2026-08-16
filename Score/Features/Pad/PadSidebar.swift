@@ -259,6 +259,10 @@ struct PadSidebar: View {
                     .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
+                if subject.isOralExamSubject {
+                    OralExamBadge(isCompact: true)
+                }
+
                 Text(ScoreNumberFormat.points(summary.result))
                     .font(ScoreTypography.publicSans(500, 11))
                     .monospacedDigit()

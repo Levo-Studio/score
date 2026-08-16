@@ -49,17 +49,22 @@ struct DashedChip: View {
         .scoreAnimation(ScoreMotion.selection, value: isEditing)
     }
 
-    /// Die sichtbare Hülle des Tags: Polsterung, Mindesthöhe, gestrichelte Kante.
+    /// Die sichtbare Hülle des Tags: Polsterung, Höhe, gestrichelte Kante.
     ///
     /// Sie steht bewusst **innerhalb** des Knopfes. Aussen angesetzt vergrössert
     /// sie nur die Fläche, die der Tag einnimmt — getroffen würde weiterhin allein
     /// die Beschriftung, und der Tag reagierte auf den grössten Teil seiner
     /// sichtbaren Fläche nicht.
+    ///
+    /// Die Höhe ist fest und nicht bloss ein Mindestmass. Als Mindestmass mit
+    /// senkrechter Polsterung fiel der Eingabezustand höher aus als die gefüllten
+    /// Chips daneben: Textfeld und „OK" bringen eigene Höhen mit, und die
+    /// Polsterung legte sich zusätzlich darum. Jetzt gibt die Hülle dieselbe Höhe
+    /// vor, die ein gefüllter Chip erreicht — nur die Breite darf sich ändern.
     private func shell<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
             .padding(.horizontal, 15)
-            .padding(.vertical, 11)
-            .frame(minHeight: ScoreMetrics.minimumTapTarget)
+            .frame(height: ScoreMetrics.chipHeight)
             .overlay(
                 Capsule().strokeBorder(ScorePalette.lineStrong, style: DashedBorder.style)
             )
@@ -102,10 +107,13 @@ struct DashedChip: View {
                     Text("OK")
                         .font(ScoreTypography.publicSans(600, 11.5))
                         .foregroundStyle(ScorePalette.accent)
-                        // Die Trefferfläche geht über die volle Höhe des Tags.
-                        // Auf die beiden Buchstaben allein zielt niemand.
-                        .padding(.vertical, 11)
                         .padding(.leading, ScoreMetrics.Spacing.xs)
+                        // Die Trefferfläche geht über die volle Höhe des Tags —
+                        // auf die beiden Buchstaben allein zielt niemand. Sie
+                        // dehnt sich dafür in die vorhandene Höhe, statt mit
+                        // Polsterung neue zu schaffen: mit Polsterung wuchs der
+                        // ganze Tag über seine Nachbarn hinaus.
+                        .frame(maxHeight: .infinity)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -169,7 +177,11 @@ struct DashedButton: View {
     @Previewable @State var draft = ""
 
     return VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
-        DashedChip(title: "Eigenes Fach", text: $draft) {}
+        // Nebeneinander, damit die gleiche Höhe im Bild nachprüfbar ist.
+        HStack(spacing: ScoreMetrics.Spacing.xs) {
+            ScoreChip(verbatimTitle: "Psychologie", isSelected: true) {}
+            DashedChip(title: "Eigenes Fach", text: $draft) {}
+        }
         DashedButton(title: "＋ Eigenes Fach hinzufügen") {}
         DashedButton(
             title: "＋ Klassenarbeit oder Projekt",

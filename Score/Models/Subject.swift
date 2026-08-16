@@ -104,6 +104,41 @@ final class Subject {
     /// Was daraus für die Rechnung folgt, steht in ``BlockOneCalculator``.
     @Attribute(.allowsCloudEncryption) var isOralExamSubject: Bool = false
 
+    /// Ob dieses Leistungsfach **doppelt gewertet** wird.
+    ///
+    /// Zwei der drei Leistungsfächer zählen im Kursblock doppelt, und welche zwei,
+    /// entscheidet der Schüler. Score wählt von sich aus die günstigste
+    /// Kombination; setzt der Nutzer **genau zwei** dieser Kennzeichen, gilt seine
+    /// Wahl.
+    ///
+    /// Das Kennzeichen sitzt am Fach und nicht als Liste am Profil — aus demselben
+    /// Grund wie bei ``isOralExamSubject``: ein einzelnes Feld je Fach löst
+    /// CloudKit nach „letzter Schreiber gewinnt" auf, eine Liste an einer Stelle
+    /// müsste zwischen zwei Geräten zusammengeführt werden. Dass dabei
+    /// vorübergehend drei Fächer gesetzt sein können, ist eingeplant: der
+    /// Rechenkern behandelt jede Zahl ausser zwei als „keine Wahl getroffen".
+    @Attribute(.allowsCloudEncryption) var isDoubleWeighted: Bool = false
+
+    /// Das schriftliche Abiturprüfungsergebnis, 0 bis 15 Punkte.
+    ///
+    /// Nur bei Leistungsfächern belegt — in Baden-Württemberg sind sie die drei
+    /// schriftlichen Prüfungsfächer. `nil` heisst **noch nicht geprüft** und ist
+    /// etwas anderes als 0 Punkte: eine fehlende Prüfung zieht den Schnitt nicht
+    /// nach unten, sie macht das Ergebnis zu einer Hochrechnung.
+    @Attribute(.allowsCloudEncryption) var writtenExamPoints: Int?
+
+    /// Das mündliche Abiturprüfungsergebnis, 0 bis 15 Punkte.
+    ///
+    /// Zwei Fälle, ein Feld: bei einem mündlichen Prüfungsfach ist das *die*
+    /// Prüfung, bei einem Leistungsfach die **zusätzliche** mündliche Prüfung, die
+    /// zur schriftlichen hinzukommen kann. Welcher Fall gilt, steht schon in
+    /// ``kind`` und ``isOralExamSubject``; ein zweites Feld wäre die gleiche
+    /// Angabe doppelt.
+    ///
+    /// `nil` heisst noch nicht geprüft. Wie beides verrechnet wird, steht in
+    /// ``BlockTwoCalculator``.
+    @Attribute(.allowsCloudEncryption) var oralExamPoints: Int?
+
     /// Position in der Fächerliste.
     @Attribute(.allowsCloudEncryption) var sortIndex: Int = 0
 
@@ -122,6 +157,9 @@ final class Subject {
         activeSemesters: [Int] = [0, 1, 2, 3],
         maximumContributedCourses: Int? = nil,
         isOralExamSubject: Bool = false,
+        isDoubleWeighted: Bool = false,
+        writtenExamPoints: Int? = nil,
+        oralExamPoints: Int? = nil,
         sortIndex: Int = 0
     ) {
         self.identifier = identifier
@@ -134,6 +172,9 @@ final class Subject {
         self.activeSemesters = activeSemesters
         self.maximumContributedCourses = maximumContributedCourses
         self.isOralExamSubject = isOralExamSubject
+        self.isDoubleWeighted = isDoubleWeighted
+        self.writtenExamPoints = writtenExamPoints
+        self.oralExamPoints = oralExamPoints
         self.sortIndex = sortIndex
         self.semesters = []
     }

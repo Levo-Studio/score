@@ -121,7 +121,7 @@ struct PadDashboardView: View {
             title: "Erwarteter Abischnitt",
             trend: model.trendText(for: semesterIndex),
             average: model.expectedGradeText,
-            averageValue: model.outcome.expectedGrade,
+            averageValue: model.expectedGrade,
             stats: [
                 ScoreStat(value: model.blockOneText, label: "Block I"),
                 ScoreStat(value: model.courseCountText, label: "Kurse"),

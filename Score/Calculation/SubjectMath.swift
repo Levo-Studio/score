@@ -114,7 +114,14 @@ enum SubjectMath {
 
     // MARK: - Punkte und Noten
 
-    /// Rechnet Punkte in eine Note um.
+    /// Rechnet die Punkte **eines Kurses oder eines Fachs** in eine Schulnote um.
+    ///
+    /// > Wichtig: Nicht für den Abischnitt. Der kommt aus ``AbiturGradeTable`` und
+    /// > aus der Gesamtpunktzahl beider Blöcke, nicht aus einem Punkteschnitt.
+    /// > Diese Gerade hier beantwortet eine andere Frage — „welche Note steht
+    /// > hinter 11,4 Punkten in Mathematik" —, und dafür ist sie richtig.
+    /// > Score hat den Abischnitt früher ebenfalls so gerechnet; das war der
+    /// > Fehler, den die amtliche Tabelle jetzt behebt.
     ///
     /// Verwendet die lineare Umrechnung `Note = 17/3 − Punkte/3`. Sie trifft die
     /// amtliche Notentabelle über den ganzen mittleren Bereich exakt: 14 Punkte
@@ -206,18 +213,44 @@ struct SubjectInput: Sendable, Equatable, Identifiable {
     /// Ob dieses Fach eines der beiden mündlichen Prüfungsfächer ist.
     var isOralExamSubject: Bool
 
+    /// Ob der Nutzer dieses Leistungsfach zur Doppelwertung bestimmt hat.
+    ///
+    /// Nur bei Leistungsfächern von Bedeutung, und nur, wenn **genau zwei** von
+    /// ihnen gesetzt sind. Sonst wählt Score selbst — siehe
+    /// ``BlockOneCalculator/doubleWeightedSubjects(in:among:)``.
+    var isDoubleWeighted: Bool
+
+    /// Das schriftliche Abiturprüfungsergebnis, 0 bis 15.
+    ///
+    /// Nur bei Leistungsfächern: sie sind in Baden-Württemberg die drei
+    /// schriftlichen Prüfungsfächer. `nil` heisst „noch nicht geprüft".
+    var writtenExamPoints: Int?
+
+    /// Das mündliche Abiturprüfungsergebnis, 0 bis 15.
+    ///
+    /// Bei einem mündlichen Prüfungsfach ist das die Prüfung, bei einem
+    /// Leistungsfach die zusätzliche mündliche Prüfung zur schriftlichen. `nil`
+    /// heisst „noch nicht geprüft".
+    var oralExamPoints: Int?
+
     init(
         id: String,
         kind: SubjectKind,
         semesters: [SemesterInput],
         maximumContributedCourses: Int? = nil,
-        isOralExamSubject: Bool = false
+        isOralExamSubject: Bool = false,
+        isDoubleWeighted: Bool = false,
+        writtenExamPoints: Int? = nil,
+        oralExamPoints: Int? = nil
     ) {
         self.id = id
         self.kind = kind
         self.semesters = semesters
         self.maximumContributedCourses = maximumContributedCourses
         self.isOralExamSubject = isOralExamSubject
+        self.isDoubleWeighted = isDoubleWeighted
+        self.writtenExamPoints = writtenExamPoints
+        self.oralExamPoints = oralExamPoints
     }
 
     /// Die Grenze, die der Rechenkern anwendet.
@@ -285,7 +318,10 @@ extension SubjectInput {
                 )
             },
             maximumContributedCourses: subject.maximumContributedCourses,
-            isOralExamSubject: subject.isOralExamSubject
+            isOralExamSubject: subject.isOralExamSubject,
+            isDoubleWeighted: subject.isDoubleWeighted,
+            writtenExamPoints: subject.writtenExamPoints,
+            oralExamPoints: subject.oralExamPoints
         )
     }
 }

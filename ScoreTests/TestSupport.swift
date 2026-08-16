@@ -36,7 +36,10 @@ func subject(
     points: [Int],
     limit: Int? = nil,
     bracketed: Set<Int> = [],
-    isOralExam: Bool = false
+    isOralExam: Bool = false,
+    isDoubleWeighted: Bool = false,
+    writtenExamPoints: Int? = nil,
+    oralExamPoints: Int? = nil
 ) -> SubjectInput {
     SubjectInput(
         id: id,
@@ -45,7 +48,10 @@ func subject(
             semester($0.offset, points: $0.element, bracketed: bracketed.contains($0.offset))
         },
         maximumContributedCourses: limit,
-        isOralExamSubject: isOralExam
+        isOralExamSubject: isOralExam,
+        isDoubleWeighted: isDoubleWeighted,
+        writtenExamPoints: writtenExamPoints,
+        oralExamPoints: oralExamPoints
     )
 }
 
@@ -56,7 +62,10 @@ func subject(
     allPoints: Int,
     limit: Int? = nil,
     bracketed: Set<Int> = [],
-    isOralExam: Bool = false
+    isOralExam: Bool = false,
+    isDoubleWeighted: Bool = false,
+    writtenExamPoints: Int? = nil,
+    oralExamPoints: Int? = nil
 ) -> SubjectInput {
     subject(
         id,
@@ -64,7 +73,10 @@ func subject(
         points: Array(repeating: allPoints, count: 4),
         limit: limit,
         bracketed: bracketed,
-        isOralExam: isOralExam
+        isOralExam: isOralExam,
+        isDoubleWeighted: isDoubleWeighted,
+        writtenExamPoints: writtenExamPoints,
+        oralExamPoints: oralExamPoints
     )
 }
 

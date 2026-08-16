@@ -229,6 +229,9 @@ struct SubjectEditorView: View {
 
             OralExamToggle(draft: $draft)
                 .padding(.top, ScoreMetrics.Spacing.xs)
+
+            ExamResultSection(draft: $draft)
+                .padding(.top, ScoreMetrics.Spacing.xs)
         }
     }
 

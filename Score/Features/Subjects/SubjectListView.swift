@@ -14,6 +14,8 @@ struct SubjectListView: View {
 
     @Environment(\.modelContext) private var modelContext
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @Query(sort: \Subject.sortIndex) private var subjects: [Subject]
 
     @AppStorage(SubjectPreference.selectedSemesterKey)
@@ -52,7 +54,7 @@ struct SubjectListView: View {
                     DashedButton(title: "＋ Eigenes Fach hinzufügen") {
                         editorTarget = .new
                     }
-                    oralExamCard
+                    oralExamEntry
                 }
                 .padding(.horizontal, ScoreMetrics.screenPadding)
                 .padding(.top, 6)
@@ -78,11 +80,65 @@ struct SubjectListView: View {
 
     // MARK: - Mündliche Prüfungsfächer
 
-    /// Der Einstieg in die Wahl der mündlichen Prüfungsfächer.
+    /// Ob beide mündlichen Prüfungsfächer gewählt sind.
+    private var isOralExamChoiceComplete: Bool {
+        subjects.count(where: \.isOralExamSubject) >= OralExamSubjectSelection.requiredCount
+    }
+
+    /// Der Einstieg in die Wahl der mündlichen Prüfungsfächer — als Karte,
+    /// solange die Angabe fehlt, danach als ruhige Zeile.
     ///
-    /// Die Karte nennt den Stand, bevor man sie antippt — steht die Wahl, liest
-    /// man die beiden Fächer, sonst den Hinweis, dass ohne sie zu gut gerechnet
-    /// wird. Ein blosser Knopf müsste erst geöffnet werden, um das zu sagen.
+    /// Die Karte ist eine Aufforderung. Sie hat nichts mehr zu sagen, sobald
+    /// beide Fächer stehen: Eine offene Aufgabe, die erledigt ist, wird zur
+    /// Tapete und man liest über sie hinweg. Ändern lässt sich die Wahl
+    /// weiterhin — nur eben über einen Zugang statt über eine Mahnung. Welche
+    /// Fächer es sind, steht ab da an den Fächern selbst, als Siegel in ihrer
+    /// Zeile.
+    @ViewBuilder
+    private var oralExamEntry: some View {
+        Group {
+            if isOralExamChoiceComplete {
+                oralExamLink
+            } else {
+                oralExamCard
+            }
+        }
+        .transition(reduceMotion
+            ? .opacity
+            : .opacity.combined(with: .offset(y: -ScoreMotion.rowOffset)))
+        .scoreAnimation(ScoreMotion.rowIn, value: isOralExamChoiceComplete)
+    }
+
+    /// Der ruhige Zugang, wenn die Wahl steht.
+    private var oralExamLink: some View {
+        Button {
+            isOralExamPickerPresented = true
+        } label: {
+            HStack(spacing: 7) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 11, weight: .semibold))
+
+                Text("Mündliche Prüfungsfächer ändern")
+                    .font(.meta)
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+            }
+            .foregroundStyle(ScorePalette.inkSecondary)
+            .padding(.horizontal, 4)
+            .frame(maxWidth: .infinity, minHeight: ScoreMetrics.minimumTapTarget, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Die Karte, solange die Angabe fehlt.
+    ///
+    /// Sie nennt den Stand, bevor man sie antippt — schon gewählte Fächer und
+    /// wie viele noch fehlen. Ein blosser Knopf müsste erst geöffnet werden, um
+    /// das zu sagen.
     private var oralExamCard: some View {
         Button {
             isOralExamPickerPresented = true
@@ -114,12 +170,20 @@ struct SubjectListView: View {
         .buttonStyle(.plain)
     }
 
+    /// Der Stand auf der Karte. Sie steht nur, solange die Wahl offen ist —
+    /// entweder fehlt sie ganz, oder es fehlt noch eins von beiden.
     private var oralExamNote: Text {
         let chosen = subjects.filter(\.isOralExamSubject)
         guard !chosen.isEmpty else {
             return Text("Noch nicht gewählt. Ihre Halbjahre sind anrechnungspflichtig — ohne die Angabe rechnet Score zu gut.")
         }
-        return Text(verbatim: chosen.map(\.name).joined(separator: " · "))
+        return Text(
+            AttributedString(chosen.map(\.name).joined(separator: " · "))
+                + AttributedString(" · ")
+                + AttributedString.scoreLocalized(
+                    "\(chosen.count) von \(OralExamSubjectSelection.requiredCount) gewählt"
+                )
+        )
     }
 
     // MARK: - Kopf

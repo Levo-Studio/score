@@ -4262,6 +4262,23 @@
         }
       }
     },
+    "Mündliche Prüfungsfächer ändern" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mündliche Prüfungsfächer ändern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change oral exam subjects"
+          }
+        }
+      }
+    },
     "Mündliches Prüfungsfach" : {
       "extractionState" : "manual",
       "localizations" : {

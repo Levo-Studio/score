@@ -273,6 +273,17 @@ final class OnboardingViewModel {
         case .electiveBasicSubjects:
             if !isKnown { customBasicNames.append(name) }
             electiveBasicSubjects.insert(name)
+        case .oralExamSubjects:
+            // Wer erst hier merkt, dass ihm ein Fach fehlt, legt es hier an:
+            // als Wahl-Basisfach, damit es überhaupt existiert, und gleich als
+            // Prüfungsfach. Sonst müsste er zwei Schritte zurück und wieder vor.
+            //
+            // Ein Leistungsfach bleibt aussen vor: in ihm wird bereits
+            // schriftlich geprüft, ein viertes Mal geprüft wird nicht.
+            guard !advancedSubjects.contains(name) else { break }
+            if !isKnown { customBasicNames.append(name) }
+            electiveBasicSubjects.insert(name)
+            if !oralExamSubjects.contains(name) { toggleOralExamSubject(name) }
         default:
             break
         }

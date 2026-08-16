@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import Score
 
@@ -49,12 +50,16 @@ struct DashboardGreetingTests {
 
     /// „Läuft bei dir" ist das Mass — der Vorname hängt hinter der Zeile, und
     /// beides zusammen muss auf einem iPhone in eine Zeile passen.
+    ///
+    /// Gemessen wird die deutsche Basiszeile: Der Schlüssel im Katalog ist
+    /// zugleich der deutsche Text, `String(localized:)` gibt ihn also unabhängig
+    /// von der Sprache des Testlaufs zurück.
     @Test("Keine Zeile ist länger als das Mass")
     func linesStayShort() {
         let limit = "Läuft bei dir".count
 
         for stage in DashboardGreeting.Stage.allCases {
-            let line = DashboardGreeting.text(for: stage, firstName: "")
+            let line = String(localized: DashboardGreeting.value(for: stage, firstName: ""))
             // Ohne Vornamen bleiben Trennzeichen stehen; gemessen wird die
             // Formulierung davor.
             let phrase = line.prefix { $0 != "," }
@@ -68,7 +73,7 @@ struct DashboardGreetingTests {
     @Test("Jede Stufe hat eine eigene Zeile")
     func everyStageHasItsOwnLine() {
         let lines = DashboardGreeting.Stage.allCases.map {
-            DashboardGreeting.text(for: $0, firstName: "Julius")
+            String(localized: DashboardGreeting.value(for: $0, firstName: "Julius"))
         }
         #expect(Set(lines).count == lines.count)
     }

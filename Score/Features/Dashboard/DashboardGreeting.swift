@@ -1,8 +1,8 @@
-import Foundation
+import SwiftUI
 
 /// Die Begrüssung über dem Score — die eine Zeile, die den Stand in Worte fasst.
 ///
-/// Sie steht auf dem iPhone im Dashboard und auf dem iPad in der Kopfleiste.
+/// Sie steht auf beiden Geräten über dem Score, dem iPhone wie dem iPad.
 /// Beide holen sie hier ab, damit die Zeile nur an einer Stelle gepflegt wird:
 /// Wer den Ton ändern will oder eine Schwelle verschieben, fasst diese Datei an
 /// und keine View.
@@ -69,30 +69,46 @@ enum DashboardGreeting {
 
     // MARK: - Zeilen
 
-    /// Die fertige Zeile samt Vornamen.
+    /// Die Zeilen selbst — die einzige Stelle, an der sie stehen.
     ///
-    /// Der Name steht im Schlüssel und nicht dahinter angeklebt: So entscheidet
-    /// jede Sprache selbst, wo er hingehört und ob ein Komma davor steht.
-    ///
-    /// Übersetzt wird über ``String/scoreLocalized(_:)``, weil hier ein `String`
-    /// entsteht und kein `Text` — die in Score gewählte Sprache erreicht einen
-    /// freistehenden `String(localized:)` nicht.
-    static func text(for stage: Stage, firstName: String) -> String {
+    /// Der Name gehört in den Schlüssel und wird nicht dahinter geklebt: So
+    /// entscheidet jede Sprache selbst, wo er steht und ob ein Komma davor
+    /// gehört. Deutsch ist die Basissprache, der Schlüssel also zugleich die
+    /// deutsche Zeile; das Englische steht im Katalog daneben.
+    static func value(for stage: Stage, firstName: String) -> String.LocalizationValue {
         switch stage {
         // Noch nichts erfasst: Die Zeile lädt ein, statt eine Leistung zu
         // bewerten, die es noch gar nicht gibt.
-        case .start: String.scoreLocalized("Leg los, \(firstName)")
-        case .excellent: String.scoreLocalized("Läuft bei dir, \(firstName)")
-        case .good: String.scoreLocalized("Gut unterwegs, \(firstName)")
-        case .solid: String.scoreLocalized("Da geht was, \(firstName)")
+        case .start: "Leg los, \(firstName)"
+        case .excellent: "Läuft bei dir, \(firstName)"
+        case .good: "Gut unterwegs, \(firstName)"
+        case .solid: "Da geht was, \(firstName)"
         // Die unterste Stufe. Sie sagt nicht, dass es schlecht steht, sondern
         // dass es zu schaffen ist.
-        case .onward: String.scoreLocalized("Du packst das, \(firstName)")
+        case .onward: "Du packst das, \(firstName)"
         }
     }
 
+    /// Die fertige Zeile für eine View.
+    ///
+    /// Als `Text` und nicht als `String`: Ein freistehender `String(localized:)`
+    /// sucht die Übersetzung in der Sprache des Prozesses und nicht in der, die
+    /// der Nutzer in Score gewählt hat — auf einem englischen Gerät mit deutsch
+    /// gestellter App stünde hier sonst die englische Zeile. Der Umweg über
+    /// ``LocalizedStringResource`` nimmt die Sprache ausdrücklich mit.
+    @MainActor
+    static func text(for stage: Stage, firstName: String) -> Text {
+        Text(
+            LocalizedStringResource(
+                value(for: stage, firstName: firstName),
+                locale: AppSettings.shared.locale
+            )
+        )
+    }
+
     /// Beides in einem Schritt — der Weg, den die Views nehmen.
-    static func text(expectedGrade: Double, recordedCount: Int, firstName: String) -> String {
+    @MainActor
+    static func text(expectedGrade: Double, recordedCount: Int, firstName: String) -> Text {
         text(
             for: stage(expectedGrade: expectedGrade, recordedCount: recordedCount),
             firstName: firstName

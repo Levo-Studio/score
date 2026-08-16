@@ -93,7 +93,7 @@ final class DashboardViewModel {
     }
 
     /// Die fertige Begrüssung samt Vornamen.
-    func greetingText(firstName: String) -> String {
+    func greetingText(firstName: String) -> Text {
         DashboardGreeting.text(for: greetingStage, firstName: firstName)
     }
 

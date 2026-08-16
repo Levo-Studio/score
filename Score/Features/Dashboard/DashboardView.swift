@@ -101,9 +101,9 @@ struct DashboardView: View {
                     .font(ScoreTypography.publicSans(400, 12))
                     .foregroundStyle(ScorePalette.inkSecondary)
 
-                // Bereits übersetzt, deshalb `verbatim` — die Zeile kommt aus
-                // `DashboardGreeting` und nicht aus dem Katalog der View.
-                Text(verbatim: model.greetingText(firstName: profile.firstName))
+                // Die Zeile kommt aus `DashboardGreeting` und nicht aus dem
+                // Katalog dieser View — dort stehen alle Stufen beieinander.
+                model.greetingText(firstName: profile.firstName)
                     .font(.greeting)
                     .tracking(em: -0.03, at: 24)
                     .foregroundStyle(ScorePalette.ink)

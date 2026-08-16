@@ -20,8 +20,8 @@ import UIKit
 /// verhandelt nur SwiftUI-Gesten untereinander und sagt der `UIScrollView`
 /// nichts davon. Es entscheidet also niemand — und wer den Finger bekommt, ist
 /// keine Frage der Mindeststrecke, sondern davon, welches der beiden Systeme
-/// zuerst zugreift. Deshalb trug es nicht, an
-/// ``SwipeRowGesture/minimumDragDistance`` zu drehen.
+/// zuerst zugreift. Deshalb trug es nicht, an der Mindeststrecke der
+/// `DragGesture` zu drehen.
 ///
 /// ## Warum die Erkenner an der Liste hängen und nicht an der Zeile
 ///
@@ -204,14 +204,11 @@ extension SwipeRowAnchored where Self: UIGestureRecognizer {
 /// es, mal nicht" soll hier nicht entstehen.
 ///
 /// Deshalb entscheidet der Erkenner selbst, und zwar zu dem Zeitpunkt, zu dem es
-/// etwas zu entscheiden gibt: sobald der Finger ``axisLock`` Punkt weit gewandert
-/// ist. Überwiegt bis dahin die Senkrechte, lässt er sich fallen und die
+/// etwas zu entscheiden gibt: sobald der Finger ``SwipeRowGesture/axisLock``
+/// Punkt weit gewandert ist. Überwiegt bis dahin die Senkrechte, lässt er sich fallen und die
 /// `UIScrollView` scrollt. Überwiegt die Waagerechte, läuft er weiter und die
 /// Zeile folgt dem Finger.
 final class SwipeRowPanGestureRecognizer: UIPanGestureRecognizer, SwipeRowAnchored {
-
-    /// Ab dieser Strecke steht die Achse fest.
-    static let axisLock: CGFloat = 8
 
     weak var anchor: SwipeRowAnchorView?
 
@@ -241,7 +238,7 @@ final class SwipeRowPanGestureRecognizer: UIPanGestureRecognizer, SwipeRowAnchor
         let point = touch.location(in: nil)
         let dx = point.x - origin.x
         let dy = point.y - origin.y
-        guard max(abs(dx), abs(dy)) >= Self.axisLock else { return }
+        guard max(abs(dx), abs(dy)) >= SwipeRowGesture.axisLock else { return }
 
         hasDecided = true
         // Senkrecht heisst scrollen — und dieser Erkenner hat hier nichts

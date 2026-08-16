@@ -83,8 +83,7 @@ extension View {
 /// `simultaneousGesture` verhandelt nur SwiftUI-Gesten untereinander und sagt
 /// der `UIScrollView` nichts. Es entschied also niemand, SwiftUI nahm den Finger,
 /// und die Liste stand — der Reiter „Fächer" liess sich auf dem iPhone nicht
-/// mehr scrollen. An ``SwipeRowGesture/minimumDragDistance`` zu drehen half
-/// nicht: die Strecke verschiebt nur den Moment des Zugriffs, nicht das fehlende
+/// mehr scrollen. An der Mindeststrecke der `DragGesture` zu drehen half nicht: die Strecke verschiebt nur den Moment des Zugriffs, nicht das fehlende
 /// Aushandeln.
 ///
 /// Wisch und Tipp hängen deshalb an ``SwipeRowGestureHost`` — echte

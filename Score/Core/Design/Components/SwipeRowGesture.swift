@@ -23,20 +23,14 @@ struct SwipeRowGesture {
     var actionWidth: CGFloat
 
     /// Ab dieser Strecke steht fest, ob gewischt oder gescrollt wird.
+    ///
+    /// Dieselbe Zahl entscheidet zweimal, und das ist Absicht:
+    /// ``SwipeRowPanGestureRecognizer`` legt sich nach ihr auf eine Achse fest
+    /// und lässt sich bei einem senkrechten Zug fallen, und dieser Ablauf
+    /// entscheidet nach ihr, ab wann die Zeile dem Finger folgt. Stünden hier
+    /// zwei Werte, gäbe es eine Strecke, auf der der Erkenner den Wisch schon
+    /// angenommen hätte, die Zeile sich aber noch nicht rührte.
     static let axisLock: CGFloat = 10
-
-    /// Ab dieser Strecke fängt der Wisch überhaupt erst an.
-    ///
-    /// **Muss grösser als null bleiben.** Eine `DragGesture` mit
-    /// `minimumDistance: 0` beansprucht den Finger schon beim Aufsetzen; die
-    /// umgebende `ScrollView` kommt dann nicht mehr an ihn heran, und die Liste
-    /// steht fest — überall dort, wo Zeilen stehen, also überall. Genau daran
-    /// liess sich der Reiter „Fächer" auf dem iPhone nicht mehr scrollen.
-    ///
-    /// Und kleiner als ``axisLock``: der Wisch muss schon laufen, bevor sich die
-    /// Geste auf eine Achse festlegt, sonst käme eine Bewegung dazwischen weder
-    /// als Wisch noch als Tipp an.
-    static let minimumDragDistance: CGFloat = 6
 
     /// Wie weit sich die Zeile über die Löschfläche hinaus ziehen lässt.
     static let overpull: CGFloat = 28

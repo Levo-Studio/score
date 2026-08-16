@@ -208,6 +208,9 @@ struct PadSidebar: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .scrollIndicators(.hidden)
+        // Ein Tipp neben die Zeilen schliesst eine offene Zeile — wie in einer
+        // Systemliste.
+        .closesOpenSwipeRow()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 

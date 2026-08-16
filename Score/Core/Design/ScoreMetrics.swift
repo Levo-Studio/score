@@ -45,4 +45,14 @@ enum ScoreMetrics {
 
     /// Mindestgrösse einer Tap-Fläche.
     static let minimumTapTarget: CGFloat = 44
+
+    /// Die Breite eines mittigen Blattes.
+    ///
+    /// Die Vorlage setzt für das Eingabe-Sheet 520 Punkt. Auf dem iPhone bleibt
+    /// davon die Bildschirmbreite abzüglich der Ränder — dort ist der Wert also
+    /// nur die Obergrenze.
+    static let overlaySheetWidth: CGFloat = 520
+
+    /// Der Rand, den ein mittiges Blatt zum Bildschirm hält.
+    static let overlaySheetInset: CGFloat = Spacing.lg
 }

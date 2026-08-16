@@ -53,6 +53,9 @@ struct SubjectDetailView: View {
             .padding(.bottom, 170)
         }
         .background(ScorePalette.background)
+        // Ein Tipp neben die Zeilen schliesst eine offene Zeile — wie in einer
+        // Systemliste.
+        .closesOpenSwipeRow()
         // Der Streifen liegt über dem Inhalt, aber unter der schwebenden
         // Tab-Bar — sonst verdeckte die Leiste genau die Schaltfläche, die er
         // anbietet.
@@ -63,7 +66,8 @@ struct SubjectDetailView: View {
         .sheet(isPresented: $isEditorPresented) {
             SubjectEditorView(target: .existing(subject)) { dismiss() }
         }
-        .sheet(item: $editedEntry) { entry in
+        // Mittig und nicht von unten: siehe ``ScoreOverlaySheet``.
+        .scoreOverlaySheet(item: $editedEntry) { entry in
             GradeEntrySheet(entry: entry, subject: subject) {
                 delete(entry)
             }

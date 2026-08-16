@@ -56,11 +56,18 @@ struct GradeEntryUndo: Identifiable, Equatable {
     /// Legt die Leistung wieder an.
     ///
     /// Findet das Halbjahr nicht mehr statt — das Fach wurde inzwischen gelöscht
-    /// oder abgewählt —, passiert nichts. Ein Datensatz ohne Halbjahr wäre
-    /// genau der verwaiste Zustand, den Score sonst überall vermeidet.
+    /// oder abgewählt —, passiert nichts.
     @discardableResult
     func restore(to subject: Subject, in context: ModelContext) -> Bool {
-        guard let semester = subject.semester(at: semesterIndex) else { return false }
+        // `isDeleted` gehört zur Prüfung dazu: Ein gelöschtes Halbjahr bleibt bis
+        // zum Speichern als Objekt in der Beziehung stehen. Ohne die Prüfung
+        // hinge die zurückgeholte Leistung an einem Datensatz, den es nicht mehr
+        // gibt — genau der verwaiste Zustand, den Score sonst überall vermeidet.
+        guard let semester = subject.semester(at: semesterIndex),
+              !semester.isDeleted,
+              !subject.isDeleted else {
+            return false
+        }
 
         let entry = GradeEntry(
             title: title,

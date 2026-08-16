@@ -24,6 +24,14 @@ struct SubjectListView: View {
     /// Das Fach, dessen Löschung nach einem Wisch zur Bestätigung ansteht.
     @State private var pendingDeletion: SubjectDeletion.Request?
 
+    /// Das geöffnete Fach.
+    ///
+    /// Die Zeile trägt keinen `NavigationLink` mehr, seit sie sich wischen
+    /// lässt: ein Knopf im Inhalt löste am Ende jedes Wisches zusätzlich aus,
+    /// weil der Finger die Zeile dabei nie verlässt. Die Navigation hängt
+    /// deshalb an diesem Zustand, gesetzt vom Tipp der Hülle.
+    @State private var openedSubject: Subject?
+
     private var summaries: [SubjectSummary] {
         SubjectOverview.summaries(of: subjects, semesterIndex: semesterIndex)
     }
@@ -45,7 +53,7 @@ struct SubjectListView: View {
             }
             .background(ScorePalette.background)
             .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(for: Subject.self) { subject in
+            .navigationDestination(item: $openedSubject) { subject in
                 SubjectDetailView(subject: subject)
             }
         }
@@ -81,12 +89,10 @@ struct SubjectListView: View {
                 // verschwände er mit der Zeile, die er gerade betrifft.
                 SwipeToDelete(
                     accessibilityLabel: Text("\(summary.subject.name) löschen"),
-                    action: { pendingDeletion = SubjectDeletion.request(for: summary.subject) }
+                    onDelete: { pendingDeletion = SubjectDeletion.request(for: summary.subject) },
+                    onTap: { openedSubject = summary.subject }
                 ) {
-                    NavigationLink(value: summary.subject) {
-                        SubjectListRow(summary: summary)
-                    }
-                    .buttonStyle(.plain)
+                    SubjectListRow(summary: summary)
                 }
                 // Die Zeilen fahren nacheinander ein; antippbar sind sie dabei
                 // die ganze Zeit, die Einblendung ändert nur Deckkraft und Lage.

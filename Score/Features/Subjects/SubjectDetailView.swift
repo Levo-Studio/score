@@ -363,14 +363,10 @@ struct SubjectDetailView: View {
                 // eingetragen, und der Streifen unten nimmt den Fehlgriff zurück.
                 SwipeToDelete(
                     accessibilityLabel: Text("\(entry.title) löschen"),
-                    action: { delete(entry) }
+                    onDelete: { delete(entry) },
+                    onTap: { editedEntry = entry }
                 ) {
-                    Button {
-                        editedEntry = entry
-                    } label: {
-                        entryRow(entry, share: share)
-                    }
-                    .buttonStyle(.plain)
+                    entryRow(entry, share: share)
                 }
                 .rowAppearance(index: index, base: 0.1)
             }

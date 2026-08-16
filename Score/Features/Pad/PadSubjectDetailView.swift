@@ -412,14 +412,10 @@ struct PadSubjectDetailView: View {
                 // unten nimmt es zurück.
                 SwipeToDelete(
                     accessibilityLabel: Text("\(entry.title) löschen"),
-                    action: { delete(entry) }
+                    onDelete: { delete(entry) },
+                    onTap: { editedEntry = entry }
                 ) {
-                    Button {
-                        editedEntry = entry
-                    } label: {
-                        entryRow(entry, share: share)
-                    }
-                    .buttonStyle(.plain)
+                    entryRow(entry, share: share)
                 }
             }
 

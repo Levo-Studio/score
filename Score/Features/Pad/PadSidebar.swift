@@ -180,7 +180,8 @@ struct PadSidebar: View {
                         actionWidth: 72,
                         font: ScoreTypography.publicSans(500, 11.5),
                         accessibilityLabel: Text("\(summary.subject.name) löschen"),
-                        action: { pendingDeletion = SubjectDeletion.request(for: summary.subject) }
+                        onDelete: { pendingDeletion = SubjectDeletion.request(for: summary.subject) },
+                        onTap: { route = .subject(summary.subject.identifier) }
                     ) {
                         subjectRow(summary)
                     }
@@ -189,14 +190,15 @@ struct PadSidebar: View {
         }
     }
 
+    /// Eine Fachzeile der Sidebar.
+    ///
+    /// Reine Darstellung ohne eigenen Knopf: Das Antippen übernimmt die
+    /// Wisch-Hülle, sonst löste jeder Wisch am Ende auch die Auswahl aus.
     private func subjectRow(_ summary: SubjectSummary) -> some View {
         let subject = summary.subject
         let isSelected = route.subjectIdentifier == subject.identifier
 
-        return Button {
-            route = .subject(subject.identifier)
-        } label: {
-            HStack(spacing: 9) {
+        return HStack(spacing: 9) {
                 SubjectDot(color: subject.color, size: 14, cornerRadius: 5)
 
                 Text(verbatim: subject.name)
@@ -219,9 +221,7 @@ struct PadSidebar: View {
                     .fill(isSelected ? ScorePalette.surface : .clear)
             )
             .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .scoreAnimation(ScoreMotion.selection, value: isSelected)
+            .scoreAnimation(ScoreMotion.selection, value: isSelected)
     }
 }
 

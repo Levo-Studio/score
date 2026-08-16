@@ -307,13 +307,20 @@ struct ScreenshotTests {
         }
     }
 
-    @Test("Das Prüfungsergebnis eines Leistungsfachs")
+    /// Der Ort der Eingabe: die Fachansicht, unter den Halbjahren.
+    ///
+    /// Die Bilder zeigen den Abschnitt „Abiturprüfung" mit dem eingetragenen
+    /// schriftlichen Ergebnis und der mündlichen Nachprüfung — dieselbe Form wie
+    /// die Leistungen darüber. Im Fach-Editor steht davon nichts mehr.
+    @Test("Das Prüfungsergebnis eines Leistungsfachs in der Fachansicht")
     func examResultAtAnAdvancedSubject() async throws {
         let container = try Self.makeStoredSubjects()
-        let context = ModelContext(container)
+        let context = container.mainContext
         let subjects = try context.fetch(FetchDescriptor<Subject>())
         Self.recordExams(in: subjects)
         let mathematik = try #require(subjects.first { $0.name == "Mathematik" })
+
+        UserDefaults.standard.set(3, forKey: SubjectPreference.selectedSemesterKey)
 
         for scheme in ColorScheme.allCases {
             try await capture(
@@ -322,7 +329,7 @@ struct ScreenshotTests {
                 size: CGSize(width: Device.phone.width, height: 1500),
                 context: context
             ) {
-                SubjectEditorView(target: .existing(mathematik))
+                NavigationStack { SubjectDetailView(subject: mathematik) }
             }
 
             try await capture(
@@ -331,8 +338,10 @@ struct ScreenshotTests {
                 size: Device.pad,
                 context: context
             ) {
-                PadSubjectEditorView(
-                    target: .existing(mathematik),
+                PadSubjectDetailView(
+                    subject: mathematik,
+                    summaries: SubjectOverview.summaries(of: subjects, semesterIndex: 3),
+                    semesterIndex: .constant(3),
                     route: .constant(.subject(mathematik.identifier))
                 )
                 .background(ScorePalette.background)
@@ -340,17 +349,18 @@ struct ScreenshotTests {
         }
     }
 
-    @Test("Das Prüfungsergebnis eines mündlichen Prüfungsfachs")
-    func examResultAtAnOralExamSubject() async throws {
+    /// Der Fach-Editor, in dem von der Prüfung nur noch der Schalter steht.
+    @Test("Der Fach-Editor mit dem blossen Schalter")
+    func subjectEditorKeepsOnlyTheSwitch() async throws {
         let container = try Self.makeStoredSubjects()
-        let context = ModelContext(container)
+        let context = container.mainContext
         let subjects = try context.fetch(FetchDescriptor<Subject>())
         Self.recordExams(in: subjects)
         let gemeinschaftskunde = try #require(subjects.first { $0.name == "Gemeinschaftskunde" })
 
         for scheme in ColorScheme.allCases {
             try await capture(
-                "pruefung-muendlich-iphone",
+                "pruefung-editor-iphone",
                 scheme: scheme,
                 size: CGSize(width: Device.phone.width, height: 1500),
                 context: context
@@ -359,13 +369,89 @@ struct ScreenshotTests {
             }
 
             try await capture(
-                "pruefung-muendlich-ipad",
+                "pruefung-editor-ipad",
                 scheme: scheme,
                 size: Device.pad,
                 context: context
             ) {
                 PadSubjectEditorView(
                     target: .existing(gemeinschaftskunde),
+                    route: .constant(.subject(gemeinschaftskunde.identifier))
+                )
+                .background(ScorePalette.background)
+            }
+        }
+    }
+
+    /// Ein Fach ohne Prüfung: Physik ist Wahl-Basisfach und wird nicht geprüft —
+    /// unter den Leistungen steht deshalb kein Prüfungsabschnitt.
+    @Test("Ein gewöhnliches Fach zeigt keinen Prüfungsabschnitt")
+    func ordinarySubjectHasNoExamSection() async throws {
+        let container = try Self.makeStoredSubjects()
+        let context = container.mainContext
+        let subjects = try context.fetch(FetchDescriptor<Subject>())
+        Self.recordExams(in: subjects)
+        let physik = try #require(subjects.first { $0.name == "Physik" })
+
+        UserDefaults.standard.set(3, forKey: SubjectPreference.selectedSemesterKey)
+
+        for scheme in ColorScheme.allCases {
+            try await capture(
+                "pruefung-ohne-iphone",
+                scheme: scheme,
+                size: CGSize(width: Device.phone.width, height: 1500),
+                context: context
+            ) {
+                NavigationStack { SubjectDetailView(subject: physik) }
+            }
+
+            try await capture(
+                "pruefung-ohne-ipad",
+                scheme: scheme,
+                size: Device.pad,
+                context: context
+            ) {
+                PadSubjectDetailView(
+                    subject: physik,
+                    summaries: SubjectOverview.summaries(of: subjects, semesterIndex: 3),
+                    semesterIndex: .constant(3),
+                    route: .constant(.subject(physik.identifier))
+                )
+                .background(ScorePalette.background)
+            }
+        }
+    }
+
+    @Test("Das Prüfungsergebnis eines mündlichen Prüfungsfachs in der Fachansicht")
+    func examResultAtAnOralExamSubject() async throws {
+        let container = try Self.makeStoredSubjects()
+        let context = container.mainContext
+        let subjects = try context.fetch(FetchDescriptor<Subject>())
+        Self.recordExams(in: subjects)
+        let gemeinschaftskunde = try #require(subjects.first { $0.name == "Gemeinschaftskunde" })
+
+        UserDefaults.standard.set(3, forKey: SubjectPreference.selectedSemesterKey)
+
+        for scheme in ColorScheme.allCases {
+            try await capture(
+                "pruefung-muendlich-iphone",
+                scheme: scheme,
+                size: CGSize(width: Device.phone.width, height: 1500),
+                context: context
+            ) {
+                NavigationStack { SubjectDetailView(subject: gemeinschaftskunde) }
+            }
+
+            try await capture(
+                "pruefung-muendlich-ipad",
+                scheme: scheme,
+                size: Device.pad,
+                context: context
+            ) {
+                PadSubjectDetailView(
+                    subject: gemeinschaftskunde,
+                    summaries: SubjectOverview.summaries(of: subjects, semesterIndex: 3),
+                    semesterIndex: .constant(3),
                     route: .constant(.subject(gemeinschaftskunde.identifier))
                 )
                 .background(ScorePalette.background)

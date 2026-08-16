@@ -13,6 +13,7 @@ import SwiftData
 /// welche Kurse nicht gewertet werden.
 struct PadDashboardView: View {
 
+    let profile: StudentProfile
     let subjects: [Subject]
 
     @Binding var semesterIndex: Int
@@ -39,6 +40,7 @@ struct PadDashboardView: View {
         GeometryReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.md) {
+                    greeting
                     topRow
                         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
                             topRowHeight = $0
@@ -55,6 +57,25 @@ struct PadDashboardView: View {
         .onChange(of: inputs, initial: true) { _, newInputs in
             model.update(with: newInputs)
         }
+    }
+
+    // MARK: - Begrüssung
+
+    /// Der Zuspruch über der Score-Karte, wie auf dem iPhone.
+    ///
+    /// Er steht bewusst hier und nicht in der Kopfleiste des iPads: Die Zeile
+    /// kommentiert den Schnitt, also gehört sie neben den Schnitt. In der
+    /// Kopfleiste stünde sie auch über den Einstellungen und dem Fach-Editor,
+    /// wo die Note gar nicht zu sehen ist — und ein Zuspruch, der immer da ist,
+    /// wird zur Tapete. Das Profilbild bleibt dagegen oben: es sagt nichts über
+    /// die Leistung, sondern wem die Daten gehören, und das gilt überall.
+    private var greeting: some View {
+        model.greetingText(firstName: profile.firstName)
+            .font(ScoreTypography.archivo(700, 22))
+            .tracking(em: -0.03, at: 22)
+            .foregroundStyle(ScorePalette.ink)
+            .contentTransition(.opacity)
+            .scoreAnimation(ScoreMotion.valueChange, value: model.greetingStage)
     }
 
     // MARK: - Obere Reihe

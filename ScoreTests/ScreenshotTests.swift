@@ -700,6 +700,50 @@ struct ScreenshotTests {
         }
     }
 
+    // MARK: - Die Fächerliste beim Scrollen
+
+    /// Die Fächerliste mit mehr Inhalt als Bildschirmhöhe — oben und gescrollt.
+    ///
+    /// Der Beleg zum Fehler „im Reiter Fächer lässt sich nicht mehr scrollen".
+    /// Gescrollt wird mit einem gebauten Finger, der senkrecht über eine Zeile
+    /// zieht — also genau dort aufsetzt, wo die Wischgeste liegt und wo sich
+    /// nichts mehr bewegte.
+    @Test("Die Fächerliste, oben und nach unten gescrollt")
+    func subjectListScrolled() async throws {
+        let container = try Self.makeStoredSubjects()
+        let context = ModelContext(container)
+
+        for scheme in ColorScheme.allCases {
+            try await capture(
+                "faecherliste-oben-iphone",
+                scheme: scheme,
+                size: Device.phone,
+                context: context
+            ) {
+                SubjectListView()
+            }
+
+            try await capture(
+                "faecherliste-gescrollt-iphone",
+                scheme: scheme,
+                size: Device.phone,
+                context: context,
+                beforeCapture: { window in
+                    let start = CGPoint(x: Device.phone.width / 2, y: 420)
+                    for _ in 0..<3 {
+                        try await SyntheticFinger.drag(
+                            from: start,
+                            by: CGSize(width: 0, height: -300),
+                            in: window
+                        )
+                    }
+                }
+            ) {
+                SubjectListView()
+            }
+        }
+    }
+
     // MARK: - Die Synchronisierung von Hand
 
     /// Die vier Zustände der Schaltfläche „Jetzt synchronisieren" samt der Zeile

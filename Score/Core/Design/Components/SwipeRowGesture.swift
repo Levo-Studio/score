@@ -8,8 +8,15 @@ import SwiftUI
 /// Tipp auf die freigelegte Fläche löscht oder die Zeile öffnet. Als eigener Typ
 /// lässt sich das Schritt für Schritt nachstellen, statt nur behauptet zu werden.
 ///
-/// Der Ablauf ist immer derselbe: ``touchDown(isOpen:)``, beliebig oft
-/// ``drag(translation:)``, einmal ``release(translation:predicted:startX:width:)``.
+/// Es sind zwei Abläufe, und sie schliessen einander aus — die Ansicht stellt
+/// das mit einer ausschliessenden Geste sicher:
+///
+/// - Gewischt: ``touchDown(isOpen:)``, beliebig oft ``drag(translation:)``,
+///   einmal ``release(translation:predicted:)``.
+/// - Getippt: einmal ``tap(atX:width:)``.
+///
+/// Dass beides nicht gleichzeitig gelten kann, ist keine Feinheit: genau daran
+/// hing „ein Wisch öffnet am Ende auch noch die Zeile".
 struct SwipeRowGesture {
 
     /// Wie breit die Löschfläche aufgezogen steht.
@@ -18,8 +25,18 @@ struct SwipeRowGesture {
     /// Ab dieser Strecke steht fest, ob gewischt oder gescrollt wird.
     static let axisLock: CGFloat = 10
 
-    /// Bis hierhin gilt eine Bewegung noch als Tipp.
-    static let tapSlop: CGFloat = 6
+    /// Ab dieser Strecke fängt der Wisch überhaupt erst an.
+    ///
+    /// **Muss grösser als null bleiben.** Eine `DragGesture` mit
+    /// `minimumDistance: 0` beansprucht den Finger schon beim Aufsetzen; die
+    /// umgebende `ScrollView` kommt dann nicht mehr an ihn heran, und die Liste
+    /// steht fest — überall dort, wo Zeilen stehen, also überall. Genau daran
+    /// liess sich der Reiter „Fächer" auf dem iPhone nicht mehr scrollen.
+    ///
+    /// Und kleiner als ``axisLock``: der Wisch muss schon laufen, bevor sich die
+    /// Geste auf eine Achse festlegt, sonst käme eine Bewegung dazwischen weder
+    /// als Wisch noch als Tipp an.
+    static let minimumDragDistance: CGFloat = 6
 
     /// Wie weit sich die Zeile über die Löschfläche hinaus ziehen lässt.
     static let overpull: CGFloat = 28
@@ -32,13 +49,6 @@ struct SwipeRowGesture {
 
     /// Die Richtung, auf die sich die laufende Geste festgelegt hat.
     private(set) var axis: Axis?
-
-    /// Ob die Zeile beim Aufsetzen des Fingers offen stand.
-    ///
-    /// Wird beim Loslassen gebraucht und nicht aus ``offset`` gelesen: der
-    /// Versatz kann sich währenddessen geändert haben, weil anderswo getippt
-    /// wurde und diese Zeile darüber zugegangen ist.
-    private(set) var wasOpenAtTouchDown = false
 
     /// Ob gerade ein Finger auf dieser Zeile liegt.
     private(set) var isTracking = false
@@ -68,11 +78,10 @@ struct SwipeRowGesture {
 
     // MARK: - Ablauf
 
-    /// Der Finger setzt auf.
-    mutating func touchDown(isOpen: Bool) {
+    /// Der Wisch fängt an.
+    mutating func touchDown() {
         guard !isTracking else { return }
         isTracking = true
-        wasOpenAtTouchDown = isOpen
     }
 
     /// Der Finger bewegt sich. Gibt zurück, ob die Zeile deswegen zugehen soll —
@@ -106,19 +115,11 @@ struct SwipeRowGesture {
     /// - Parameters:
     ///   - translation: Wie weit er insgesamt gewandert ist.
     ///   - predicted: Wo er bei diesem Schwung ausliefe.
-    ///   - startX: Wo er aufgesetzt hat, waagerecht in der Zeile.
-    ///   - width: Die Breite der Zeile.
-    mutating func release(
-        translation: CGSize,
-        predicted: CGSize,
-        startX: CGFloat,
-        width: CGFloat
-    ) -> Outcome {
+    @discardableResult
+    mutating func release(translation: CGSize, predicted: CGSize) -> Outcome {
         let decidedAxis = axis
-        let openedAtTouchDown = wasOpenAtTouchDown
         axis = nil
         isTracking = false
-        wasOpenAtTouchDown = false
 
         switch decidedAxis {
         case .horizontal:
@@ -135,24 +136,33 @@ struct SwipeRowGesture {
             return .close
 
         case .vertical:
-            // Senkrecht gewischt heisst gescrollt — hier ist nichts zu tun.
+            // Senkrecht gewischt heisst gescrollt — die Liste hat den Finger,
+            // hier ist nichts zu tun.
             return .none
 
         case nil:
-            // Kaum bewegt: ein Tipp. Wohin er ging, sagt die Stelle, an der der
-            // Finger aufgesetzt hat.
-            let travelled = max(abs(translation.width), abs(translation.height))
-            guard travelled <= Self.tapSlop else { return .none }
-
-            guard openedAtTouchDown else { return .tap }
-
-            // Auf der offenen Zeile: die freigelegte Fläche löscht, der Rest
-            // schliesst nur. Wer eine Löschfläche freigelegt hat, wollte nicht
-            // ins Ziel der Zeile.
-            let hitsAction = width > 0 && startX >= width - actionWidth
-            reset()
-            return hitsAction ? .delete : .close
+            // Der Wisch hat angefangen, aber nie eine Achse gefunden: zu wenig
+            // Bewegung für das eine, zu viel für einen Tipp. Nichts geschieht —
+            // und ein Tipp kommt hier nicht mehr an, dafür sorgt die
+            // ausschliessende Geste in der Ansicht.
+            return .none
         }
+    }
+
+    /// Die Zeile wurde angetippt, ohne dass ein Wisch angefangen hätte.
+    ///
+    /// - Parameters:
+    ///   - x: Wo der Finger aufgesetzt hat, waagerecht in der Zeile.
+    ///   - width: Die Breite der Zeile.
+    mutating func tap(atX x: CGFloat, width: CGFloat) -> Outcome {
+        guard offset != 0 else { return .tap }
+
+        // Auf der offenen Zeile: die freigelegte Fläche löscht, der Rest
+        // schliesst nur. Wer eine Löschfläche freigelegt hat, wollte nicht ins
+        // Ziel der Zeile.
+        let hitsAction = width > 0 && x >= width - actionWidth
+        reset()
+        return hitsAction ? .delete : .close
     }
 
     // MARK: - Stand setzen

@@ -13,6 +13,9 @@ struct PadSidebar: View {
     /// Die Fächer samt ihren Kennzahlen für das gewählte Halbjahr.
     let summaries: [SubjectSummary]
 
+    /// Das Fach, dessen Löschung nach einem Wisch zur Bestätigung ansteht.
+    @State private var pendingDeletion: SubjectDeletion.Request?
+
     var body: some View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
             brand
@@ -58,6 +61,15 @@ struct PadSidebar: View {
                 .ignoresSafeArea(edges: .vertical)
         }
         .scrollContentBackground(.hidden)
+        .subjectDeleteConfirmation($pendingDeletion, among: summaries.map(\.subject)) { deleted in
+            // Stand der Detailbereich auf dem gelöschten Fach, zeigte er sonst
+            // die Notiz „Dieses Fach gibt es nicht mehr" — richtig, aber eine
+            // Sackgasse. Die Übersicht ist der Ort, an dem man nach dem Löschen
+            // ohnehin landen will.
+            if route.subjectIdentifier == deleted {
+                route = .dashboard
+            }
+        }
     }
 
     // MARK: - Kopf
@@ -161,7 +173,17 @@ struct PadSidebar: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 ForEach(summaries) { summary in
-                    subjectRow(summary)
+                    // Wie auf dem iPhone: nach links wischen legt das Löschen
+                    // frei. Nur schmaler, weil die Sidebar-Zeile es ist.
+                    SwipeToDelete(
+                        cornerRadius: 10,
+                        actionWidth: 72,
+                        font: ScoreTypography.publicSans(500, 11.5),
+                        accessibilityLabel: Text("\(summary.subject.name) löschen"),
+                        action: { pendingDeletion = SubjectDeletion.request(for: summary.subject) }
+                    ) {
+                        subjectRow(summary)
+                    }
                 }
             }
         }

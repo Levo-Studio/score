@@ -21,6 +21,9 @@ struct SubjectListView: View {
 
     @State private var editorTarget: SubjectEditorTarget?
 
+    /// Das Fach, dessen Löschung nach einem Wisch zur Bestätigung ansteht.
+    @State private var pendingDeletion: SubjectDeletion.Request?
+
     private var summaries: [SubjectSummary] {
         SubjectOverview.summaries(of: subjects, semesterIndex: semesterIndex)
     }
@@ -49,6 +52,7 @@ struct SubjectListView: View {
         .sheet(item: $editorTarget) { target in
             SubjectEditorView(target: target)
         }
+        .subjectDeleteConfirmation($pendingDeletion, among: subjects)
     }
 
     // MARK: - Kopf
@@ -72,10 +76,18 @@ struct SubjectListView: View {
     private var subjectRows: some View {
         VStack(spacing: ScoreMetrics.Spacing.xs) {
             ForEach(Array(summaries.enumerated()), id: \.element.id) { index, summary in
-                NavigationLink(value: summary.subject) {
-                    SubjectListRow(summary: summary)
+                // Nach links wischen legt das Löschen frei. Der Dialog danach
+                // hängt an der Ansicht und nicht an der Zeile — sonst
+                // verschwände er mit der Zeile, die er gerade betrifft.
+                SwipeToDelete(
+                    accessibilityLabel: Text("\(summary.subject.name) löschen"),
+                    action: { pendingDeletion = SubjectDeletion.request(for: summary.subject) }
+                ) {
+                    NavigationLink(value: summary.subject) {
+                        SubjectListRow(summary: summary)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
                 // Die Zeilen fahren nacheinander ein; antippbar sind sie dabei
                 // die ganze Zeit, die Einblendung ändert nur Deckkraft und Lage.
                 .rowAppearance(index: index, base: 0.06)

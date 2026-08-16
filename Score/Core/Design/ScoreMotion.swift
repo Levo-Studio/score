@@ -87,6 +87,15 @@ enum ScoreMotion {
     /// (`background .18s ease, transform .18s ease`).
     static let tap = Animation.easeOut(duration: 0.18)
 
+    /// Ein Umlauf des Pfeils, während von Hand abgeglichen wird.
+    ///
+    /// Die einzige Kurve ohne Vorbild in der Vorlage — die kennt keinen
+    /// Dauerlauf, weil in ihr nichts wartet. Sie steht trotzdem hier und nicht
+    /// an der Aufrufstelle, damit es dabei bleibt, dass Bewegung an einer Stelle
+    /// festgelegt wird. Linear, weil ein beschleunigter Umlauf nach Ruckeln
+    /// aussieht; 0,9 s ist die Dauer von `scGlow` als voller Umlauf.
+    static let spin = Animation.linear(duration: 0.90)
+
     /// Was bei eingeschalteter Bewegungsreduktion übrig bleibt: eine kurze
     /// Überblendung ohne Versatz, ohne Federung.
     static let reduced = Animation.easeOut(duration: 0.20)

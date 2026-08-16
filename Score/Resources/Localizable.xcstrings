@@ -865,6 +865,40 @@
         }
       }
     },
+    "Abgeglichen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abgeglichen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synced"
+          }
+        }
+      }
+    },
+    "Abgleich fehlgeschlagen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abgleich fehlgeschlagen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync failed"
+          }
+        }
+      }
+    },
     "Abgleich gestört" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1388,6 +1422,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Off"
+          }
+        }
+      }
+    },
+    "Ausgesetzt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgesetzt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paused"
           }
         }
       }
@@ -2277,6 +2328,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Syncing is off. New grades stay on this device; whatever is already in your iCloud stays there untouched."
+          }
+        }
+      }
+    },
+    "Der Abgleich ist nicht durchgelaufen. Versuch es später noch einmal." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Abgleich ist nicht durchgelaufen. Versuch es später noch einmal."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The sync did not finish. Try again later."
+          }
+        }
+      }
+    },
+    "Der Abgleich meldet sich nicht. Prüf deine Verbindung und versuch es später noch einmal." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Abgleich meldet sich nicht. Prüf deine Verbindung und versuch es später noch einmal."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The sync is not responding. Check your connection and try again later."
+          }
+        }
+      }
+    },
+    "Der Speicher liess sich nicht neu öffnen. Deine Daten sind unverändert — versuch es gleich noch einmal." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Speicher liess sich nicht neu öffnen. Deine Daten sind unverändert — versuch es gleich noch einmal."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The store could not be reopened. Your data is untouched — try again in a moment."
           }
         }
       }
@@ -3470,6 +3572,23 @@
         }
       }
     },
+    "Jetzt abgleichen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jetzt abgleichen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync now"
+          }
+        }
+      }
+    },
     "Kein Account nötig — alles wird über iCloud gesynct." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4483,6 +4602,23 @@
         }
       }
     },
+    "Noch nie" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nie"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Never"
+          }
+        }
+      }
+    },
     "Note %@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4581,6 +4717,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Or just type your own name above."
+          }
+        }
+      }
+    },
+    "Ohne angemeldetes iCloud-Konto gibt es nichts abzugleichen." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne angemeldetes iCloud-Konto gibt es nichts abzugleichen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Without a signed-in iCloud account there is nothing to sync."
           }
         }
       }
@@ -5963,6 +6116,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Shows how the average adds up"
+          }
+        }
+      }
+    },
+    "Zuletzt abgeglichen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuletzt abgeglichen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last synced"
           }
         }
       }

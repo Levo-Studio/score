@@ -15,6 +15,10 @@ struct PadSettingsView: View {
     /// ob er gerade etwas bewirkt.
     @State private var syncStatus = CloudSyncStatus()
 
+    /// Der Abgleich von Hand. Dieselbe Instanz wie auf dem iPhone-Layout — ein
+    /// Lauf gehört dem Gerät, nicht der Ansicht.
+    @State private var sync = ManualCloudSync.shared
+
     /// Es gibt genau ein Profil. Die Abfrage liefert trotzdem eine Liste, weil ein
     /// unterbrochener CloudKit-Erstabgleich theoretisch zwei anlegen kann; genutzt
     /// wird dann das erste.
@@ -130,6 +134,27 @@ struct PadSettingsView: View {
                 PadSettingsNote(text: explanation)
             }
 
+            // Ein Knopf, kein Schalter: Der Schalter darüber sagt, ob ständig
+            // abgeglichen wird, dieser stösst einen Lauf an. Was er dabei
+            // wirklich tut, steht in `ManualCloudSync`.
+            Button {
+                sync.start()
+            } label: {
+                PadSettingsRow(title: "Jetzt abgleichen", isFirst: false) {
+                    ManualCloudSyncIndicator(phase: sync.phase, size: 13.5)
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(!canSyncNow)
+
+            if let note = sync.phase.note {
+                PadSettingsNote(text: Text(note))
+            }
+
+            PadSettingsRow(title: "Zuletzt abgeglichen", isFirst: false) {
+                PadSettingsValue(text: lastSyncedText)
+            }
+
             // Nicht in der Design-Datei, aber auf dem iPhone vorhanden: einen
             // Export nur auf einem der beiden Geräte anzubieten wäre eine Falle.
             ShareLink(item: export, preview: SharePreview("Score-Export")) {
@@ -156,6 +181,24 @@ struct PadSettingsView: View {
         // Der Hinweis unter dem Schalter kommt und geht mit ihm — die Karte
         // wächst dabei, statt zu springen.
         .scoreAnimation(ScoreMotion.valueChange, value: settings.wrappedValue.isCloudSyncEnabled)
+        // Dasselbe für die Erklärung unter „Jetzt abgleichen".
+        .scoreAnimation(ScoreMotion.valueChange, value: sync.phase)
+    }
+
+    // MARK: - Abgleich von Hand
+
+    /// Ob sich der Abgleich gerade anstossen lässt.
+    private var canSyncNow: Bool {
+        sync.canStart && syncStatus.state.allowsSync
+    }
+
+    /// Was in der Zeile „Zuletzt abgeglichen" steht.
+    private var lastSyncedText: String {
+        ManualCloudSync.lastSyncedText(
+            date: sync.lastSyncedAt,
+            isActive: syncStatus.state.allowsSync,
+            locale: settings.locale
+        )
     }
 
     // MARK: - Erklärung

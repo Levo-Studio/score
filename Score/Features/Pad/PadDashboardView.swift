@@ -123,7 +123,7 @@ struct PadDashboardView: View {
             average: model.expectedGradeText,
             averageValue: model.outcome.expectedGrade,
             stats: [
-                ScoreStat(value: model.blockOneText, label: "Block I"),
+                ScoreStat(value: model.blockOneText, label: "Kurspunkte"),
                 ScoreStat(value: model.courseCountText, label: "Kurse"),
                 ScoreStat(
                     value: model.semesterAverageText(semesterIndex),
@@ -204,7 +204,7 @@ struct PadDashboardView: View {
     private var statistics: [Statistic] {
         [
             Statistic(label: "Ø Leistungsfächer", value: ScoreNumberFormat.points(advancedAverage)),
-            Statistic(label: "Bestes Ergebnis", value: text(for: bestCourse)),
+            Statistic(label: "Bester Kurs", value: text(for: bestCourse)),
             Statistic(label: "Schwächstes", value: text(for: weakestCourse)),
             Statistic(
                 label: "Nicht gewertet",

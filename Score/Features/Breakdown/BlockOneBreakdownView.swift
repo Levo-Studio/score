@@ -121,7 +121,7 @@ struct BlockOneBreakdownView: View {
 
     private var title: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Block I")
+            Text("Kurspunkte")
                 .font(.stepKicker)
                 .foregroundStyle(ScorePalette.inkSecondary)
 
@@ -169,7 +169,7 @@ struct BlockOneBreakdownView: View {
                     isAccented: true
                 )
                 calculationRow(
-                    label: Text("Block I · Schnitt × 42"),
+                    label: Text("Kurspunkte · Schnitt × 42"),
                     value: ScoreNumberFormat.points(breakdown.outcome.blockOnePoints)
                 )
             }
@@ -179,7 +179,7 @@ struct BlockOneBreakdownView: View {
                 .padding(.top, ScoreMetrics.Spacing.md)
 
             if breakdown.outcome.includedCount < BlockOneCalculator.totalCourseCount {
-                Text("Erst \(breakdown.outcome.includedCount) von \(BlockOneCalculator.totalCourseCount) Kursen haben ein Ergebnis. Score rechnet mit dem, was schon da ist.")
+                Text("Erst \(breakdown.outcome.includedCount) von \(BlockOneCalculator.totalCourseCount) Kursen haben eine Note. Score rechnet mit dem, was schon da ist.")
                     .font(.meta)
                     .lineSpacing(3)
                     .foregroundStyle(ScorePalette.scoreInkSecondary)
@@ -354,7 +354,7 @@ struct BlockOneBreakdownView: View {
         case .pflichtBasisfach:
             Text("Nicht abwählbar. Score klammert hier nie von sich aus — auch ein schwaches Pflicht-Basisfach bleibt drin.")
         case .wahlBasisfach:
-            Text("\(breakdown.optionalCandidateCount) Ergebnisse stehen zur Klammerung, \(breakdown.optionalSlotCount) davon bleiben drin. Score klammert von unten.")
+            Text("\(breakdown.optionalCandidateCount) Kurse stehen zur Klammerung, \(breakdown.optionalSlotCount) davon bleiben drin. Score klammert von unten.")
         }
     }
 
@@ -382,7 +382,7 @@ struct BlockOneBreakdownView: View {
     /// der es folgt, nicht bloss mit der Behauptung.
     private func fixedIntro(_ breakdown: BlockOneBreakdown) -> some View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
-            Text("Leistungs- und Pflicht-Basisfächer bringen alles ein, was sie haben. Auch ein schwaches Ergebnis bleibt drin — Score klammert hier nie von sich aus.")
+            Text("Leistungs- und Pflicht-Basisfächer bringen alles ein, was sie haben. Auch ein schwacher Kurs bleibt drin — Score klammert hier nie von sich aus.")
 
             if !breakdown.oralExamSubjects.isEmpty {
                 Text("Dazu deine mündlichen Prüfungsfächer: In den Kursen, in denen du geprüft wirst, sind alle Halbjahre anrechnungspflichtig. Sie lassen sich nicht klammern, auch nicht von Hand.")
@@ -520,9 +520,9 @@ struct BlockOneBreakdownView: View {
             return Text("Von dir geklammert. Dieser Kurs bleibt draussen, egal wie er ausfällt — du nimmst die Klammer in der Fachansicht wieder weg.")
         case .beyondSubjectLimit:
             let limit = group.courseLimit ?? group.courses.count
-            return Text("Dieses Fach bringt nur \(limit) Ergebnisse ein. Score behält die besten und klammert diese hier.")
+            return Text("Dieses Fach bringt nur \(limit) Kurse ein. Score behält die besten und klammert diese hier.")
         case .automatic:
-            return Text("Automatisch geklammert: Block I fasst \(BlockOneCalculator.totalCourseCount) Kurse, und dieser gehört zu den schwächsten. Ab \(breakdown.optionalThreshold ?? 0) Punkten bleibt ein Wahl-Basisfach-Kurs drin.")
+            return Text("Automatisch geklammert: Es zählen nur \(BlockOneCalculator.totalCourseCount) Kurse, und dieser gehört zu den schwächsten. Ab \(breakdown.optionalThreshold ?? 0) Punkten bleibt ein Wahl-Basisfach-Kurs drin.")
         }
     }
 
@@ -579,12 +579,12 @@ struct BlockOneBreakdownView: View {
     /// Die Bilanz eines Fachs in einer Zeile: wie viele seiner Ergebnisse zählen.
     private func subjectBalance(_ entry: BlockOneBreakdown.SubjectEntry) -> Text {
         if entry.isOralExamSubject {
-            return Text("Bringt \(entry.includedCount) von \(entry.recordedCount) Ergebnissen ein · mündliches Prüfungsfach, nicht klammerbar")
+            return Text("Bringt \(entry.includedCount) von \(entry.recordedCount) Kursen ein · mündliches Prüfungsfach, nicht klammerbar")
         }
         if let limit = entry.courseLimit, limit < entry.recordedCount {
-            return Text("Bringt \(entry.includedCount) von \(entry.recordedCount) Ergebnissen ein · eigene Grenze \(limit)")
+            return Text("Bringt \(entry.includedCount) von \(entry.recordedCount) Kursen ein · eigene Grenze \(limit)")
         }
-        return Text("Bringt \(entry.includedCount) von \(entry.recordedCount) Ergebnissen ein")
+        return Text("Bringt \(entry.includedCount) von \(entry.recordedCount) Kursen ein")
     }
 
     /// Ein Halbjahr als Kachel: Beschriftung, Punktzahl, Zustand.
@@ -674,13 +674,13 @@ struct BlockOneBreakdownView: View {
 
     private var explanation: some View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
-            Text("Block I fasst 42 Halbjahresergebnisse. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 42 übrig sind. Aus dem Punkteschnitt dieser Kurse folgt beides — Block I als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben.")
+            Text("In deinen Schnitt gehen 42 Kurse ein. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 42 übrig sind. Aus dem Punkteschnitt dieser Kurse folgt beides — die Kurspunkte als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben.")
 
             Text("Nicht klammerbar sind die Kurse deiner Prüfungsfächer: die drei Leistungsfächer, in denen du schriftlich geprüft wirst, und deine beiden mündlichen Prüfungsfächer. Deren Halbjahre sind anrechnungspflichtig. Pflicht-Basisfächer klammert Score ebenfalls nie von sich aus.")
 
-            Text("Wie viele Ergebnisse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift zuerst: Was ein Fach nicht einbringt, steht auch nicht mehr zur Klammerung.")
+            Text("Wie viele Kurse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift zuerst: Was ein Fach nicht einbringt, steht auch nicht mehr zur Klammerung.")
 
-            Text("Haben zwei Wahl-Basisfach-Ergebnisse dieselbe Punktzahl und trifft es nur noch eines, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten.")
+            Text("Haben zwei Wahl-Basisfach-Kurse dieselbe Punktzahl und trifft es nur noch eines, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten.")
         }
         .font(.optionMeta)
         .lineSpacing(5.5)

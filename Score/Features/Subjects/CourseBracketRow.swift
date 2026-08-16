@@ -66,15 +66,15 @@ struct CourseBracketRow: View {
             return Text("In diesem Halbjahr nicht belegt — hier gibt es nichts zu klammern.")
         }
         if isBracketed {
-            return Text("Geklammert. Dieses Ergebnis geht nicht in Block I ein, egal wie gut es ist.")
+            return Text("Geklammert. Dieser Kurs zählt nicht mit, egal wie gut er ist.")
         }
         switch bracketReason {
         case .automatic:
-            return Text("Zählt nicht mit: Score hat den Kurs automatisch geklammert, weil Block I nur \(BlockOneCalculator.totalCourseCount) Kurse fasst.")
+            return Text("Zählt nicht mit: Score hat den Kurs automatisch geklammert, weil nur \(BlockOneCalculator.totalCourseCount) Kurse zählen.")
         case .beyondSubjectLimit:
-            return Text("Zählt nicht mit: Dieses Fach bringt nur eine begrenzte Zahl seiner Ergebnisse ein.")
+            return Text("Zählt nicht mit: Dieses Fach bringt nur eine begrenzte Zahl seiner Kurse ein.")
         case .manual, .none:
-            return Text("Geht in Block I ein. Klammern nimmt es heraus, ohne die Noten zu löschen.")
+            return Text("Zählt mit. Klammern nimmt den Kurs heraus, ohne die Noten zu löschen.")
         }
     }
 }

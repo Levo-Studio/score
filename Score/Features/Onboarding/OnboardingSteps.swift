@@ -46,7 +46,7 @@ struct WelcomeStep: View {
                     .foregroundStyle(ScorePalette.inkSecondary)
                     .padding(.top, ScoreMetrics.Spacing.sm)
 
-                Text("Trag deine Halbjahresergebnisse ein, Score rechnet deinen Abischnitt mit. Ab der Kursstufe 1.")
+                Text("Trag deine Kurse ein, Score rechnet deinen Abischnitt mit. Ab der Kursstufe 1.")
                     .font(ScoreTypography.publicSans(400, 14))
                     .lineSpacing(5.6)
                     .foregroundStyle(ScorePalette.inkSecondary)
@@ -189,7 +189,7 @@ struct ClassLevelStep: View {
             }
             .staggeredAppearance(index: 3)
 
-            Text("Score beginnt mit der Kursstufe — erst ab 11/1 zählen Halbjahresergebnisse für Block I.")
+            Text("Score beginnt mit der Kursstufe — erst ab 11/1 zählen deine Kurse mit.")
                 .font(.optionMeta)
                 .lineSpacing(5.5)
                 .foregroundStyle(ScorePalette.inkSecondary)
@@ -261,7 +261,7 @@ struct AdvancedSubjectsStep: View {
             OnboardingHeader(
                 kicker: model.stepKicker,
                 title: "Deine drei Leistungsfächer",
-                text: "Fünfstündig, zwölf Halbjahresergebnisse, größtes Gewicht im Schnitt."
+                text: "Fünfstündig, zwölf Kurse, größtes Gewicht im Schnitt."
             )
 
             SubjectSelectionSection(

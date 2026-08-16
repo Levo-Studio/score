@@ -18,107 +18,6 @@
         }
       }
     },
-    "%lld Ergebnisse stehen zur Klammerung, %lld davon bleiben drin. Score klammert von unten." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$#@results@, %2$#@staying@ drin. Score klammert von unten."
-          },
-          "substitutions" : {
-            "results" : {
-              "argNum" : 1,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg Ergebnis steht zur Klammerung"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg Ergebnisse stehen zur Klammerung"
-                    }
-                  }
-                }
-              }
-            },
-            "staying" : {
-              "argNum" : 2,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg davon bleibt"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg davon bleiben"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$#@results@, %2$#@staying@. Score brackets from the bottom."
-          },
-          "substitutions" : {
-            "results" : {
-              "argNum" : 1,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg result is up for bracketing"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg results are up for bracketing"
-                    }
-                  }
-                }
-              }
-            },
-            "staying" : {
-              "argNum" : 2,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg of them stays in"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg of them stay in"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "%lld Fächer" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -512,6 +411,107 @@
                     "stringUnit" : {
                       "state" : "translated",
                       "value" : "%arg basic subjects"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld Kurse stehen zur Klammerung, %lld davon bleiben drin. Score klammert von unten." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@courses@, %2$#@staying@ drin. Score klammert von unten."
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurs steht zur Klammerung"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Kurse stehen zur Klammerung"
+                    }
+                  }
+                }
+              }
+            },
+            "staying" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg davon bleibt"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg davon bleiben"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@courses@, %2$#@staying@. Score brackets from the bottom."
+          },
+          "substitutions" : {
+            "courses" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg course is up for bracketing"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg courses are up for bracketing"
+                    }
+                  }
+                }
+              }
+            },
+            "staying" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg of them stays in"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg of them stay in"
                     }
                   }
                 }
@@ -1120,36 +1120,36 @@
         }
       }
     },
-    "Alle belegten Halbjahre gehen in Block I ein und lassen sich nicht klammern." : {
+    "Alle belegten Kurse zählen mit und lassen sich nicht klammern." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alle belegten Halbjahre gehen in Block I ein und lassen sich nicht klammern."
+            "value" : "Alle belegten Kurse zählen mit und lassen sich nicht klammern."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Every semester you took counts towards Block I and cannot be bracketed."
+            "value" : "Every course you took counts and cannot be bracketed."
           }
         }
       }
     },
-    "Alle belegten Halbjahre gehen in Block I ein." : {
+    "Alle belegten Kurse zählen mit." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alle belegten Halbjahre gehen in Block I ein."
+            "value" : "Alle belegten Kurse zählen mit."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Every semester you took counts towards block I."
+            "value" : "Every course you took counts."
           }
         }
       }
@@ -1341,23 +1341,6 @@
         }
       }
     },
-    "Aus diesen Fächern füllt Score die restlichen Plätze in Block I mit deinen besten Ergebnissen. Schwächere fallen heraus, sobald genug bessere da sind." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aus diesen Fächern füllt Score die restlichen Plätze in Block I mit deinen besten Ergebnissen. Schwächere fallen heraus, sobald genug bessere da sind."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Score fills the remaining Block I slots from these subjects, using your best results. Weaker ones drop out as soon as there are enough better ones."
-          }
-        }
-      }
-    },
     "Aus iCloud geladen" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1392,13 +1375,13 @@
         }
       }
     },
-    "Automatisch geklammert: Block I fasst %lld Kurse, und dieser gehört zu den schwächsten. Ab %lld Punkten bleibt ein Wahl-Basisfach-Kurs drin." : {
+    "Automatisch geklammert: Es zählen nur %lld Kurse, und dieser gehört zu den schwächsten. Ab %lld Punkten bleibt ein Wahl-Basisfach-Kurs drin." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Automatisch geklammert: Block I fasst %1$lld Kurse, und dieser gehört zu den schwächsten. Ab %2$#@points@ bleibt ein Wahl-Basisfach-Kurs drin."
+            "value" : "Automatisch geklammert: Es zählen nur %1$lld Kurse, und dieser gehört zu den schwächsten. Ab %2$#@points@ bleibt ein Wahl-Basisfach-Kurs drin."
           },
           "substitutions" : {
             "points" : {
@@ -1426,7 +1409,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bracketed automatically: Block I holds %1$lld courses, and this one is among the weakest. From %2$#@points@ upwards a elective basic course course stays in."
+            "value" : "Bracketed automatically: only %1$lld courses count, and this one is among the weakest. From %2$#@points@ upwards an elective basic course stays in."
           },
           "substitutions" : {
             "points" : {
@@ -1538,19 +1521,19 @@
         }
       }
     },
-    "Bestes Ergebnis" : {
+    "Bester Kurs" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bestes Ergebnis"
+            "value" : "Bester Kurs"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Best result"
+            "value" : "Best course"
           }
         }
       }
@@ -1640,101 +1623,16 @@
         }
       }
     },
-    "Block I" : {
+    "Bringt %lld von %lld Kursen ein" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Block I"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I"
-          }
-        }
-      }
-    },
-    "Block I besteht aus 42 Halbjahresergebnissen: 12 aus deinen drei Leistungsfächern plus 30 aus deinen Basisfächern. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I besteht aus 42 Halbjahresergebnissen: 12 aus deinen drei Leistungsfächern plus 30 aus deinen Basisfächern. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I is made up of 42 semester results: 12 from your three advanced courses plus 30 from your basic courses. The required basic courses are fixed, and the rest is filled automatically from your best remaining courses."
-          }
-        }
-      }
-    },
-    "Block I besteht aus 42 Halbjahresergebnissen: 12 aus deinen drei Leistungsfächern plus 30 aus den Wahl-Basisfächern. Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I besteht aus 42 Halbjahresergebnissen: 12 aus deinen drei Leistungsfächern plus 30 aus den Wahl-Basisfächern. Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I is made up of 42 semester results: 12 from your three advanced courses plus 30 from the elective basic courses. Required basic courses are fixed, and the rest is filled automatically from your best remaining courses."
-          }
-        }
-      }
-    },
-    "Block I fasst 42 Halbjahresergebnisse. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 42 übrig sind. Aus dem Punkteschnitt dieser Kurse folgt beides — Block I als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I fasst 42 Halbjahresergebnisse. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 42 übrig sind. Aus dem Punkteschnitt dieser Kurse folgt beides — Block I als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I holds 42 semester results. If you have more, they get bracketed: first whatever you bracketed yourself, then the weakest ones from the bottom until 42 remain. The point average of those courses gives you both — Block I as the average times 42, and the expected final grade via the conversion above."
-          }
-        }
-      }
-    },
-    "Block I · Schnitt × 42" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I · Schnitt × 42"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Block I · average × 42"
-          }
-        }
-      }
-    },
-    "Bringt %lld von %lld Ergebnissen ein" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bringt %1$lld von %2$#@results@ ein"
+            "value" : "Bringt %1$lld von %2$#@courses@ ein"
           },
           "substitutions" : {
-            "results" : {
+            "courses" : {
               "argNum" : 2,
               "formatSpecifier" : "lld",
               "variations" : {
@@ -1742,13 +1640,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg Ergebnis"
+                      "value" : "%arg Kurs"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg Ergebnissen"
+                      "value" : "%arg Kursen"
                     }
                   }
                 }
@@ -1759,10 +1657,10 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Contributes %1$lld of %2$#@results@"
+            "value" : "Contributes %1$lld of %2$#@courses@"
           },
           "substitutions" : {
-            "results" : {
+            "courses" : {
               "argNum" : 2,
               "formatSpecifier" : "lld",
               "variations" : {
@@ -1770,13 +1668,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg result"
+                      "value" : "%arg course"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg results"
+                      "value" : "%arg courses"
                     }
                   }
                 }
@@ -1786,16 +1684,16 @@
         }
       }
     },
-    "Bringt %lld von %lld Ergebnissen ein · eigene Grenze %lld" : {
+    "Bringt %lld von %lld Kursen ein · eigene Grenze %lld" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bringt %1$lld von %2$#@results@ ein · eigene Grenze %3$lld"
+            "value" : "Bringt %1$lld von %2$#@courses@ ein · eigene Grenze %3$lld"
           },
           "substitutions" : {
-            "results" : {
+            "courses" : {
               "argNum" : 2,
               "formatSpecifier" : "lld",
               "variations" : {
@@ -1803,13 +1701,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg Ergebnis"
+                      "value" : "%arg Kurs"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg Ergebnissen"
+                      "value" : "%arg Kursen"
                     }
                   }
                 }
@@ -1820,10 +1718,10 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Contributes %1$lld of %2$#@results@ · own limit %3$lld"
+            "value" : "Contributes %1$lld of %2$#@courses@ · own limit %3$lld"
           },
           "substitutions" : {
-            "results" : {
+            "courses" : {
               "argNum" : 2,
               "formatSpecifier" : "lld",
               "variations" : {
@@ -1831,13 +1729,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg result"
+                      "value" : "%arg course"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg results"
+                      "value" : "%arg courses"
                     }
                   }
                 }
@@ -1847,16 +1745,16 @@
         }
       }
     },
-    "Bringt %lld von %lld Ergebnissen ein · mündliches Prüfungsfach, nicht klammerbar" : {
+    "Bringt %lld von %lld Kursen ein · mündliches Prüfungsfach, nicht klammerbar" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bringt %1$lld von %2$#@results@ ein · mündliches Prüfungsfach, nicht klammerbar"
+            "value" : "Bringt %1$lld von %2$#@courses@ ein · mündliches Prüfungsfach, nicht klammerbar"
           },
           "substitutions" : {
-            "results" : {
+            "courses" : {
               "argNum" : 2,
               "formatSpecifier" : "lld",
               "variations" : {
@@ -1864,13 +1762,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg Ergebnis"
+                      "value" : "%arg Kurs"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg Ergebnissen"
+                      "value" : "%arg Kursen"
                     }
                   }
                 }
@@ -1881,10 +1779,10 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Contributes %1$lld of %2$#@results@ · oral exam subject, cannot be bracketed"
+            "value" : "Contributes %1$lld of %2$#@courses@ · oral exam subject, cannot be bracketed"
           },
           "substitutions" : {
-            "results" : {
+            "courses" : {
               "argNum" : 2,
               "formatSpecifier" : "lld",
               "variations" : {
@@ -1892,13 +1790,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg result"
+                      "value" : "%arg course"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg results"
+                      "value" : "%arg courses"
                     }
                   }
                 }
@@ -2444,16 +2342,16 @@
         }
       }
     },
-    "Dieses Fach bringt nur %lld Ergebnisse ein. Score behält die besten und klammert diese hier." : {
+    "Dieses Fach bringt nur %lld Kurse ein. Score behält die besten und klammert diese hier." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dieses Fach bringt nur %#@results@ ein. Score behält die besten und klammert diese hier."
+            "value" : "Dieses Fach bringt nur %#@courses@ ein. Score behält die besten und klammert diese hier."
           },
           "substitutions" : {
-            "results" : {
+            "courses" : {
               "argNum" : 1,
               "formatSpecifier" : "lld",
               "variations" : {
@@ -2461,13 +2359,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg Ergebnis"
+                      "value" : "%arg Kurs"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg Ergebnisse"
+                      "value" : "%arg Kurse"
                     }
                   }
                 }
@@ -2478,10 +2376,10 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This subject only contributes %#@results@. Score keeps the best ones and brackets these."
+            "value" : "This subject only contributes %#@courses@. Score keeps the best ones and brackets these."
           },
           "substitutions" : {
-            "results" : {
+            "courses" : {
               "argNum" : 1,
               "formatSpecifier" : "lld",
               "variations" : {
@@ -2489,13 +2387,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg result"
+                      "value" : "%arg course"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%arg results"
+                      "value" : "%arg courses"
                     }
                   }
                 }
@@ -2675,53 +2573,19 @@
         }
       }
     },
-    "Ergebnis" : {
+    "Erst %lld von %lld Kursen haben eine Note. Score rechnet mit dem, was schon da ist." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ergebnis"
+            "value" : "Erst %lld von %lld Kursen haben eine Note. Score rechnet mit dem, was schon da ist."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Result"
-          }
-        }
-      }
-    },
-    "Ergebnis · Note %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ergebnis · Note %@"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Result · grade %@"
-          }
-        }
-      }
-    },
-    "Erst %lld von %lld Kursen haben ein Ergebnis. Score rechnet mit dem, was schon da ist." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erst %1$lld von %2$lld Kursen haben ein Ergebnis. Score rechnet mit dem, was schon da ist."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Only %1$lld of %2$lld courses have a result so far. Score works with what is already there."
+            "value" : "Only %1$lld of %2$lld courses have a grade so far. Score works with what is already there."
           }
         }
       }
@@ -2980,94 +2844,36 @@
         }
       }
     },
-    "Fünfstündig, zwölf Halbjahresergebnisse, größtes Gewicht im Schnitt." : {
+    "Fünfstündig, zwölf Kurse, größtes Gewicht im Schnitt." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fünfstündig, zwölf Halbjahresergebnisse, größtes Gewicht im Schnitt."
+            "value" : "Fünfstündig, zwölf Kurse, größtes Gewicht im Schnitt."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Five periods a week, twelve semester results, the largest weight in your average."
+            "value" : "Five periods a week, twelve courses, the largest weight in your average."
           }
         }
       }
     },
-    "Für die %lld freien Plätze nimmt Score die besten Wahl-Basisfach-Ergebnisse." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Für den einen freien Platz nimmt Score das beste Wahl-Basisfach-Ergebnis."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Für die %lld freien Plätze nimmt Score die besten Wahl-Basisfach-Ergebnisse."
-                }
-              }
-            }
-          }
-        },
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "For the one open slot Score takes the best elective basic course result."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "For the %lld open slots Score takes the best elective basic course results."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "Geht in Block I ein. Klammern nimmt es heraus, ohne die Noten zu löschen." : {
+    "Geklammert. Dieser Kurs zählt nicht mit, egal wie gut er ist." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Geht in Block I ein. Klammern nimmt es heraus, ohne die Noten zu löschen."
+            "value" : "Geklammert. Dieser Kurs zählt nicht mit, egal wie gut er ist."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Counts towards Block I. Bracketing takes it out without deleting any grades."
-          }
-        }
-      }
-    },
-    "Geklammert. Dieses Ergebnis geht nicht in Block I ein, egal wie gut es ist." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Geklammert. Dieses Ergebnis geht nicht in Block I ein, egal wie gut es ist."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bracketed. This result stays out of Block I, no matter how good it is."
+            "value" : "Bracketed. This course does not count, no matter how good it is."
           }
         }
       }
@@ -3232,19 +3038,19 @@
         }
       }
     },
-    "Haben zwei Wahl-Basisfach-Ergebnisse dieselbe Punktzahl und trifft es nur noch eines, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten." : {
+    "Haben zwei Wahl-Basisfach-Kurse dieselbe Punktzahl und trifft es nur noch eines, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Haben zwei Wahl-Basisfach-Ergebnisse dieselbe Punktzahl und trifft es nur noch eines, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten."
+            "value" : "Haben zwei Wahl-Basisfach-Kurse dieselbe Punktzahl und trifft es nur noch eines, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "If two elective basic course results have the same score and only one of them gets bracketed, the order of the subjects decides. Semesters without a grade and semesters you did not take count nowhere — they are not a course worth zero points."
+            "value" : "If two elective basic courses have the same score and only one of them gets bracketed, the order of the subjects decides. Semesters without a grade and semesters you did not take count nowhere — they are not a course worth zero points."
           }
         }
       }
@@ -3351,6 +3157,40 @@
         }
       }
     },
+    "In deinen Schnitt gehen 42 Kurse ein. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 42 übrig sind. Aus dem Punkteschnitt dieser Kurse folgt beides — die Kurspunkte als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In deinen Schnitt gehen 42 Kurse ein. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 42 übrig sind. Aus dem Punkteschnitt dieser Kurse folgt beides — die Kurspunkte als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "42 courses go into your average. If you have more, they get bracketed: first whatever you bracketed yourself, then the weakest ones from the bottom until 42 remain. The point average of those courses gives you both — the course points as the average times 42, and the expected final grade via the conversion above."
+          }
+        }
+      }
+    },
+    "In deinen Schnitt gehen 42 Kurse ein: 12 aus deinen drei Leistungsfächern plus 30 aus deinen Basisfächern. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In deinen Schnitt gehen 42 Kurse ein: 12 aus deinen drei Leistungsfächern plus 30 aus deinen Basisfächern. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "42 courses go into your average: 12 from your three advanced courses plus 30 from your basic courses. The required basic courses are fixed, and the rest is filled automatically from your best remaining courses."
+          }
+        }
+      }
+    },
     "In diesem Build nicht verfügbar" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3402,19 +3242,19 @@
         }
       }
     },
-    "In diesen beiden Fächern gehen alle belegten Halbjahre in Block I ein. Sie lassen sich nicht klammern." : {
+    "In diesen beiden Fächern zählen alle belegten Kurse mit. Sie lassen sich nicht klammern." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In diesen beiden Fächern gehen alle belegten Halbjahre in Block I ein. Sie lassen sich nicht klammern."
+            "value" : "In diesen beiden Fächern zählen alle belegten Kurse mit. Sie lassen sich nicht klammern."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In these two subjects every semester you took counts towards Block I. They cannot be bracketed."
+            "value" : "In these two subjects every course you took counts. They cannot be bracketed."
           }
         }
       }
@@ -3453,19 +3293,19 @@
         }
       }
     },
-    "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. Block I fasst 42 Kurse — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso." : {
+    "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. In den Schnitt gehen 42 Kurse ein — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. Block I fasst 42 Kurse — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso."
+            "value" : "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. In den Schnitt gehen 42 Kurse ein — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Every grade counts towards its part-grade with its own percentage. Block I holds 42 courses — if you have more, Score brackets the weakest from the bottom. Required basic courses always stay in, and so do the courses of your exam subjects."
+            "value" : "Every grade counts towards its part-grade with its own percentage. 42 courses go into your average — if you have more, Score brackets the weakest from the bottom. Required basic courses always stay in, and so do the courses of your exam subjects."
           }
         }
       }
@@ -3657,6 +3497,23 @@
         }
       }
     },
+    "Kurs" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurs"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Course"
+          }
+        }
+      }
+    },
     "Kurs für Kurs" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3687,6 +3544,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bracket course"
+          }
+        }
+      }
+    },
+    "Kurs · Note %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurs · Note %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Course · grade %@"
           }
         }
       }
@@ -3725,19 +3599,53 @@
         }
       }
     },
-    "Kurse in Block I" : {
+    "Kurse, die zählen" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kurse in Block I"
+            "value" : "Kurse, die zählen"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Courses in block I"
+            "value" : "Courses that count"
+          }
+        }
+      }
+    },
+    "Kurspunkte" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurspunkte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Course points"
+          }
+        }
+      }
+    },
+    "Kurspunkte · Schnitt × 42" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurspunkte · Schnitt × 42"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Course points · average × 42"
           }
         }
       }
@@ -3861,36 +3769,19 @@
         }
       }
     },
-    "Leistungs- und Pflicht-Basisfächer bringen alles ein, was sie haben. Auch ein schwaches Ergebnis bleibt drin — Score klammert hier nie von sich aus." : {
+    "Leistungs- und Pflicht-Basisfächer bringen alles ein, was sie haben. Auch ein schwacher Kurs bleibt drin — Score klammert hier nie von sich aus." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Leistungs- und Pflicht-Basisfächer bringen alles ein, was sie haben. Auch ein schwaches Ergebnis bleibt drin — Score klammert hier nie von sich aus."
+            "value" : "Leistungs- und Pflicht-Basisfächer bringen alles ein, was sie haben. Auch ein schwacher Kurs bleibt drin — Score klammert hier nie von sich aus."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Advanced and required basic courses contribute everything they have. Even a weak result stays in — Score never brackets here on its own."
-          }
-        }
-      }
-    },
-    "Leistungs- und Pflicht-Basisfächer zählen immer. Wahl-Basisfächer treten gegeneinander an — nur die besten füllen die freien Plätze in Block I." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Leistungs- und Pflicht-Basisfächer zählen immer. Wahl-Basisfächer treten gegeneinander an — nur die besten füllen die freien Plätze in Block I."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Advanced courses and required basic courses always count. Elective basic courses compete with each other — only the best ones fill the free slots in Block I."
+            "value" : "Advanced and required basic courses contribute everything they have. Even a weak course stays in — Score never brackets here on its own."
           }
         }
       }
@@ -4517,19 +4408,19 @@
         }
       }
     },
-    "Nur belegte Halbjahre zählen für Block I. Abgewählte bleiben gespeichert, gehen aber nicht in den Schnitt ein." : {
+    "Nur belegte Kurse zählen mit. Abgewählte bleiben gespeichert, gehen aber nicht in den Schnitt ein." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nur belegte Halbjahre zählen für Block I. Abgewählte bleiben gespeichert, gehen aber nicht in den Schnitt ein."
+            "value" : "Nur belegte Kurse zählen mit. Abgewählte bleiben gespeichert, gehen aber nicht in den Schnitt ein."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Only semesters you have taken count towards Block I. Deselected ones stay saved but do not go into the average."
+            "value" : "Only courses you have taken count. Deselected ones stay saved but do not go into the average."
           }
         }
       }
@@ -4683,23 +4574,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Required basic courses cannot be dropped and always count — even when they stand worse than a elective basic course. Score has preselected the usual ones."
-          }
-        }
-      }
-    },
-    "Pflicht-Basisfächer zählen, wie sie stehen. Auch ein schwaches Ergebnis bleibt drin — abwählen geht hier nicht." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pflicht-Basisfächer zählen, wie sie stehen. Auch ein schwaches Ergebnis bleibt drin — abwählen geht hier nicht."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Required basic courses count exactly as they stand. Even a weak result stays in — there is no dropping them."
           }
         }
       }
@@ -5061,19 +4935,19 @@
         }
       }
     },
-    "Score beginnt mit der Kursstufe — erst ab 11/1 zählen Halbjahresergebnisse für Block I." : {
+    "Score beginnt mit der Kursstufe — erst ab 11/1 zählen deine Kurse mit." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Score beginnt mit der Kursstufe — erst ab 11/1 zählen Halbjahresergebnisse für Block I."
+            "value" : "Score beginnt mit der Kursstufe — erst ab 11/1 zählen deine Kurse mit."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Score starts with upper secondary — semester results only count towards Block I from 11/1 onwards."
+            "value" : "Score starts with upper secondary — your courses only count from 11/1 onwards."
           }
         }
       }
@@ -5095,7 +4969,7 @@
         }
       }
     },
-    "Score nimmt die besten %lld Ergebnisse dieses Fachs, die übrigen bleiben aussen vor." : {
+    "Score nimmt die besten %lld Kurse dieses Fachs, die übrigen bleiben aussen vor." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
@@ -5104,13 +4978,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Score nimmt %lld Ergebnis dieses Fachs — das beste. Die übrigen bleiben aussen vor."
+                  "value" : "Score nimmt %lld Kurs dieses Fachs — den besten. Die übrigen bleiben aussen vor."
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Score nimmt die besten %lld Ergebnisse dieses Fachs, die übrigen bleiben aussen vor."
+                  "value" : "Score nimmt die besten %lld Kurse dieses Fachs, die übrigen bleiben aussen vor."
                 }
               }
             }
@@ -5122,13 +4996,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Score takes %lld result from this subject — the best one. The rest stay out."
+                  "value" : "Score takes %lld course from this subject — the best one. The rest stay out."
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Score takes the best %lld results from this subject, the rest stay out."
+                  "value" : "Score takes the best %lld courses from this subject, the rest stay out."
                 }
               }
             }
@@ -5198,23 +5072,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Show sidebar"
-          }
-        }
-      }
-    },
-    "Sie bringen alle vier Halbjahre in Block I ein und lassen sich nicht abwählen. Genau drei müssen es sein." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sie bringen alle vier Halbjahre in Block I ein und lassen sich nicht abwählen. Genau drei müssen es sein."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "They contribute all four semesters to Block I and cannot be dropped. It has to be exactly three."
           }
         }
       }
@@ -5464,19 +5321,19 @@
         }
       }
     },
-    "Trag deine Halbjahresergebnisse ein, Score rechnet deinen Abischnitt mit. Ab der Kursstufe 1." : {
+    "Trag deine Kurse ein, Score rechnet deinen Abischnitt mit. Ab der Kursstufe 1." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trag deine Halbjahresergebnisse ein, Score rechnet deinen Abischnitt mit. Ab der Kursstufe 1."
+            "value" : "Trag deine Kurse ein, Score rechnet deinen Abischnitt mit. Ab der Kursstufe 1."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Enter your semester results and Score works out your final grade as you go. From upper secondary 1 onwards."
+            "value" : "Enter your courses and Score works out your final grade as you go. From upper secondary 1 onwards."
           }
         }
       }
@@ -5763,19 +5620,19 @@
         }
       }
     },
-    "Wie viele Ergebnisse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift zuerst: Was ein Fach nicht einbringt, steht auch nicht mehr zur Klammerung." : {
+    "Wie viele Kurse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift zuerst: Was ein Fach nicht einbringt, steht auch nicht mehr zur Klammerung." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wie viele Ergebnisse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift zuerst: Was ein Fach nicht einbringt, steht auch nicht mehr zur Klammerung."
+            "value" : "Wie viele Kurse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift zuerst: Was ein Fach nicht einbringt, steht auch nicht mehr zur Klammerung."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "How many results a subject contributes at most is set in the subject editor. That limit applies first: what a subject does not contribute is not up for bracketing either."
+            "value" : "How many courses a subject contributes at most is set in the subject editor. That limit applies first: what a subject does not contribute is not up for bracketing either."
           }
         }
       }
@@ -6052,36 +5909,53 @@
         }
       }
     },
-    "Zählt nicht mit: Dieses Fach bringt nur eine begrenzte Zahl seiner Ergebnisse ein." : {
+    "Zählt mit. Klammern nimmt den Kurs heraus, ohne die Noten zu löschen." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zählt nicht mit: Dieses Fach bringt nur eine begrenzte Zahl seiner Ergebnisse ein."
+            "value" : "Zählt mit. Klammern nimmt den Kurs heraus, ohne die Noten zu löschen."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Does not count: this subject only contributes a limited number of its results."
+            "value" : "Counts towards your average. Bracketing takes it out without deleting any grades."
           }
         }
       }
     },
-    "Zählt nicht mit: Score hat den Kurs automatisch geklammert, weil Block I nur %lld Kurse fasst." : {
+    "Zählt nicht mit: Dieses Fach bringt nur eine begrenzte Zahl seiner Kurse ein." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zählt nicht mit: Score hat den Kurs automatisch geklammert, weil Block I nur %lld Kurse fasst."
+            "value" : "Zählt nicht mit: Dieses Fach bringt nur eine begrenzte Zahl seiner Kurse ein."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Does not count: Score bracketed this course automatically because Block I only holds %lld courses."
+            "value" : "Does not count: this subject only contributes a limited number of its courses."
+          }
+        }
+      }
+    },
+    "Zählt nicht mit: Score hat den Kurs automatisch geklammert, weil nur %lld Kurse zählen." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zählt nicht mit: Score hat den Kurs automatisch geklammert, weil nur %lld Kurse zählen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Does not count: Score bracketed this course automatically because only %lld courses count."
           }
         }
       }

@@ -103,7 +103,7 @@ struct OnboardingPadWelcome: View {
         OnboardingHeader(
             kicker: "Start",
             title: "Willkommen bei Score",
-            text: "Trag deine Halbjahresergebnisse ein, Score rechnet deinen Abischnitt mit. Ab der Kursstufe 1."
+            text: "Trag deine Kurse ein, Score rechnet deinen Abischnitt mit. Ab der Kursstufe 1."
         )
     }
 }

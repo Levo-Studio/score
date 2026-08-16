@@ -46,6 +46,10 @@ struct SubjectDetailView: View {
                     addTitle: "＋ Mündliche Note",
                     addCategory: .other
                 )
+                // Unter den Halbjahren und nicht in einem: die Abiturprüfung
+                // hängt am Fach als Ganzem. Sie steht nur bei den Fächern, in
+                // denen tatsächlich geprüft wird.
+                ExamResultSection(subject: subject)
                 blockOneNote
             }
             .padding(.horizontal, ScoreMetrics.screenPadding)

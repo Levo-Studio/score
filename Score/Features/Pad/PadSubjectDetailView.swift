@@ -33,6 +33,13 @@ struct PadSubjectDetailView: View {
                 headerCard
                 cardRow
                 entryColumns
+                // Unter den Halbjahren und nicht in einem: die Abiturprüfung
+                // hängt am Fach als Ganzem. Ihre Zeilen bleiben so breit wie
+                // eine Spalte der Leistungen darüber — über die ganze Breite
+                // gezogen stünden zwei kurze Zeilen Text in einer 1200 Punkt
+                // breiten Fläche.
+                ExamResultSection(subject: subject)
+                    .frame(maxWidth: 560, alignment: .leading)
             }
             .padding(.horizontal, PadMetrics.contentPadding)
             .padding(.top, 22)

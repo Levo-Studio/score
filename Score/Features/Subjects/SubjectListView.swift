@@ -59,6 +59,9 @@ struct SubjectListView: View {
                 .padding(.bottom, ScoreMetrics.tabBarClearance)
             }
             .background(ScorePalette.background)
+            // Ein Tipp neben die Zeilen schliesst eine offene Zeile — wie in
+            // einer Systemliste.
+            .closesOpenSwipeRow()
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(item: $openedSubject) { subject in
                 SubjectDetailView(subject: subject)

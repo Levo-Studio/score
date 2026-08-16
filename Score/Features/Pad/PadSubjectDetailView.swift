@@ -39,6 +39,9 @@ struct PadSubjectDetailView: View {
             .padding(.bottom, PadMetrics.contentPadding)
         }
         .scrollIndicators(.hidden)
+        // Ein Tipp neben die Zeilen schliesst eine offene Zeile — wie in einer
+        // Systemliste.
+        .closesOpenSwipeRow()
         .overlay(alignment: .bottom) {
             undoOverlay
         }

@@ -189,6 +189,9 @@ struct PadSubjectEditorView: View {
                         }
                     }
                 }
+
+                OralExamToggle(draft: $draft)
+                    .padding(.top, ScoreMetrics.Spacing.xxs)
             }
         }
     }

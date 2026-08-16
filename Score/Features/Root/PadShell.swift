@@ -18,13 +18,16 @@ enum PadRoute: Hashable {
     case subject(UUID)
     case newSubject
     case editSubject(UUID)
+    /// Die Wahl der mündlichen Prüfungsfächer. Eine gewöhnliche Detailseite —
+    /// anders als die Aufschlüsselung erklärt sie nichts, was darunter stünde.
+    case oralExamSubjects
 
     /// Das Fach, zu dem diese Route gehört. Die Sidebar hebt seine Zeile hervor,
     /// auch während das Fach im Editor steht.
     var subjectIdentifier: UUID? {
         switch self {
         case .subject(let identifier), .editSubject(let identifier): identifier
-        case .dashboard, .breakdown, .settings, .newSubject: nil
+        case .dashboard, .breakdown, .settings, .newSubject, .oralExamSubjects: nil
         }
     }
 }
@@ -221,6 +224,10 @@ struct PadShell: View {
             } else {
                 missingSubject
             }
+        case .oralExamSubjects:
+            // Dieselbe Auswahl wie im Sheet des iPhones, nur ohne dessen
+            // Navigationsleiste: die Kopfleiste des iPads nennt den Titel schon.
+            OralExamSubjectSheet(showsNavigationBar: false)
         case .newSubject:
             PadSubjectEditorView(target: .new, route: navigation)
         case .editSubject:
@@ -358,6 +365,7 @@ struct PadShell: View {
         case .dashboard, .breakdown: String.scoreLocalized("Übersicht")
         case .settings: String.scoreLocalized("Einstellungen")
         case .newSubject: String.scoreLocalized("Neues Fach")
+        case .oralExamSubjects: String.scoreLocalized("Mündliche Prüfungsfächer")
         case .editSubject: String.scoreLocalized("Fach bearbeiten")
         case .subject: selectedSubject?.name ?? String.scoreLocalized("Fach")
         }

@@ -281,9 +281,26 @@ struct PadSubjectDetailView: View {
                     value: String(currentSemester?.entries?.count ?? 0),
                     isFirst: false
                 )
+
+                CourseBracketRow(
+                    isBracketed: bracketBinding,
+                    allowsBracketing: summary.allowsBracketing,
+                    bracketReason: summary.bracketReason,
+                    isActive: summary.isActive
+                )
+                .padding(.top, ScoreMetrics.Spacing.xs)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
+    }
+
+    /// Die Klammer des gerade gewählten Halbjahres — dieselbe Bindung wie auf
+    /// dem iPhone, siehe `SubjectDetailView`.
+    private var bracketBinding: Binding<Bool> {
+        Binding(
+            get: { currentSemester?.isManuallyBracketed ?? false },
+            set: { currentSemester?.isManuallyBracketed = $0 }
+        )
     }
 
     private func semesterRow(
@@ -320,8 +337,12 @@ struct PadSubjectDetailView: View {
 
     private var semesterStateText: LocalizedStringKey? {
         if !summary.isActive { return "nicht belegt" }
-        if summary.isExcluded { return "wird nicht gewertet" }
-        return nil
+        switch summary.bracketReason {
+        case .manual: return "von dir geklammert"
+        case .automatic: return "geklammert"
+        case .beyondSubjectLimit: return "über der Kursgrenze"
+        case .none: return nil
+        }
     }
 
     // MARK: - Verlauf

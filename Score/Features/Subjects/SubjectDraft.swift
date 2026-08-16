@@ -23,6 +23,9 @@ struct SubjectDraft {
     /// `nil` heisst „alle belegten".
     var maximumContributedCourses: Int?
 
+    /// Ob dieses Fach eines der beiden mündlichen Prüfungsfächer ist.
+    var isOralExamSubject: Bool
+
     init(subject: Subject?) {
         name = subject?.name ?? ""
         abbreviation = subject?.abbreviation ?? ""
@@ -31,15 +34,29 @@ struct SubjectDraft {
         activeSemesters = Set(subject?.activeSemesters ?? Semester.allIndices)
         writtenShare = subject?.writtenShare ?? 50
         maximumContributedCourses = subject?.maximumContributedCourses
+        isOralExamSubject = subject?.isOralExamSubject ?? false
     }
 
     // MARK: - Kursgrenze
 
     /// Ob sich für dieses Fach überhaupt eine Kursgrenze setzen lässt.
     ///
-    /// Leistungsfächer bringen immer alle vier Halbjahre ein — dort ist die
+    /// Prüfungsfächer bringen immer alle belegten Halbjahre ein — dort ist die
     /// Eingabe kein Wahlrecht, das gesperrt wäre, sondern schlicht keine Frage.
-    var allowsCourseLimit: Bool { kind != .leistungsfach }
+    var allowsCourseLimit: Bool { !isExamSubject }
+
+    /// Ob dieses Fach im Abitur geprüft wird — schriftlich oder mündlich.
+    ///
+    /// Ein Leistungsfach ist immer ein schriftliches Prüfungsfach; deshalb wird
+    /// die mündliche Angabe bei ihm ignoriert und nicht gelöscht. Wer den Fachtyp
+    /// nur kurz umstellt, findet seine Wahl danach wieder vor.
+    var isExamSubject: Bool { kind == .leistungsfach || resolvedOralExamSubject }
+
+    /// Die mündliche Prüfungsfach-Angabe, wie sie gespeichert wird.
+    ///
+    /// Bei einem Leistungsfach immer `false`: es wird bereits schriftlich
+    /// geprüft, und beide Kennzeichen zugleich wären ein Widerspruch im Datensatz.
+    var resolvedOralExamSubject: Bool { kind != .leistungsfach && isOralExamSubject }
 
     /// Die wählbaren Grenzen: von einem Kurs bis „alle".
     ///
@@ -136,6 +153,7 @@ struct SubjectDraft {
             subject.activeSemesters = semesters
             subject.writtenShare = writtenShare
             subject.maximumContributedCourses = resolvedCourseLimit
+            subject.isOralExamSubject = resolvedOralExamSubject
             return subject
         }
 
@@ -148,6 +166,7 @@ struct SubjectDraft {
             writtenShare: writtenShare,
             activeSemesters: semesters,
             maximumContributedCourses: resolvedCourseLimit,
+            isOralExamSubject: resolvedOralExamSubject,
             sortIndex: (existingSubjects.map(\.sortIndex).max() ?? -1) + 1
         )
         context.insert(subject)

@@ -14,6 +14,12 @@ enum OnboardingStep: Int, CaseIterable {
     case advancedSubjects
     case coreSubjects
     case basicSubjects
+    /// Die beiden mündlichen Prüfungsfächer — der letzte Schritt der Fächerwahl.
+    ///
+    /// Er steht hier und nicht früher, weil man aus den Basisfächern wählt: erst
+    /// wenn sie stehen, ist die Frage überhaupt beantwortbar. Überspringen ist
+    /// erlaubt, wer in Kursstufe 1 einsteigt, weiss es noch nicht.
+    case oralExamSubjects
     case language
     case summary
 
@@ -55,6 +61,13 @@ final class OnboardingViewModel {
     var coreSubjects: Set<String> = []
     var basicSubjects: Set<String> = []
 
+    /// Die beiden mündlichen Prüfungsfächer, über ihren Fachnamen.
+    ///
+    /// Im Onboarding gibt es die Fächer noch nicht als Datensatz — sie entstehen
+    /// erst in `finish(in:)`. Deshalb steht hier der Name und nicht die Kennung,
+    /// wie bei den drei anderen Auswahlen auch.
+    var oralExamSubjects: Set<String> = []
+
     /// Fächer, die der Nutzer selbst eingetippt hat, je Schritt getrennt.
     ///
     /// Sie stehen in der Wolke ganz hinten und verhalten sich sonst wie
@@ -92,6 +105,15 @@ final class OnboardingViewModel {
             .map(\.name)
             .filter { !advancedSubjects.contains($0) && !coreSubjects.contains($0) }
             + customBasicNames
+    }
+
+    /// Die Fächer, die als mündliches Prüfungsfach in Frage kommen.
+    ///
+    /// Alles Gewählte ausser den Leistungsfächern — in denen wird bereits
+    /// schriftlich geprüft. Die Reihenfolge ist die der Fächerliste danach:
+    /// erst die Kernfächer, dann die Basisfächer.
+    var oralExamOptions: [String] {
+        sortedCoreSubjects + sortedBasicSubjects
     }
 
     /// Die Kernfächer, die Score von sich aus vorschlägt.
@@ -146,6 +168,12 @@ final class OnboardingViewModel {
             coreSubjects = suggestedCoreSubjects
         }
 
+        // Wer zurückgeht und ein Fach wieder abwählt, darf es nicht als
+        // Prüfungsfach zurücklassen — es gäbe das Fach dann gar nicht mehr.
+        if next == .oralExamSubjects {
+            oralExamSubjects.formIntersection(oralExamOptions)
+        }
+
         customSubjectDraft = ""
         step = next
     }
@@ -185,6 +213,23 @@ final class OnboardingViewModel {
         } else {
             basicSubjects.insert(name)
         }
+    }
+
+    /// Wählt ein mündliches Prüfungsfach an oder ab.
+    ///
+    /// Über zwei hinaus wird nicht gewählt — wie bei den Leistungsfächern wird
+    /// die dritte Wahl ignoriert, statt still die erste zu verdrängen.
+    func toggleOralExamSubject(_ name: String) {
+        if oralExamSubjects.contains(name) {
+            oralExamSubjects.remove(name)
+        } else if oralExamSubjects.count < OralExamSubjectSelection.requiredCount {
+            oralExamSubjects.insert(name)
+        }
+    }
+
+    /// Die gewählten Prüfungsfächer in der Reihenfolge der Fächerliste.
+    var sortedOralExamSubjects: [String] {
+        oralExamOptions.filter { oralExamSubjects.contains($0) }
     }
 
     /// Übernimmt das eingetippte Fach in den Schritt, in dem es eingegeben wurde,
@@ -298,6 +343,10 @@ final class OnboardingViewModel {
             kind: kind,
             isCustom: template == nil,
             activeSemesters: classLevel.availableSemesters,
+            // Ein Leistungsfach wird bereits schriftlich geprüft; die Angabe
+            // hätte dort keine Bedeutung und bliebe im Datensatz als Widerspruch
+            // stehen.
+            isOralExamSubject: kind != .leistungsfach && oralExamSubjects.contains(name),
             sortIndex: sortIndex
         )
         context.insert(subject)

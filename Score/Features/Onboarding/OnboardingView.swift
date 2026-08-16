@@ -98,6 +98,8 @@ struct OnboardingView: View {
             CoreSubjectsStep(model: model)
         case .basicSubjects:
             BasicSubjectsStep(model: model)
+        case .oralExamSubjects:
+            OralExamSubjectsStep(model: model)
         case .language:
             LanguageStep(model: model)
         case .summary:

@@ -17,6 +17,14 @@ struct ScoreApp: App {
     /// nicht ihre Werte.
     private let modelContainer: ModelContainer
 
+    /// Meldet die App bei den stillen Push-Nachrichten von CloudKit an.
+    ///
+    /// Ohne diese Anmeldung importiert SwiftData Änderungen anderer Geräte erst
+    /// beim nächsten Kaltstart — siehe ``ScoreAppDelegate``. Der Umweg über
+    /// einen Delegaten ist nötig, weil `registerForRemoteNotifications()` an
+    /// `UIApplication` hängt und SwiftUI dafür keine eigene Entsprechung hat.
+    @UIApplicationDelegateAdaptor(ScoreAppDelegate.self) private var appDelegate
+
     init() {
         let schema = Schema([
             Subject.self,

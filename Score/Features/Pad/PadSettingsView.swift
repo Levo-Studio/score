@@ -13,7 +13,18 @@ struct PadSettingsView: View {
     /// Zeigt, ob der iCloud-Abgleich tatsächlich läuft — dieselbe Auskunft wie
     /// auf dem iPhone. Ein Schalter ohne Zustandsanzeige daneben liesse offen,
     /// ob er gerade etwas bewirkt.
-    @State private var syncStatus = CloudSyncStatus()
+    @State private var syncStatus: CloudSyncStatus
+
+    /// Die Synchronisierung von Hand. Dieselbe Instanz wie im iPhone-Layout —
+    /// ein Lauf gehört dem Gerät, nicht der Ansicht.
+    @State private var sync: ManualCloudSync
+
+    /// Beides kommt von aussen herein, damit Belegbilder die Zustände zeigen
+    /// können, die sich sonst nur bei echtem Netz und echtem Konto einstellen.
+    init(syncStatus: CloudSyncStatus = CloudSyncStatus(), sync: ManualCloudSync = .shared) {
+        _syncStatus = State(initialValue: syncStatus)
+        _sync = State(initialValue: sync)
+    }
 
     /// Es gibt genau ein Profil. Die Abfrage liefert trotzdem eine Liste, weil ein
     /// unterbrochener CloudKit-Erstabgleich theoretisch zwei anlegen kann; genutzt
@@ -106,7 +117,7 @@ struct PadSettingsView: View {
                 .disabled(profile == nil)
             }
 
-            PadSettingsRow(title: "Mit iCloud abgleichen", isFirst: false) {
+            PadSettingsRow(title: "Mit iCloud synchronisieren", isFirst: false) {
                 ScoreSwitch(isOn: settings.isCloudSyncEnabled)
             }
 
@@ -128,6 +139,27 @@ struct PadSettingsView: View {
 
             if let explanation = syncStatus.state.explanation {
                 PadSettingsNote(text: explanation)
+            }
+
+            // Ein Knopf, kein Schalter: Der Schalter darüber sagt, ob ständig
+            // abgeglichen wird, dieser stösst einen Lauf an. Was er dabei
+            // wirklich tut, steht in `ManualCloudSync`.
+            Button {
+                sync.start()
+            } label: {
+                PadSettingsRow(title: "Jetzt synchronisieren", isFirst: false) {
+                    ManualCloudSyncIndicator(phase: sync.phase, size: 13.5)
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(!canSyncNow)
+
+            if let note = sync.phase.note {
+                PadSettingsNote(text: Text(note))
+            }
+
+            PadSettingsRow(title: "Zuletzt synchronisiert", isFirst: false) {
+                PadSettingsValue(text: lastSyncedText)
             }
 
             // Nicht in der Design-Datei, aber auf dem iPhone vorhanden: einen
@@ -156,6 +188,24 @@ struct PadSettingsView: View {
         // Der Hinweis unter dem Schalter kommt und geht mit ihm — die Karte
         // wächst dabei, statt zu springen.
         .scoreAnimation(ScoreMotion.valueChange, value: settings.wrappedValue.isCloudSyncEnabled)
+        // Dasselbe für die Erklärung unter „Jetzt synchronisieren".
+        .scoreAnimation(ScoreMotion.valueChange, value: sync.phase)
+    }
+
+    // MARK: - Abgleich von Hand
+
+    /// Ob sich der Abgleich gerade anstossen lässt.
+    private var canSyncNow: Bool {
+        sync.canStart && syncStatus.state.allowsSync
+    }
+
+    /// Was in der Zeile „Zuletzt synchronisiert" steht.
+    private var lastSyncedText: String {
+        ManualCloudSync.lastSyncedText(
+            date: sync.lastSyncedAt,
+            isActive: syncStatus.state.allowsSync,
+            locale: settings.locale
+        )
     }
 
     // MARK: - Erklärung

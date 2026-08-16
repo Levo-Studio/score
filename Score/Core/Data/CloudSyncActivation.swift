@@ -68,7 +68,7 @@ enum CloudSyncActivation {
     ) -> LocalizedStringKey? {
         guard requiresRestart(desired: desired, isEntitled: isEntitled) else { return nil }
         return desired
-            ? "Beende Score und öffne es neu — dann beginnt der Abgleich."
-            : "Score gleicht bis zum nächsten Start weiter ab. Beende die App und öffne sie neu, damit der Abgleich endet."
+            ? "Beende Score und öffne es neu — dann beginnt die Synchronisierung."
+            : "Score synchronisiert bis zum nächsten Start weiter. Beende die App und öffne sie neu, damit die Synchronisierung endet."
     }
 }

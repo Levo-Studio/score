@@ -13,7 +13,19 @@ struct SettingsView: View {
 
     /// Zeigt, ob der iCloud-Abgleich tatsächlich läuft. Ohne Konto und ohne
     /// Anmeldung gäbe es sonst keine Rückmeldung, wenn der Sync klemmt.
-    @State private var syncStatus = CloudSyncStatus()
+    @State private var syncStatus: CloudSyncStatus
+
+    /// Die Synchronisierung von Hand. Geteilt mit dem iPad-Layout, damit ein
+    /// Lauf nicht je nach Ansicht anders dasteht.
+    @State private var sync: ManualCloudSync
+
+    /// Beides kommt von aussen herein, damit Belegbilder die Zustände zeigen
+    /// können, die sich sonst nur bei echtem Netz und echtem Konto einstellen.
+    init(syncStatus: CloudSyncStatus = CloudSyncStatus(), sync: ManualCloudSync = .shared) {
+        _syncStatus = State(initialValue: syncStatus)
+        _sync = State(initialValue: sync)
+    }
+
     @Environment(\.modelContext) private var modelContext
 
     /// Es gibt genau ein Profil. Die Abfrage liefert trotzdem eine Liste, weil ein
@@ -109,7 +121,7 @@ struct SettingsView: View {
                 .disabled(profile == nil)
             }
 
-            SettingsRow(title: "Mit iCloud abgleichen") {
+            SettingsRow(title: "Mit iCloud synchronisieren") {
                 ScoreSwitch(isOn: settings.isCloudSyncEnabled)
             }
 
@@ -130,6 +142,27 @@ struct SettingsView: View {
                 cardNote(explanation)
             }
 
+            // Ein Knopf, kein Schalter: Der Schalter darüber sagt, ob ständig
+            // abgeglichen wird, dieser stösst einen Lauf an. Was er dabei
+            // wirklich tut, steht in `ManualCloudSync`.
+            Button {
+                sync.start()
+            } label: {
+                SettingsRowLabel(title: "Jetzt synchronisieren") {
+                    ManualCloudSyncIndicator(phase: sync.phase)
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(!canSyncNow)
+
+            if let note = sync.phase.note {
+                cardNote(Text(note))
+            }
+
+            SettingsRow(title: "Zuletzt synchronisiert") {
+                SettingsValue(text: lastSyncedText)
+            }
+
             ShareLink(item: export, preview: SharePreview("Score-Export")) {
                 SettingsRowLabel(title: "Daten exportieren") {
                     Image(systemName: "chevron.right")
@@ -148,6 +181,24 @@ struct SettingsView: View {
         // Der Hinweis unter dem Schalter kommt und geht mit ihm — die Karte
         // wächst dabei, statt zu springen.
         .scoreAnimation(ScoreMotion.valueChange, value: settings.wrappedValue.isCloudSyncEnabled)
+        // Dasselbe für die Erklärung unter „Jetzt synchronisieren".
+        .scoreAnimation(ScoreMotion.valueChange, value: sync.phase)
+    }
+
+    // MARK: - Abgleich von Hand
+
+    /// Ob sich der Abgleich gerade anstossen lässt.
+    private var canSyncNow: Bool {
+        sync.canStart && syncStatus.state.allowsSync
+    }
+
+    /// Was in der Zeile „Zuletzt synchronisiert" steht.
+    private var lastSyncedText: String {
+        ManualCloudSync.lastSyncedText(
+            date: sync.lastSyncedAt,
+            isActive: syncStatus.state.allowsSync,
+            locale: settings.locale
+        )
     }
 
     /// Ein erklärender Satz innerhalb einer Karte, unter der Zeile, zu der er gehört.

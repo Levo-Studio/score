@@ -1001,6 +1001,23 @@
         }
       }
     },
+    "Abitur Baden-Württemberg" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abitur Baden-Württemberg"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abitur Baden-Württemberg"
+          }
+        }
+      }
+    },
     "Abitur im Jahr" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1137,6 +1154,23 @@
         }
       }
     },
+    "Alle drei Bedingungen erfüllt. Das Abitur ist bestanden." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle drei Bedingungen erfüllt. Das Abitur ist bestanden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All three requirements met. The Abitur is passed."
+          }
+        }
+      }
+    },
     "Alle vier Halbjahre jedes Leistungsfachs. Gesetzt, nicht abwählbar." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1167,6 +1201,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "All four semesters are under way"
+          }
+        }
+      }
+    },
+    "Alle vier Kurse dieses Fachs zählen zweimal. Setz genau zwei Leistungsfächer, sonst wählt Score die günstigste Kombination selbst." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle vier Kurse dieses Fachs zählen zweimal. Setz genau zwei Leistungsfächer, sonst wählt Score die günstigste Kombination selbst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All four courses of this subject count twice. Mark exactly two advanced subjects, otherwise Score picks the best combination itself."
           }
         }
       }
@@ -1341,6 +1392,23 @@
         }
       }
     },
+    "Aus schriftlich und mündlich wird ein Ergebnis, und das zählt vierfach." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus schriftlich und mündlich wird ein Ergebnis, und das zählt vierfach."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Written and oral become one result, and that counts fourfold."
+          }
+        }
+      }
+    },
     "Ausgeschaltet" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1358,7 +1426,6 @@
         }
       }
     },
-    "Automatisch geklammert: Es zählen nur %lld Kurse, und dieser gehört zu den schwächsten. Ab %lld Punkten bleibt ein Wahl-Basisfach-Kurs drin." : {
     "Ausgesetzt" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1376,6 +1443,7 @@
         }
       }
     },
+    "Automatisch geklammert: Es zählen nur %lld Kurse, und dieser gehört zu den schwächsten. Ab %lld Punkten bleibt ein Wahl-Basisfach-Kurs drin." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
@@ -2043,6 +2111,40 @@
         }
       }
     },
+    "Das mündliche Ergebnis zählt vierfach. Solange es fehlt, rechnet Score die Prüfung auf deinem heutigen Stand hoch." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das mündliche Ergebnis zählt vierfach. Solange es fehlt, rechnet Score die Prüfung auf deinem heutigen Stand hoch."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The oral result counts fourfold. While it is missing, Score projects the exam from where you stand today."
+          }
+        }
+      }
+    },
+    "Das schriftliche Ergebnis zählt vierfach. Solange es fehlt, rechnet Score die Prüfung auf deinem heutigen Stand hoch." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das schriftliche Ergebnis zählt vierfach. Solange es fehlt, rechnet Score die Prüfung auf deinem heutigen Stand hoch."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The written result counts fourfold. While it is missing, Score projects the exam from where you stand today."
+          }
+        }
+      }
+    },
     "Daten exportieren" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2073,6 +2175,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Plus your oral exam subjects: in the subjects you are examined in, every semester must be counted. They cannot be bracketed, not even by hand."
+          }
+        }
+      }
+    },
+    "Dazu kommen die fünf Abiturprüfungen, jede vierfach gewertet, höchstens 300 Punkte. Beides zusammen sind 300 bis 900 Punkte, und aus dieser Gesamtpunktzahl liest die amtliche Tabelle die Note ab — in Stufen von 18 Punkten, ab 823 Punkten steht 1,0. Score rechnet das nicht mit einer Formel nach, sondern schlägt in der Tabelle nach." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dazu kommen die fünf Abiturprüfungen, jede vierfach gewertet, höchstens 300 Punkte. Beides zusammen sind 300 bis 900 Punkte, und aus dieser Gesamtpunktzahl liest die amtliche Tabelle die Note ab — in Stufen von 18 Punkten, ab 823 Punkten steht 1,0. Score rechnet das nicht mit einer Formel nach, sondern schlägt in der Tabelle nach."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On top come the five Abitur exams, each counted fourfold, at most 300 points. Together that is 300 to 900 points, and the official table reads the grade off that total — in steps of 18 points, with 1.0 from 823 points on. Score does not reproduce this with a formula; it looks it up in the table."
           }
         }
       }
@@ -2359,6 +2478,23 @@
         }
       }
     },
+    "Die fünf Prüfungen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die fünf Prüfungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The five exams"
+          }
+        }
+      }
+    },
     "Die zweistündigen Fächer, die du belegen musst. Welche das sind, ergibt sich aus deinen Leistungsfächern — Score hat vorausgewählt, was dazu üblich ist." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2372,6 +2508,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The two-hour courses you have to take. Which ones they are follows from your advanced courses — Score has preselected the usual set."
+          }
+        }
+      }
+    },
+    "Diese Wahl hast du selbst getroffen. Score rechnet damit, auch wenn eine andere Kombination besser ausfiele. Nimm ein Kennzeichen weg, und Score wählt wieder von sich aus." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Wahl hast du selbst getroffen. Score rechnet damit, auch wenn eine andere Kombination besser ausfiele. Nimm ein Kennzeichen weg, und Score wählt wieder von sich aus."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You made this choice yourself. Score uses it, even if another combination would come out better. Remove one mark and Score chooses again on its own."
           }
         }
       }
@@ -2471,6 +2624,23 @@
         }
       }
     },
+    "Doppelt gewertet" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doppelt gewertet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Counted twice"
+          }
+        }
+      }
+    },
     "Du kannst jede Angabe später in den Einstellungen ändern." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2552,6 +2722,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Own subject"
+          }
+        }
+      }
+    },
+    "Eine der drei Bedingungen ist gerissen. Damit ist das Abitur nicht bestanden, unabhängig von der Gesamtpunktzahl." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine der drei Bedingungen ist gerissen. Damit ist das Abitur nicht bestanden, unabhängig von der Gesamtpunktzahl."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One of the three requirements is missed. The Abitur is not passed, whatever the total says."
           }
         }
       }
@@ -2929,6 +3116,57 @@
         }
       }
     },
+    "Geprüft wird in fünf Fächern: schriftlich in den drei Leistungsfächern, mündlich in zwei weiteren. Jedes Ergebnis zählt vierfach — höchstens 300 Punkte. Die Ergebnisse trägst du im jeweiligen Fach ein." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geprüft wird in fünf Fächern: schriftlich in den drei Leistungsfächern, mündlich in zwei weiteren. Jedes Ergebnis zählt vierfach — höchstens 300 Punkte. Die Ergebnisse trägst du im jeweiligen Fach ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Five subjects are examined: written in the three advanced subjects, oral in two more. Each result counts fourfold — at most 300 points. You enter the results in the subject itself."
+          }
+        }
+      }
+    },
+    "Gesamt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesamt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total"
+          }
+        }
+      }
+    },
+    "Gesamtpunktzahl in der amtlichen Notentabelle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesamtpunktzahl in der amtlichen Notentabelle"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total points in the official grade table"
+          }
+        }
+      }
+    },
     "Gesetzt" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2959,6 +3197,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Divided by the number of courses"
+          }
+        }
+      }
+    },
+    "Geteilt durch die Zahl der Wertungen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geteilt durch die Zahl der Wertungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Divided by the number of weightings"
           }
         }
       }
@@ -3208,36 +3463,36 @@
         }
       }
     },
-    "In deinen Schnitt gehen 42 Kurse ein. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 42 übrig sind. Aus dem Punkteschnitt dieser Kurse folgt beides — die Kurspunkte als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben." : {
+    "In deinen Schnitt gehen 40 Kurse ein. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 40 übrig sind. Zwei deiner drei Leistungsfächer zählen dabei doppelt — aus 40 Kursen werden so 48 Wertungen. Die Punktsumme über alle 48 geteilt durch 48 und mal 40 ergibt die Kurspunkte, höchstens 600." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In deinen Schnitt gehen 42 Kurse ein. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 42 übrig sind. Aus dem Punkteschnitt dieser Kurse folgt beides — die Kurspunkte als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben."
+            "value" : "In deinen Schnitt gehen 40 Kurse ein. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 40 übrig sind. Zwei deiner drei Leistungsfächer zählen dabei doppelt — aus 40 Kursen werden so 48 Wertungen. Die Punktsumme über alle 48 geteilt durch 48 und mal 40 ergibt die Kurspunkte, höchstens 600."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "42 courses go into your average. If you have more, they get bracketed: first whatever you bracketed yourself, then the weakest ones from the bottom until 42 remain. The point average of those courses gives you both — the course points as the average times 42, and the expected final grade via the conversion above."
+            "value" : "40 courses go into your average. If you have more, they get bracketed: first whatever you bracketed yourself, then the weakest ones from the bottom until 40 remain. Two of your three advanced subjects count twice — 40 courses thus become 48 weightings. The points across all 48, divided by 48 and multiplied by 40, give the course points, at most 600."
           }
         }
       }
     },
-    "In deinen Schnitt gehen 42 Kurse ein: 12 aus deinen drei Leistungsfächern plus 30 aus deinen Basisfächern. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt." : {
+    "In deinen Schnitt gehen 40 Kurse ein: 12 aus deinen drei Leistungsfächern plus 28 aus deinen Basisfächern. Zwei der drei Leistungsfächer zählen doppelt. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In deinen Schnitt gehen 42 Kurse ein: 12 aus deinen drei Leistungsfächern plus 30 aus deinen Basisfächern. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt."
+            "value" : "In deinen Schnitt gehen 40 Kurse ein: 12 aus deinen drei Leistungsfächern plus 28 aus deinen Basisfächern. Zwei der drei Leistungsfächer zählen doppelt. Die Pflicht-Basisfächer sind gesetzt, der Rest wird automatisch aus deinen besten übrigen Kursen gefüllt."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "42 courses go into your average: 12 from your three advanced courses plus 30 from your basic courses. The required basic courses are fixed, and the rest is filled automatically from your best remaining courses."
+            "value" : "40 courses go into your average: 12 from your three advanced subjects plus 28 from your basic subjects. Two of the three advanced subjects count twice. The required basic subjects are fixed, and the rest is filled automatically from your best remaining courses."
           }
         }
       }
@@ -3344,19 +3599,19 @@
         }
       }
     },
-    "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. In den Schnitt gehen 42 Kurse ein — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso." : {
+    "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. In den Schnitt gehen 40 Kurse ein — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. In den Schnitt gehen 42 Kurse ein — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso."
+            "value" : "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. In den Schnitt gehen 40 Kurse ein — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Every grade counts towards its part-grade with its own percentage. 42 courses go into your average — if you have more, Score brackets the weakest from the bottom. Required basic courses always stay in, and so do the courses of your exam subjects."
+            "value" : "Every grade counts towards its part-grade with its own percentage. 40 courses go into your average — if you have more, Score brackets the weakest from the bottom. Required basic subjects always stay in, and so do the courses of your exam subjects."
           }
         }
       }
@@ -3565,6 +3820,23 @@
         }
       }
     },
+    "Kommt sie hinzu, zählen schriftlich und mündlich im Verhältnis 2 : 1." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kommt sie hinzu, zählen schriftlich und mündlich im Verhältnis 2 : 1."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If it is added, written and oral count in a ratio of 2 : 1."
+          }
+        }
+      }
+    },
     "Kurs" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3701,19 +3973,19 @@
         }
       }
     },
-    "Kurspunkte · Schnitt × 42" : {
+    "Kurspunkte · Schnitt × 40" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kurspunkte · Schnitt × 42"
+            "value" : "Kurspunkte · Schnitt × 40"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Course points · average × 42"
+            "value" : "Course points · average × 40"
           }
         }
       }
@@ -4024,6 +4296,40 @@
         }
       }
     },
+    "Mindestbedingungen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mindestbedingungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimum requirements"
+          }
+        }
+      }
+    },
+    "Mindestens %lld Punkte" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mindestens %lld Punkte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At least %lld points"
+          }
+        }
+      }
+    },
     "Mit %@ verschwinden alle Halbjahre und %lld erfasste Leistungen. Rückgängig machen lässt sich das nicht." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4204,6 +4510,40 @@
         }
       }
     },
+    "Mündliche Prüfung · %lld Punkte × 4" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mündliche Prüfung · %lld Punkte × 4"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oral exam · %lld points × 4"
+          }
+        }
+      }
+    },
+    "Mündliche Prüfung · noch nicht eingetragen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mündliche Prüfung · noch nicht eingetragen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oral exam · not entered yet"
+          }
+        }
+      }
+    },
     "Mündliche Prüfungsfächer" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4238,6 +4578,23 @@
         }
       }
     },
+    "Mündliches Ergebnis" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mündliches Ergebnis"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oral result"
+          }
+        }
+      }
+    },
     "Mündliches Prüfungsfach" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4251,6 +4608,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oral exam subject"
+          }
+        }
+      }
+    },
+    "Nach dem heutigen Stand ist alles erfüllt. Sicher ist es erst, wenn die Prüfungen geschrieben sind." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach dem heutigen Stand ist alles erfüllt. Sicher ist es erst, wenn die Prüfungen geschrieben sind."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As things stand today, everything is met. It is only certain once the exams are written."
           }
         }
       }
@@ -4408,6 +4782,23 @@
         }
       }
     },
+    "Noch %lld von 5 Prüfungen offen. Score setzt sie mit %@ Punkten an — deinem heutigen Stand — und rechnet die Gesamtpunktzahl daraus hoch." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch %lld von 5 Prüfungen offen. Score setzt sie mit %@ Punkten an — deinem heutigen Stand — und rechnet die Gesamtpunktzahl daraus hoch."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of 5 exams still to come. Score assumes %2$@ points for them — where you stand today — and projects the total from that."
+          }
+        }
+      }
+    },
     "Noch ein Fach fehlt. Score rechnet auch mit einem, weiss dann aber nur die Hälfte." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4438,6 +4829,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No subjects yet. Create your first one on the New tab."
+          }
+        }
+      }
+    },
+    "Noch nicht eingetragen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nicht eingetragen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not entered yet"
           }
         }
       }
@@ -4731,6 +5139,40 @@
         }
       }
     },
+    "Prüfungen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüfungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exams"
+          }
+        }
+      }
+    },
+    "Prüfungen · fünf Ergebnisse × 4" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüfungen · fünf Ergebnisse × 4"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exams · five results × 4"
+          }
+        }
+      }
+    },
     "Prüfungsfach: Alle Halbjahre sind anrechnungspflichtig und lassen sich nicht klammern." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4799,6 +5241,23 @@
         }
       }
     },
+    "Punkteschnitt je Wertung" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Punkteschnitt je Wertung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average points per weighting"
+          }
+        }
+      }
+    },
     "Punktsumme der eingebrachten Kurse" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4812,6 +5271,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Points of the counted courses"
+          }
+        }
+      }
+    },
+    "Punktsumme über alle Wertungen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Punktsumme über alle Wertungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Points across all weightings"
           }
         }
       }
@@ -4918,6 +5394,23 @@
         }
       }
     },
+    "Schriftlich %lld, mündlich %lld · (%lld × 2 + %lld) ÷ 3 × 4" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriftlich %lld, mündlich %lld · (%lld × 2 + %lld) ÷ 3 × 4"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Written %1$lld, oral %2$lld · (%3$lld × 2 + %4$lld) ÷ 3 × 4"
+          }
+        }
+      }
+    },
     "Schriftlich geprüft" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4982,6 +5475,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Written assessments"
+          }
+        }
+      }
+    },
+    "Schriftliche Prüfung" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriftliche Prüfung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Written exam"
+          }
+        }
+      }
+    },
+    "Schriftliche Prüfung · %lld Punkte × 4" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriftliche Prüfung · %lld Punkte × 4"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Written exam · %lld points × 4"
+          }
+        }
+      }
+    },
+    "Schriftliche Prüfung · noch nicht eingetragen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriftliche Prüfung · noch nicht eingetragen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Written exam · not entered yet"
           }
         }
       }
@@ -5208,6 +5752,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "How Score calculates"
+          }
+        }
+      }
+    },
+    "So wie es heute steht, reicht es noch nicht. Die Prüfungen sind aber noch offen — das ist eine Hochrechnung und kein Ergebnis." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "So wie es heute steht, reicht es noch nicht. Die Prüfungen sind aber noch offen — das ist eine Hochrechnung und kein Ergebnis."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As things stand today, it is not enough yet. The exams are still ahead — this is a projection, not a result."
           }
         }
       }
@@ -5542,63 +6103,19 @@
         }
       }
     },
-    "Von den 42 Kursen sind nach den nicht klammerbaren noch %lld offen. Score klammert von unten: hier stehen die Wahl-Basisfächer in genau der Reihenfolge, in der es sie trifft." : {
+    "Von den 40 Kursen sind nach den nicht klammerbaren noch %lld offen. Score klammert von unten: hier stehen die Wahl-Basisfächer in genau der Reihenfolge, in der es sie trifft." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nach den nicht klammerbaren %#@open@ von den 42 offen. Score klammert von unten: hier stehen die Wahl-Basisfächer in genau der Reihenfolge, in der es sie trifft."
-          },
-          "substitutions" : {
-            "open" : {
-              "argNum" : 1,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "ist noch %arg Kurs"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "sind noch %arg Kurse"
-                    }
-                  }
-                }
-              }
-            }
+            "value" : "Von den 40 Kursen sind nach den nicht klammerbaren noch %lld offen. Score klammert von unten: hier stehen die Wahl-Basisfächer in genau der Reihenfolge, in der es sie trifft."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Once the ones that cannot be bracketed are in, %#@open@ of the 42 still open. Score brackets from the bottom: here are the basic subjects in exactly the order it works through them."
-          },
-          "substitutions" : {
-            "open" : {
-              "argNum" : 1,
-              "formatSpecifier" : "lld",
-              "variations" : {
-                "plural" : {
-                  "one" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg course is"
-                    }
-                  },
-                  "other" : {
-                    "stringUnit" : {
-                      "state" : "translated",
-                      "value" : "%arg courses are"
-                    }
-                  }
-                }
-              }
-            }
+            "value" : "Of the 40 courses, %lld are still open after the ones that cannot be bracketed. Score brackets from the bottom: the elective subjects stand here in exactly the order it hits them."
           }
         }
       }
@@ -6024,6 +6541,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Back"
+          }
+        }
+      }
+    },
+    "Zusätzliche mündliche Prüfung" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zusätzliche mündliche Prüfung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Additional oral exam"
+          }
+        }
+      }
+    },
+    "Zwei deiner drei Leistungsfächer zählen doppelt. Ohne eigene Wahl nimmt Score die Kombination, die am besten ausfällt." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwei deiner drei Leistungsfächer zählen doppelt. Ohne eigene Wahl nimmt Score die Kombination, die am besten ausfällt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Two of your three advanced subjects count twice. Without a choice of your own, Score takes the combination that comes out best."
+          }
+        }
+      }
+    },
+    "Zwei deiner drei Leistungsfächer zählen mit allen vier Kursen doppelt — welche zwei, entscheidest du. Score hat die günstigste Kombination gewählt. Im Fach-Editor kannst du sie selbst setzen." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwei deiner drei Leistungsfächer zählen mit allen vier Kursen doppelt — welche zwei, entscheidest du. Score hat die günstigste Kombination gewählt. Im Fach-Editor kannst du sie selbst setzen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Two of your three advanced courses count twice with all four courses — which two is your choice. Score picked the best combination. You can set it yourself in the subject editor."
           }
         }
       }

@@ -14,14 +14,10 @@ final class DashboardViewModel {
     /// Wie lange der Schein nach einer Verbesserung leuchtet.
     private static let celebrationDuration: Duration = .milliseconds(900)
 
-    private(set) var outcome = BlockOneCalculator.Outcome(
-        expectedGrade: 4,
-        blockOnePoints: 0,
-        averagePoints: 0,
-        includedCourses: [],
-        bracketReasons: [:],
-        recordedCount: 0
-    )
+    private(set) var result = AbiturResult.empty
+
+    /// Der Kursblock allein — die Grösse, an der die meisten Ansichten hängen.
+    var outcome: BlockOneCalculator.Outcome { result.courseBlock }
 
     /// Löst die Glow-Animation der Score-Karte aus.
     private(set) var isCelebrating = false
@@ -43,14 +39,22 @@ final class DashboardViewModel {
     /// kein Erfolg.
     func update(with inputs: [SubjectInput]) {
         self.inputs = inputs
-        let newOutcome = BlockOneCalculator.calculate(for: inputs)
-        let improved = previousExpectedGrade.map { newOutcome.expectedGrade < $0 - 0.0001 } ?? false
+        let newResult = AbiturResult.calculate(for: inputs)
+        let newGrade = newResult.grade ?? worstGrade
+        let improved = previousExpectedGrade.map { newGrade < $0 - 0.0001 } ?? false
 
-        outcome = newOutcome
-        previousExpectedGrade = newOutcome.expectedGrade
+        result = newResult
+        previousExpectedGrade = newGrade
 
         if improved { celebrate() }
     }
+
+    /// Die Note, mit der gerechnet wird, wenn es noch gar keine gibt.
+    ///
+    /// Unter 300 Punkten nennt die amtliche Tabelle keine Note. Für den Vergleich
+    /// „ist es besser geworden" braucht es trotzdem eine Zahl, und 4,0 ist die
+    /// schlechteste, die je auf einem Abiturzeugnis steht.
+    private let worstGrade = 4.0
 
     private func celebrate() {
         celebrationTask?.cancel()
@@ -65,15 +69,23 @@ final class DashboardViewModel {
     // MARK: - Werte für die Score-Karte
 
     /// Der erwartete Abischnitt mit Komma, etwa „1,8".
+    ///
+    /// Ohne Note — unter 300 Punkten — steht der Platzhalter. Eine erfundene 5,0
+    /// wäre eine Zahl, die es auf dem Zeugnis nicht gibt.
     var expectedGradeText: String {
-        ScoreNumberFormat.decimal(outcome.expectedGrade)
+        result.grade.map { ScoreNumberFormat.decimal($0) } ?? ScoreNumberFormat.placeholder
+    }
+
+    /// Der erwartete Abischnitt als Zahl, für Animation und Vergleich.
+    var expectedGrade: Double {
+        result.grade ?? worstGrade
     }
 
     var blockOneText: String {
-        String(outcome.blockOnePoints)
+        String(outcome.points)
     }
 
-    /// Eingebrachte Kurse gegen die 42, die Block I fasst.
+    /// Eingebrachte Kurse gegen die 40, die der Kursblock fasst.
     var courseCountText: String {
         "\(outcome.includedCount)/\(BlockOneCalculator.totalCourseCount)"
     }
@@ -87,7 +99,7 @@ final class DashboardViewModel {
     /// bei jeder Nachkommastelle.
     var greetingStage: DashboardGreeting.Stage {
         DashboardGreeting.stage(
-            expectedGrade: outcome.expectedGrade,
+            expectedGrade: expectedGrade,
             recordedCount: outcome.recordedCount
         )
     }

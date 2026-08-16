@@ -11,9 +11,10 @@
 
 ---
 
-Score rechnet Block I des baden-württembergischen Abiturs: Noten werden als
-einzelne Leistungen erfasst, daraus entsteht je Halbjahr ein Ergebnis von 0 bis 15,
-und aus den 42 eingebrachten Kursen der erwartete Abischnitt. Alles liegt in der
+Score rechnet das baden-württembergische Abitur so, wie es amtlich berechnet
+wird: Noten werden als einzelne Leistungen erfasst, daraus entsteht je Halbjahr
+ein Kursergebnis von 0 bis 15, aus 40 eingebrachten Kursen und fünf Prüfungen
+eine Gesamtpunktzahl, und aus ihr die Note des Zeugnisses. Alles liegt in der
 privaten iCloud des Nutzers — es gibt kein Backend und kein Konto.
 
 <table>
@@ -27,7 +28,7 @@ privaten iCloud des Nutzers — es gibt kein Backend und kein Konto.
     <td width="50%">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset=".github/assets/blockone-dark.png">
-        <img src=".github/assets/blockone-light.png" alt="Aufschlüsselung von Block I">
+        <img src=".github/assets/blockone-light.png" alt="Aufschlüsselung der Rechnung">
       </picture>
     </td>
   </tr>
@@ -38,47 +39,66 @@ privaten iCloud des Nutzers — es gibt kein Backend und kein Konto.
   <img src=".github/assets/ipad-light.png" alt="Score auf dem iPad">
 </picture>
 
-## Die Block-I-Regel
+## Die Rechnung
 
-Das Abitur besteht aus zwei Blöcken: Block I sind die Halbjahresergebnisse der
-Kursstufe, Block II die Prüfungen. Score rechnet Block I.
+Das Abitur besteht aus zwei Teilen: dem **Kursblock** mit den Kursen der
+Kursstufe und dem **Prüfungsblock** mit den fünf Abiturprüfungen. Score rechnet
+beide und setzt sie zusammen.
 
-Es gehen **42 Halbjahresergebnisse** ein:
+### Kursblock — 0 bis 600 Punkte, mindestens 200
 
-| | Kurse | Auswahl |
-|---|---|---|
-| Leistungsfächer | 12 | gesetzt — alle vier Halbjahre der drei Fächer |
-| Kernfächer | so viele, wie belegt sind | gesetzt — zählen, wie sie stehen |
-| Basisfächer | was von den 30 übrigen Plätzen bleibt | die besten Ergebnisse rücken nach |
+Eingebracht werden **40 Kurse**, darunter die zwölf der drei Leistungsfächer. Wer
+mehr erfasst hat, klammert die überzähligen: erst von Hand, danach von unten die
+schwächsten. Nicht klammerbar sind die Kurse der fünf Prüfungsfächer — sie sind
+anrechnungspflichtig —, und Pflicht-Basisfächer klammert Score nie von sich aus.
 
-Zwölf Kurse kommen aus den Leistungsfächern, dreissig aus den übrigen Fächern.
-Innerhalb dieser dreissig sind die Kernfächer nicht ausschliessbar — Deutsch,
-Mathematik, die Fremdsprache, Geschichte, Gemeinschaftskunde und eine
-Naturwissenschaft. Erst was danach übrig ist, geht an die besten Basisfächer.
-
-Die Rechnung selbst ist ein Mittelwert. Interessant ist, *welche* Kurse
-hineingehen: ein gutes Basisfach verdrängt ein schwaches, ein schwaches Kernfach
-lässt sich dagegen nicht loswerden. Deshalb sind Kern- und Basisfach im Datenmodell
-zwei verschiedene Typen und nicht bloss ein Namensabgleich.
-
-Aus dem Punkteschnitt der eingebrachten Kurse wird der erwartete Abischnitt:
+**Zwei der drei Leistungsfächer zählen doppelt**, mit allen vier Kursen. Aus 40
+Kursen werden so 48 Wertungen:
 
 ```
-Note = 17/3 − Punkteschnitt/3      auf 1,0 bis 4,0 begrenzt
+Kursblock = Summe über alle 48 Wertungen ÷ 48 × 40      höchstens 600
 ```
+
+Welche zwei doppelt zählen, entscheidet der Schüler. Score nimmt von sich aus die
+günstigste Kombination und zeigt sie an; im Fach-Editor lässt sie sich selbst
+setzen.
 
 Wer ein Fach über die Pflicht hinaus belegt hat, kann festlegen, wie viele seiner
-Halbjahre es einbringt. Diese Grenze greift **vor** der Auswahl — ein Kurs, den
+Halbjahre es einbringt. Diese Grenze greift **vor** der Klammerung — ein Kurs, den
 das eigene Fach nicht einbringt, soll keinem anderen den Platz wegnehmen.
 
-### Abweichung von der amtlichen Fassung
+### Prüfungsblock — 0 bis 300 Punkte, mindestens 100
 
-Die amtliche Regel kennt zusätzlich zwei doppelt gewertete Leistungsfächer und
-rechnet mit 40 Ergebnissen durch 48. Score folgt bewusst der vereinfachten
-Fassung: **42 Ergebnisse ohne Doppelwertung**. Das ist eine Produktentscheidung,
-kein Versehen — aber es heisst, dass der angezeigte Schnitt nicht der Schnitt
-des Prüfungsamts ist. Details in
-[`Score/Calculation/BlockOneCalculator.swift`](Score/Calculation/BlockOneCalculator.swift).
+Fünf Prüfungen: **drei schriftlich** in den Leistungsfächern, **zwei mündlich**.
+Jedes Ergebnis zählt vierfach. Kommt zu einer schriftlichen Prüfung eine mündliche
+hinzu, gilt für dieses Fach `(schriftlich × 2 + mündlich) ÷ 3`, und dieses
+Ergebnis geht vierfach ein.
+
+Solange Prüfungen fehlen, gehen sie **nicht als 0** ein: Score schreibt sie auf
+dem gezeigten Niveau fort und weist das Ergebnis als Hochrechnung aus.
+
+### Note — aus der Tabelle, nicht aus einer Formel
+
+Beide Blöcke zusammen ergeben 300 bis 900 Punkte. Die Durchschnittsnote steht in
+**Anlage 2 der AGVO**: ab 823 Punkten 1,0, darunter in Stufen von 18 Punkten je
+ein Zehntel abwärts bis 4,0 bei genau 300. Unter 300 Punkten ist das Abitur nicht
+bestanden.
+
+Die Tabelle liegt als Tabelle im Code und nicht als Gerade. Die kursierende Formel
+`17/3 − Gesamtpunktzahl/180` trifft die Stufen zwar, wenn man abschneidet — aber
+an den Stufengrenzen liefert Gleitkomma-Arithmetik Werte wie 1,2000000000000002,
+und amtlich ist ohnehin die Tabelle.
+
+Drei Mindestbedingungen müssen zugleich erfüllt sein: 200 im Kursblock, 100 im
+Prüfungsblock, 300 insgesamt. Wer eine reisst, hat nicht bestanden, gleich was die
+Tabelle zur Gesamtpunktzahl sagt — die Aufschlüsselung zeigt deshalb alle drei
+einzeln.
+
+Details in
+[`Score/Calculation/BlockOneCalculator.swift`](Score/Calculation/BlockOneCalculator.swift),
+[`BlockTwoCalculator.swift`](Score/Calculation/BlockTwoCalculator.swift),
+[`AbiturGradeTable.swift`](Score/Calculation/AbiturGradeTable.swift) und
+[`AbiturResult.swift`](Score/Calculation/AbiturResult.swift).
 
 ## Verschlüsselung
 
@@ -87,7 +107,7 @@ Verschlüsselt wird ein Feld aber nur, wenn es `@Attribute(.allowsCloudEncryptio
 trägt — dann landet es in `CKRecord.encryptedValues`, und der Schlüssel hängt am
 iCloud-Schlüsselbund. Apple sieht die Struktur der Daten, nicht ihre Werte.
 
-**25 von 25 gespeicherten Attributen** tragen das Flag. Ausgenommen sind nur die
+**30 von 30 gespeicherten Attributen** tragen das Flag. Ausgenommen sind nur die
 vier Beziehungen: sie werden als `CKReference` gespiegelt, und eine Referenz muss
 für CloudKit auflösbar bleiben.
 

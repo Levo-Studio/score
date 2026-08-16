@@ -58,7 +58,7 @@ struct DashboardView: View {
                     title: "Erwarteter Abischnitt",
                     trend: model.trendText(for: selectedSemester),
                     average: model.expectedGradeText,
-                    averageValue: model.outcome.expectedGrade,
+                    averageValue: model.expectedGrade,
                     stats: [
                         ScoreStat(value: model.blockOneText, label: "Kurspunkte"),
                         ScoreStat(value: model.courseCountText, label: "Kurse"),

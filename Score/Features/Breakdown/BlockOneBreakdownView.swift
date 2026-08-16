@@ -82,16 +82,22 @@ struct BlockOneBreakdownView: View {
 
                 resultCard(breakdown)
                     .staggeredAppearance(index: 0)
-                originSection(breakdown)
+                minimumSection(breakdown)
                     .staggeredAppearance(index: 1)
-                fixedSection(breakdown)
+                doubleWeightingSection(breakdown)
                     .staggeredAppearance(index: 2)
-                competitionSection(breakdown)
+                examSection(breakdown)
                     .staggeredAppearance(index: 3)
-                droppedSection(breakdown)
+                originSection(breakdown)
                     .staggeredAppearance(index: 4)
-                explanation
+                fixedSection(breakdown)
                     .staggeredAppearance(index: 5)
+                competitionSection(breakdown)
+                    .staggeredAppearance(index: 6)
+                droppedSection(breakdown)
+                    .staggeredAppearance(index: 7)
+                explanation
+                    .staggeredAppearance(index: 8)
             }
             .padding(.horizontal, layout.contentPadding)
             .padding(.top, layout.topPadding)
@@ -121,7 +127,7 @@ struct BlockOneBreakdownView: View {
 
     private var title: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Kurspunkte")
+            Text("Abitur Baden-Württemberg")
                 .font(.stepKicker)
                 .foregroundStyle(ScorePalette.inkSecondary)
 
@@ -145,32 +151,41 @@ struct BlockOneBreakdownView: View {
                 .font(.cardLabel)
                 .foregroundStyle(ScorePalette.scoreInkSecondary)
 
-            Text(ScoreNumberFormat.grade(breakdown.outcome.expectedGrade))
+            Text(verbatim: gradeText(breakdown))
                 .font(.scoreDisplay(54))
                 .monospacedDigit()
                 .tracking(em: -0.045, at: 54)
-                .animatedValue(breakdown.outcome.expectedGrade)
+                .animatedValue(breakdown.result.grade ?? 4)
                 .foregroundStyle(ScorePalette.scoreInk)
                 .padding(.top, ScoreMetrics.Spacing.xs)
 
             VStack(spacing: 0) {
                 calculationRow(
-                    label: Text("Punktsumme der eingebrachten Kurse"),
-                    value: ScoreNumberFormat.points(breakdown.includedPointsTotal),
+                    label: Text("Punktsumme über alle Wertungen"),
+                    value: ScoreNumberFormat.points(breakdown.outcome.weightedPointsTotal),
                     isFirst: true
                 )
                 calculationRow(
-                    label: Text("Geteilt durch die Zahl der Kurse"),
-                    value: ScoreNumberFormat.points(breakdown.outcome.includedCount)
+                    label: Text("Geteilt durch die Zahl der Wertungen"),
+                    value: ScoreNumberFormat.points(breakdown.outcome.effectiveWeightingCount)
                 )
                 calculationRow(
-                    label: Text("Punkteschnitt"),
+                    label: Text("Punkteschnitt je Wertung"),
                     value: ScoreNumberFormat.decimal(breakdown.outcome.averagePoints),
                     isAccented: true
                 )
                 calculationRow(
-                    label: Text("Kurspunkte · Schnitt × 42"),
-                    value: ScoreNumberFormat.points(breakdown.outcome.blockOnePoints)
+                    label: Text("Kurspunkte · Schnitt × 40"),
+                    value: ScoreNumberFormat.points(breakdown.outcome.points)
+                )
+                calculationRow(
+                    label: Text("Prüfungen · fünf Ergebnisse × 4"),
+                    value: ScoreNumberFormat.points(breakdown.result.projectedExamBlockPoints)
+                )
+                calculationRow(
+                    label: Text("Gesamt"),
+                    value: ScoreNumberFormat.points(breakdown.result.totalPoints),
+                    isAccented: true
                 )
             }
             .padding(.top, ScoreMetrics.Spacing.md)
@@ -178,14 +193,7 @@ struct BlockOneBreakdownView: View {
             formulaRow(breakdown)
                 .padding(.top, ScoreMetrics.Spacing.md)
 
-            if breakdown.outcome.includedCount < BlockOneCalculator.totalCourseCount {
-                Text("Erst \(breakdown.outcome.includedCount) von \(BlockOneCalculator.totalCourseCount) Kursen haben eine Note. Score rechnet mit dem, was schon da ist.")
-                    .font(.meta)
-                    .lineSpacing(3)
-                    .foregroundStyle(ScorePalette.scoreInkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, ScoreMetrics.Spacing.sm)
-            }
+            resultNotes(breakdown)
         }
         .padding(.horizontal, 22)
         .padding(.vertical, ScoreMetrics.Spacing.lg)
@@ -233,7 +241,7 @@ struct BlockOneBreakdownView: View {
     /// Zahlen wechseln das Trennzeichen.
     private func formulaRow(_ breakdown: BlockOneBreakdown) -> some View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
-            Text("Punkte in Note")
+            Text("Gesamtpunktzahl in der amtlichen Notentabelle")
                 .font(.fieldLabel)
                 .foregroundStyle(ScorePalette.scoreInkSecondary)
 
@@ -249,13 +257,291 @@ struct BlockOneBreakdownView: View {
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
+    /// „723 Punkte → 1,6" — die Zeile der amtlichen Notentabelle, in der die
+    /// Gesamtpunktzahl steht.
     private func formulaText(_ breakdown: BlockOneBreakdown) -> String {
-        let average = ScoreNumberFormat.decimal(breakdown.outcome.averagePoints)
-        let grade = ScoreNumberFormat.grade(breakdown.outcome.expectedGrade)
-        return "17/3 − \(average)/3 = \(grade)"
+        let total = ScoreNumberFormat.points(breakdown.result.totalPoints)
+        return "\(total) → \(gradeText(breakdown))"
     }
 
-    // MARK: - 2. Woher die Kurse kommen
+    /// Der Abischnitt, oder der Platzhalter, wenn es unter 300 Punkten keinen gibt.
+    private func gradeText(_ breakdown: BlockOneBreakdown) -> String {
+        breakdown.result.grade.map(ScoreNumberFormat.grade) ?? ScoreNumberFormat.placeholder
+    }
+
+    /// Was unter der Rechnung noch gesagt werden muss: dass Kurse fehlen, dass
+    /// Prüfungen fehlen, dass eine Mindestbedingung gerissen ist.
+    ///
+    /// Alle drei Sätze sind Hinweise und keine Warnungen — vor dem Abitur fehlt
+    /// naturgemäss fast alles, und ein Bildschirm, der das jedes Mal dramatisiert,
+    /// wird nicht mehr gelesen.
+    @ViewBuilder
+    private func resultNotes(_ breakdown: BlockOneBreakdown) -> some View {
+        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
+            if breakdown.outcome.includedCount < BlockOneCalculator.totalCourseCount {
+                Text("Erst \(breakdown.outcome.includedCount) von \(BlockOneCalculator.totalCourseCount) Kursen haben eine Note. Score rechnet mit dem, was schon da ist.")
+            }
+
+            if breakdown.result.isProjection {
+                projectionNote(breakdown)
+            }
+        }
+        .font(.meta)
+        .lineSpacing(3)
+        .foregroundStyle(ScorePalette.scoreInkSecondary)
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(.top, ScoreMetrics.Spacing.sm)
+    }
+
+    private func projectionNote(_ breakdown: BlockOneBreakdown) -> Text {
+        let missing = breakdown.result.examBlock.missingExamCount
+        let level = ScoreNumberFormat.decimal(breakdown.result.projectionLevel)
+        return Text("Noch \(missing) von 5 Prüfungen offen. Score setzt sie mit \(level) Punkten an — deinem heutigen Stand — und rechnet die Gesamtpunktzahl daraus hoch.")
+    }
+
+    // MARK: - 2. Die Mindestbedingungen
+
+    /// Die drei Hürden, an denen ein Abitur scheitern kann.
+    ///
+    /// Sie stehen weit oben und nicht am Ende: eine Note, die man erreicht,
+    /// nachdem man eine Mindestbedingung gerissen hat, steht auf keinem Zeugnis.
+    /// Wer 590 im Kursblock hat und 90 in den Prüfungen, käme rechnerisch auf 1,9
+    /// — und hätte trotzdem nicht bestanden.
+    private func minimumSection(_ breakdown: BlockOneBreakdown) -> some View {
+        section("Mindestbedingungen") {
+            ScoreCard(cornerRadius: layout.cardRadius) {
+                VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
+                    minimumRow(
+                        title: Text("Kurse"),
+                        points: breakdown.outcome.points,
+                        minimum: BlockOneCalculator.passingPoints,
+                        maximum: BlockOneCalculator.maximumPoints
+                    )
+                    minimumRow(
+                        title: Text("Prüfungen"),
+                        points: breakdown.result.projectedExamBlockPoints,
+                        minimum: BlockTwoCalculator.passingPoints,
+                        maximum: BlockTwoCalculator.maximumPoints
+                    )
+                    minimumRow(
+                        title: Text("Gesamt"),
+                        points: breakdown.result.totalPoints,
+                        minimum: AbiturGradeTable.passingTotal,
+                        maximum: AbiturGradeTable.maximumTotal
+                    )
+
+                    minimumNote(breakdown)
+                        .font(.optionMeta)
+                        .lineSpacing(4.5)
+                        .foregroundStyle(
+                            breakdown.result.failedConditions.isEmpty
+                                ? ScorePalette.inkSecondary
+                                : ScorePalette.warn
+                        )
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
+    /// Eine Hürde als Zeile: erreichte Punkte, geforderte Punkte, ein Balken.
+    private func minimumRow(
+        title: Text,
+        points: Int,
+        minimum: Int,
+        maximum: Int
+    ) -> some View {
+        let isMet = points >= minimum
+
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: ScoreMetrics.Spacing.xs) {
+                title
+                    .font(.rowTitle)
+                    .foregroundStyle(ScorePalette.ink)
+
+                Spacer(minLength: 0)
+
+                Text(verbatim: "\(ScoreNumberFormat.points(points)) / \(ScoreNumberFormat.points(maximum))")
+                    .font(.statValue)
+                    .monospacedDigit()
+                    .foregroundStyle(isMet ? ScorePalette.ink : ScorePalette.warn)
+            }
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(ScorePalette.track)
+
+                    Capsule()
+                        .fill(isMet ? ScorePalette.accent : ScorePalette.warn)
+                        .frame(
+                            width: proxy.size.width
+                                * CGFloat(min(points, maximum))
+                                / CGFloat(max(1, maximum))
+                        )
+
+                    // Die Marke sitzt genau auf der Mindestpunktzahl. Sie ist die
+                    // eigentliche Aussage der Zeile — der Balken sagt nur, wo man
+                    // im Verhältnis dazu steht.
+                    Rectangle()
+                        .fill(ScorePalette.lineStrong)
+                        .frame(width: 2)
+                        .offset(x: proxy.size.width * CGFloat(minimum) / CGFloat(max(1, maximum)))
+                }
+            }
+            .frame(height: 8)
+            .clipShape(Capsule())
+            .scoreAnimation(ScoreMotion.bar, value: points)
+
+            Text("Mindestens \(minimum) Punkte")
+                .font(.micro)
+                .foregroundStyle(ScorePalette.inkSecondary)
+        }
+    }
+
+    private func minimumNote(_ breakdown: BlockOneBreakdown) -> Text {
+        let failed = breakdown.result.failedConditions
+
+        if failed.isEmpty {
+            return breakdown.result.isProjection
+                ? Text("Nach dem heutigen Stand ist alles erfüllt. Sicher ist es erst, wenn die Prüfungen geschrieben sind.")
+                : Text("Alle drei Bedingungen erfüllt. Das Abitur ist bestanden.")
+        }
+
+        if breakdown.result.isProjection {
+            return Text("So wie es heute steht, reicht es noch nicht. Die Prüfungen sind aber noch offen — das ist eine Hochrechnung und kein Ergebnis.")
+        }
+
+        return Text("Eine der drei Bedingungen ist gerissen. Damit ist das Abitur nicht bestanden, unabhängig von der Gesamtpunktzahl.")
+    }
+
+    // MARK: - 3. Die Doppelwertung
+
+    /// Welche zwei Leistungsfächer doppelt zählen — und dass man das ändern kann.
+    @ViewBuilder
+    private func doubleWeightingSection(_ breakdown: BlockOneBreakdown) -> some View {
+        let chosen = breakdown.doubleWeightedSubjects
+
+        if !chosen.isEmpty {
+            section("Doppelt gewertet") {
+                ScoreCard(cornerRadius: layout.cardRadius) {
+                    VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
+                        ForEach(chosen) { entry in
+                            HStack(spacing: 10) {
+                                SubjectDot(color: entry.color, size: 22, cornerRadius: 8)
+
+                                Text(verbatim: entry.name)
+                                    .font(.rowTitle)
+                                    .foregroundStyle(ScorePalette.ink)
+                                    .lineLimit(1)
+
+                                Spacer(minLength: ScoreMetrics.Spacing.xs)
+
+                                Text(verbatim: "× 2")
+                                    .font(.statValue)
+                                    .monospacedDigit()
+                                    .foregroundStyle(ScorePalette.accent)
+                            }
+                        }
+
+                        doubleWeightingNote(breakdown)
+                            .font(.optionMeta)
+                            .lineSpacing(4.5)
+                            .foregroundStyle(ScorePalette.inkSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+        }
+    }
+
+    private func doubleWeightingNote(_ breakdown: BlockOneBreakdown) -> Text {
+        breakdown.outcome.usesAutomaticDoubleWeighting
+            ? Text("Zwei deiner drei Leistungsfächer zählen mit allen vier Kursen doppelt — welche zwei, entscheidest du. Score hat die günstigste Kombination gewählt. Im Fach-Editor kannst du sie selbst setzen.")
+            : Text("Diese Wahl hast du selbst getroffen. Score rechnet damit, auch wenn eine andere Kombination besser ausfiele. Nimm ein Kennzeichen weg, und Score wählt wieder von sich aus.")
+    }
+
+    // MARK: - 4. Die fünf Prüfungen
+
+    @ViewBuilder
+    private func examSection(_ breakdown: BlockOneBreakdown) -> some View {
+        if !breakdown.exams.isEmpty {
+            section("Die fünf Prüfungen") {
+                examIntro(breakdown)
+
+                ForEach(breakdown.exams) { entry in
+                    examCard(entry)
+                }
+            }
+        }
+    }
+
+    private func examIntro(_ breakdown: BlockOneBreakdown) -> some View {
+        Text("Geprüft wird in fünf Fächern: schriftlich in den drei Leistungsfächern, mündlich in zwei weiteren. Jedes Ergebnis zählt vierfach — höchstens 300 Punkte. Die Ergebnisse trägst du im jeweiligen Fach ein.")
+            .font(.optionMeta)
+            .lineSpacing(4.5)
+            .foregroundStyle(ScorePalette.inkSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func examCard(_ entry: BlockOneBreakdown.ExamEntry) -> some View {
+        ScoreCard(padding: 14, cornerRadius: layout.cardRadius) {
+            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
+                HStack(spacing: 10) {
+                    SubjectDot(color: entry.color, size: 22, cornerRadius: 8)
+
+                    Text(verbatim: entry.name)
+                        .font(.rowTitle)
+                        .foregroundStyle(ScorePalette.ink)
+                        .lineLimit(1)
+
+                    Spacer(minLength: ScoreMetrics.Spacing.xs)
+
+                    Text(verbatim: ScoreNumberFormat.points(entry.exam.points))
+                        .font(.statValue)
+                        .monospacedDigit()
+                        .foregroundStyle(
+                            entry.exam.points == nil
+                                ? ScorePalette.inkSecondary
+                                : ScorePalette.ink
+                        )
+                }
+
+                examDetail(entry)
+                    .font(.optionMeta)
+                    .lineSpacing(4)
+                    .foregroundStyle(ScorePalette.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    /// Was hinter der Punktzahl steht — und beim Sonderfall auch, wie sie entstand.
+    private func examDetail(_ entry: BlockOneBreakdown.ExamEntry) -> Text {
+        guard entry.exam.result != nil else {
+            return entry.exam.role == .written
+                ? Text("Schriftliche Prüfung · noch nicht eingetragen")
+                : Text("Mündliche Prüfung · noch nicht eingetragen")
+        }
+
+        if entry.exam.isCombined,
+           let written = entry.exam.writtenPoints,
+           let oral = entry.exam.oralPoints {
+            return Text("Schriftlich \(written), mündlich \(oral) · (\(written) × 2 + \(oral)) ÷ 3 × 4")
+        }
+
+        if entry.exam.role == .written, let written = entry.exam.writtenPoints {
+            return Text("Schriftliche Prüfung · \(written) Punkte × 4")
+        }
+
+        if let oral = entry.exam.oralPoints {
+            return Text("Mündliche Prüfung · \(oral) Punkte × 4")
+        }
+
+        return Text("Noch nicht eingetragen")
+    }
+
+    // MARK: - 5. Woher die Kurse kommen
 
     private func originSection(_ breakdown: BlockOneBreakdown) -> some View {
         section("Woher die Kurse kommen") {
@@ -419,7 +705,7 @@ struct BlockOneBreakdownView: View {
 
     private func competitionIntro(_ breakdown: BlockOneBreakdown) -> some View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
-            Text("Von den 42 Kursen sind nach den nicht klammerbaren noch \(breakdown.optionalSlotCount) offen. Score klammert von unten: hier stehen die Wahl-Basisfächer in genau der Reihenfolge, in der es sie trifft.")
+            Text("Von den 40 Kursen sind nach den nicht klammerbaren noch \(breakdown.optionalSlotCount) offen. Score klammert von unten: hier stehen die Wahl-Basisfächer in genau der Reihenfolge, in der es sie trifft.")
                 .font(.optionMeta)
                 .lineSpacing(4.5)
                 .foregroundStyle(ScorePalette.inkSecondary)
@@ -674,7 +960,9 @@ struct BlockOneBreakdownView: View {
 
     private var explanation: some View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
-            Text("In deinen Schnitt gehen 42 Kurse ein. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 42 übrig sind. Aus dem Punkteschnitt dieser Kurse folgt beides — die Kurspunkte als Schnitt mal 42 und der erwartete Abischnitt über die Umrechnung oben.")
+            Text("In deinen Schnitt gehen 40 Kurse ein. Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 40 übrig sind. Zwei deiner drei Leistungsfächer zählen dabei doppelt — aus 40 Kursen werden so 48 Wertungen. Die Punktsumme über alle 48 geteilt durch 48 und mal 40 ergibt die Kurspunkte, höchstens 600.")
+
+            Text("Dazu kommen die fünf Abiturprüfungen, jede vierfach gewertet, höchstens 300 Punkte. Beides zusammen sind 300 bis 900 Punkte, und aus dieser Gesamtpunktzahl liest die amtliche Tabelle die Note ab — in Stufen von 18 Punkten, ab 823 Punkten steht 1,0. Score rechnet das nicht mit einer Formel nach, sondern schlägt in der Tabelle nach.")
 
             Text("Nicht klammerbar sind die Kurse deiner Prüfungsfächer: die drei Leistungsfächer, in denen du schriftlich geprüft wirst, und deine beiden mündlichen Prüfungsfächer. Deren Halbjahre sind anrechnungspflichtig. Pflicht-Basisfächer klammert Score ebenfalls nie von sich aus.")
 

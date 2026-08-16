@@ -260,6 +260,150 @@ struct ScreenshotTests {
         }
     }
 
+    // MARK: - Die Abiturprüfungen
+
+    /// Trägt die fünf Prüfungsergebnisse ein — drei schriftliche in den
+    /// Leistungsfächern, zwei mündliche.
+    ///
+    /// In Mathematik kommt zusätzlich eine mündliche Prüfung hinzu; das ist der
+    /// Sonderfall, bei dem schriftlich und mündlich im Verhältnis 2 : 1 zählen.
+    private static func recordExams(in subjects: [Subject]) {
+        let written = ["Deutsch": 13, "Mathematik": 11, "Biologie": 12]
+        let oral = ["Gemeinschaftskunde": 10, "Bildende Kunst": 8, "Mathematik": 14]
+
+        for subject in subjects {
+            if subject.kind == .leistungsfach { subject.writtenExamPoints = written[subject.name] }
+            subject.oralExamPoints = oral[subject.name]
+        }
+    }
+
+    @Test("Die Aufschlüsselung mit eingetragenen Prüfungen")
+    func breakdownWithExamResults() async throws {
+        let context = try Self.makeContext()
+        let subjects = Self.makeSubjects(in: context)
+        Self.recordExams(in: subjects)
+
+        for scheme in ColorScheme.allCases {
+            try await capture(
+                "pruefungen-aufschluesselung-iphone",
+                scheme: scheme,
+                size: CGSize(width: Device.phone.width, height: 5600),
+                context: context
+            ) {
+                BlockOneBreakdownView(subjects: subjects, layout: .phone) {}
+            }
+
+            try await capture(
+                "pruefungen-aufschluesselung-ipad",
+                scheme: scheme,
+                size: CGSize(width: 640, height: 6400),
+                context: context
+            ) {
+                BlockOneBreakdownView(subjects: subjects, layout: .padSheet) {}
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: ScoreMetrics.Radius.sheet, style: .continuous)
+                    )
+            }
+        }
+    }
+
+    @Test("Das Prüfungsergebnis eines Leistungsfachs")
+    func examResultAtAnAdvancedSubject() async throws {
+        let container = try Self.makeStoredSubjects()
+        let context = ModelContext(container)
+        let subjects = try context.fetch(FetchDescriptor<Subject>())
+        Self.recordExams(in: subjects)
+        let mathematik = try #require(subjects.first { $0.name == "Mathematik" })
+
+        for scheme in ColorScheme.allCases {
+            try await capture(
+                "pruefung-leistungsfach-iphone",
+                scheme: scheme,
+                size: CGSize(width: Device.phone.width, height: 1500),
+                context: context
+            ) {
+                SubjectEditorView(target: .existing(mathematik))
+            }
+
+            try await capture(
+                "pruefung-leistungsfach-ipad",
+                scheme: scheme,
+                size: Device.pad,
+                context: context
+            ) {
+                PadSubjectEditorView(
+                    target: .existing(mathematik),
+                    route: .constant(.subject(mathematik.identifier))
+                )
+                .background(ScorePalette.background)
+            }
+        }
+    }
+
+    @Test("Das Prüfungsergebnis eines mündlichen Prüfungsfachs")
+    func examResultAtAnOralExamSubject() async throws {
+        let container = try Self.makeStoredSubjects()
+        let context = ModelContext(container)
+        let subjects = try context.fetch(FetchDescriptor<Subject>())
+        Self.recordExams(in: subjects)
+        let gemeinschaftskunde = try #require(subjects.first { $0.name == "Gemeinschaftskunde" })
+
+        for scheme in ColorScheme.allCases {
+            try await capture(
+                "pruefung-muendlich-iphone",
+                scheme: scheme,
+                size: CGSize(width: Device.phone.width, height: 1500),
+                context: context
+            ) {
+                SubjectEditorView(target: .existing(gemeinschaftskunde))
+            }
+
+            try await capture(
+                "pruefung-muendlich-ipad",
+                scheme: scheme,
+                size: Device.pad,
+                context: context
+            ) {
+                PadSubjectEditorView(
+                    target: .existing(gemeinschaftskunde),
+                    route: .constant(.subject(gemeinschaftskunde.identifier))
+                )
+                .background(ScorePalette.background)
+            }
+        }
+    }
+
+    @Test("Der Zustand, in dem noch keine Prüfung eingetragen ist")
+    func examResultsNotEnteredYet() async throws {
+        let context = try Self.makeContext()
+        let subjects = Self.makeSubjects(in: context)
+        // Bewusst ohne `recordExams`: So sieht der Bildschirm den ganzen
+        // Kursstufen-Verlauf über aus, und das ist der Normalfall.
+
+        for scheme in ColorScheme.allCases {
+            try await capture(
+                "pruefungen-offen-iphone",
+                scheme: scheme,
+                size: CGSize(width: Device.phone.width, height: 5600),
+                context: context
+            ) {
+                BlockOneBreakdownView(subjects: subjects, layout: .phone) {}
+            }
+
+            try await capture(
+                "pruefungen-offen-ipad",
+                scheme: scheme,
+                size: CGSize(width: 640, height: 6400),
+                context: context
+            ) {
+                BlockOneBreakdownView(subjects: subjects, layout: .padSheet) {}
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: ScoreMetrics.Radius.sheet, style: .continuous)
+                    )
+            }
+        }
+    }
+
     @Test("Die Auswahl der mündlichen Prüfungsfächer")
     func oralExamSubjects() async throws {
         let context = try Self.makeContext()

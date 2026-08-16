@@ -448,7 +448,7 @@ struct SubjectDetailView: View {
     // MARK: - Erklärung
 
     private var blockOneNote: some View {
-        Text("Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. In den Schnitt gehen 42 Kurse ein — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso.")
+        Text("Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. In den Schnitt gehen 40 Kurse ein — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso.")
             .font(.optionMeta)
             .lineSpacing(5.5)
             .foregroundStyle(ScorePalette.inkSecondary)

@@ -11,13 +11,14 @@ import Testing
 @Suite("BlockOneBreakdown")
 struct BlockOneBreakdownTests {
 
-    /// Ein Jahrgang mit 48 verfügbaren Kursen — sechs mehr, als Block I fasst.
+    /// Ein Jahrgang mit 46 verfügbaren Kursen — sechs mehr, als eingebracht werden.
     ///
-    /// Leistungsfächer 13/12/11, Pflicht-Basisfächer 10/9/8, dazu sechs Wahl-Basisfächer. Nach
-    /// den zwölf Pflicht-Basisfach-Kursen bleiben 18 Plätze für die 24 Wahl-Basisfach-Kurse:
-    /// 14, 13, 12 und 11 füllen sechzehn davon, die beiden Zehner aus `bf-e` die
-    /// restlichen zwei. Heraus fallen die beiden Dreier aus `bf-e` und alle vier
-    /// Kurse von `bf-f`.
+    /// Leistungsfächer 13/12/11, Pflicht-Basisfächer 10/9/8, dazu sechs
+    /// Wahl-Basisfächer. Nach den zwölf Leistungsfach- und zwölf
+    /// Pflicht-Basisfach-Kursen bleiben 16 Plätze für die 22 Wahl-Basisfach-Kurse:
+    /// `bf-a` (4), `bf-b` (4), `bf-c` (2) und `bf-d` (4) füllen vierzehn davon, die
+    /// beiden Zehner aus `bf-e` die restlichen zwei. Heraus fallen die beiden
+    /// Dreier aus `bf-e` und alle vier Kurse von `bf-f`.
     static let presentations: [BlockOneBreakdown.SubjectPresentation] = [
         presentation(subject("lf-a", .leistungsfach, allPoints: 13)),
         presentation(subject("lf-b", .leistungsfach, allPoints: 12)),
@@ -31,7 +32,7 @@ struct BlockOneBreakdownTests {
         presentation(subject("bf-d", .wahlBasisfach, allPoints: 11)),
         presentation(subject("bf-a", .wahlBasisfach, allPoints: 14)),
         presentation(subject("bf-e", .wahlBasisfach, points: [10, 10, 3, 3])),
-        presentation(subject("bf-c", .wahlBasisfach, allPoints: 12)),
+        presentation(subject("bf-c", .wahlBasisfach, points: [12, 12])),
         presentation(subject("bf-b", .wahlBasisfach, allPoints: 13))
     ]
 
@@ -45,20 +46,32 @@ struct BlockOneBreakdownTests {
     func includedPointsTotal() {
         let breakdown = Self.breakdown
 
-        // Leistungsfächer 4 · (13 + 12 + 11) = 144, Pflicht-Basisfächer 4 · (10 + 9 + 8) = 108,
-        // Wahl-Basisfächer 4 · (14 + 13 + 12 + 11) + 10 + 10 = 220.
-        #expect(breakdown.includedPointsTotal == 472)
-        #expect(breakdown.outcome.includedCount == 42)
+        // Leistungsfächer 4 · (13 + 12 + 11) = 144, Pflicht-Basisfächer
+        // 4 · (10 + 9 + 8) = 108, Wahl-Basisfächer 4·14 + 4·13 + 2·12 + 4·11 +
+        // 10 + 10 = 196.
+        #expect(breakdown.includedPointsTotal == 448)
+        #expect(breakdown.outcome.includedCount == 40)
     }
 
-    @Test("Schnitt, Block I und Note folgen aus der Punktsumme")
+    @Test("Schnitt, Kurspunkte und Note folgen aus der Punktsumme")
     func averageAndGrade() {
         let breakdown = Self.breakdown
 
-        #expect(isClose(breakdown.outcome.averagePoints, 472.0 / 42.0))
-        #expect(breakdown.outcome.blockOnePoints == 472)
-        // 17/3 − (472/42)/3
-        #expect(isClose(breakdown.outcome.expectedGrade, 17.0 / 3.0 - (472.0 / 42.0) / 3.0))
+        // Doppelt gewertet werden lf-a (13·4 = 52) und lf-b (12·4 = 48):
+        // 448 + 100 = 548 auf 48 Wertungen.
+        #expect(breakdown.outcome.weightedPointsTotal == 548)
+        #expect(breakdown.outcome.effectiveWeightingCount == 48)
+        #expect(isClose(breakdown.outcome.averagePoints, 548.0 / 48.0))
+        // 548/48 · 40 = 456,66… — aufgerundet.
+        #expect(breakdown.outcome.points == 457)
+
+        // Ohne Prüfungen rechnet Score sie auf dem heutigen Stand hoch:
+        // 11,4166… · 4 = 45,66… → 46 je Prüfung, fünfmal also 230.
+        #expect(breakdown.result.isProjection)
+        #expect(breakdown.result.projectedExamBlockPoints == 230)
+        #expect(breakdown.result.totalPoints == 687)
+        // 687 liegt in der Zeile 679–696 der amtlichen Tabelle.
+        #expect(breakdown.result.grade == 1.8)
     }
 
     // MARK: - Die drei Gruppen
@@ -72,17 +85,17 @@ struct BlockOneBreakdownTests {
         #expect(groups[0].excludedCount == 0)
         #expect(groups[1].includedCount == 12)
         #expect(groups[1].excludedCount == 0)
-        #expect(groups[2].includedCount == 18)
-        #expect(groups[2].recordedCount == 24)
+        #expect(groups[2].includedCount == 16)
+        #expect(groups[2].recordedCount == 22)
         #expect(groups[2].excludedCount == 6)
     }
 
-    @Test("Die freien Plätze sind die 30 minus die Pflicht-Basisfach-Kurse")
+    @Test("Die freien Plätze sind die 40 minus die nicht klammerbaren Kurse")
     func optionalSlots() {
         let breakdown = Self.breakdown
 
-        #expect(breakdown.optionalSlotCount == 18)
-        #expect(breakdown.optionalCandidateCount == 24)
+        #expect(breakdown.optionalSlotCount == 16)
+        #expect(breakdown.optionalCandidateCount == 22)
     }
 
     // MARK: - Die Reihenfolge der Wahl-Basisfächer
@@ -190,11 +203,11 @@ struct BlockOneBreakdownTests {
     func cappedCoursesAreNoCandidates() {
         let limited = Self.limitedBreakdown
 
-        // 24 erfasste Wahl-Basisfach-Kurse, zwei davon über der Grenze von bf-e.
-        #expect(limited.optionalCandidateCount == 22)
-        #expect(limited.optionalSlotCount == 18)
-        #expect(limited.groups[2].recordedCount == 24)
-        #expect(limited.groups[2].includedCount == 18)
+        // 22 erfasste Wahl-Basisfach-Kurse, zwei davon über der Grenze von bf-e.
+        #expect(limited.optionalCandidateCount == 20)
+        #expect(limited.optionalSlotCount == 16)
+        #expect(limited.groups[2].recordedCount == 22)
+        #expect(limited.groups[2].includedCount == 16)
     }
 
     @Test("Was geklammert ist, steht nach Fach und Grund gebündelt da")
@@ -294,8 +307,8 @@ struct BlockOneBreakdownTests {
         let breakdown = Self.oralExamBreakdown
 
         // 12 Leistungsfach-, 12 Pflicht-Basisfach- und 4 Prüfungsfach-Kurse sind 28
-        // anrechnungspflichtige; von den 42 bleiben 14 offen.
-        #expect(breakdown.optionalSlotCount == 14)
+        // anrechnungspflichtige; von den 40 bleiben 12 offen.
+        #expect(breakdown.optionalSlotCount == 12)
         #expect(breakdown.oralExamSubjects.allSatisfy { $0.includedCount == 4 })
     }
 

@@ -189,7 +189,7 @@ struct GlowScoreCard: View {
         averageValue: 1.8,
         stats: [
             ScoreStat(value: "534", label: "Kurspunkte"),
-            ScoreStat(value: "30/42", label: "Kurse"),
+            ScoreStat(value: "30/40", label: "Kurse"),
             ScoreStat(value: "12,4", label: "Ø \(Semester.label(3))", isAccented: true)
         ]
     )

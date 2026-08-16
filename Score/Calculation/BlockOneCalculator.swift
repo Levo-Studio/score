@@ -4,11 +4,12 @@ import Foundation
 ///
 /// ## Die Regel
 ///
-/// Das Abitur in Baden-Württemberg besteht aus zwei Blöcken. Block I sind die
-/// Halbjahresergebnisse der Kursstufe, Block II die Prüfungen. Score rechnet
-/// Block I.
+/// Das Abitur in Baden-Württemberg besteht aus zwei Teilen. Der **Kursblock**
+/// sind die Kurse der Kursstufe, der **Prüfungsblock** die fünf Abiturprüfungen.
+/// Hier steht der Kursblock; der Prüfungsblock steht in ``BlockTwoCalculator``,
+/// zusammengesetzt werden beide in ``AbiturResult``.
 ///
-/// In Block I gehen **42 Halbjahresergebnisse** ein. Wer mehr erfasst hat, muss
+/// In den Kursblock gehen **40 Kurse** ein. Wer mehr erfasst hat, muss
 /// die überzähligen **klammern** — sie stehen weiter im Zeugnis, zählen aber
 /// nicht mit.
 ///
@@ -77,17 +78,60 @@ import Foundation
 /// Die Grenze gilt nicht für Prüfungsfächer: sie bringen immer alle belegten
 /// Halbjahre ein.
 ///
-/// ## Abweichung von der amtlichen Regel
+/// ## Die Doppelwertung: 40 Kurse, 48 Wertungen
 ///
-/// Die amtliche Fassung rechnet mit **40 Kursen durch 48**, weil zwei
-/// Leistungsfächer doppelt gewertet werden. Diese App folgt bewusst der
-/// vereinfachten Fassung aus dem Prototyp der Design-Datei: **42 Ergebnisse ohne
-/// Doppelwertung**. Das ist eine Produktentscheidung, kein Versehen — die
-/// Anrechnungspflicht der Prüfungsfächer gilt in beiden Fassungen gleichermassen.
+/// Die 40 Kurse sind nicht 40 Wertungen. **Zwei der drei Leistungsfächer zählen
+/// doppelt** — mit allen vier Kursen, also acht zusätzlichen Wertungen. Damit
+/// stehen 48 Wertungen im Zähler, und die Verordnung teilt durch ebendiese 48 und
+/// streckt auf 40:
+///
+/// ```
+/// Kursblock = Summe über alle 48 Wertungen ÷ 48 × 40
+/// ```
+///
+/// Der Höchstwert bleibt dadurch bei 15 × 48 ÷ 48 × 40 = **600 Punkten**,
+/// **200** sind zum Bestehen nötig. Das Ergebnis wird kaufmännisch auf eine ganze
+/// Zahl gerundet.
+///
+/// Die Doppelwertung ist keine Verschiebung nach oben, sondern eine Gewichtung:
+/// wer in zwei Leistungsfächern besser steht als im Rest, gewinnt; wer dort
+/// schlechter steht, verliert. Genau deshalb darf man wählen.
+///
+/// ## Welche zwei Leistungsfächer doppelt zählen
+///
+/// **Das entscheidet der Schüler**, nicht die Schule. Score nimmt von sich aus die
+/// Kombination, die das beste Ergebnis bringt — das sind die beiden
+/// Leistungsfächer mit der höchsten Punktsumme über ihre vier Kurse, und weil die
+/// zwölf Leistungsfachkurse ohnehin alle eingehen, lässt sich diese Wahl
+/// unabhängig von der Klammerung treffen: sie berührt nur den Zähler.
+///
+/// Wer es anders will, setzt die Wahl selbst — ``SubjectInput/isDoubleWeighted``.
+/// Sind **genau zwei** Leistungsfächer so gekennzeichnet, gilt diese Wahl; sonst
+/// wählt Score. Der Mittelweg wäre schlimmer als beide Enden: eine halb gesetzte
+/// Wahl, die stillschweigend um ein Fach ergänzt wird, könnte auf einem zweiten
+/// Gerät anders ausgehen. ``Outcome/usesAutomaticDoubleWeighting`` sagt, welcher
+/// Fall gerade vorliegt — die Oberfläche muss beides zeigen können.
+///
+/// Quelle: Abiturverordnung Gymnasien der Normalform (AGVO) vom 19. Oktober 2018,
+/// § 21; Kultusministerium Baden-Württemberg, „Leitfaden für die gymnasiale
+/// Oberstufe"; abschluss-bw.de/abitur/note.
 enum BlockOneCalculator {
 
-    /// Wie viele Halbjahresergebnisse insgesamt eingebracht werden.
-    static let totalCourseCount = 42
+    /// Wie viele Kurse insgesamt eingebracht werden.
+    static let totalCourseCount = 40
+
+    /// Wie viele Wertungen daraus werden: 40 Kurse plus die acht Kurse der beiden
+    /// doppelt gewerteten Leistungsfächer.
+    static let weightingCount = 48
+
+    /// Wie viele Leistungsfächer doppelt gewertet werden.
+    static let doubleWeightedSubjectCount = 2
+
+    /// Die grösstmögliche Punktzahl im Kursblock.
+    static let maximumPoints = 600
+
+    /// Die kleinste Punktzahl, mit der der Kursblock bestanden ist.
+    static let passingPoints = 200
 
     /// Ein einzelnes Halbjahresergebnis, wie es in die Auswahl eingeht.
     struct Course: Sendable, Equatable, Identifiable {
@@ -130,14 +174,33 @@ enum BlockOneCalculator {
 
     /// Das Ergebnis der Rechnung.
     struct Outcome: Sendable, Equatable {
-        /// Der erwartete Abischnitt, 1,0 bis 4,0.
-        var expectedGrade: Double
-        /// Die Punktsumme für Block I.
-        var blockOnePoints: Int
-        /// Der Punkteschnitt der eingebrachten Kurse.
+        /// Die Punktzahl des Kursblocks, 0 bis 600.
+        var points: Int
+        /// Der Punkteschnitt **je Wertung** — der Wert, der mit 40 multipliziert
+        /// wird.
+        ///
+        /// Bei vollständigem Jahrgang ist das die Summe über 48 Wertungen geteilt
+        /// durch 48. Fehlen noch Kurse, wird durch die tatsächliche Zahl der
+        /// Wertungen geteilt: ein fehlender Kurs ist kein Kurs mit null Punkten
+        /// und darf den Schnitt nicht nach unten ziehen.
         var averagePoints: Double
+        /// Die Punktsumme über alle Wertungen — die doppelt gewerteten
+        /// Leistungsfachkurse also zweimal. Der Zähler der Rechnung.
+        var weightedPointsTotal: Int
         /// Die Kurse, die eingebracht werden.
         var includedCourses: [CourseIdentifier]
+        /// Die beiden Leistungsfächer, die doppelt gewertet werden.
+        var doubleWeightedSubjectIDs: [String]
+        /// Durch wie viele Wertungen tatsächlich geteilt wird.
+        ///
+        /// Bei vollständigem Jahrgang 48. Solange Kurse fehlen, weniger — die
+        /// Zahl steht deshalb hier und ist keine Konstante der Anzeige.
+        var effectiveWeightingCount: Int
+        /// Ob Score die Doppelwertung selbst gewählt hat.
+        ///
+        /// `false` heisst: der Nutzer hat genau zwei Leistungsfächer gesetzt und
+        /// Score hält sich daran, auch wenn eine andere Wahl besser wäre.
+        var usesAutomaticDoubleWeighting: Bool
         /// Zu jedem geklammerten Kurs der Grund, aus dem er nicht mitzählt.
         ///
         /// Enthält alle drei Gründe. Die abgeleiteten Mengen darunter greifen
@@ -147,6 +210,9 @@ enum BlockOneCalculator {
         var includedCount: Int { includedCourses.count }
         /// Wie viele Kurse überhaupt ein Ergebnis haben.
         var recordedCount: Int
+
+        /// Ob die Mindestbedingung von 200 Punkten erfüllt ist.
+        var meetsMinimum: Bool { points >= passingPoints }
 
         /// Alle Kurse, die erfasst sind, aber nicht in den Score einfliessen.
         var excludedCourses: Set<CourseIdentifier> {
@@ -204,11 +270,11 @@ enum BlockOneCalculator {
         }
 
         // Schritt 3: die automatische Klammerung füllt auf. Von den übrigen
-        // Kursen fallen die schlechtesten heraus, bis 42 stehen bleiben.
+        // Kursen fallen die schlechtesten heraus, bis 40 stehen bleiben.
         //
         // Nicht alle stehen dabei zur Disposition: Prüfungsfächer sind
         // anrechnungspflichtig, Pflicht-Basisfächer nicht abwählbar. Sie bleiben, auch
-        // wenn dadurch mehr als 42 Kurse zusammenkommen — die Klammerung kann
+        // wenn dadurch mehr als 40 Kurse zusammenkommen — die Klammerung kann
         // schwer nur streichen, was streichbar ist.
         let (protected, bracketable) = remaining.partitioned {
             $0.kind == .wahlBasisfach && !$0.isExamCourse
@@ -232,18 +298,84 @@ enum BlockOneCalculator {
         }
 
         let included = protected + selected
-        let averagePoints = included.isEmpty
+
+        // Schritt 4: die Doppelwertung. Sie kommt zum Schluss, weil sie an der
+        // Auswahl nichts mehr ändert — die zwölf Leistungsfachkurse sind ohnehin
+        // alle drin. Sie verdoppelt nur acht von ihnen im Zähler und erhöht die
+        // Zahl der Wertungen um acht.
+        let doubleWeighted = doubleWeightedSubjects(in: subjects, among: included)
+
+        let baseTotal = included.reduce(0) { $0 + $1.points }
+        let bonusCourses = included.filter { doubleWeighted.identifiers.contains($0.id.subjectID) }
+        let weightedPointsTotal = baseTotal + bonusCourses.reduce(0) { $0 + $1.points }
+
+        // Geteilt wird durch die Zahl der *Wertungen*, nicht der Kurse: 40 Kurse
+        // ergeben 48 Wertungen. Fehlen noch Kurse, steht hier weniger — und der
+        // fehlende Kurs zieht den Schnitt nicht nach unten, sondern kommt später
+        // hinzu.
+        let effectiveWeightingCount = included.count + bonusCourses.count
+        let averagePoints = effectiveWeightingCount == 0
             ? 0
-            : Double(included.reduce(0) { $0 + $1.points }) / Double(included.count)
+            : Double(weightedPointsTotal) / Double(effectiveWeightingCount)
 
         return Outcome(
-            expectedGrade: expectedGrade(forAveragePoints: averagePoints),
-            blockOnePoints: Int((averagePoints * Double(totalCourseCount)).rounded()),
+            points: Int((averagePoints * Double(totalCourseCount)).rounded()),
             averagePoints: averagePoints,
+            weightedPointsTotal: weightedPointsTotal,
             includedCourses: included.map(\.id),
+            doubleWeightedSubjectIDs: doubleWeighted.identifiers,
+            effectiveWeightingCount: effectiveWeightingCount,
+            usesAutomaticDoubleWeighting: doubleWeighted.isAutomatic,
             bracketReasons: reasons,
             recordedCount: recorded.count
         )
+    }
+
+    /// Welche Leistungsfächer doppelt gewertet werden.
+    ///
+    /// Die Wahl des Nutzers gilt, wenn sie vollständig ist — also **genau zwei**
+    /// gekennzeichnete Leistungsfächer. Eine Wahl, an der noch eines fehlt oder
+    /// bei der durch einen Sync auf zwei Geräten drei gesetzt sind, ist keine Wahl;
+    /// dann rechnet Score selbst und sagt es über
+    /// ``Outcome/usesAutomaticDoubleWeighting``.
+    ///
+    /// Automatisch fällt die Wahl auf die beiden Leistungsfächer mit der höchsten
+    /// **Punktsumme über ihre eingebrachten Kurse** — nicht mit dem höchsten
+    /// Schnitt. Der Unterschied zählt, wenn ein Leistungsfach noch nicht alle vier
+    /// Ergebnisse hat: verdoppelt wird die Summe, und ein Fach mit zwei starken
+    /// Kursen bringt weniger ein als eines mit vier mittelmässigen.
+    ///
+    /// Bei Gleichstand entscheidet die Fachkennung, damit die Wahl nicht bei jedem
+    /// Aufruf zwischen zwei gleich guten Fächern springt.
+    ///
+    /// - Parameter included: Die Kurse, die in den Kursblock eingehen. Nur sie
+    ///   werden verdoppelt — ein geklammerter Kurs bleibt geklammert.
+    static func doubleWeightedSubjects(
+        in subjects: [SubjectInput],
+        among included: [Course]
+    ) -> (identifiers: [String], isAutomatic: Bool) {
+        let advanced = subjects.filter { $0.kind == .leistungsfach }
+        let chosen = advanced.filter(\.isDoubleWeighted).map(\.id)
+
+        if chosen.count == doubleWeightedSubjectCount {
+            return (chosen.sorted(), false)
+        }
+
+        var totals = [String: Int]()
+        for course in included where course.kind == .leistungsfach {
+            totals[course.id.subjectID, default: 0] += course.points
+        }
+
+        let best = advanced
+            .map { ($0.id, totals[$0.id] ?? 0) }
+            .sorted { left, right in
+                if left.1 != right.1 { return left.1 > right.1 }
+                return left.0 < right.0
+            }
+            .prefix(doubleWeightedSubjectCount)
+            .map(\.0)
+
+        return (best.sorted(), true)
     }
 
     /// Wendet die Kursgrenze jedes Fachs an.
@@ -323,13 +455,6 @@ enum BlockOneCalculator {
         }
     }
 
-    /// Rechnet den Punkteschnitt in den erwarteten Abischnitt um.
-    ///
-    /// Dieselbe Umrechnung wie bei einer einzelnen Note, aber auf 4,0 gedeckelt:
-    /// wer Block I besteht, kann nicht schlechter als 4,0 herauskommen.
-    static func expectedGrade(forAveragePoints points: Double) -> Double {
-        min(4, max(1, 17.0 / 3.0 - points / 3.0))
-    }
 }
 
 // MARK: - Hilfen

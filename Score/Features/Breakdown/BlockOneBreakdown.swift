@@ -182,9 +182,36 @@ struct BlockOneBreakdown {
         var bestPoints: Int? { courses.compactMap { $0.state.points }.max() }
     }
 
+    /// Eine der fünf Prüfungen, so wie sie auf dem Bildschirm steht.
+    struct ExamEntry: Identifiable {
+        let subjectID: String
+        let name: String
+        let color: Color
+        let kind: SubjectKind
+        let exam: BlockTwoCalculator.Exam
+
+        var id: String { subjectID }
+
+        /// Ob dieses Fach doppelt in den Kursblock zählt.
+        let isDoubleWeighted: Bool
+    }
+
     // MARK: - Werte
 
-    let outcome: BlockOneCalculator.Outcome
+    /// Das Gesamtergebnis: Kursblock, Prüfungsblock, Gesamtpunktzahl, Note.
+    let result: AbiturResult.Outcome
+
+    /// Der Kursblock allein — die Grösse, um die es auf diesem Bildschirm
+    /// überwiegend geht.
+    var outcome: BlockOneCalculator.Outcome { result.courseBlock }
+
+    /// Die fünf Prüfungen, erst die schriftlichen, dann die mündlichen.
+    let exams: [ExamEntry]
+
+    /// Die beiden doppelt gewerteten Leistungsfächer, mit Namen.
+    var doubleWeightedSubjects: [SubjectEntry] {
+        advancedSubjects.filter { outcome.doubleWeightedSubjectIDs.contains($0.id) }
+    }
 
     /// Die Punktsumme der eingebrachten Kurse — der Zähler der Rechnung.
     let includedPointsTotal: Int
@@ -254,15 +281,34 @@ struct BlockOneBreakdown {
 
     init(presentations: [SubjectPresentation]) {
         let inputs = presentations.map(\.input)
-        let outcome = BlockOneCalculator.calculate(for: inputs)
+        let result = AbiturResult.calculate(for: inputs)
+        let outcome = result.courseBlock
         let included = Set(outcome.includedCourses)
         let reasons = outcome.bracketReasons
         let pointsByCourse = Dictionary(
             uniqueKeysWithValues: BlockOneCalculator.availableCourses(in: inputs).map { ($0.id, $0.points) }
         )
 
-        self.outcome = outcome
+        self.result = result
         self.includedPointsTotal = outcome.includedCourses.reduce(0) { $0 + (pointsByCourse[$1] ?? 0) }
+
+        // Die Prüfungen bekommen Namen und Farbe ihres Fachs. Die Reihenfolge
+        // kommt aus dem Rechenkern und wird hier nicht neu erfunden.
+        let byIdentifier = Dictionary(
+            presentations.map { ($0.input.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        exams = result.examBlock.exams.compactMap { exam in
+            guard let presentation = byIdentifier[exam.id] else { return nil }
+            return ExamEntry(
+                subjectID: exam.id,
+                name: presentation.name,
+                color: presentation.color,
+                kind: presentation.input.kind,
+                exam: exam,
+                isDoubleWeighted: outcome.doubleWeightedSubjectIDs.contains(exam.id)
+            )
+        }
 
         let entries = presentations.map { presentation in
             let input = presentation.input

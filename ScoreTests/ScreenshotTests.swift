@@ -577,6 +577,84 @@ struct ScreenshotTests {
         }
     }
 
+    /// Der Anfang der Kursstufe: acht Fächer, aber erst das erste Halbjahr
+    /// benotet und keine einzige Prüfung.
+    ///
+    /// Genau der Zustand, in dem der Rechenweg tragen muss: Fast jede Zahl der
+    /// Kette ist noch klein oder fehlt, und die Stufen müssen das sagen, statt
+    /// eine volle Rechnung vorzutäuschen.
+    private static func makeSparseSubjects(in context: ModelContext) -> [Subject] {
+        let definitions: [(String, String, Int, SubjectKind, Int?)] = [
+            ("Deutsch", "D", 0x8A6A4A, .leistungsfach, 11),
+            ("Mathematik", "M", 0x1C6B6E, .leistungsfach, 9),
+            ("Biologie", "Bio", 0x5A7A61, .leistungsfach, 12),
+            ("Englisch", "E", 0x3E7CA6, .pflichtBasisfach, 10),
+            ("Geschichte", "G", 0xB4534A, .pflichtBasisfach, nil),
+            ("Gemeinschaftskunde", "GK", 0x7A6EA6, .pflichtBasisfach, nil),
+            ("Physik", "Ph", 0x40708C, .wahlBasisfach, 13),
+            ("Sport", "S", 0xB4834A, .wahlBasisfach, nil)
+        ]
+
+        return definitions.enumerated().map { index, definition in
+            let (name, abbreviation, color, kind, points) = definition
+
+            let subject = Subject(
+                name: name,
+                abbreviation: abbreviation,
+                colorValue: color,
+                kind: kind,
+                sortIndex: index
+            )
+            context.insert(subject)
+
+            for semesterIndex in Semester.allIndices {
+                let semester = SemesterResult(index: semesterIndex)
+                semester.subject = subject
+                context.insert(semester)
+
+                // Nur das erste Halbjahr trägt eine Note, und auch das nicht
+                // überall — der Rest ist belegt, aber leer.
+                guard semesterIndex == 0, let points else { continue }
+                let entry = GradeEntry(category: .exam, title: "Klausur")
+                entry.points = points
+                entry.kind = .written
+                entry.semester = semester
+                context.insert(entry)
+            }
+
+            return subject
+        }
+    }
+
+    @Test("Die Aufschlüsselung ganz am Anfang der Kursstufe")
+    func breakdownWithBarelyAnyData() async throws {
+        let context = try Self.makeContext()
+        let subjects = Self.makeSparseSubjects(in: context)
+
+        for scheme in ColorScheme.allCases {
+            try await capture(
+                "aufschluesselung-wenig-iphone",
+                scheme: scheme,
+                size: CGSize(width: Device.phone.width, height: 3400),
+                context: context
+            ) {
+                BlockOneBreakdownView(subjects: subjects, layout: .phone) {}
+            }
+
+            try await capture(
+                "aufschluesselung-wenig-ipad",
+                scheme: scheme,
+                size: CGSize(width: 640, height: 3800),
+                context: context
+            ) {
+                BlockOneBreakdownView(subjects: subjects, layout: .padSheet) {}
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: ScoreMetrics.Radius.sheet, style: .continuous)
+                    )
+            }
+        }
+    }
+
     @Test("Die Auswahl der mündlichen Prüfungsfächer")
     func oralExamSubjects() async throws {
         let context = try Self.makeContext()

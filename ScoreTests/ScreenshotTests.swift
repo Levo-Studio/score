@@ -190,7 +190,7 @@ struct ScreenshotTests {
             try await capture(
                 "aufschluesselung-iphone",
                 scheme: scheme,
-                size: CGSize(width: Device.phone.width, height: 4600),
+                size: CGSize(width: Device.phone.width, height: 5800),
                 context: context
             ) {
                 BlockOneBreakdownView(subjects: subjects, layout: .phone) {}
@@ -287,7 +287,7 @@ struct ScreenshotTests {
             try await capture(
                 "pruefungen-aufschluesselung-iphone",
                 scheme: scheme,
-                size: CGSize(width: Device.phone.width, height: 5600),
+                size: CGSize(width: Device.phone.width, height: 5800),
                 context: context
             ) {
                 BlockOneBreakdownView(subjects: subjects, layout: .phone) {}
@@ -296,7 +296,7 @@ struct ScreenshotTests {
             try await capture(
                 "pruefungen-aufschluesselung-ipad",
                 scheme: scheme,
-                size: CGSize(width: 640, height: 6400),
+                size: CGSize(width: 640, height: 5400),
                 context: context
             ) {
                 BlockOneBreakdownView(subjects: subjects, layout: .padSheet) {}
@@ -557,7 +557,7 @@ struct ScreenshotTests {
             try await capture(
                 "pruefungen-offen-iphone",
                 scheme: scheme,
-                size: CGSize(width: Device.phone.width, height: 5600),
+                size: CGSize(width: Device.phone.width, height: 5800),
                 context: context
             ) {
                 BlockOneBreakdownView(subjects: subjects, layout: .phone) {}
@@ -566,7 +566,7 @@ struct ScreenshotTests {
             try await capture(
                 "pruefungen-offen-ipad",
                 scheme: scheme,
-                size: CGSize(width: 640, height: 6400),
+                size: CGSize(width: 640, height: 5400),
                 context: context
             ) {
                 BlockOneBreakdownView(subjects: subjects, layout: .padSheet) {}
@@ -635,7 +635,7 @@ struct ScreenshotTests {
             try await capture(
                 "aufschluesselung-wenig-iphone",
                 scheme: scheme,
-                size: CGSize(width: Device.phone.width, height: 3400),
+                size: CGSize(width: Device.phone.width, height: 3800),
                 context: context
             ) {
                 BlockOneBreakdownView(subjects: subjects, layout: .phone) {}
@@ -644,7 +644,7 @@ struct ScreenshotTests {
             try await capture(
                 "aufschluesselung-wenig-ipad",
                 scheme: scheme,
-                size: CGSize(width: 640, height: 3800),
+                size: CGSize(width: 640, height: 3600),
                 context: context
             ) {
                 BlockOneBreakdownView(subjects: subjects, layout: .padSheet) {}

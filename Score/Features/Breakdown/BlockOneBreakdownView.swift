@@ -2,10 +2,14 @@ import SwiftUI
 
 /// Die Aufschlüsselung des Schnitts.
 ///
-/// Der Bildschirm beantwortet die Frage, die die Score-Karte offenlässt, und er
-/// beantwortet sie als Erzählung statt als Liste:
+/// Der Bildschirm beantwortet die Frage, die die Score-Karte offenlässt — und er
+/// beantwortet sie zuerst als Bild:
 ///
-/// 1. **Die Rechnung** — Punktsumme, Kurszahl, Schnitt, Umrechnung in die Note.
+/// 1. **Der Rechenweg** — acht Stufen als Kette, von den belegten Kursen bis zur
+///    Note: 42 → 40 → 48 → 600, plus 300, macht 900. Mit seinen Zahlen darin.
+///    Früher stand dieselbe Rechnung zweimal auf dem Bildschirm — oben als
+///    Rechenzeilen, unten als sechs Absätze Fliesstext. Jetzt steht sie einmal,
+///    und zwar dort, wo die Zahlen ohnehin sind.
 /// 2. **Woher die Kurse kommen** — wie viele aus Leistungs-, Pflicht- und
 ///    Wahl-Basisfächern, als Balken und in Worten.
 /// 3. **Was sich nicht klammern lässt** — Leistungs- und Pflicht-Basisfächer sowie die
@@ -15,6 +19,7 @@ import SwiftUI
 /// 5. **Was geklammert ist und warum** — mit dem Grund ausgeschrieben, getrennt
 ///    nach „von Hand geklammert", „über der eigenen Kursgrenze" und
 ///    „automatisch geklammert".
+/// 6. **Sonderfälle** — hinter einer Aufklappzeile, siehe ``BreakdownEdgeCases``.
 ///
 /// Nichts davon rechnet er selbst: alles kommt aus `BlockOneBreakdown` und damit
 /// aus `BlockOneCalculator`. Weichen Anzeige und Rechnung auseinander, ist das
@@ -96,7 +101,7 @@ struct BlockOneBreakdownView: View {
                     .staggeredAppearance(index: 6)
                 droppedSection(breakdown)
                     .staggeredAppearance(index: 7)
-                explanation
+                BreakdownEdgeCases(cornerRadius: layout.cardRadius)
                     .staggeredAppearance(index: 8)
             }
             .padding(.horizontal, layout.contentPadding)
@@ -159,41 +164,8 @@ struct BlockOneBreakdownView: View {
                 .foregroundStyle(ScorePalette.scoreInk)
                 .padding(.top, ScoreMetrics.Spacing.xs)
 
-            VStack(spacing: 0) {
-                calculationRow(
-                    label: Text("Punktsumme über alle Wertungen"),
-                    value: ScoreNumberFormat.points(breakdown.outcome.weightedPointsTotal),
-                    isFirst: true
-                )
-                calculationRow(
-                    label: Text("Geteilt durch die Zahl der Wertungen"),
-                    value: ScoreNumberFormat.points(breakdown.outcome.effectiveWeightingCount)
-                )
-                calculationRow(
-                    label: Text("Punkteschnitt je Wertung"),
-                    value: ScoreNumberFormat.decimal(breakdown.outcome.averagePoints),
-                    isAccented: true
-                )
-                calculationRow(
-                    label: Text("Kurspunkte · Schnitt × 40"),
-                    value: ScoreNumberFormat.points(breakdown.outcome.points)
-                )
-                calculationRow(
-                    label: Text("Prüfungen · fünf Ergebnisse × 4"),
-                    value: ScoreNumberFormat.points(breakdown.result.projectedExamBlockPoints)
-                )
-                calculationRow(
-                    label: Text("Gesamt"),
-                    value: ScoreNumberFormat.points(breakdown.result.totalPoints),
-                    isAccented: true
-                )
-            }
-            .padding(.top, ScoreMetrics.Spacing.md)
-
-            formulaRow(breakdown)
-                .padding(.top, ScoreMetrics.Spacing.md)
-
-            resultNotes(breakdown)
+            calculationPath(breakdown)
+                .padding(.top, ScoreMetrics.Spacing.lg)
         }
         .padding(.horizontal, 22)
         .padding(.vertical, ScoreMetrics.Spacing.lg)
@@ -206,97 +178,210 @@ struct BlockOneBreakdownView: View {
         )
     }
 
-    private func calculationRow(
-        label: Text,
-        value: String,
-        isFirst: Bool = false,
-        isAccented: Bool = false
-    ) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: ScoreMetrics.Spacing.sm) {
-            label
-                .font(.summaryLabel)
-                .foregroundStyle(ScorePalette.scoreInkSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Spacer(minLength: 0)
-
-            Text(verbatim: value)
-                .font(.statValue)
-                .monospacedDigit()
-                .foregroundStyle(isAccented ? ScorePalette.accent : ScorePalette.scoreInk)
-        }
-        .padding(.vertical, 10)
-        .overlay(alignment: .top) {
-            if !isFirst {
-                Rectangle()
-                    .fill(ScorePalette.scoreLine)
-                    .frame(height: 1)
-            }
-        }
-    }
-
-    /// Die Umrechnung Punkte → Note, so wie sie im Rechenkern steht.
+    /// Der Rechenweg als Kette: acht Stufen von den belegten Kursen bis zur Note.
     ///
-    /// Die Formel steht verbatim da: sie ist in beiden Sprachen dieselbe, nur die
-    /// Zahlen wechseln das Trennzeichen.
-    private func formulaRow(_ breakdown: BlockOneBreakdown) -> some View {
-        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
-            Text("Gesamtpunktzahl in der amtlichen Notentabelle")
-                .font(.fieldLabel)
-                .foregroundStyle(ScorePalette.scoreInkSecondary)
+    /// Vorher stand hier eine Liste aus sechs Rechenzeilen und darunter, am Fuss
+    /// des Bildschirms, dieselbe Rechnung noch einmal als sechs Absätze Fliesstext.
+    /// Beides zusammen beantwortete die Frage „wie kommt meine Zahl zustande"
+    /// zweimal und keines davon auf einen Blick.
+    ///
+    /// Jetzt trägt eine Kette die ganze Auskunft: **42 → 40 → 48 → 600, plus 300,
+    /// macht 900, daraus die Note.** Die Konstanten stehen als Nenner rechts
+    /// (`40 / 40`, `512 / 600`), die Regel dazu in der Unterzeile — und die Zahlen
+    /// sind seine, nicht die des Lehrbuchs. Wo eine fehlt, weil er sie noch nicht
+    /// eingetragen hat, sagt die Unterzeile genau das.
+    private func calculationPath(_ breakdown: BlockOneBreakdown) -> some View {
+        let outcome = breakdown.outcome
+        let examBlock = breakdown.result.examBlock
+        let bracketed = max(0, outcome.recordedCount - outcome.includedCount)
+        let missingCourses = max(0, BlockOneCalculator.totalCourseCount - outcome.includedCount)
+        let doubleWeightings = max(0, outcome.effectiveWeightingCount - outcome.includedCount)
 
-            Text(verbatim: formulaText(breakdown))
-                .font(.statValue)
-                .monospacedDigit()
-                .foregroundStyle(ScorePalette.scoreInk)
-                .fixedSize(horizontal: false, vertical: true)
+        return VStack(alignment: .leading, spacing: 0) {
+            pathStep(
+                1,
+                title: Text("Kurse mit Note"),
+                value: ScoreNumberFormat.points(outcome.recordedCount),
+                caption: Text("Belegt werden mindestens 42 · gewertet 40")
+            )
+
+            pathStep(
+                2,
+                title: Text("Davon geklammert"),
+                value: ScoreNumberFormat.points(bracketed),
+                caption: bracketCaption(breakdown, bracketed: bracketed)
+            )
+
+            pathStep(
+                3,
+                title: Text("Eingebracht"),
+                value: ratio(outcome.includedCount, BlockOneCalculator.totalCourseCount),
+                caption: missingCourses > 0
+                    ? Text("Bis 40 fehlen noch \(missingCourses)")
+                    : Text("Mehr als 40 gehen nicht ein")
+            )
+
+            pathStep(
+                4,
+                title: Text("Wertungen"),
+                value: ratio(outcome.effectiveWeightingCount, BlockOneCalculator.weightingCount),
+                caption: doubleWeightings > 0
+                    ? Text("Zwei Leistungsfächer zählen doppelt · + \(doubleWeightings)")
+                    : Text("Noch kein Leistungsfach zählt doppelt")
+            )
+
+            pathStep(
+                5,
+                title: Text("Kurspunkte"),
+                value: ratio(outcome.points, BlockOneCalculator.maximumPoints),
+                caption: Text(verbatim: averageFormula(outcome))
+            )
+
+            pathStep(
+                6,
+                title: Text("Prüfungen"),
+                value: ratio(
+                    breakdown.result.projectedExamBlockPoints,
+                    BlockTwoCalculator.maximumPoints
+                ),
+                caption: examCaption(breakdown, examBlock: examBlock)
+            )
+
+            pathStep(
+                7,
+                title: Text("Gesamt"),
+                value: ratio(breakdown.result.totalPoints, AbiturGradeTable.maximumTotal),
+                caption: nil,
+                isAccented: true
+            )
+
+            pathStep(
+                8,
+                title: Text("Note"),
+                value: gradeText(breakdown),
+                caption: Text("Amtliche Tabelle in Stufen von 18 Punkten · ab 823 steht 1,0"),
+                isAccented: true,
+                isLast: true
+            )
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(ScoreMetrics.Spacing.sm)
-        .background(ScorePalette.fill)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
-    /// „723 Punkte → 1,6" — die Zeile der amtlichen Notentabelle, in der die
-    /// Gesamtpunktzahl steht.
-    private func formulaText(_ breakdown: BlockOneBreakdown) -> String {
-        let total = ScoreNumberFormat.points(breakdown.result.totalPoints)
-        return "\(total) → \(gradeText(breakdown))"
+    /// Eine Stufe der Kette: Siegel mit der Nummer, Verbindungslinie, Titel mit
+    /// Wert rechts und darunter die Regel, aus der der Wert folgt.
+    ///
+    /// Die Linie unter dem Siegel ist das, was aus acht Zeilen einen Weg macht —
+    /// ohne sie stünden hier bloss acht Zahlen untereinander. Für die
+    /// Vorlesefunktion ist sie nichts wert; deshalb liest sich jede Stufe als ein
+    /// Element aus Titel, Wert und Regel, und das Siegel bleibt stumm.
+    private func pathStep(
+        _ step: Int,
+        title: Text,
+        value: String,
+        caption: Text?,
+        isAccented: Bool = false,
+        isLast: Bool = false
+    ) -> some View {
+        HStack(alignment: .top, spacing: ScoreMetrics.Spacing.sm) {
+            VStack(spacing: 0) {
+                Text(verbatim: ScoreNumberFormat.points(step))
+                    .font(.badgeLabel)
+                    .monospacedDigit()
+                    .foregroundStyle(ScorePalette.scoreInkSecondary)
+                    .frame(width: 20, height: 20)
+                    .background(ScorePalette.fill)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+
+                if !isLast {
+                    Rectangle()
+                        .fill(ScorePalette.scoreLine)
+                        .frame(width: 1)
+                        .frame(maxHeight: .infinity)
+                }
+            }
+            .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(alignment: .firstTextBaseline, spacing: ScoreMetrics.Spacing.xs) {
+                    title
+                        .font(.summaryLabel)
+                        .foregroundStyle(ScorePalette.scoreInkSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Spacer(minLength: 0)
+
+                    Text(verbatim: value)
+                        .font(.statValue)
+                        .monospacedDigit()
+                        .foregroundStyle(isAccented ? ScorePalette.accent : ScorePalette.scoreInk)
+                }
+
+                if let caption {
+                    caption
+                        .font(.micro)
+                        .lineSpacing(2)
+                        .foregroundStyle(ScorePalette.scoreInkSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(.bottom, isLast ? 0 : ScoreMetrics.Spacing.sm)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    /// „512 / 600" — der Wert und die Grenze, gegen die er läuft.
+    private func ratio(_ value: Int, _ maximum: Int) -> String {
+        "\(ScoreNumberFormat.points(value)) / \(ScoreNumberFormat.points(maximum))"
+    }
+
+    /// „3.072 ÷ 48 × 40" — die Rechnung hinter den Kurspunkten.
+    ///
+    /// Sie steht verbatim: In beiden Sprachen dieselbe Formel, nur das
+    /// Trennzeichen der Zahlen wechselt.
+    private func averageFormula(_ outcome: BlockOneCalculator.Outcome) -> String {
+        let total = ScoreNumberFormat.points(outcome.weightedPointsTotal)
+        let count = ScoreNumberFormat.points(outcome.effectiveWeightingCount)
+        return "\(total) ÷ \(count) × \(BlockOneCalculator.totalCourseCount)"
+    }
+
+    /// Wer geklammert hat und aus welchem Grund — als eine Zeile aus bis zu drei
+    /// Stücken, in derselben Reihenfolge wie der Abschnitt „Was geklammert ist".
+    private func bracketCaption(_ breakdown: BlockOneBreakdown, bracketed: Int) -> Text {
+        guard bracketed > 0 else { return Text("Noch nichts zu klammern") }
+
+        let outcome = breakdown.outcome
+        let parts: [(Int, String.LocalizationValue)] = [
+            (outcome.manuallyBracketedCourses.count, "\(outcome.manuallyBracketedCourses.count) von dir"),
+            (outcome.coursesBeyondSubjectLimit.count, "\(outcome.coursesBeyondSubjectLimit.count) über der Fachgrenze"),
+            (outcome.automaticallyBracketedCourses.count, "\(outcome.automaticallyBracketedCourses.count) von Score")
+        ]
+
+        // Zusammengesetzt als `AttributedString`, weil die Verkettung zweier
+        // `Text` abgekündigt ist.
+        let line = parts
+            .filter { $0.0 > 0 }
+            .map { AttributedString.scoreLocalized($0.1) }
+            .reduce(AttributedString()) { joined, part in
+                joined.characters.isEmpty ? part : joined + AttributedString(" · ") + part
+            }
+
+        return Text(line)
+    }
+
+    /// Was am Prüfungsblock schon feststeht — und womit Score den Rest ansetzt.
+    private func examCaption(
+        _ breakdown: BlockOneBreakdown,
+        examBlock: BlockTwoCalculator.Outcome
+    ) -> Text {
+        guard breakdown.result.isProjection else {
+            return Text("Fünf Ergebnisse · jedes × 4")
+        }
+        let level = ScoreNumberFormat.decimal(breakdown.result.projectionLevel)
+        return Text("\(examBlock.recordedExamCount) von 5 eingetragen · offene angesetzt mit \(level) Punkten")
     }
 
     /// Der Abischnitt, oder der Platzhalter, wenn es unter 300 Punkten keinen gibt.
     private func gradeText(_ breakdown: BlockOneBreakdown) -> String {
         breakdown.result.grade.map(ScoreNumberFormat.grade) ?? ScoreNumberFormat.placeholder
-    }
-
-    /// Was unter der Rechnung noch gesagt werden muss: dass Kurse fehlen, dass
-    /// Prüfungen fehlen, dass eine Mindestbedingung gerissen ist.
-    ///
-    /// Alle drei Sätze sind Hinweise und keine Warnungen — vor dem Abitur fehlt
-    /// naturgemäss fast alles, und ein Bildschirm, der das jedes Mal dramatisiert,
-    /// wird nicht mehr gelesen.
-    @ViewBuilder
-    private func resultNotes(_ breakdown: BlockOneBreakdown) -> some View {
-        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
-            if breakdown.outcome.includedCount < BlockOneCalculator.totalCourseCount {
-                Text("Erst \(breakdown.outcome.includedCount) von \(BlockOneCalculator.totalCourseCount) Kursen haben eine Note. Score rechnet mit dem, was schon da ist.")
-            }
-
-            if breakdown.result.isProjection {
-                projectionNote(breakdown)
-            }
-        }
-        .font(.meta)
-        .lineSpacing(3)
-        .foregroundStyle(ScorePalette.scoreInkSecondary)
-        .fixedSize(horizontal: false, vertical: true)
-        .padding(.top, ScoreMetrics.Spacing.sm)
-    }
-
-    private func projectionNote(_ breakdown: BlockOneBreakdown) -> Text {
-        let missing = breakdown.result.examBlock.missingExamCount
-        let level = ScoreNumberFormat.decimal(breakdown.result.projectionLevel)
-        return Text("Noch \(missing) von 5 Prüfungen offen. Score setzt sie mit \(level) Punkten an — deinem heutigen Stand — und rechnet die Gesamtpunktzahl daraus hoch.")
     }
 
     // MARK: - 2. Die Mindestbedingungen
@@ -476,8 +561,11 @@ struct BlockOneBreakdownView: View {
         }
     }
 
+    /// Die Vierfachwertung und die 300 Punkte stehen als Stufe 6 im Rechenweg —
+    /// hier bleibt nur, was dort nicht steht: welche fünf Fächer es sind und wo
+    /// die Ergebnisse hingehören.
     private func examIntro(_ breakdown: BlockOneBreakdown) -> some View {
-        Text("Geprüft wird in fünf Fächern: schriftlich in den drei Leistungsfächern, mündlich in zwei weiteren. Jedes Ergebnis zählt vierfach — höchstens 300 Punkte. Die Ergebnisse trägst du im jeweiligen Fach ein.")
+        Text("Schriftlich in den drei Leistungsfächern, mündlich in zwei weiteren. Die Ergebnisse trägst du im jeweiligen Fach ein.")
             .font(.optionMeta)
             .lineSpacing(4.5)
             .foregroundStyle(ScorePalette.inkSecondary)
@@ -956,31 +1044,69 @@ struct BlockOneBreakdownView: View {
         }
     }
 
-    // MARK: - Erklärung
+}
 
-    private var explanation: some View {
-        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
-            // Der erste Satz räumt eine Verwechslung aus, die in der Schule
-            // regelmässig passiert: 42 ist die Zahl der Kurse, die man belegen
-            // MUSS, 40 die Zahl derer, die gewertet werden. Wer nur die 42 kennt,
-            // hält das Klammern für eine Eigenart der App statt für die Regel.
-            Text("Belegen musst du mindestens 42 Kurse — zwölf in den Leistungsfächern und mindestens dreissig weitere. In den Schnitt gehen davon 40 ein.")
+// MARK: - Sonderfälle
 
-            Text("Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 40 übrig sind. Zwei deiner drei Leistungsfächer zählen dabei doppelt — aus 40 Kursen werden so 48 Wertungen. Die Punktsumme über alle 48 geteilt durch 48 und mal 40 ergibt die Kurspunkte, höchstens 600.")
+/// Die drei Regeln, die der Bildschirm sonst nirgends zeigt — hinter einer
+/// Aufklappzeile.
+///
+/// Was hier **nicht** mehr steht, steht dafür an seinem Ort: dass Prüfungsfächer
+/// nicht klammerbar sind, sagt der Abschnitt „Nicht klammerbar" und die Bilanz
+/// jedes Fachs; dass Pflicht-Basisfächer nie automatisch fallen, sagt „Woher die
+/// Kurse kommen"; und warum ein einzelner Kurs draussen ist, sagt seine eigene
+/// Zeile. Ein Satz, der eine Stelle der Oberfläche wiederholt, macht den
+/// Bildschirm länger und nicht klarer.
+///
+/// Übrig bleiben drei Regeln, die man an keiner Zeile ablesen kann: die
+/// Reihenfolge, in der die Kursgrenze greift, wie Gleichstand aufgelöst wird und
+/// dass ein Halbjahr ohne Note kein Kurs mit null Punkten ist. Sie beantworten
+/// „warum ausgerechnet dieser Kurs" — wichtig, aber nicht beim ersten Blick.
+private struct BreakdownEdgeCases: View {
 
-            Text("Dazu kommen die fünf Abiturprüfungen, jede vierfach gewertet, höchstens 300 Punkte. Beides zusammen sind 300 bis 900 Punkte, und aus dieser Gesamtpunktzahl liest die amtliche Tabelle die Note ab — in Stufen von 18 Punkten, ab 823 Punkten steht 1,0. Score rechnet das nicht mit einer Formel nach, sondern schlägt in der Tabelle nach.")
+    let cornerRadius: CGFloat
 
-            Text("Nicht klammerbar sind die Kurse deiner Prüfungsfächer: die drei Leistungsfächer, in denen du schriftlich geprüft wirst, und deine beiden mündlichen Prüfungsfächer. Deren Halbjahre sind anrechnungspflichtig. Pflicht-Basisfächer klammert Score ebenfalls nie von sich aus.")
+    @State private var isExpanded = false
 
-            Text("Wie viele Kurse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift zuerst: Was ein Fach nicht einbringt, steht auch nicht mehr zur Klammerung.")
+    var body: some View {
+        ScoreCard(cornerRadius: cornerRadius) {
+            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
+                Button {
+                    isExpanded.toggle()
+                } label: {
+                    HStack(spacing: ScoreMetrics.Spacing.xs) {
+                        Text("Sonderfälle")
+                            .font(.rowTitle)
+                            .foregroundStyle(ScorePalette.ink)
 
-            Text("Haben zwei Wahl-Basisfach-Kurse dieselbe Punktzahl und trifft es nur noch eines, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten.")
+                        Spacer(minLength: 0)
+
+                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(ScorePalette.accent)
+                            .accessibilityHidden(true)
+                    }
+                    .frame(minHeight: ScoreMetrics.minimumTapTarget - ScoreMetrics.Spacing.sm)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                if isExpanded {
+                    VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
+                        Text("Die Kursgrenze eines Fachs greift zuerst: Was ein Fach nicht einbringt, steht gar nicht mehr zur Klammerung.")
+
+                        Text("Haben zwei Kurse dieselbe Punktzahl und trifft es nur einen, entscheidet die Reihenfolge der Fächer.")
+
+                        Text("Halbjahre ohne Note zählen nirgends mit — sie sind kein Kurs mit null Punkten.")
+                    }
+                    .font(.optionMeta)
+                    .lineSpacing(4.5)
+                    .foregroundStyle(ScorePalette.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+            }
         }
-        .font(.optionMeta)
-        .lineSpacing(5.5)
-        .foregroundStyle(ScorePalette.inkSecondary)
-        .fixedSize(horizontal: false, vertical: true)
-        .padding(.horizontal, ScoreMetrics.Spacing.xxs)
+        .scoreAnimation(ScoreMotion.segment, value: isExpanded)
     }
 }
 

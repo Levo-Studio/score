@@ -144,9 +144,9 @@ struct BlockOneBreakdownView: View {
         }
     }
 
-    // MARK: - 1. Die Rechnung
+    // MARK: - 1. Der Rechenweg
 
-    /// Die Rechnung, offen hingeschrieben: Summe, Anzahl, Schnitt, Umrechnung.
+    /// Der Schnitt und darunter der Weg, auf dem er entsteht.
     ///
     /// Die Karte steht auf `scoreBackground` und nicht auf `surface` — sie ist
     /// dieselbe Aussage wie die Score-Karte auf dem Dashboard, nur ausgeschrieben.

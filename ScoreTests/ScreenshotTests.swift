@@ -1339,75 +1339,143 @@ struct ScreenshotTests {
             window.layoutIfNeeded()
         }
 
-        // `layer.render(in:)` und nicht `drawHierarchy`: Letzteres nimmt nur auf,
-        // was tatsächlich auf dem Bildschirm liegt, und schneidet an dessen Kante
-        // ab. Die Aufschlüsselung wird in voller Inhaltshöhe aufgenommen und ist
-        // damit um ein Vielfaches höher als jedes Gerät — sie käme leer heraus.
-        // Unschärfe-Materialien gibt der Ebenenweg nicht wieder; auf keinem der
-        // hier aufgenommenen Bildschirme kommt eines vor.
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 2
-        let image = UIGraphicsImageRenderer(size: size, format: format).image { renderer in
-            window.layer.render(in: renderer.cgContext)
-        }
-
         let suffix = scheme == .dark ? "dunkel" : "hell"
-        let data = try #require(Self.trimmed(image).pngData())
+        let data = try #require(
+            autoreleasepool { Self.png(of: window, size: size) },
+            "Ohne Bitmap kein Belegbild"
+        )
         try data.write(to: directory.appending(path: "\(name)-\(suffix).png"))
     }
 
-    /// Schneidet leere Fläche am unteren Rand ab.
+    /// Die Auflösung der Belegbilder.
+    ///
+    /// Zwei statt der drei des Geräts: Die Schrift steht damit gestochen, und die
+    /// Bitmap ist nur halb so hoch und halb so breit — also ein Viertel so gross.
+    private static let captureScale = 2
+
+    /// Nimmt das Fenster auf, schneidet den leeren Fuss ab und kodiert das PNG.
+    ///
+    /// ## Warum das nicht über `UIGraphicsImageRenderer` läuft
+    ///
+    /// Die Aufschlüsselung wird in voller Inhaltshöhe aufgenommen und ist damit
+    /// über 5000 Punkt hoch — bei doppelter Auflösung gut 11 000 Pixel und knapp
+    /// 40 MB je Bitmap. Der frühere Weg hielt drei davon zugleich: eine im
+    /// `UIGraphicsImageRenderer`, eine als `[UInt8]` in der Fusssuche und eine im
+    /// `CGContext` des Zuschnitts. Das sprengte dem Testprozess den Speicher. Xcode
+    /// startete ihn mitten im Lauf neu und wiederholte die Tests einzeln — im
+    /// Protokoll meldete danach jeder Einzeltest grün, während der Lauf insgesamt
+    /// mit „Restarting after unexpected exit, crash, or test timeout" scheiterte.
+    /// Wer nur auf die Einzelzeilen sah, hielt das für einen grünen Lauf.
+    ///
+    /// Jetzt gibt es von Anfang bis Ende genau **eine** Bitmap: in sie wird
+    /// gerendert, auf ihr wird der leere Fuss gesucht, und aus ihr heraus wird
+    /// kodiert. Das `CGImage` des Zuschnitts kopiert nichts — es zeigt über einen
+    /// `CGDataProvider` auf denselben Puffer, der deshalb bis nach dem Kodieren
+    /// stehen bleiben muss. Genau dafür passiert hier alles in einem Zug, statt ein
+    /// Bild nach draussen zu reichen.
+    ///
+    /// `layer.render(in:)` und nicht `drawHierarchy`: Letzteres nimmt nur auf, was
+    /// tatsächlich auf dem Bildschirm liegt, und schneidet an dessen Kante ab — die
+    /// Aufschlüsselung käme leer heraus. Unschärfe-Materialien gibt der Ebenenweg
+    /// nicht wieder; auf keinem der hier aufgenommenen Bildschirme kommt eines vor.
+    private static func png(of window: UIWindow, size: CGSize) -> Data? {
+        let scale = captureScale
+        let width = Int(size.width.rounded()) * scale
+        let height = Int(size.height.rounded()) * scale
+        let bytesPerRow = width * 4
+
+        guard
+            let space = CGColorSpace(name: CGColorSpace.sRGB),
+            let context = CGContext(
+                data: nil,
+                width: width,
+                height: height,
+                bitsPerComponent: 8,
+                bytesPerRow: bytesPerRow,
+                space: space,
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            ),
+            let buffer = context.data
+        else { return nil }
+
+        // `CGContext` rechnet von unten nach oben, UIKit von oben nach unten.
+        context.translateBy(x: 0, y: CGFloat(height))
+        context.scaleBy(x: CGFloat(scale), y: -CGFloat(scale))
+        window.layer.render(in: context)
+
+        let bottom = contentBottom(
+            in: buffer.assumingMemoryBound(to: UInt8.self),
+            width: width,
+            height: height
+        )
+
+        // Die erste Zeile des Puffers ist die oberste des Bildes; die obersten
+        // `bottom` Zeilen sind also genau der Zuschnitt.
+        guard
+            let provider = CGDataProvider(
+                dataInfo: nil,
+                data: buffer,
+                size: bytesPerRow * bottom,
+                releaseData: { _, _, _ in }
+            ),
+            let image = CGImage(
+                width: width,
+                height: bottom,
+                bitsPerComponent: 8,
+                bitsPerPixel: 32,
+                bytesPerRow: bytesPerRow,
+                space: space,
+                bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+                provider: provider,
+                decode: nil,
+                shouldInterpolate: false,
+                intent: .defaultIntent
+            )
+        else { return nil }
+
+        return UIImage(cgImage: image, scale: CGFloat(scale), orientation: .up).pngData()
+    }
+
+    /// Wo der Inhalt endet — alles darunter ist einfarbiger Hintergrund.
     ///
     /// Die Aufschlüsselung wird mit reichlich Höhe aufgenommen, damit ihr Inhalt
-    /// sicher hineinpasst — wie viel sie am Ende braucht, weiss man vorher nicht,
-    /// weil eine `ScrollView` ihre Inhaltshöhe nicht nach aussen meldet. Was
-    /// übrig bleibt, ist einfarbiger Hintergrund und wird hier weggeschnitten.
-    private static func trimmed(_ image: UIImage) -> UIImage {
-        guard let cgImage = image.cgImage else { return image }
-
-        let width = cgImage.width
-        let height = cgImage.height
-        var pixels = [UInt8](repeating: 0, count: width * height * 4)
-
-        guard let context = CGContext(
-            data: &pixels,
-            width: width,
-            height: height,
-            bitsPerComponent: 8,
-            bytesPerRow: width * 4,
-            space: CGColorSpaceCreateDeviceRGB(),
-            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else { return image }
-
-        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
-
-        // Von unten nach oben die erste Zeile suchen, die nicht durchgehend die
-        // Farbe der untersten Zeile trägt.
-        func pixel(_ x: Int, _ y: Int) -> ArraySlice<UInt8> {
-            let start = (y * width + x) * 4
-            return pixels[start..<(start + 4)]
-        }
-
+    /// sicher hineinpasst: Wie viel sie braucht, weiss man vorher nicht, weil eine
+    /// `ScrollView` ihre Inhaltshöhe nicht nach aussen meldet. Was übrig bleibt,
+    /// fällt weg.
+    ///
+    /// Gelesen wird direkt auf dem Puffer des `CGContext` — dessen erste Zeile ist
+    /// die oberste des entstehenden Bildes. Eine Kopie davon gäbe es nur, um
+    /// dasselbe noch einmal zu betrachten.
+    private static func contentBottom(
+        in pixels: UnsafeMutablePointer<UInt8>,
+        width: Int,
+        height: Int
+    ) -> Int {
         // Die Probe wird in der Mitte genommen und die Ränder werden übersprungen:
         // Die Aufschlüsselung liegt auf dem iPad in einer Karte mit runden Ecken,
         // und an den Ecken ist die Fläche durchsichtig. Von ganz links gelesen
         // wäre schon die vorletzte Zeile „anders" und es würde nie geschnitten.
         let margin = width / 10
-        let background = pixel(width / 2, height - 1)
+        let reference = ((height - 1) * width + width / 2) * 4
+
+        func isBackground(_ x: Int, _ y: Int) -> Bool {
+            let start = (y * width + x) * 4
+            return pixels[start] == pixels[reference]
+                && pixels[start + 1] == pixels[reference + 1]
+                && pixels[start + 2] == pixels[reference + 2]
+                && pixels[start + 3] == pixels[reference + 3]
+        }
+
         var lastContentRow = height - 1
         rows: for y in stride(from: height - 1, through: 0, by: -1) {
-            for x in stride(from: margin, to: width - margin, by: 4) where pixel(x, y) != background {
+            for x in stride(from: margin, to: width - margin, by: 4) where !isBackground(x, y) {
                 lastContentRow = y
                 break rows
             }
         }
 
         // Etwas Luft stehen lassen, sonst klebt der letzte Satz an der Kante.
-        let bottom = min(height, lastContentRow + Int(image.scale) * 24)
-        guard bottom < height else { return image }
-
-        let cropped = cgImage.cropping(to: CGRect(x: 0, y: 0, width: width, height: bottom))
-        return cropped.map { UIImage(cgImage: $0, scale: image.scale, orientation: .up) } ?? image
+        return min(height, lastContentRow + captureScale * 24)
     }
 }
 

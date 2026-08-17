@@ -121,7 +121,8 @@ final class CloudSyncStatus {
                 state = .unknown
             }
         } catch {
-            state = .failed(error.localizedDescription)
+            let reason = CloudSyncFailure.diagnose(error)
+            state = reason == .noAccount ? .noAccount : .failed(reason.message)
         }
     }
 
@@ -143,11 +144,14 @@ final class CloudSyncStatus {
             // `Event` ist nicht `Sendable`, darf also die Isolationsgrenze nicht
             // überqueren. Alles Nötige wird deshalb hier zu schlichten Werten
             // ausgelesen — der Block läuft ohnehin schon auf der Hauptqueue.
+            // Nie `localizedDescription`: bei `partialFailure` steht dort nur
+            // „CKErrorDomain error 2". Siehe ``CloudSyncFailure``.
+            let reason = event.error.map(CloudSyncFailure.diagnose)
+
             let outcome = Outcome(
                 isFinished: event.endDate != nil,
                 endDate: event.endDate,
-                errorDescription: event.error?.localizedDescription,
-                isNoAccount: event.error.map(Self.isNoAccountError) ?? false
+                reason: reason
             )
 
             MainActor.assumeIsolated {
@@ -162,15 +166,14 @@ final class CloudSyncStatus {
     private struct Outcome: Sendable {
         var isFinished: Bool
         var endDate: Date?
-        var errorDescription: String?
-        var isNoAccount: Bool
+        var reason: CloudSyncFailure.Reason?
     }
 
     private func apply(_ outcome: Outcome) {
         // Der Setup-Lauf meldet den Kontofehler zuerst; ihn als Sync-Fehler zu
         // zeigen wäre irreführend, wenn schlicht niemand angemeldet ist.
-        if let description = outcome.errorDescription {
-            state = outcome.isNoAccount ? .noAccount : .failed(description)
+        if let reason = outcome.reason {
+            state = reason == .noAccount ? .noAccount : .failed(reason.message)
             return
         }
 
@@ -181,14 +184,6 @@ final class CloudSyncStatus {
         }
     }
 
-    /// Ob ein Fehler nur bedeutet, dass kein Konto angemeldet ist.
-    private nonisolated static func isNoAccountError(_ error: Error) -> Bool {
-        let nsError = error as NSError
-        // CoreData meldet den Fall als 134400 mit dem CloudKit-Fehler im Kontext.
-        if nsError.domain == NSCocoaErrorDomain && nsError.code == 134400 { return true }
-        if let ckError = error as? CKError { return ckError.code == .notAuthenticated }
-        return false
-    }
 }
 
 // MARK: - Anmeldung beim NotificationCenter

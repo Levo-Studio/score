@@ -279,12 +279,12 @@ final class ManualCloudSync {
     }
 
     /// Ob ein Fehler nur bedeutet, dass kein Konto angemeldet ist.
+    ///
+    /// Führt über ``CloudSyncFailure``, damit hier und im Sync-Status dieselbe
+    /// Antwort herauskommt — und damit auch der Fall gefunden wird, in dem der
+    /// Kontofehler in einem `partialFailure` steckt statt obenauf zu liegen.
     private nonisolated static func isNoAccountError(_ error: Error) -> Bool {
-        let nsError = error as NSError
-        // CoreData meldet den Fall als 134400 mit dem CloudKit-Fehler im Kontext.
-        if nsError.domain == NSCocoaErrorDomain && nsError.code == 134400 { return true }
-        if let ckError = error as? CKError { return ckError.code == .notAuthenticated }
-        return false
+        CloudSyncFailure.diagnose(error) == .noAccount
     }
 
     /// Ob ein Fehler nur davon kommt, dass der alte Speicher abgeräumt wurde.

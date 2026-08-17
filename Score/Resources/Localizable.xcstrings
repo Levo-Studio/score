@@ -1375,6 +1375,23 @@
         }
       }
     },
+    "Auf diesem Gerät ist kein iCloud-Konto angemeldet." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf diesem Gerät ist kein iCloud-Konto angemeldet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No iCloud account is signed in on this device."
+          }
+        }
+      }
+    },
     "Auf einen Blick" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2430,6 +2447,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your three advanced subjects. In Baden-Württemberg that is fixed, so there is nothing to choose here."
+          }
+        }
+      }
+    },
+    "Der Abgleich mit iCloud kam nicht durch. Score versucht es später erneut." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Abgleich mit iCloud kam nicht durch. Score versucht es später erneut."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The sync with iCloud did not go through. Score will try again later."
           }
         }
       }
@@ -3684,6 +3718,23 @@
         }
       }
     },
+    "In deiner iCloud ist kein Platz mehr frei." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In deiner iCloud ist kein Platz mehr frei."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your iCloud storage is full."
+          }
+        }
+      }
+    },
     "In diesem Build nicht verfügbar" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3884,6 +3935,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No sign-up, no account. Your courses live in iCloud and stay in sync across iPhone and iPad."
+          }
+        }
+      }
+    },
+    "Keine Verbindung zu iCloud. Score versucht es später von selbst." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Verbindung zu iCloud. Score versucht es später von selbst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No connection to iCloud. Score will try again on its own."
           }
         }
       }

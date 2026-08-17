@@ -736,6 +736,74 @@
         }
       }
     },
+    "%lld von 5 eingetragen · offene angesetzt mit %@ Punkten" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld von 5 eingetragen · offene angesetzt mit %@ Punkten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld of 5 entered · open ones assumed at %@ points"
+          }
+        }
+      }
+    },
+    "%lld von Score" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld von Score"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld by Score"
+          }
+        }
+      }
+    },
+    "%lld von dir" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld von dir"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld by you"
+          }
+        }
+      }
+    },
+    "%lld über der Fachgrenze" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld über der Fachgrenze"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld over the subject limit"
+          }
+        }
+      }
+    },
     "0–15 Punkte" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1324,6 +1392,23 @@
         }
       }
     },
+    "Amtliche Tabelle in Stufen von 18 Punkten · ab 823 steht 1,0" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Amtliche Tabelle in Stufen von 18 Punkten · ab 823 steht 1,0"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Official table in steps of 18 points · 823 and up is 1.0"
+          }
+        }
+      }
+    },
     "Anteil an der Teilnote" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1623,19 +1708,19 @@
         }
       }
     },
-    "Belegen musst du mindestens 42 Kurse — zwölf in den Leistungsfächern und mindestens dreissig weitere. In den Schnitt gehen davon 40 ein." : {
+    "Belegt werden mindestens 42 · gewertet 40" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Belegen musst du mindestens 42 Kurse — zwölf in den Leistungsfächern und mindestens dreissig weitere. In den Schnitt gehen davon 40 ein."
+            "value" : "Belegt werden mindestens 42 · gewertet 40"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "You have to take at least 42 courses — twelve in your advanced subjects and at least thirty more. Of those, 40 go into your average."
+            "value" : "At least 42 are taken · 40 are counted"
           }
         }
       }
@@ -1772,6 +1857,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Change picture"
+          }
+        }
+      }
+    },
+    "Bis 40 fehlen noch %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bis 40 fehlen noch %lld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld short of 40"
           }
         }
       }
@@ -2332,6 +2434,23 @@
         }
       }
     },
+    "Davon geklammert" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Davon geklammert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Of those, bracketed"
+          }
+        }
+      }
+    },
     "Dazu deine mündlichen Prüfungsfächer: In den Kursen, in denen du geprüft wirst, sind alle Halbjahre anrechnungspflichtig. Sie lassen sich nicht klammern, auch nicht von Hand." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2345,23 +2464,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Plus your oral exam subjects: in the subjects you are examined in, every semester must be counted. They cannot be bracketed, not even by hand."
-          }
-        }
-      }
-    },
-    "Dazu kommen die fünf Abiturprüfungen, jede vierfach gewertet, höchstens 300 Punkte. Beides zusammen sind 300 bis 900 Punkte, und aus dieser Gesamtpunktzahl liest die amtliche Tabelle die Note ab — in Stufen von 18 Punkten, ab 823 Punkten steht 1,0. Score rechnet das nicht mit einer Formel nach, sondern schlägt in der Tabelle nach." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dazu kommen die fünf Abiturprüfungen, jede vierfach gewertet, höchstens 300 Punkte. Beides zusammen sind 300 bis 900 Punkte, und aus dieser Gesamtpunktzahl liest die amtliche Tabelle die Note ab — in Stufen von 18 Punkten, ab 823 Punkten steht 1,0. Score rechnet das nicht mit einer Formel nach, sondern schlägt in der Tabelle nach."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "On top come the five Abitur exams, each counted fourfold, at most 300 points. Together that is 300 to 900 points, and the official table reads the grade off that total — in steps of 18 points, with 1.0 from 823 points on. Score does not reproduce this with a formula; it looks it up in the table."
           }
         }
       }
@@ -2610,6 +2712,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The basic courses you picked on top — everything else you take."
+          }
+        }
+      }
+    },
+    "Die Kursgrenze eines Fachs greift zuerst: Was ein Fach nicht einbringt, steht gar nicht mehr zur Klammerung." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Kursgrenze eines Fachs greift zuerst: Was ein Fach nicht einbringt, steht gar nicht mehr zur Klammerung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A subject’s course limit applies first: whatever a subject does not contribute is no longer up for bracketing at all."
           }
         }
       }
@@ -2947,6 +3066,23 @@
         }
       }
     },
+    "Eingebracht" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingebracht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Counted"
+          }
+        }
+      }
+    },
     "Einrichten" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3011,23 +3147,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Recorded assessments"
-          }
-        }
-      }
-    },
-    "Erst %lld von %lld Kursen haben eine Note. Score rechnet mit dem, was schon da ist." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erst %lld von %lld Kursen haben eine Note. Score rechnet mit dem, was schon da ist."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Only %1$lld of %2$lld courses have a grade so far. Score works with what is already there."
           }
         }
       }
@@ -3303,6 +3422,23 @@
         }
       }
     },
+    "Fünf Ergebnisse · jedes × 4" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fünf Ergebnisse · jedes × 4"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Five results · each × 4"
+          }
+        }
+      }
+    },
     "Fünfstündig, zwölf Kurse, größtes Gewicht im Schnitt." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3337,23 +3473,6 @@
         }
       }
     },
-    "Geprüft wird in fünf Fächern: schriftlich in den drei Leistungsfächern, mündlich in zwei weiteren. Jedes Ergebnis zählt vierfach — höchstens 300 Punkte. Die Ergebnisse trägst du im jeweiligen Fach ein." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Geprüft wird in fünf Fächern: schriftlich in den drei Leistungsfächern, mündlich in zwei weiteren. Jedes Ergebnis zählt vierfach — höchstens 300 Punkte. Die Ergebnisse trägst du im jeweiligen Fach ein."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Five subjects are examined: written in the three advanced subjects, oral in two more. Each result counts fourfold — at most 300 points. You enter the results in the subject itself."
-          }
-        }
-      }
-    },
     "Gesamt" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3371,23 +3490,6 @@
         }
       }
     },
-    "Gesamtpunktzahl in der amtlichen Notentabelle" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gesamtpunktzahl in der amtlichen Notentabelle"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Total points in the official grade table"
-          }
-        }
-      }
-    },
     "Gesetzt" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3401,40 +3503,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fixed"
-          }
-        }
-      }
-    },
-    "Geteilt durch die Zahl der Kurse" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Geteilt durch die Zahl der Kurse"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Divided by the number of courses"
-          }
-        }
-      }
-    },
-    "Geteilt durch die Zahl der Wertungen" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Geteilt durch die Zahl der Wertungen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Divided by the number of weightings"
           }
         }
       }
@@ -3565,19 +3633,19 @@
         }
       }
     },
-    "Haben zwei Wahl-Basisfach-Kurse dieselbe Punktzahl und trifft es nur noch eines, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten." : {
+    "Haben zwei Kurse dieselbe Punktzahl und trifft es nur einen, entscheidet die Reihenfolge der Fächer." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Haben zwei Wahl-Basisfach-Kurse dieselbe Punktzahl und trifft es nur noch eines, entscheidet die Reihenfolge der Fächer. Halbjahre ohne Note und nicht belegte Halbjahre zählen nirgends mit — sie sind kein Kurs mit null Punkten."
+            "value" : "Haben zwei Kurse dieselbe Punktzahl und trifft es nur einen, entscheidet die Reihenfolge der Fächer."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "If two elective basic courses have the same score and only one of them gets bracketed, the order of the subjects decides. Semesters without a grade and semesters you did not take count nowhere — they are not a course worth zero points."
+            "value" : "If two courses have the same points and only one of them is dropped, the order of the subjects decides."
           }
         }
       }
@@ -3650,19 +3718,19 @@
         }
       }
     },
-    "Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 40 übrig sind. Zwei deiner drei Leistungsfächer zählen dabei doppelt — aus 40 Kursen werden so 48 Wertungen. Die Punktsumme über alle 48 geteilt durch 48 und mal 40 ergibt die Kurspunkte, höchstens 600." : {
+    "Halbjahre ohne Note zählen nirgends mit — sie sind kein Kurs mit null Punkten." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hast du mehr, wird geklammert: erst, was du selbst geklammert hast, danach von unten die schwächsten, bis 40 übrig sind. Zwei deiner drei Leistungsfächer zählen dabei doppelt — aus 40 Kursen werden so 48 Wertungen. Die Punktsumme über alle 48 geteilt durch 48 und mal 40 ergibt die Kurspunkte, höchstens 600."
+            "value" : "Halbjahre ohne Note zählen nirgends mit — sie sind kein Kurs mit null Punkten."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "If you have more, they get bracketed: first whatever you bracketed yourself, then the weakest ones from the bottom until 40 remain. Two of your three advanced subjects count double — so 40 courses become 48 weightings. The sum over all 48, divided by 48 and times 40, gives the course points, up to 600."
+            "value" : "Semesters without a grade count nowhere — they are not a course worth zero points."
           }
         }
       }
@@ -4194,6 +4262,23 @@
         }
       }
     },
+    "Kurse mit Note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurse mit Note"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Courses with a grade"
+          }
+        }
+      }
+    },
     "Kurse, die zählen" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4224,23 +4309,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Course points"
-          }
-        }
-      }
-    },
-    "Kurspunkte · Schnitt × 40" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kurspunkte · Schnitt × 40"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Course points · average × 40"
           }
         }
       }
@@ -4513,6 +4581,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "More"
+          }
+        }
+      }
+    },
+    "Mehr als 40 gehen nicht ein" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr als 40 gehen nicht ein"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No more than 40 can count"
           }
         }
       }
@@ -5054,40 +5139,6 @@
         }
       }
     },
-    "Nicht klammerbar sind die Kurse deiner Prüfungsfächer: die drei Leistungsfächer, in denen du schriftlich geprüft wirst, und deine beiden mündlichen Prüfungsfächer. Deren Halbjahre sind anrechnungspflichtig. Pflicht-Basisfächer klammert Score ebenfalls nie von sich aus." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nicht klammerbar sind die Kurse deiner Prüfungsfächer: die drei Leistungsfächer, in denen du schriftlich geprüft wirst, und deine beiden mündlichen Prüfungsfächer. Deren Halbjahre sind anrechnungspflichtig. Pflicht-Basisfächer klammert Score ebenfalls nie von sich aus."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The courses of your exam subjects cannot be bracketed: the three advanced subjects you sit written exams in, and your two oral exam subjects. Their semesters must be counted. Score never brackets required basic courses on its own either."
-          }
-        }
-      }
-    },
-    "Noch %lld von 5 Prüfungen offen. Score setzt sie mit %@ Punkten an — deinem heutigen Stand — und rechnet die Gesamtpunktzahl daraus hoch." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Noch %lld von 5 Prüfungen offen. Score setzt sie mit %@ Punkten an — deinem heutigen Stand — und rechnet die Gesamtpunktzahl daraus hoch."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld of 5 exams still to come. Score assumes %2$@ points for them — where you stand today — and projects the total from that."
-          }
-        }
-      }
-    },
     "Noch ein Fach fehlt. Score rechnet auch mit einem, weiss dann aber nur die Hälfte." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5101,6 +5152,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "One subject is still missing. Score works with one as well, but then it only knows half the picture."
+          }
+        }
+      }
+    },
+    "Noch kein Leistungsfach zählt doppelt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch kein Leistungsfach zählt doppelt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No advanced subject counts double yet"
           }
         }
       }
@@ -5156,6 +5224,23 @@
         }
       }
     },
+    "Noch nichts zu klammern" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nichts zu klammern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing to bracket yet"
+          }
+        }
+      }
+    },
     "Noch nie" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5169,6 +5254,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Never"
+          }
+        }
+      }
+    },
+    "Note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grade"
           }
         }
       }
@@ -5496,23 +5598,6 @@
         }
       }
     },
-    "Prüfungen · fünf Ergebnisse × 4" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Prüfungen · fünf Ergebnisse × 4"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Exams · five results × 4"
-          }
-        }
-      }
-    },
     "Prüfungsfach: Alle Halbjahre sind anrechnungspflichtig und lassen sich nicht klammern." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5598,23 +5683,6 @@
         }
       }
     },
-    "Punkteschnitt je Wertung" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Punkteschnitt je Wertung"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Average points per weighting"
-          }
-        }
-      }
-    },
     "Punktsumme der eingebrachten Kurse" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5628,23 +5696,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Points of the counted courses"
-          }
-        }
-      }
-    },
-    "Punktsumme über alle Wertungen" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Punktsumme über alle Wertungen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Points across all weightings"
           }
         }
       }
@@ -5781,6 +5832,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Written exams"
+          }
+        }
+      }
+    },
+    "Schriftlich in den drei Leistungsfächern, mündlich in zwei weiteren. Die Ergebnisse trägst du im jeweiligen Fach ein." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriftlich in den drei Leistungsfächern, mündlich in zwei weiteren. Die Ergebnisse trägst du im jeweiligen Fach ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Written in your three advanced subjects, oral in two more. You enter the results in the subject itself."
           }
         }
       }
@@ -6126,6 +6194,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "As things stand today, it is not enough yet. The exams are still ahead — this is a projection, not a result."
+          }
+        }
+      }
+    },
+    "Sonderfälle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonderfälle"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edge cases"
           }
         }
       }
@@ -6613,6 +6698,23 @@
         }
       }
     },
+    "Wertungen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wertungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weightings"
+          }
+        }
+      }
+    },
     "Wie heisst du?" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6643,23 +6745,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "What should we call you?"
-          }
-        }
-      }
-    },
-    "Wie viele Kurse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift zuerst: Was ein Fach nicht einbringt, steht auch nicht mehr zur Klammerung." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wie viele Kurse ein Fach höchstens einbringt, legst du im Fach-Editor fest. Diese Grenze greift zuerst: Was ein Fach nicht einbringt, steht auch nicht mehr zur Klammerung."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "How many courses a subject contributes at most is set in the subject editor. That limit applies first: what a subject does not contribute is not up for bracketing either."
           }
         }
       }
@@ -6898,6 +6983,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Back"
+          }
+        }
+      }
+    },
+    "Zwei Leistungsfächer zählen doppelt · + %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwei Leistungsfächer zählen doppelt · + %lld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Two advanced subjects count double · + %lld"
           }
         }
       }

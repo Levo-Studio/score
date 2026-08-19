@@ -393,7 +393,17 @@ final class OnboardingViewModel {
             colorValue: template?.colorValue ?? Self.colorValue(for: sortIndex),
             kind: kind,
             isCustom: template == nil,
-            activeSemesters: classLevel.availableSemesters,
+            // Alle vier Halbjahre, unabhängig davon, in welcher Klassenstufe
+            // der Nutzer gerade steckt. Ein Fach belegt man für die ganze
+            // Kursstufe, nicht für ein Halbjahr — wer in Klasse 11 einrichtet,
+            // müsste sonst später jedes Fach einzeln nachziehen, nur damit es
+            // in 3/4 und 4/4 überhaupt auftaucht.
+            //
+            // Die Klassenstufe steuert weiterhin, welches Halbjahr die App beim
+            // Start zeigt und was sie zur Eingabe anbietet. Sie soll aber nicht
+            // darüber entscheiden, wie lange ein Fach belegt ist — das ist eine
+            // Aussage über das Fach, keine über den heutigen Tag.
+            activeSemesters: Semester.allIndices,
             // Ein Leistungsfach wird bereits schriftlich geprüft; die Angabe
             // hätte dort keine Bedeutung und bliebe im Datensatz als Widerspruch
             // stehen.

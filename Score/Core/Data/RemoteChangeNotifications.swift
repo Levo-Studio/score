@@ -39,7 +39,7 @@ import UIKit
 /// Anmeldung ohne Zweck.
 final class ScoreAppDelegate: NSObject, UIApplicationDelegate {
 
-    private static let log = Logger(subsystem: "levo-studio.Score", category: "sync")
+    private static let log = Logger(subsystem: "apps.levo-studio.Score", category: "sync")
 
     func application(
         _ application: UIApplication,

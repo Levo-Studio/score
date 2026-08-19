@@ -161,7 +161,7 @@ final class ScoreDataStore {
         let configuration = ModelConfiguration(
             schema: schema,
             cloudKitDatabase: usesCloudKit
-                ? .private("iCloud.levo-studio.Score")
+                ? .private("iCloud.apps.levo-studio.Score")
                 : .none
         )
 

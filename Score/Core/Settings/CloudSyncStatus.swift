@@ -65,7 +65,7 @@ final class CloudSyncStatus {
     private let probesAccount: Bool
 
     init(
-        containerIdentifier: String = "iCloud.levo-studio.Score",
+        containerIdentifier: String = "iCloud.apps.levo-studio.Score",
         state: State = .unknown,
         probesAccount: Bool = true
     ) {

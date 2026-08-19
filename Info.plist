@@ -2,6 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!--
+	  Der Name auf dem Homescreen. Er steht hier und nicht in den
+	  Build-Einstellungen: Das Projekt bringt ein eigenes Info.plist mit, und
+	  INFOPLIST_KEY_… wird dann nicht eingemischt — der Name kam bisher nur
+	  zufällig über den Produktnamen zustande.
+
+	  Der Name im App Store ist etwas anderes und steht in App Store Connect:
+	  dort heisst die App „Score – Abi Planer", auf dem Gerät bleibt es „Score".
+	-->
+	<key>CFBundleDisplayName</key>
+	<string>Score</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Archivo.ttf</string>

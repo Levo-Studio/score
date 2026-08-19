@@ -88,6 +88,13 @@ final class ManualCloudSync {
     /// und ein zu früher Abbruch meldete einen Fehler, den es nicht gibt.
     static let timeout: Duration = .seconds(30)
 
+    /// Wie lange nach dem Einrichten auf Import oder Export gewartet wird, bevor
+    /// der Abgleich als „nichts zu tun" abgeschlossen gilt.
+    ///
+    /// Kurz genug, dass der Knopf nicht hängt; lang genug, dass ein Lauf, der
+    /// unmittelbar folgt, noch als der eigentliche Abgleich gilt.
+    static let defaultSettleDuration: Duration = .seconds(4)
+
     /// Wie lange der Haken stehen bleibt, bevor die Schaltfläche in den
     /// Ruhezustand zurückfällt. Der Zustand endet also — ein Ring, der sich nie
     /// beruhigt, wäre keine Rückmeldung, sondern ein Dauerzustand.
@@ -97,12 +104,19 @@ final class ManualCloudSync {
     /// der Haken das Bild noch steht, wenn es aufgenommen wird.
     let successDuration: Duration
 
+    /// Dieselbe Karenz für diese Instanz. Tests setzen sie kurz.
+    let settleDuration: Duration
+
     private let defaults: UserDefaults
     private let saveAndReopen: @MainActor () async throws -> Void
     private let isAvailable: @MainActor () -> Bool
 
     private var observation: NotificationObservation?
     private var run: Task<Void, Never>?
+
+    /// Wartet nach dem Einrichten kurz auf einen Lauf, der vielleicht gar nicht
+    /// kommt, weil es nichts zu tun gibt.
+    private var settle: Task<Void, Never>?
     private var reset: Task<Void, Never>?
 
     private enum Key {
@@ -119,6 +133,7 @@ final class ManualCloudSync {
         defaults: UserDefaults = .standard,
         observesEvents: Bool = true,
         successDuration: Duration = defaultSuccessDuration,
+        settleDuration: Duration = defaultSettleDuration,
         saveAndReopen: @escaping @MainActor () async throws -> Void = ScoreDataStore.saveAndReopen,
         isAvailable: @escaping @MainActor () -> Bool = {
             CloudKitAvailability.isEntitled && CloudSyncActivation.isActiveInThisSession
@@ -126,6 +141,7 @@ final class ManualCloudSync {
     ) {
         self.defaults = defaults
         self.successDuration = successDuration
+        self.settleDuration = settleDuration
         self.saveAndReopen = saveAndReopen
         self.isAvailable = isAvailable
         self.lastSyncedAt = defaults.object(forKey: Key.lastSyncedAt) as? Date
@@ -189,6 +205,13 @@ final class ManualCloudSync {
     /// bauen, ohne CloudKit zu betreiben.
     struct Event: Sendable, Equatable {
         var isImportOrExport: Bool
+
+        /// Ob die Spiegelung sich gerade eingerichtet hat.
+        ///
+        /// Für sich genommen ist das kein Abgleich. Es ist aber der Beweis, dass
+        /// die Verbindung zu iCloud steht — und wenn danach nichts mehr kommt,
+        /// war schlicht nichts zu tun. Siehe ``settleDuration``.
+        var isSetup = false
         var endDate: Date?
         var hasFailed: Bool
         var isNoAccount: Bool
@@ -230,15 +253,38 @@ final class ManualCloudSync {
             return
         }
 
-        // Nur Import und Export bewegen Daten. Das reine Einrichten der
-        // Spiegelung als „abgeglichen" auszugeben wäre eine Übertreibung.
-        guard event.isImportOrExport, let endDate = event.endDate else { return }
+        // Die Spiegelung steht, und ob danach noch etwas kommt, ist offen. Wer
+        // nichts geändert hat und auf dessen anderem Gerät sich nichts getan
+        // hat, bekommt gar keinen Import und keinen Export — CloudKit hat dann
+        // nichts zu tun. Genau dieser Fall lief bisher in die Zeitgrenze und
+        // wurde als Fehlschlag gemeldet, obwohl alles in Ordnung war.
+        //
+        // Deshalb: nach dem Einrichten kurz warten. Kommt ein Lauf, gewinnt er.
+        // Kommt keiner, war der Abgleich erfolgreich und hatte nichts zu tragen.
+        if event.isSetup, phase == .running {
+            settle?.cancel()
+            settle = Task { [weak self] in
+                try? await Task.sleep(for: self?.settleDuration ?? Self.defaultSettleDuration)
+                guard let self, !Task.isCancelled, self.phase == .running else { return }
+                self.recordSync(at: .now)
+                self.finish(with: .succeeded)
+            }
+            return
+        }
 
-        lastSyncedAt = endDate
-        defaults.set(endDate, forKey: Key.lastSyncedAt)
+        // Import und Export bewegen Daten — das ist der eindeutige Fall.
+        guard event.isImportOrExport, let endDate = event.endDate else { return }
+        settle?.cancel()
+
+        recordSync(at: endDate)
 
         guard phase == .running else { return }
         finish(with: .succeeded)
+    }
+
+    private func recordSync(at date: Date) {
+        lastSyncedAt = date
+        defaults.set(date, forKey: Key.lastSyncedAt)
     }
 
     private func finish(with phase: Phase) {
@@ -276,6 +322,7 @@ final class ManualCloudSync {
 
             let event = Event(
                 isImportOrExport: raw.type == .import || raw.type == .export,
+                isSetup: raw.type == .setup,
                 endDate: raw.endDate,
                 hasFailed: raw.error != nil,
                 isNoAccount: raw.error.map(Self.isNoAccountError) ?? false,

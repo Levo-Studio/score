@@ -29,6 +29,7 @@ struct ManualCloudSyncTests {
         ManualCloudSync(
             defaults: defaults,
             observesEvents: false,
+            settleDuration: .milliseconds(50),
             saveAndReopen: saveAndReopen,
             isAvailable: { isAvailable }
         )
@@ -47,6 +48,54 @@ struct ManualCloudSyncTests {
 
     private func finishedImport(at date: Date) -> ManualCloudSync.Event {
         ManualCloudSync.Event(isImportOrExport: true, endDate: date, hasFailed: false, isNoAccount: false)
+    }
+
+    private func finishedSetup(at date: Date) -> ManualCloudSync.Event {
+        ManualCloudSync.Event(
+            isImportOrExport: false,
+            isSetup: true,
+            endDate: date,
+            hasFailed: false,
+            isNoAccount: false
+        )
+    }
+
+    // MARK: - Nichts zu tun ist kein Fehlschlag
+
+    /// Der Fall aus dem Betrieb: Wer nichts geändert hat und auf dessen anderem
+    /// Gerät sich nichts getan hat, bekommt von CloudKit weder Import noch
+    /// Export — es gibt schlicht nichts zu tragen. Bis hierher lief genau das
+    /// in die Zeitgrenze und meldete „Synchronisierung fehlgeschlagen".
+    @Test("Ohne Import und Export gilt der Abgleich trotzdem als erfolgreich")
+    func setupAloneCountsAsSync() async {
+        let defaults = makeDefaults()
+        let sync = makeSync(defaults: defaults)
+
+        sync.start()
+        await waitUntil { sync.phase == .running }
+        sync.apply(finishedSetup(at: .now))
+
+        await waitUntil { sync.phase == .succeeded }
+        #expect(sync.phase == .succeeded)
+        #expect(sync.lastSyncedAt != nil)
+    }
+
+    /// Kommt doch noch ein Lauf, ist er der eigentliche Abgleich — sein
+    /// Zeitpunkt zählt, nicht der des Einrichtens.
+    @Test("Ein folgender Import gewinnt gegen das blosse Einrichten")
+    func importWinsOverSetup() async {
+        let defaults = makeDefaults()
+        let sync = makeSync(defaults: defaults)
+        let ende = Date(timeIntervalSince1970: 1_800_000_000)
+
+        sync.start()
+        await waitUntil { sync.phase == .running }
+        sync.apply(finishedSetup(at: .now))
+        sync.apply(finishedImport(at: ende))
+
+        await waitUntil { sync.phase == .succeeded }
+        #expect(sync.phase == .succeeded)
+        #expect(sync.lastSyncedAt == ende)
     }
 
     // MARK: - Auslösen

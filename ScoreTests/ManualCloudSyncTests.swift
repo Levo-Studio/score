@@ -185,8 +185,14 @@ struct ManualCloudSyncTests {
         #expect(sync.lastSyncedAt == nil)
     }
 
-    @Test("Ein gescheiterter Lauf setzt keinen Zeitpunkt")
-    func failedEventSetsNothing() {
+    /// Ein gemeldeter Fehler beendet den Lauf **nicht** mehr. Beim Neuöffnen des
+    /// Speichers meldet die alte Spiegelung ihre abgebrochenen Anfragen, und
+    /// welche Codes das sind, hängt vom Gerät ab. Aufzugeben, während die neue
+    /// Spiegelung noch arbeitet, meldete einen Fehlschlag, den es nicht gibt —
+    /// genau das stand beim Nutzer als „Synchronisierung gestört", während
+    /// iCloud einwandfrei lief. Bleibt es wirklich dabei, greift die Zeitgrenze.
+    @Test("Ein gemeldeter Fehler beendet den Lauf nicht und setzt keinen Zeitpunkt")
+    func failedEventKeepsRunning() {
         let sync = makeSync(defaults: makeDefaults())
 
         sync.start()
@@ -194,7 +200,21 @@ struct ManualCloudSyncTests {
             ManualCloudSync.Event(isImportOrExport: true, endDate: .now, hasFailed: true, isNoAccount: false)
         )
 
-        #expect(sync.phase == .failed(.sync))
+        #expect(sync.phase == .running)
+        #expect(sync.lastSyncedAt == nil)
+    }
+
+    /// Die eine Ausnahme: Ohne Konto wartet niemand auf etwas, das nicht kommt.
+    @Test("Ohne Konto endet der Lauf sofort")
+    func noAccountEndsTheRun() {
+        let sync = makeSync(defaults: makeDefaults())
+
+        sync.start()
+        sync.apply(
+            ManualCloudSync.Event(isImportOrExport: true, endDate: .now, hasFailed: true, isNoAccount: true)
+        )
+
+        #expect(sync.phase == .failed(.noAccount))
         #expect(sync.lastSyncedAt == nil)
     }
 

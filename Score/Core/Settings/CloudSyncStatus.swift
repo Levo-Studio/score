@@ -121,8 +121,14 @@ final class CloudSyncStatus {
                 state = .unknown
             }
         } catch {
+            // Dieselbe Zurückhaltung wie oben: Nur was der Nutzer beheben
+            // kann, erscheint als Störung.
             let reason = CloudSyncFailure.diagnose(error)
-            state = reason == .noAccount ? .noAccount : .failed(reason.message)
+            switch reason {
+            case .noAccount: state = .noAccount
+            case .quota: state = .failed(reason.message)
+            case .retryable, .unknown: break
+            }
         }
     }
 
@@ -195,8 +201,29 @@ final class CloudSyncStatus {
             state = .syncing
             return
 
-        case .quota, .unknown:
-            state = .failed(outcome.reason!.message)
+        // Volle iCloud ist das Einzige neben dem fehlenden Konto, was der
+        // Nutzer selbst beheben kann. Also ist es auch das Einzige, was hier
+        // als Störung erscheint.
+        case .quota:
+            state = .failed(CloudSyncFailure.Reason.quota.message)
+            return
+
+        // Alles Übrige bleibt stumm — und das ist eine bewusste Entscheidung.
+        //
+        // Die Spiegelung meldet beim Neuöffnen des Speichers eine ganze Reihe
+        // von Fehlern, die zum Vorgang gehören und nicht zu seinem Ergebnis:
+        // abgebrochene Anfragen, ein Delegat, der sich noch einrichtet, eine
+        // Anfrage, die eine andere überholt. Welche davon auftreten, hängt vom
+        // Gerät und vom Datenbestand ab — eine Liste zu pflegen hiesse, sie
+        // immer wieder zu erweitern, und bis dahin stünde beim Nutzer eine
+        // Warnung, gegen die er nichts tun kann.
+        //
+        // Ob der Abgleich wirklich klemmt, sagt ihm die Zeile darunter besser:
+        // „Zuletzt synchronisiert" kommt aus abgeschlossenen Läufen und wird
+        // alt, wenn nichts mehr durchkommt. Das ist die ehrlichere Auskunft.
+        case .unknown:
+            if case .synced = state { return }
+            state = .syncing
             return
         }
 

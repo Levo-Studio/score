@@ -247,9 +247,17 @@ final class ManualCloudSync {
             // die Spiegelung noch arbeitet — und der nächste Versuch kommt
             // vielleicht eine Sekunde später durch. Bleibt es dabei, greift die
             // Zeitgrenze und sagt es ehrlich.
-            if event.isRetryable && !event.isNoAccount { return }
-
-            finish(with: .failed(event.isNoAccount ? .noAccount : .sync))
+            // Nur das fehlende Konto beendet den Lauf sofort — dagegen kann
+            // der Nutzer etwas tun. Jeder andere Fehler kann zum Vorgang
+            // gehören statt zu seinem Ergebnis: Beim Neuöffnen des Speichers
+            // meldet die alte Spiegelung ihre abgebrochenen Anfragen, und
+            // welche das sind, hängt vom Gerät ab. Aufzugeben, während die
+            // neue Spiegelung noch arbeitet, meldete einen Fehlschlag, den es
+            // nicht gibt.
+            //
+            // Bleibt es wirklich dabei, greift die Zeitgrenze und sagt es.
+            guard event.isNoAccount else { return }
+            finish(with: .failed(.noAccount))
             return
         }
 

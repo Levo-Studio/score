@@ -36,8 +36,12 @@ nonisolated enum CloudSyncFailure {
     enum Reason: Sendable, Equatable {
         /// Kein iCloud-Konto auf dem Gerät. Kein Fehler, sondern ein Zustand.
         case noAccount
-        case network
         case quota
+        /// Ein Fehler, den CloudKit selbst wiederholt — Ratenbegrenzung, belegte
+        /// Zone, kurzer Netzaussetzer, ein Datensatz, der sich zwischenzeitlich
+        /// geändert hat. Im Betrieb ist das der Normalfall und **kein** Anlass,
+        /// dem Nutzer eine Störung zu melden.
+        case retryable
         /// Bleibt es unklar, wird das auch so gesagt — nie als Fehlercode.
         case unknown
     }
@@ -45,9 +49,11 @@ nonisolated enum CloudSyncFailure {
     /// Liest den Grund aus einem Fehler heraus.
     static func diagnose(_ error: Error) -> Reason {
         let reasons = unwrap(error)
+        // Die Reihenfolge ist die der Dringlichkeit: Was der Nutzer selbst
+        // beheben muss, gewinnt gegen das, was sich von allein erledigt.
         if reasons.contains(where: isNoAccount) { return .noAccount }
-        if reasons.contains(where: isNetwork) { return .network }
         if reasons.contains(where: isQuota) { return .quota }
+        if reasons.contains(where: isRetryable) { return .retryable }
         return .unknown
     }
 
@@ -84,12 +90,34 @@ nonisolated enum CloudSyncFailure {
         return ckError.code == .notAuthenticated || ckError.code == .managedAccountRestricted
     }
 
-    private static func isNetwork(_ error: Error) -> Bool {
-        if let ckError = error as? CKError {
-            return ckError.code == .networkUnavailable || ckError.code == .networkFailure
-        }
+    /// Ob CloudKit den Fehler von sich aus noch einmal versucht.
+    ///
+    /// Diese Liste ist der Kern der Sache. Die Spiegelung meldet solche Fehler
+    /// im gewöhnlichen Betrieb dauernd — sie wartet dann und läuft erneut. Wer
+    /// jeden davon als Störung anzeigt, hat eine Anzeige, die meistens rot ist
+    /// und deshalb nichts mehr wert, wenn sie einmal zu Recht rot wird.
+    private static func isRetryable(_ error: Error) -> Bool {
         let nsError = error as NSError
-        return nsError.domain == NSURLErrorDomain
+
+        // Der Speicher wurde abgeräumt — beim Neuöffnen der Normalfall.
+        if nsError.domain == NSCocoaErrorDomain && nsError.code == 134407 { return true }
+        // Jede Netzstörung. Sie geht vorbei, und die Spiegelung nimmt den Faden
+        // von selbst wieder auf.
+        if nsError.domain == NSURLErrorDomain { return true }
+
+        guard let ckError = error as? CKError else { return false }
+        return switch ckError.code {
+        case .networkUnavailable, .networkFailure,
+             .serviceUnavailable, .requestRateLimited, .zoneBusy,
+             // Ein Datensatz hat sich zwischenzeitlich geändert. Genau dafür ist
+             // die Spiegelung da; sie führt zusammen und schreibt erneut.
+             .serverRecordChanged,
+             .changeTokenExpired,
+             .internalError:
+            true
+        default:
+            false
+        }
     }
 
     private static func isQuota(_ error: Error) -> Bool {
@@ -104,7 +132,7 @@ extension CloudSyncFailure.Reason {
         switch self {
         case .noAccount:
             .scoreLocalized("Auf diesem Gerät ist kein iCloud-Konto angemeldet.")
-        case .network:
+        case .retryable:
             .scoreLocalized("Keine Verbindung zu iCloud. Score versucht es später von selbst.")
         case .quota:
             .scoreLocalized("In deiner iCloud ist kein Platz mehr frei.")

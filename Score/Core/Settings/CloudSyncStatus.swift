@@ -170,10 +170,33 @@ final class CloudSyncStatus {
     }
 
     private func apply(_ outcome: Outcome) {
+        switch outcome.reason {
+        case .none:
+            break
+
         // Der Setup-Lauf meldet den Kontofehler zuerst; ihn als Sync-Fehler zu
         // zeigen wäre irreführend, wenn schlicht niemand angemeldet ist.
-        if let reason = outcome.reason {
-            state = reason == .noAccount ? .noAccount : .failed(reason.message)
+        case .noAccount:
+            state = .noAccount
+            return
+
+        // Was CloudKit selbst wiederholt, ist keine Störung. Die Spiegelung
+        // meldet solche Fehler im Betrieb dauernd — Ratenbegrenzung, belegte
+        // Zone, ein Datensatz, der sich zwischenzeitlich geändert hat. Wer sie
+        // anzeigt, hat eine Warnung, die fast immer steht und deshalb nichts
+        // mehr aussagt, wenn sie einmal zu Recht steht.
+        //
+        // Der zuletzt bekannte gute Stand bleibt deshalb stehen. Kommt der
+        // Abgleich dauerhaft nicht durch, sieht der Nutzer das am Zeitstempel
+        // unter „Zuletzt synchronisiert" — und der Knopf sagt es ihm sofort,
+        // wenn er von Hand nachfragt.
+        case .retryable:
+            if case .synced = state { return }
+            state = .syncing
+            return
+
+        case .quota, .unknown:
+            state = .failed(outcome.reason!.message)
             return
         }
 

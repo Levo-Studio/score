@@ -197,6 +197,10 @@ final class ManualCloudSync {
         /// abgeräumt wurde. Beim Neuöffnen ist das der Normalfall und kein
         /// Grund, dem Nutzer einen Fehler zu melden.
         var isTeardown = false
+
+        /// Ob CloudKit den Fehler von sich aus wiederholt. Dann ist der Lauf
+        /// nicht gescheitert, sondern noch unterwegs — die Zeitgrenze entscheidet.
+        var isRetryable = false
     }
 
     /// Verarbeitet einen Lauf — auch einen, den niemand angestossen hat.
@@ -214,6 +218,14 @@ final class ManualCloudSync {
 
         if event.hasFailed {
             guard phase == .running else { return }
+
+            // Ein Fehler, den CloudKit selbst wiederholt, beendet den Lauf
+            // nicht. Ihn als Fehlschlag zu melden hiesse, aufzugeben, während
+            // die Spiegelung noch arbeitet — und der nächste Versuch kommt
+            // vielleicht eine Sekunde später durch. Bleibt es dabei, greift die
+            // Zeitgrenze und sagt es ehrlich.
+            if event.isRetryable && !event.isNoAccount { return }
+
             finish(with: .failed(event.isNoAccount ? .noAccount : .sync))
             return
         }
@@ -267,7 +279,8 @@ final class ManualCloudSync {
                 endDate: raw.endDate,
                 hasFailed: raw.error != nil,
                 isNoAccount: raw.error.map(Self.isNoAccountError) ?? false,
-                isTeardown: raw.error.map(Self.isTeardownError) ?? false
+                isTeardown: raw.error.map(Self.isTeardownError) ?? false,
+                isRetryable: raw.error.map { CloudSyncFailure.diagnose($0) == .retryable } ?? false
             )
 
             MainActor.assumeIsolated {

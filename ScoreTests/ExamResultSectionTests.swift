@@ -60,11 +60,12 @@ struct ExamResultSectionTests {
         #expect(!ExamResultCopy.hasOralExam(subject))
     }
 
-    /// Der Editor schreibt keine Ergebnisse mehr, räumt aber weiterhin auf: wer
-    /// ein Leistungsfach zum Basisfach macht, lässt kein schriftliches Ergebnis
-    /// zurück, das sonst in die Rechnung einginge.
-    @Test("Ein Typwechsel im Editor lässt kein Prüfungsergebnis zurück")
-    func changingTheKindClearsTheResult() throws {
+    /// Der Editor schreibt keine Ergebnisse mehr und räumt auch nicht mehr auf:
+    /// wer ein Leistungsfach zum Basisfach macht, behält sein schriftliches
+    /// Ergebnis. Es wird ignoriert, nicht gelöscht — dass es nicht in die
+    /// Rechnung eingeht, entscheidet `BlockTwoCalculator.exams(in:)`.
+    @Test("Ein Typwechsel im Editor lässt das Prüfungsergebnis stehen")
+    func changingTheKindKeepsTheResult() throws {
         let container = try ModelContainer(
             for: Subject.self, SemesterResult.self, GradeEntry.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
@@ -79,7 +80,8 @@ struct ExamResultSectionTests {
         draft.kind = .wahlBasisfach
         draft.save(to: subject, in: context, existingSubjects: [subject])
 
-        #expect(subject.writtenExamPoints == nil)
+        #expect(subject.writtenExamPoints == 13)
+        #expect(BlockTwoCalculator.calculate(for: [SubjectInput(subject)]).exams.isEmpty)
     }
 
     /// Und umgekehrt: solange der Typ bleibt, bleibt auch das Ergebnis stehen.

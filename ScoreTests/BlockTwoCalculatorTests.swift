@@ -200,4 +200,66 @@ struct BlockTwoCalculatorTests {
         #expect(outcome.exams[0].role == .written)
         #expect(outcome.points == 44)
     }
+
+    // MARK: - Die Nachprüfung allein ist kein Ergebnis
+
+    @Test("Eine Nachprüfung ohne schriftliches Ergebnis zählt nicht")
+    func oralRetakeAloneDoesNotCount() {
+        // Ein Leistungsfach, in dem nur die mündliche Nachprüfung eingetragen
+        // ist. Die Nachprüfung ist ein Zusatz zur schriftlichen Prüfung und nie
+        // die Prüfung selbst.
+        let subjects = [subject("lf-a", .leistungsfach, allPoints: 10, oralExamPoints: 15)]
+
+        let outcome = BlockTwoCalculator.calculate(for: subjects)
+
+        #expect(outcome.exams.count == 1)
+        #expect(outcome.exams[0].result == nil)
+        #expect(outcome.exams[0].points == nil)
+        #expect(outcome.points == 0)
+        #expect(outcome.recordedExamCount == 0)
+        #expect(!outcome.isComplete)
+    }
+
+    @Test("Fünf Nachprüfungen ohne schriftliche Ergebnisse machen den Block nicht vollständig")
+    func fiveOralRetakesDoNotCompleteTheBlock() {
+        let subjects = (1...3).map {
+            subject("lf-\($0)", .leistungsfach, allPoints: 10, oralExamPoints: 15)
+        } + (1...2).map {
+            subject("mp-\($0)", .wahlBasisfach, allPoints: 10, isOralExam: true, oralExamPoints: 15)
+        }
+
+        let outcome = BlockTwoCalculator.calculate(for: subjects)
+
+        // Nur die beiden echten mündlichen Prüfungen zählen: 2 · 15 · 4 = 120.
+        #expect(outcome.points == 120)
+        #expect(outcome.recordedExamCount == 2)
+        #expect(!outcome.isComplete)
+    }
+
+    @Test("Kommt das schriftliche Ergebnis dazu, zählt die Nachprüfung mit")
+    func theRetakeCountsOnceTheWrittenResultArrives() {
+        let subjects = [
+            subject("lf-a", .leistungsfach, allPoints: 10, writtenExamPoints: 12, oralExamPoints: 15)
+        ]
+
+        let outcome = BlockTwoCalculator.calculate(for: subjects)
+
+        // (12 · 2 + 15) ÷ 3 = 13, vierfach also 52.
+        #expect(outcome.points == 52)
+        #expect(outcome.recordedExamCount == 1)
+    }
+
+    @Test("Ein liegengebliebenes schriftliches Ergebnis zählt nicht mit")
+    func aStaleWrittenResultIsIgnored() {
+        // Der Nutzer hat den Fachtyp gewechselt. Das Ergebnis bleibt gespeichert
+        // — in die Rechnung geht es nicht ein.
+        let subjects = [
+            subject("bf-a", .wahlBasisfach, allPoints: 10, writtenExamPoints: 15)
+        ]
+
+        let outcome = BlockTwoCalculator.calculate(for: subjects)
+
+        #expect(outcome.exams.isEmpty)
+        #expect(outcome.points == 0)
+    }
 }

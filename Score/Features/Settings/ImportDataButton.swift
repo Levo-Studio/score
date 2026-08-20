@@ -43,6 +43,18 @@ struct ImportDataButton<Label: View>: View {
     /// Der knappe Satz, wenn etwas schiefging.
     @State private var failure: ImportFailure?
 
+    /// Was der Nutzer im Blatt gewählt hat.
+    ///
+    /// Gehandelt wird erst, **nachdem** das Blatt zu ist: Ein Dialog, der über
+    /// einem noch schliessenden Blatt aufgeht, kommt auf dem iPhone nicht durch.
+    @State private var chosenMode: ScoreImport.Mode?
+
+    /// Die Datei, für die die Wahl gilt.
+    ///
+    /// Getrennt von ``pending``, weil `sheet(item:)` dessen Bindung beim
+    /// Schliessen auf `nil` setzt — beim Handeln danach wäre die Datei sonst weg.
+    @State private var chosenCandidate: PendingImport?
+
     var body: some View {
         Button {
             isChoosingFile = true
@@ -57,7 +69,22 @@ struct ImportDataButton<Label: View>: View {
         ) { result in
             read(result)
         }
-        .importChoiceSheet(pending: $pending, onChoose: choose)
+        .sheet(item: $pending, onDismiss: actOnChoice) { candidate in
+            ScrollView {
+                ImportChoiceSheet(candidate: candidate) { mode in
+                    chosenMode = mode
+                    chosenCandidate = candidate
+                }
+            }
+            .background(ScorePalette.surface)
+            .scrollBounceBehavior(.basedOnSize)
+            // Dieselbe Form wie „Konto wechseln": ein Blatt von unten, keine
+            // zweite Sorte.
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+            .presentationBackground(ScorePalette.surface)
+            .presentationCornerRadius(ScoreMetrics.Radius.sheet)
+        }
         .alert(
             "Bestand wirklich ersetzen?",
             isPresented: isConfirmingReplacement,
@@ -128,7 +155,15 @@ struct ImportDataButton<Label: View>: View {
         }
     }
 
-    private func choose(_ mode: ScoreImport.Mode, for candidate: PendingImport) {
+    /// Läuft, wenn das Blatt zu ist.
+    ///
+    /// Wer das Blatt einfach herunterzieht, hat nichts gewählt — dann passiert
+    /// hier auch nichts.
+    private func actOnChoice() {
+        guard let mode = chosenMode, let candidate = chosenCandidate else { return }
+        chosenMode = nil
+        chosenCandidate = nil
+
         switch mode {
         case .merge: apply(candidate.export, mode: .merge)
         case .replace: replacement = candidate
@@ -165,30 +200,6 @@ struct ImportFailure: Identifiable {
 }
 
 // MARK: - Das Blatt mit den beiden Wegen
-
-extension View {
-
-    /// Das Blatt von unten, in dem zwischen Zusammenführen und Ersetzen gewählt
-    /// wird — dieselbe Form wie „Konto wechseln".
-    func importChoiceSheet(
-        pending: Binding<PendingImport?>,
-        onChoose: @escaping (ScoreImport.Mode, PendingImport) -> Void
-    ) -> some View {
-        sheet(item: pending) { candidate in
-            ScrollView {
-                ImportChoiceSheet(candidate: candidate) { mode in
-                    onChoose(mode, candidate)
-                }
-            }
-            .background(ScorePalette.surface)
-            .scrollBounceBehavior(.basedOnSize)
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
-            .presentationBackground(ScorePalette.surface)
-            .presentationCornerRadius(ScoreMetrics.Radius.sheet)
-        }
-    }
-}
 
 /// Der Inhalt des Blattes: zwei Wege, jeder mit seiner Folge dabei.
 ///
@@ -273,10 +284,11 @@ struct ImportChoiceSheet: View {
         titleColor: Color
     ) -> some View {
         Button {
-            // Erst schliessen, dann handeln: ein Dialog über einem noch offenen
-            // Blatt käme auf dem iPhone nicht durch.
-            dismiss()
+            // Erst merken, dann schliessen: gehandelt wird in `onDismiss`, wenn
+            // das Blatt zu ist. Ein Dialog über einem noch schliessenden Blatt
+            // käme auf dem iPhone nicht durch.
             onChoose(mode)
+            dismiss()
         } label: {
             VStack(alignment: .leading, spacing: 5) {
                 title

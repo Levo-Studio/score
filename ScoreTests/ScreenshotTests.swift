@@ -929,7 +929,7 @@ struct ScreenshotTests {
                 ZStack {
                     NavigationStack { SubjectDetailView(subject: physik) }
                     ScoreOverlaySheet(onDismiss: {}) {
-                        GradeEntrySheet(entry: entry, subject: physik) {}
+                        GradeEntrySheet(entry: entry, subject: physik, onDelete: {})
                     }
                 }
             }
@@ -944,7 +944,7 @@ struct ScreenshotTests {
                     )
                     .background(ScorePalette.background)
                     ScoreOverlaySheet(onDismiss: {}) {
-                        GradeEntrySheet(entry: entry, subject: physik) {}
+                        GradeEntrySheet(entry: entry, subject: physik, onDelete: {})
                     }
                 }
             }

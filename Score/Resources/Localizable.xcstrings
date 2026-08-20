@@ -6579,6 +6579,23 @@
         }
       }
     },
+    "Verwerfen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwerfen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discard"
+          }
+        }
+      }
+    },
     "Von den 40 Kursen sind nach den nicht klammerbaren noch %lld offen. Score klammert von unten: hier stehen die Wahl-Basisfächer in genau der Reihenfolge, in der es sie trifft." : {
       "extractionState" : "manual",
       "localizations" : {

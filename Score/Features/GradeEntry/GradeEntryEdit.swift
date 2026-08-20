@@ -17,6 +17,15 @@ import SwiftData
 /// bindbar, aber nirgends gespeichert. Erst ``commit(to:)`` fügt es ein und hängt
 /// es an sein Halbjahr.
 ///
+/// ## Warum getippte Arbeit trotzdem nicht verloren geht
+///
+/// Dieselbe Geste hat damit ein neues Problem bekommen: Wer Punkte tippt und das
+/// Blatt dann herunterzieht, warf echte Arbeit weg. ``hasInput`` unterscheidet
+/// die beiden Fälle — ein unangetasteter Entwurf verfällt, ein bearbeiteter wird
+/// beim Schliessen angelegt und über den Rückgängig-Streifen angeboten. Verglichen
+/// wird gegen die Vorgaben, mit denen der Entwurf geöffnet wurde; „Verwerfen"
+/// bleibt davon unberührt und legt nie etwas an.
+///
 /// ## Warum eine eigene Kennung
 ///
 /// Das Blatt geht über `scoreOverlaySheet(item:)` auf und braucht dafür etwas
@@ -36,15 +45,46 @@ struct GradeEntryEdit: Identifiable {
     /// `nil` bei einer bestehenden Leistung — die hängt schon.
     let pendingSemester: SemesterResult?
 
+    /// Die Vorgaben, mit denen der Entwurf geöffnet wurde.
+    ///
+    /// Sie sind der Vergleichspunkt für ``hasInput``. Bei einer bestehenden
+    /// Leistung `nil` — dort gibt es keine Vorgabe, gegen die sich messen liesse.
+    private let defaults: Defaults?
+
+    /// Der Stand, mit dem ein Entwurf aufgeht.
+    private struct Defaults {
+        var title: String
+        var points: Int
+        var kind: GradeKind
+        var category: GradeCategory
+    }
+
     /// Ob diese Leistung noch gar nicht existiert.
     var isNew: Bool { pendingSemester != nil }
+
+    /// Ob am Entwurf tatsächlich etwas eingegeben wurde.
+    ///
+    /// „Etwas eingegeben" heisst: ein eigener Titel steht drin, oder die
+    /// Punktzahl weicht von der Vorgabe ab, oder Art beziehungsweise Kategorie
+    /// wurden geändert. Ein leer geräumter Titel zählt nicht — das ist kein
+    /// Beitrag, sondern eine Lücke.
+    var hasInput: Bool {
+        guard let defaults else { return false }
+
+        let title = entry.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !title.isEmpty, title != defaults.title { return true }
+
+        return entry.points != defaults.points
+            || entry.kind != defaults.kind
+            || entry.category != defaults.category
+    }
 
     /// Eine bestehende Leistung, die bearbeitet wird.
     ///
     /// Jede Änderung wirkt hier sofort: der Score soll sich unter der Hand
     /// mitbewegen, während man die Punktzahl antippt.
     static func existing(_ entry: GradeEntry) -> GradeEntryEdit {
-        GradeEntryEdit(entry: entry, pendingSemester: nil)
+        GradeEntryEdit(entry: entry, pendingSemester: nil, defaults: nil)
     }
 
     /// Ein Entwurf mit den Vorgaben seiner Art, noch in keinem Kontext.
@@ -56,7 +96,16 @@ struct GradeEntryEdit: Identifiable {
     ) -> GradeEntryEdit {
         let entry = GradeEntry(category: category, title: title)
         entry.kind = kind
-        return GradeEntryEdit(entry: entry, pendingSemester: semester)
+        return GradeEntryEdit(
+            entry: entry,
+            pendingSemester: semester,
+            defaults: Defaults(
+                title: title,
+                points: entry.points,
+                kind: kind,
+                category: category
+            )
+        )
     }
 
     /// Fügt einen Entwurf ein und hängt ihn an sein Halbjahr.

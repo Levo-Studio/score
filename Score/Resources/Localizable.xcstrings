@@ -4879,6 +4879,23 @@
         }
       }
     },
+    "Leistung angelegt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leistung angelegt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grade added"
+          }
+        }
+      }
+    },
     "Leistung gelöscht" : {
       "extractionState" : "manual",
       "localizations" : {

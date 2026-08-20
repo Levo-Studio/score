@@ -23,7 +23,7 @@ struct PadSubjectDetailView: View {
     @State private var editedEntry: GradeEntryEdit?
 
     /// Die zuletzt gelöschte Leistung, solange sie sich zurückholen lässt.
-    @State private var pendingUndo: GradeEntryUndo?
+    @State private var pendingUndo: PendingGradeEntryUndo?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -53,13 +53,13 @@ struct PadSubjectDetailView: View {
             undoOverlay
         }
         // Mittig und nicht von unten: siehe ``ScoreOverlaySheet``.
-        .scoreOverlaySheet(item: $editedEntry) { edit in
+        .scoreOverlaySheet(item: closingEntrySheet) { edit in
             GradeEntrySheet(
                 entry: edit.entry,
                 subject: subject,
                 semesterEntries: currentSemester?.entries ?? [],
                 onDelete: { discard(edit) },
-                onConfirm: { edit.commit(to: modelContext) },
+                onConfirm: { confirm(edit) },
                 isNew: edit.isNew
             )
         }
@@ -572,6 +572,34 @@ struct PadSubjectDetailView: View {
         }
     }
 
+    /// Das Blatt, mit einem Griff auf sein Schliessen — derselbe Weg wie auf dem
+    /// iPhone. Die Begründung steht in ``SubjectDetailView``.
+    private var closingEntrySheet: Binding<GradeEntryEdit?> {
+        Binding(
+            get: { editedEntry },
+            set: { newValue in
+                if newValue == nil, let edit = editedEntry { keepIfEdited(edit) }
+                editedEntry = newValue
+            }
+        )
+    }
+
+    /// „Fertig": der Entwurf wird angelegt, ohne Streifen — die Bestätigung war
+    /// ausdrücklich.
+    private func confirm(_ edit: GradeEntryEdit) {
+        edit.commit(to: modelContext)
+        editedEntry = nil
+    }
+
+    /// Ein geschlossenes Blatt mit tatsächlicher Eingabe legt die Leistung an und
+    /// bietet sie zur Rücknahme an; ein unangetasteter Entwurf verfällt.
+    private func keepIfEdited(_ edit: GradeEntryEdit) {
+        guard edit.isNew, edit.hasInput else { return }
+
+        edit.commit(to: modelContext)
+        showUndo(.creation(of: edit.entry))
+    }
+
     /// Löscht eine Leistung sofort und bietet sie zur Rücknahme an — derselbe
     /// Weg wie auf dem iPhone, auch für die Schaltfläche im Eingabe-Sheet.
     private func delete(_ entry: GradeEntry) {
@@ -579,13 +607,17 @@ struct PadSubjectDetailView: View {
         modelContext.delete(entry)
         editedEntry = nil
 
+        showUndo(snapshot.map(PendingGradeEntryUndo.deletion))
+    }
+
+    private func showUndo(_ pending: PendingGradeEntryUndo?) {
         withAnimation(ScoreMotion.resolve(ScoreMotion.sheetRise, reduceMotion: reduceMotion)) {
-            pendingUndo = snapshot
+            pendingUndo = pending
         }
     }
 
-    private func undoDeletion(_ snapshot: GradeEntryUndo) {
-        snapshot.restore(to: subject, in: modelContext)
+    private func undo(_ pending: PendingGradeEntryUndo) {
+        pending.undo(subject, modelContext)
         dismissUndo()
     }
 
@@ -601,8 +633,8 @@ struct PadSubjectDetailView: View {
     private var undoOverlay: some View {
         if let pendingUndo {
             UndoBanner(
-                message: "Leistung gelöscht",
-                action: { undoDeletion(pendingUndo) },
+                message: pendingUndo.message,
+                action: { undo(pendingUndo) },
                 onExpire: { dismissUndo() }
             )
             .id(pendingUndo.id)

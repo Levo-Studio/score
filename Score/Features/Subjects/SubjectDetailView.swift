@@ -22,7 +22,7 @@ struct SubjectDetailView: View {
     @State private var editedEntry: GradeEntryEdit?
 
     /// Die zuletzt gelöschte Leistung, solange sie sich zurückholen lässt.
-    @State private var pendingUndo: GradeEntryUndo?
+    @State private var pendingUndo: PendingGradeEntryUndo?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -71,13 +71,13 @@ struct SubjectDetailView: View {
             SubjectEditorView(target: .existing(subject)) { dismiss() }
         }
         // Mittig und nicht von unten: siehe ``ScoreOverlaySheet``.
-        .scoreOverlaySheet(item: $editedEntry) { edit in
+        .scoreOverlaySheet(item: closingEntrySheet) { edit in
             GradeEntrySheet(
                 entry: edit.entry,
                 subject: subject,
                 semesterEntries: currentSemester?.entries ?? [],
                 onDelete: { discard(edit) },
-                onConfirm: { edit.commit(to: modelContext) },
+                onConfirm: { confirm(edit) },
                 isNew: edit.isNew
             )
         }
@@ -506,6 +506,41 @@ struct SubjectDetailView: View {
         }
     }
 
+    /// Das Blatt, mit einem Griff auf sein Schliessen.
+    ///
+    /// „Fertig" und „Verwerfen" räumen ``editedEntry`` selbst ab; steht es hier
+    /// noch, wurde das Blatt heruntergezogen oder danebengetippt. Genau dann
+    /// entscheidet ``keepIfEdited(_:)``, ob etwas übrig bleibt.
+    private var closingEntrySheet: Binding<GradeEntryEdit?> {
+        Binding(
+            get: { editedEntry },
+            set: { newValue in
+                if newValue == nil, let edit = editedEntry { keepIfEdited(edit) }
+                editedEntry = newValue
+            }
+        )
+    }
+
+    /// „Fertig": der Entwurf wird angelegt, ohne Streifen — die Bestätigung war
+    /// ausdrücklich.
+    private func confirm(_ edit: GradeEntryEdit) {
+        edit.commit(to: modelContext)
+        editedEntry = nil
+    }
+
+    /// Das Blatt wurde geschlossen, ohne dass jemand „Fertig" oder „Verwerfen"
+    /// getippt hat.
+    ///
+    /// Ein unangetasteter Entwurf verfällt. Wurde tatsächlich etwas eingegeben,
+    /// entsteht die Leistung trotzdem — und der Streifen bietet sie zur Rücknahme
+    /// an, genau wie eine gelöschte Note.
+    private func keepIfEdited(_ edit: GradeEntryEdit) {
+        guard edit.isNew, edit.hasInput else { return }
+
+        edit.commit(to: modelContext)
+        showUndo(.creation(of: edit.entry))
+    }
+
     /// Löscht eine Leistung sofort und bietet sie zur Rücknahme an.
     ///
     /// Denselben Weg nimmt auch die Schaltfläche „Löschen" im Eingabe-Sheet —
@@ -515,13 +550,17 @@ struct SubjectDetailView: View {
         modelContext.delete(entry)
         editedEntry = nil
 
+        showUndo(snapshot.map(PendingGradeEntryUndo.deletion))
+    }
+
+    private func showUndo(_ pending: PendingGradeEntryUndo?) {
         withAnimation(ScoreMotion.resolve(ScoreMotion.sheetRise, reduceMotion: reduceMotion)) {
-            pendingUndo = snapshot
+            pendingUndo = pending
         }
     }
 
-    private func undoDeletion(_ snapshot: GradeEntryUndo) {
-        snapshot.restore(to: subject, in: modelContext)
+    private func undo(_ pending: PendingGradeEntryUndo) {
+        pending.undo(subject, modelContext)
         dismissUndo()
     }
 
@@ -541,8 +580,8 @@ struct SubjectDetailView: View {
     private var undoOverlay: some View {
         if let pendingUndo {
             UndoBanner(
-                message: "Leistung gelöscht",
-                action: { undoDeletion(pendingUndo) },
+                message: pendingUndo.message,
+                action: { undo(pendingUndo) },
                 onExpire: { dismissUndo() }
             )
             .id(pendingUndo.id)

@@ -32,6 +32,33 @@ struct DashedChip: View {
     let onCommit: () -> Void
 
     @State private var isEditing = false
+
+    /// Wann die Eingabe geöffnet wurde. `nil`, solange der Tag ruht.
+    ///
+    /// Der Fokus geht nicht nur verloren, wenn der Nutzer die Eingabe verlässt.
+    /// Er geht auch verloren, während die Tastatur vom vorigen Anlegen noch
+    /// schliesst — dieser Widerruf trifft dann die gerade erst geöffnete
+    /// Eingabe. Die beiden Fälle unterscheiden sich in ihrem Zeitpunkt, und
+    /// dieser Zeitstempel ist der Bezugspunkt dafür.
+    @State private var editingStartedAt: Date?
+
+    /// Wie lange nach dem Öffnen ein Fokusverlust noch der schliessenden
+    /// Tastatur zugerechnet wird.
+    ///
+    /// Ihr Widerruf trifft unmittelbar nach dem Öffnen ein — die Tastatur
+    /// braucht für ihr Schliessen rund eine Viertelsekunde, und der Widerruf
+    /// kommt an deren Ende. Die Spanne liegt darüber, damit sie ihn sicher
+    /// fängt, und bleibt kurz genug, dass sie keinen Tipp des Nutzers mehr
+    /// erwischt: Wer den Tag antippt, braucht länger, um wieder daneben zu
+    /// tippen.
+    private static let keyboardHandoverWindow: TimeInterval = 0.6
+
+    /// Ob dieser Fokusverlust noch von der schliessenden Tastatur stammen kann.
+    private var focusLossBelongsToClosingKeyboard: Bool {
+        guard let editingStartedAt else { return false }
+        return Date.now.timeIntervalSince(editingStartedAt) < Self.keyboardHandoverWindow
+    }
+
     @FocusState private var isFocused: Bool
 
     private var canCommit: Bool {
@@ -73,6 +100,7 @@ struct DashedChip: View {
     private var idle: some View {
         Button {
             isEditing = true
+            editingStartedAt = .now
             isFocused = true
         } label: {
             shell {
@@ -122,10 +150,33 @@ struct DashedChip: View {
         }
         .onChange(of: isFocused) { _, focused in
             guard !focused else { return }
-            // Wer die Eingabe verlässt, verliert den eingetippten Namen nicht —
-            // er wird übernommen. Ohne Text kommt der ruhige Tag zurück statt
-            // eines leeren Feldes in der Wolke.
-            commit()
+
+            // Wer die Eingabe mit einem Namen darin verlässt, verliert ihn
+            // nicht — er wird übernommen.
+            if canCommit {
+                commit()
+                return
+            }
+
+            // Eine leere Eingabe verliert den Fokus aus zwei ganz verschiedenen
+            // Gründen, und sie unterscheiden sich im Zeitpunkt. Unmittelbar
+            // nach dem Öffnen widerruft ihn die Tastatur, die vom vorigen
+            // Anlegen noch schliesst — der Widerruf landet in der frisch
+            // geöffneten Eingabe. Genau daran verpuffte jedes weitere eigene
+            // Fach: der Tag klappte zu, ehe getippt werden konnte. Dieser
+            // Verlust wird ignoriert und der Fokus zurückgeholt.
+            guard !focusLossBelongsToClosingKeyboard else {
+                isFocused = true
+                return
+            }
+
+            // Später kommt der Verlust vom Nutzer: Er hat neben die Eingabe
+            // getippt. Dieser Tipp wirkt — und zwar der erste, nicht erst der
+            // zweite.
+
+            // Ohne Text kommt der ruhige Tag zurück statt eines leeren Feldes
+            // in der Wolke.
+            editingStartedAt = nil
             isEditing = false
         }
     }
@@ -134,6 +185,7 @@ struct DashedChip: View {
         guard canCommit else { return }
         onCommit()
         isEditing = false
+        editingStartedAt = nil
         isFocused = false
     }
 }

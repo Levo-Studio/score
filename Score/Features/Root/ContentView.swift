@@ -112,7 +112,7 @@ struct ContentView: View {
             }
         }
         .screenSwitch(handoff.stage)
-        // Die Einstellungen erreichen darüber „Neu registrieren"; der Wechsel
+        // Die Einstellungen erreichen darüber „Neues Profil, gleiche Fächer"; der Wechsel
         // selbst läuft über `AppStorage` und braucht keinen Weg nach oben.
         .environment(handoff)
         .task {

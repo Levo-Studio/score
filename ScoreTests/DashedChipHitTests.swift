@@ -152,6 +152,92 @@ struct DashedChipHitTests {
         }
     }
 
+    @Test("Drei eigene Fächer, auch wenn die Tastatur vom vorigen noch schliesst")
+    func threeSubjectsWhileTheKeyboardIsStillClosing() async throws {
+        let model = OnboardingViewModel()
+        model.step = .electiveBasicSubjects
+
+        try await withStep(model) { window in
+            // Warum dieser Test neben ``threeSubjectsInARow`` steht: dort ist
+            // die Tastatur nie im Weg, hier schon. Auf dem Gerät gibt die
+            // Tastatur den Fokus erst frei, während der Nutzer den Tag längst
+            // wieder angetippt hat — der Widerruf landet dann in der frisch
+            // geöffneten Eingabe. Vorher klappte sie daran sofort zu: das erste
+            // eigene Fach entstand, jedes weitere verpuffte.
+            for name in ["Astronomie", "Philosophie", "Robotik"] {
+                let tag = try #require(
+                    Self.node(labelled: "Eigenes Fach", in: window),
+                    "Der Tag muss nach jedem Anlegen wieder dastehen"
+                )
+                #expect(tag.accessibilityActivate())
+                try await Self.settle(seconds: 0.2)
+
+                let field = try #require(
+                    Self.textFields(in: window).first,
+                    "Ein Tipp auf den Tag muss die Eingabe öffnen"
+                )
+                // Genau der Widerruf, den die schliessende Tastatur schickt.
+                _ = field.resignFirstResponder()
+                try await Self.settle()
+
+                #expect(
+                    !Self.textFields(in: window).isEmpty,
+                    "Die frisch geöffnete Eingabe darf daran nicht zuklappen"
+                )
+
+                model.customSubjectDraft = name
+                try await Self.settle()
+
+                let ok = try #require(
+                    Self.node(labelled: "OK", in: window),
+                    "Die Bestätigung muss stehen, sobald ein Name eingetippt ist"
+                )
+                #expect(ok.accessibilityActivate())
+                try await Self.settle()
+
+                #expect(model.electiveBasicSubjects.contains(name))
+            }
+
+            #expect(model.electiveBasicSubjects == ["Astronomie", "Philosophie", "Robotik"])
+        }
+    }
+
+    @Test("Der erste Tipp neben die leere Eingabe schliesst sie")
+    func tappingBesideTheEmptyEditorClosesIt() async throws {
+        let model = OnboardingViewModel()
+        model.step = .electiveBasicSubjects
+
+        try await withStep(model) { window in
+            let tag = try #require(Self.node(labelled: "Eigenes Fach", in: window))
+            #expect(tag.accessibilityActivate())
+            try await Self.settle()
+
+            #expect(
+                !Self.textFields(in: window).isEmpty,
+                "Ein Tipp auf den Tag muss die Eingabe öffnen"
+            )
+
+            // Der Nutzer tippt nichts und tippt dann daneben — aber erst,
+            // nachdem die Spanne für die schliessende Tastatur verstrichen ist.
+            // Genau daran hängt der Unterschied: Was so spät kommt, ist kein
+            // Widerruf der Tastatur mehr, sondern eine Entscheidung.
+            try await Self.settle(seconds: 0.9)
+
+            let field = try #require(Self.textFields(in: window).first)
+            _ = field.resignFirstResponder()
+            try await Self.settle()
+
+            #expect(
+                Self.textFields(in: window).isEmpty,
+                "Der erste Tipp neben die leere Eingabe muss sie schliessen"
+            )
+            #expect(
+                Self.node(labelled: "Eigenes Fach", in: window) != nil,
+                "Statt der Eingabe steht wieder der ruhige Tag"
+            )
+        }
+    }
+
     @Test("Wer nach dem Tippen gleich weiterblättert, behält sein Fach")
     func advancingKeepsTheTypedSubject() async throws {
         let model = OnboardingViewModel()
@@ -259,6 +345,14 @@ struct DashedChipHitTests {
     private static func node(labelled key: String.LocalizationValue, in root: UIView) -> NSObject? {
         let wanted = String.scoreLocalized(key)
         return all(in: root).first { $0.accessibilityLabel == wanted }
+    }
+
+    /// Die echten Textfelder im Baum — an ihnen hängt der Fokus.
+    private static func textFields(in root: UIView) -> [UITextField] {
+        var found: [UITextField] = []
+        if let field = root as? UITextField { found.append(field) }
+        for subview in root.subviews { found += textFields(in: subview) }
+        return found
     }
 
     /// Alle Elemente des Baums — über `subviews` und `accessibilityElements`.

@@ -19,10 +19,10 @@ struct SubjectDetailView: View {
     private var semesterIndex = SubjectPreference.defaultSemesterIndex
 
     @State private var isEditorPresented = false
-    @State private var editedEntry: GradeEntry?
+    @State private var editedEntry: GradeEntryEdit?
 
     /// Die zuletzt gelöschte Leistung, solange sie sich zurückholen lässt.
-    @State private var pendingUndo: GradeEntryUndo?
+    @State private var pendingUndo: PendingGradeEntryUndo?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -71,10 +71,15 @@ struct SubjectDetailView: View {
             SubjectEditorView(target: .existing(subject)) { dismiss() }
         }
         // Mittig und nicht von unten: siehe ``ScoreOverlaySheet``.
-        .scoreOverlaySheet(item: $editedEntry) { entry in
-            GradeEntrySheet(entry: entry, subject: subject) {
-                delete(entry)
-            }
+        .scoreOverlaySheet(item: closingEntrySheet) { edit in
+            GradeEntrySheet(
+                entry: edit.entry,
+                subject: subject,
+                semesterEntries: currentSemester?.entries ?? [],
+                onDelete: { discard(edit) },
+                onConfirm: { confirm(edit) },
+                isNew: edit.isNew
+            )
         }
     }
 
@@ -152,7 +157,7 @@ struct SubjectDetailView: View {
                         title: subject.kind.editorLabel,
                         isHighlighted: subject.kind == .leistungsfach
                     )
-                    if subject.isOralExamSubject {
+                    if subject.countsAsOralExamSubject {
                         OralExamBadge()
                     }
                     Text("Ø \(ScoreNumberFormat.points(summary.average)) Punkte")
@@ -342,6 +347,7 @@ struct SubjectDetailView: View {
         case .manual: return "von dir geklammert"
         case .automatic: return "geklammert"
         case .beyondSubjectLimit: return "über der Kursgrenze"
+        case .beyondCourseCap: return "über den 40 Kursen"
         case .none: return nil
         }
     }
@@ -399,7 +405,7 @@ struct SubjectDetailView: View {
                 SwipeToDelete(
                     accessibilityLabel: Text("\(entry.title) löschen"),
                     onDelete: { delete(entry) },
-                    onTap: { editedEntry = entry }
+                    onTap: { editedEntry = .existing(entry) }
                 ) {
                     entryRow(entry, share: share)
                 }
@@ -462,18 +468,20 @@ struct SubjectDetailView: View {
 
     // MARK: - Ändern
 
-    /// Legt eine Leistung an und öffnet sie sofort im Eingabe-Sheet.
+    /// Öffnet das Eingabe-Blatt für eine neue Leistung.
     ///
-    /// Ein leerer Datensatz auf der Liste wäre eine Sackgasse — wer hinzufügt,
-    /// will eintragen.
+    /// Angelegt wird noch nichts: Der Entwurf lebt bis zum Bestätigen nur im
+    /// Speicher. Wer das Blatt herunterzieht, ohne etwas zu tippen, lässt nichts
+    /// zurück — die Begründung steht in ``GradeEntryEdit``.
     private func addEntry(category: GradeCategory, kind: GradeKind) {
         guard let semester = currentSemester else { return }
 
-        let entry = GradeEntry(category: category, title: defaultTitle(for: category, kind: kind))
-        entry.kind = kind
-        entry.semester = semester
-        modelContext.insert(entry)
-        editedEntry = entry
+        editedEntry = .draft(
+            category: category,
+            kind: kind,
+            title: defaultTitle(for: category, kind: kind),
+            in: semester
+        )
     }
 
     private func defaultTitle(for category: GradeCategory, kind: GradeKind) -> String {
@@ -485,6 +493,54 @@ struct SubjectDetailView: View {
         }
     }
 
+    /// Die Schaltfläche unten im Blatt: ein Entwurf wird verworfen, eine
+    /// bestehende Leistung gelöscht.
+    ///
+    /// Ein Entwurf steht in keinem Kontext — es gibt nichts zu löschen und
+    /// nichts zurückzunehmen, also auch keinen Streifen.
+    private func discard(_ edit: GradeEntryEdit) {
+        if edit.isNew {
+            editedEntry = nil
+        } else {
+            delete(edit.entry)
+        }
+    }
+
+    /// Das Blatt, mit einem Griff auf sein Schliessen.
+    ///
+    /// „Fertig" und „Verwerfen" räumen ``editedEntry`` selbst ab; steht es hier
+    /// noch, wurde das Blatt heruntergezogen oder danebengetippt. Genau dann
+    /// entscheidet ``keepIfEdited(_:)``, ob etwas übrig bleibt.
+    private var closingEntrySheet: Binding<GradeEntryEdit?> {
+        Binding(
+            get: { editedEntry },
+            set: { newValue in
+                if newValue == nil, let edit = editedEntry { keepIfEdited(edit) }
+                editedEntry = newValue
+            }
+        )
+    }
+
+    /// „Fertig": der Entwurf wird angelegt, ohne Streifen — die Bestätigung war
+    /// ausdrücklich.
+    private func confirm(_ edit: GradeEntryEdit) {
+        edit.commit(to: modelContext)
+        editedEntry = nil
+    }
+
+    /// Das Blatt wurde geschlossen, ohne dass jemand „Fertig" oder „Verwerfen"
+    /// getippt hat.
+    ///
+    /// Ein unangetasteter Entwurf verfällt. Wurde tatsächlich etwas eingegeben,
+    /// entsteht die Leistung trotzdem — und der Streifen bietet sie zur Rücknahme
+    /// an, genau wie eine gelöschte Note.
+    private func keepIfEdited(_ edit: GradeEntryEdit) {
+        guard edit.isNew, edit.hasInput else { return }
+
+        edit.commit(to: modelContext)
+        showUndo(.creation(of: edit.entry))
+    }
+
     /// Löscht eine Leistung sofort und bietet sie zur Rücknahme an.
     ///
     /// Denselben Weg nimmt auch die Schaltfläche „Löschen" im Eingabe-Sheet —
@@ -494,13 +550,17 @@ struct SubjectDetailView: View {
         modelContext.delete(entry)
         editedEntry = nil
 
+        showUndo(snapshot.map(PendingGradeEntryUndo.deletion))
+    }
+
+    private func showUndo(_ pending: PendingGradeEntryUndo?) {
         withAnimation(ScoreMotion.resolve(ScoreMotion.sheetRise, reduceMotion: reduceMotion)) {
-            pendingUndo = snapshot
+            pendingUndo = pending
         }
     }
 
-    private func undoDeletion(_ snapshot: GradeEntryUndo) {
-        snapshot.restore(to: subject, in: modelContext)
+    private func undo(_ pending: PendingGradeEntryUndo) {
+        pending.undo(subject, modelContext)
         dismissUndo()
     }
 
@@ -520,8 +580,8 @@ struct SubjectDetailView: View {
     private var undoOverlay: some View {
         if let pendingUndo {
             UndoBanner(
-                message: "Leistung gelöscht",
-                action: { undoDeletion(pendingUndo) },
+                message: pendingUndo.message,
+                action: { undo(pendingUndo) },
                 onExpire: { dismissUndo() }
             )
             .id(pendingUndo.id)

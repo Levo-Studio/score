@@ -20,10 +20,10 @@ struct PadSubjectDetailView: View {
 
     @Environment(\.modelContext) private var modelContext
 
-    @State private var editedEntry: GradeEntry?
+    @State private var editedEntry: GradeEntryEdit?
 
     /// Die zuletzt gelöschte Leistung, solange sie sich zurückholen lässt.
-    @State private var pendingUndo: GradeEntryUndo?
+    @State private var pendingUndo: PendingGradeEntryUndo?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -53,10 +53,15 @@ struct PadSubjectDetailView: View {
             undoOverlay
         }
         // Mittig und nicht von unten: siehe ``ScoreOverlaySheet``.
-        .scoreOverlaySheet(item: $editedEntry) { entry in
-            GradeEntrySheet(entry: entry, subject: subject) {
-                delete(entry)
-            }
+        .scoreOverlaySheet(item: closingEntrySheet) { edit in
+            GradeEntrySheet(
+                entry: edit.entry,
+                subject: subject,
+                semesterEntries: currentSemester?.entries ?? [],
+                onDelete: { discard(edit) },
+                onConfirm: { confirm(edit) },
+                isNew: edit.isNew
+            )
         }
     }
 
@@ -107,7 +112,7 @@ struct PadSubjectDetailView: View {
                 isHighlighted: subject.kind == .leistungsfach
             )
 
-            if subject.isOralExamSubject {
+            if subject.countsAsOralExamSubject {
                 OralExamBadge()
             }
 
@@ -364,6 +369,7 @@ struct PadSubjectDetailView: View {
         case .manual: return "von dir geklammert"
         case .automatic: return "geklammert"
         case .beyondSubjectLimit: return "über der Kursgrenze"
+        case .beyondCourseCap: return "über den 40 Kursen"
         case .none: return nil
         }
     }
@@ -476,7 +482,7 @@ struct PadSubjectDetailView: View {
                     SwipeToDelete(
                         accessibilityLabel: Text("\(entry.title) löschen"),
                         onDelete: { delete(entry) },
-                        onTap: { editedEntry = entry }
+                        onTap: { editedEntry = .existing(entry) }
                     ) {
                         entryRow(entry, share: share)
                     }
@@ -528,14 +534,20 @@ struct PadSubjectDetailView: View {
 
     // MARK: - Ändern
 
+    /// Öffnet das Eingabe-Blatt für eine neue Leistung.
+    ///
+    /// Angelegt wird noch nichts: Der Entwurf lebt bis zum Bestätigen nur im
+    /// Speicher. Wer das Blatt herunterzieht, ohne etwas zu tippen, lässt nichts
+    /// zurück — die Begründung steht in ``GradeEntryEdit``.
     private func addEntry(category: GradeCategory, kind: GradeKind) {
         guard let semester = currentSemester else { return }
 
-        let entry = GradeEntry(category: category, title: defaultTitle(for: category, kind: kind))
-        entry.kind = kind
-        entry.semester = semester
-        modelContext.insert(entry)
-        editedEntry = entry
+        editedEntry = .draft(
+            category: category,
+            kind: kind,
+            title: defaultTitle(for: category, kind: kind),
+            in: semester
+        )
     }
 
     private func defaultTitle(for category: GradeCategory, kind: GradeKind) -> String {
@@ -547,6 +559,47 @@ struct PadSubjectDetailView: View {
         }
     }
 
+    /// Die Schaltfläche unten im Blatt: ein Entwurf wird verworfen, eine
+    /// bestehende Leistung gelöscht.
+    ///
+    /// Ein Entwurf steht in keinem Kontext — es gibt nichts zu löschen und
+    /// nichts zurückzunehmen, also auch keinen Streifen.
+    private func discard(_ edit: GradeEntryEdit) {
+        if edit.isNew {
+            editedEntry = nil
+        } else {
+            delete(edit.entry)
+        }
+    }
+
+    /// Das Blatt, mit einem Griff auf sein Schliessen — derselbe Weg wie auf dem
+    /// iPhone. Die Begründung steht in ``SubjectDetailView``.
+    private var closingEntrySheet: Binding<GradeEntryEdit?> {
+        Binding(
+            get: { editedEntry },
+            set: { newValue in
+                if newValue == nil, let edit = editedEntry { keepIfEdited(edit) }
+                editedEntry = newValue
+            }
+        )
+    }
+
+    /// „Fertig": der Entwurf wird angelegt, ohne Streifen — die Bestätigung war
+    /// ausdrücklich.
+    private func confirm(_ edit: GradeEntryEdit) {
+        edit.commit(to: modelContext)
+        editedEntry = nil
+    }
+
+    /// Ein geschlossenes Blatt mit tatsächlicher Eingabe legt die Leistung an und
+    /// bietet sie zur Rücknahme an; ein unangetasteter Entwurf verfällt.
+    private func keepIfEdited(_ edit: GradeEntryEdit) {
+        guard edit.isNew, edit.hasInput else { return }
+
+        edit.commit(to: modelContext)
+        showUndo(.creation(of: edit.entry))
+    }
+
     /// Löscht eine Leistung sofort und bietet sie zur Rücknahme an — derselbe
     /// Weg wie auf dem iPhone, auch für die Schaltfläche im Eingabe-Sheet.
     private func delete(_ entry: GradeEntry) {
@@ -554,13 +607,17 @@ struct PadSubjectDetailView: View {
         modelContext.delete(entry)
         editedEntry = nil
 
+        showUndo(snapshot.map(PendingGradeEntryUndo.deletion))
+    }
+
+    private func showUndo(_ pending: PendingGradeEntryUndo?) {
         withAnimation(ScoreMotion.resolve(ScoreMotion.sheetRise, reduceMotion: reduceMotion)) {
-            pendingUndo = snapshot
+            pendingUndo = pending
         }
     }
 
-    private func undoDeletion(_ snapshot: GradeEntryUndo) {
-        snapshot.restore(to: subject, in: modelContext)
+    private func undo(_ pending: PendingGradeEntryUndo) {
+        pending.undo(subject, modelContext)
         dismissUndo()
     }
 
@@ -576,8 +633,8 @@ struct PadSubjectDetailView: View {
     private var undoOverlay: some View {
         if let pendingUndo {
             UndoBanner(
-                message: "Leistung gelöscht",
-                action: { undoDeletion(pendingUndo) },
+                message: pendingUndo.message,
+                action: { undo(pendingUndo) },
                 onExpire: { dismissUndo() }
             )
             .id(pendingUndo.id)

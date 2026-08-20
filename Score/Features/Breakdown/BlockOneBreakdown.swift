@@ -56,7 +56,7 @@ struct BlockOneBreakdown {
 
     /// Warum ein erfasster Kurs nicht in Block I eingeht.
     ///
-    /// Dieselben drei Gründe wie im Rechenkern, hier nur in der Reihenfolge, in
+    /// Dieselben Gründe wie im Rechenkern, hier nur in der Reihenfolge, in
     /// der der Bildschirm sie erzählt: erst die Entscheidungen des Nutzers, dann
     /// die von Score.
     typealias ExclusionReason = BlockOneCalculator.BracketReason
@@ -132,7 +132,7 @@ struct BlockOneBreakdown {
             Self.average(
                 of: courses.compactMap { course in
                     switch course.state.exclusionReason {
-                    case .beyondSubjectLimit, .manual: nil
+                    case .beyondSubjectLimit, .manual, .beyondCourseCap: nil
                     case .automatic, .none: course.state.points
                     }
                 }
@@ -333,7 +333,7 @@ struct BlockOneBreakdown {
                     )
                 },
                 courseLimit: input.effectiveCourseLimit,
-                isOralExamSubject: input.isOralExamSubject,
+                isOralExamSubject: input.countsAsOralExamSubject,
                 allowsBracketing: input.allowsBracketing
             )
         }
@@ -382,13 +382,13 @@ struct BlockOneBreakdown {
             total + entry.courses.count { course in
                 guard course.state.points != nil else { return false }
                 switch course.state.exclusionReason {
-                case .beyondSubjectLimit, .manual: return false
+                case .beyondSubjectLimit, .manual, .beyondCourseCap: return false
                 case .automatic, .none: return true
                 }
             }
         }
 
-        // Was nach den anrechnungspflichtigen Kursen von den 42 übrig ist. Die
+        // Was nach den anrechnungspflichtigen Kursen von den 40 übrig ist. Die
         // Zahl kommt aus dem Ergebnis und nicht aus einer zweiten Rechnung: alles
         // Eingebrachte, das nicht aus einem klammerbaren Wahl-Basisfach stammt.
         let protectedIncluded = entries
@@ -429,7 +429,7 @@ struct BlockOneBreakdown {
     private static func droppedGroups(in entries: [SubjectEntry]) -> [DroppedGroup] {
         // Erst die Entscheidungen des Nutzers, dann die von Score: Wer die Liste
         // liest, soll zuerst wiederfinden, was er selbst getan hat.
-        let reasons: [ExclusionReason] = [.manual, .beyondSubjectLimit, .automatic]
+        let reasons: [ExclusionReason] = [.manual, .beyondSubjectLimit, .beyondCourseCap, .automatic]
 
         return reasons.flatMap { reason in
             entries.compactMap { entry -> DroppedGroup? in

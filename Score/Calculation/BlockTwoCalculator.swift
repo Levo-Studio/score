@@ -96,6 +96,17 @@ enum BlockTwoCalculator {
 
         /// Das Prüfungsergebnis dieses Fachs vor der vierfachen Wertung.
         ///
+        /// Bei einem schriftlich geprüften Fach hängt alles am schriftlichen
+        /// Ergebnis. Die mündliche Nachprüfung ist ein **Zusatz** dazu und nie
+        /// die Prüfung selbst: Ohne das schriftliche Ergebnis gibt es kein
+        /// Prüfungsergebnis, auch wenn eine Nachprüfung eingetragen ist. Sonst
+        /// stünde eine allein eingetragene Nachprüfung vierfach in Block II und
+        /// die Prüfung gälte als erfasst — bei fünf solchen Fällen schriebe die
+        /// App „bestanden" statt „Hochrechnung".
+        ///
+        /// Der eingetragene Wert bleibt dabei gespeichert; er geht nur nicht in
+        /// die Rechnung ein.
+        ///
         /// - Returns: `nil`, wenn noch kein Ergebnis vorliegt. Das ist nicht
         ///   dasselbe wie 0 Punkte und darf nie dazu werden.
         var result: Double? {
@@ -105,7 +116,7 @@ enum BlockTwoCalculator {
                 (Double(written) * Double(writtenWeightInCombination) + Double(oral)) / 3
             case let (written?, _) where role == .written:
                 Double(written)
-            case let (_, oral?):
+            case let (_, oral?) where role == .oral:
                 Double(oral)
             default:
                 nil
@@ -194,6 +205,13 @@ enum BlockTwoCalculator {
     /// Erst die schriftlichen — die drei Leistungsfächer —, dann die mündlichen.
     /// Innerhalb einer Rolle bleibt die Reihenfolge der Fächerliste erhalten,
     /// damit die Anzeige nicht springt.
+    ///
+    /// Hier entscheidet sich auch, dass ein **liegengebliebenes** Ergebnis nicht
+    /// mitzählt: Prüfungsergebnisse werden beim Wechsel des Fachtyps nicht
+    /// gelöscht (siehe ``SubjectDraft/resolvedWrittenExamPoints``), sondern
+    /// ignoriert. Ein `writtenExamPoints` an einem Fach, das kein Leistungsfach
+    /// mehr ist, kommt gar nicht erst in die Liste — die schriftlichen Prüfungen
+    /// entstehen ausschliesslich aus den Leistungsfächern.
     static func exams(in subjects: [SubjectInput]) -> [Exam] {
         let written = subjects
             .filter { $0.kind == .leistungsfach }

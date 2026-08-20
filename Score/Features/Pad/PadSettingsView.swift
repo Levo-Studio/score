@@ -35,7 +35,7 @@ struct PadSettingsView: View {
     /// Welches Profil dieses Gerät führt. Gerätesache, deshalb `AppStorage`.
     @AppStorage(ActiveProfile.identifierKey) private var activeProfileIdentifier = ""
 
-    /// Der Zustandsautomat der Wurzel, für „Neu registrieren". Optional, weil
+    /// Der Zustandsautomat der Wurzel, für „Neues Profil, gleiche Fächer". Optional, weil
     /// Vorschauen und Belegbilder diesen Bildschirm ohne ihn zeigen.
     @Environment(ProfileHandoffModel.self) private var handoff: ProfileHandoffModel?
 
@@ -226,6 +226,16 @@ struct PadSettingsView: View {
                 }
             }
             .buttonStyle(.plain)
+
+            // Neben dem Export und nicht neben dem Löschen: Export und Import
+            // sind zwei Richtungen derselben Sache.
+            ImportDataButton(profile: profile) {
+                PadSettingsRow(title: "Daten importieren", isFirst: false) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(ScorePalette.inkSecondary)
+                }
+            }
 
             DeleteAllDataButton {
                 PadSettingsRow(title: "Alle Daten löschen", isFirst: false, titleColor: ScorePalette.warn) {

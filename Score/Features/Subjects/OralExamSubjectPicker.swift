@@ -117,7 +117,6 @@ struct OralExamSubjectSelection: View {
 struct OralExamSubjectSheet: View {
 
     @Query(sort: \Subject.sortIndex) private var subjects: [Subject]
-    @Query private var profiles: [StudentProfile]
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -227,12 +226,9 @@ struct OralExamSubjectSheet: View {
         let name = customDraft
         customDraft = ""
 
-        OralExamSubjects.add(
-            named: name,
-            activeSemesters: profiles.first?.classLevel.availableSemesters ?? Semester.allIndices,
-            in: subjects,
-            context: modelContext
-        )
+        // Ohne `activeSemesters`: die ganze Kursstufe ist hier die Regel und
+        // keine Angabe des Bildschirms. Die Begründung steht bei ``add``.
+        OralExamSubjects.add(named: name, in: subjects, context: modelContext)
     }
 }
 
@@ -265,7 +261,7 @@ enum OralExamSubjects {
 
     /// Die Kennungen der gewählten Fächer.
     static func selection(in subjects: [Subject]) -> Set<String> {
-        Set(subjects.filter(\.isOralExamSubject).map(\.identifier.uuidString))
+        Set(subjects.filter(\.countsAsOralExamSubject).map(\.identifier.uuidString))
     }
 
     /// Wählt ein Fach an oder ab.
@@ -274,12 +270,18 @@ enum OralExamSubjects {
     /// statt still die erste zu verdrängen — genauso wie bei den drei
     /// Leistungsfächern im Onboarding. Was verschwindet, ohne dass man es
     /// angefasst hat, verwirrt mehr, als es hilft.
+    ///
+    /// Gefragt wird dabei nach ``Subject/countsAsOralExamSubject`` und nicht nach
+    /// dem rohen Feld — dieselbe Frage, die auch ``selection(in:)`` stellt.
+    /// Schreiben und Zählen dürfen nicht auseinanderlaufen: Ein Fach, das als
+    /// gewählt gezählt wird, muss sich abwählen lassen, und eines, das nicht
+    /// zählt, darf keinen Platz belegen.
     static func toggle(_ identifier: String, in subjects: [Subject]) {
         guard let subject = subjects.first(where: { $0.identifier.uuidString == identifier }),
               subject.canBeOralExamSubject
         else { return }
 
-        if subject.isOralExamSubject {
+        if subject.countsAsOralExamSubject {
             subject.isOralExamSubject = false
         } else if selection(in: subjects).count < OralExamSubjectSelection.requiredCount {
             subject.isOralExamSubject = true
@@ -297,11 +299,18 @@ enum OralExamSubjects {
     /// vorhandene Fach wird nur gewählt. Sonst legte ein Vertipper eine
     /// Dublette an, die still doppelt in Block I zählte.
     ///
+    /// Belegt wird die **ganze Kursstufe**, nicht nur die Halbjahre der
+    /// heutigen Klassenstufe. Ein Fach belegt man für zwei Jahre, und bei einem
+    /// Prüfungsfach wiegt das doppelt: seine Kurse sind anrechnungspflichtig.
+    /// Wer in Kursstufe 1 ein Prüfungsfach anlegt, hätte sonst nur 1/4 und 2/4
+    /// belegt, und die ein Jahr später eingetragenen Noten fielen stumm aus der
+    /// Rechnung. Dieselbe Begründung steht im Onboarding.
+    ///
     /// - Returns: Das gewählte Fach, oder `nil`, wenn der Name leer war.
     @discardableResult
     static func add(
         named rawName: String,
-        activeSemesters: [Int],
+        activeSemesters: [Int] = Semester.allIndices,
         in subjects: [Subject],
         context: ModelContext
     ) -> Subject? {

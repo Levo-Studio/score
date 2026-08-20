@@ -37,11 +37,21 @@ struct SubjectDraft {
     /// geprüft".
     var oralExamPoints: Int?
 
+    /// Die Prüfungsrolle, mit der das Fach in den Editor kam.
+    ///
+    /// Sie wird nur für eine Frage gebraucht: ob das Fach die Rolle gewechselt
+    /// hat. Siehe ``hasSwitchedExamRole``.
+    private let initialExamRole: ExamRole
+
     init(subject: Subject?) {
         name = subject?.name ?? ""
         abbreviation = subject?.abbreviation ?? ""
         colorValue = subject?.colorValue ?? Int(ScorePalette.subjectColorValues[0])
         kind = subject?.kind ?? .wahlBasisfach
+        initialExamRole = Self.examRole(
+            kind: subject?.kind ?? .wahlBasisfach,
+            isOralExamSubject: subject?.isOralExamSubject ?? false
+        )
         activeSemesters = Set(subject?.activeSemesters ?? Semester.allIndices)
         writtenShare = subject?.writtenShare ?? 50
         maximumContributedCourses = subject?.maximumContributedCourses
@@ -67,24 +77,94 @@ struct SubjectDraft {
 
     /// Die Doppelwertung, wie sie gespeichert wird.
     ///
-    /// Bei allem, was kein Leistungsfach ist, immer `false`: doppelt gewertet
-    /// werden nur Leistungsfächer. Der Wert wird nicht gelöscht, sondern beim
-    /// Sichern ausgewertet — wer den Fachtyp kurz umstellt, findet seine Wahl
-    /// danach wieder vor.
-    var resolvedDoubleWeighted: Bool { allowsDoubleWeighting && isDoubleWeighted }
+    /// Doppelt gewertet werden nur Leistungsfächer. Passt der Fachtyp nicht,
+    /// wird die Wahl **ignoriert und nicht gelöscht** — genau wie die
+    /// Prüfungsergebnisse. Wer sein Leistungsfach kurz auf Pflicht-Basisfach
+    /// stellt und zurück, hatte sonst seine Doppelwertung verloren, ohne sie je
+    /// angefasst zu haben.
+    ///
+    /// Dass eine liegengebliebene Wahl nicht mitzählt, entscheidet der
+    /// Rechenkern: ``BlockOneCalculator/doubleWeightedSubjects(in:among:)``
+    /// betrachtet ausschliesslich Leistungsfächer.
+    var resolvedDoubleWeighted: Bool { isDoubleWeighted }
 
     /// Das schriftliche Prüfungsergebnis, wie es gespeichert wird.
     ///
-    /// Nur Leistungsfächer werden schriftlich geprüft; bei allen anderen bleibt
-    /// das Feld leer, damit kein Ergebnis stehen bleibt, das in die Rechnung
-    /// einginge, sobald das Fach wieder Leistungsfach wird.
+    /// Nur Leistungsfächer werden schriftlich geprüft. Passt der Fachtyp nicht,
+    /// wird das Ergebnis **ignoriert und nicht gelöscht** — genau wie Klammerung,
+    /// Kursgrenze und Doppelwertung darüber. Wer sein Leistungsfach kurz auf
+    /// Pflicht-Basisfach stellt und zurück, hatte sonst seine Abiturnote
+    /// verloren, ohne sie je angefasst zu haben.
+    ///
+    /// Dass ein liegengebliebenes Ergebnis nicht mitzählt, entscheidet der
+    /// Rechenkern: ``BlockTwoCalculator/exams(in:)`` stellt die schriftlichen
+    /// Prüfungen ausschliesslich aus den Leistungsfächern zusammen.
     var resolvedWrittenExamPoints: Int? {
-        hasWrittenExam ? writtenExamPoints.map(GradeEntry.clamp) : nil
+        writtenExamPoints.map(GradeEntry.clamp)
+    }
+
+    /// In welcher Rolle ein Fach im Abitur geprüft wird.
+    ///
+    /// Sie entscheidet, was ``oralExamPoints`` **bedeutet** — und nur deshalb
+    /// gibt es sie hier.
+    enum ExamRole {
+        /// Gar nicht geprüft.
+        case none
+        /// Schriftlich geprüft: ein Leistungsfach. `oralExamPoints` ist dort die
+        /// mündliche **Nachprüfung**.
+        case written
+        /// Mündlich geprüft: eines der beiden mündlichen Prüfungsfächer.
+        /// `oralExamPoints` ist dort die mündliche **Prüfung**.
+        case oral
+    }
+
+    private static func examRole(kind: SubjectKind, isOralExamSubject: Bool) -> ExamRole {
+        if kind == .leistungsfach { return .written }
+        return isOralExamSubject ? .oral : .none
+    }
+
+    /// Die Rolle, in der das Fach den Editor verlässt.
+    var examRole: ExamRole {
+        Self.examRole(kind: kind, isOralExamSubject: isOralExamSubject)
+    }
+
+    /// Ob das Fach zwischen „mündliches Prüfungsfach" und „Leistungsfach"
+    /// gewechselt ist — und damit die **Bedeutung** von ``oralExamPoints``.
+    ///
+    /// Das ist die eine bewusste Ausnahme von der Ignorier-Regel, die über allen
+    /// anderen Feldern steht. Der Unterschied:
+    ///
+    /// - Kursgrenze, Doppelwertung und das schriftliche Ergebnis bedeuten in
+    ///   jeder Rolle **dasselbe**. Ein liegengebliebener Wert ist dort nur ein
+    ///   Wert, der gerade nicht zählt — ihn aufzuheben schützt den Nutzer.
+    /// - ``oralExamPoints`` bedeutet in den beiden Prüfungsrollen etwas
+    ///   **anderes**: beim mündlichen Prüfungsfach die mündliche Prüfung, beim
+    ///   Leistungsfach die mündliche **Nachprüfung**, die mit 2 : 1 gegen das
+    ///   schriftliche Ergebnis verrechnet wird. Aus 5 Punkten Geschichte würden
+    ///   so still 11 Punkte weniger in Block II.
+    ///
+    /// Einen Wert aufzuheben, dessen Bedeutung sich ändert, ist kein Schutz,
+    /// sondern eine Falle. Er wird deshalb **gelöscht**.
+    ///
+    /// Gemeint ist ausschliesslich der Wechsel zwischen den beiden
+    /// Prüfungsrollen, in beide Richtungen. Wird aus einem Leistungsfach ein
+    /// gewöhnliches Basisfach, bleibt das Ergebnis liegen wie eh und je: Solange
+    /// keine zweite Rolle dazukommt, bedeutet es weiterhin dasselbe.
+    private var hasSwitchedExamRole: Bool {
+        switch (initialExamRole, examRole) {
+        case (.oral, .written), (.written, .oral): true
+        default: false
+        }
     }
 
     /// Das mündliche Prüfungsergebnis, wie es gespeichert wird.
+    ///
+    /// Bleibt stehen, auch wenn in diesem Fach gerade nicht mündlich geprüft
+    /// wird — es sei denn, das Fach hat die Prüfungsrolle gewechselt. Dann ist
+    /// es weg; die Begründung steht bei ``hasSwitchedExamRole``.
     var resolvedOralExamPoints: Int? {
-        hasOralExam ? oralExamPoints.map(GradeEntry.clamp) : nil
+        guard !hasSwitchedExamRole else { return nil }
+        return oralExamPoints.map(GradeEntry.clamp)
     }
 
     // MARK: - Kursgrenze
@@ -97,16 +177,28 @@ struct SubjectDraft {
 
     /// Ob dieses Fach im Abitur geprüft wird — schriftlich oder mündlich.
     ///
-    /// Ein Leistungsfach ist immer ein schriftliches Prüfungsfach; deshalb wird
-    /// die mündliche Angabe bei ihm ignoriert und nicht gelöscht. Wer den Fachtyp
-    /// nur kurz umstellt, findet seine Wahl danach wieder vor.
+    /// Ein Leistungsfach ist immer ein schriftliches Prüfungsfach; die mündliche
+    /// Angabe kann bei ihm gar nicht mehr gesetzt sein, siehe
+    /// ``resolvedOralExamSubject``.
     var isExamSubject: Bool { kind == .leistungsfach || resolvedOralExamSubject }
 
     /// Die mündliche Prüfungsfach-Angabe, wie sie gespeichert wird.
     ///
-    /// Bei einem Leistungsfach immer `false`: es wird bereits schriftlich
-    /// geprüft, und beide Kennzeichen zugleich wären ein Widerspruch im Datensatz.
-    var resolvedOralExamSubject: Bool { kind != .leistungsfach && isOralExamSubject }
+    /// Anders als Kursgrenze, Doppelwertung und schriftliches Ergebnis wird sie
+    /// an einem Leistungsfach **gelöscht** und nicht aufgehoben: In ihm wird
+    /// schriftlich geprüft, „mündliches Prüfungsfach" ist dort kein
+    /// liegengebliebener Wert, sondern ein Widerspruch.
+    ///
+    /// Aufgehoben wurde sie früher, damit ein kurzes Umstellen des Fachtyps die
+    /// Wahl nicht kostet. Das war der Weg zu drei mündlichen Prüfungsfächern:
+    /// Solange sie am Leistungsfach stehen blieb, zählte sie nirgends mit, ein
+    /// drittes Fach liess sich wählen — und beim Zurückstellen standen plötzlich
+    /// drei. Was geschrieben wird, muss dieselbe Frage stellen wie das, was
+    /// gezählt wird, und ``Subject/countsAsOralExamSubject`` stellt genau diese.
+    ///
+    /// Innerhalb der Basisfächer bleibt die Angabe unangetastet: dort ändert der
+    /// Fachtyp nichts an ihrer Bedeutung.
+    var resolvedOralExamSubject: Bool { kind == .leistungsfach ? false : isOralExamSubject }
 
     /// Die wählbaren Grenzen: von einem Kurs bis „alle".
     ///
@@ -123,8 +215,12 @@ struct SubjectDraft {
     /// Wer ein Halbjahr abwählt, kann eine Grenze zurücklassen, die alle
     /// verbliebenen Kurse umfasst — das ist dasselbe wie „alle" und wird auch so
     /// angezeigt, statt eine Zahl zu zeigen, die nichts mehr bewirkt.
+    ///
+    /// Bei einem Prüfungsfach wird die Grenze **ignoriert und nicht gelöscht**.
+    /// Dass sie dort nicht mitzählt, entscheidet der Rechenkern:
+    /// ``SubjectInput/effectiveCourseLimit`` gibt für Prüfungsfächer `nil` zurück.
     var resolvedCourseLimit: Int? {
-        guard allowsCourseLimit, let limit = maximumContributedCourses else { return nil }
+        guard let limit = maximumContributedCourses else { return nil }
         return limit < activeSemesters.count ? max(1, limit) : nil
     }
 

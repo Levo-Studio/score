@@ -25,9 +25,30 @@ struct GradeEntrySheet: View {
 
     let subject: Subject
 
+    /// Die Leistungen des Halbjahres, in dem diese hier steht.
+    ///
+    /// Kommt von aussen und nicht über `entry.semester`, weil ein Entwurf noch an
+    /// keinem Halbjahr hängt — er wird erst beim Bestätigen eingefügt. Gebraucht
+    /// wird die Liste nur für den Hinweis, wie sich der automatische Anteil
+    /// aufteilt.
+    var semesterEntries: [GradeEntry] = []
+
     /// Löscht die Leistung. Liegt beim Aufrufer, weil dort der `ModelContext`
     /// und die Liste hängen, aus der sie verschwinden muss.
-    let onDelete: () -> Void
+    var onDelete: () -> Void = {}
+
+    /// Bestätigt die Eingabe: „Fertig".
+    ///
+    /// Bei einem Entwurf entsteht der Datensatz erst hier. Wird das Blatt anders
+    /// geschlossen — heruntergezogen, neben das Blatt getippt —, bleibt nichts
+    /// zurück.
+    var onConfirm: () -> Void = {}
+
+    /// Ob dieses Blatt einen Entwurf zeigt, den es noch nicht gibt.
+    ///
+    /// Ändert nur die Beschriftung der Schaltfläche unten: was noch nicht
+    /// existiert, wird verworfen und nicht gelöscht.
+    var isNew: Bool = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -69,7 +90,10 @@ struct GradeEntrySheet: View {
                 .foregroundStyle(ScorePalette.ink)
                 .textInputAutocapitalization(.sentences)
 
-            Button("Fertig") { dismiss() }
+            Button("Fertig") {
+                onConfirm()
+                dismiss()
+            }
                 .font(.chipLabel)
                 .foregroundStyle(ScorePalette.accent)
         }
@@ -181,7 +205,7 @@ struct GradeEntrySheet: View {
                 onDelete()
                 dismiss()
             } label: {
-                Text("Löschen")
+                deleteLabel
                     .font(.chipLabel)
                     .foregroundStyle(ScorePalette.warn)
                     .frame(minHeight: ScoreMetrics.minimumTapTarget)
@@ -192,11 +216,22 @@ struct GradeEntrySheet: View {
         .padding(.top, 14)
     }
 
+    /// „Verwerfen" bei einem Entwurf, „Löschen" bei einer bestehenden Leistung.
+    private var deleteLabel: Text {
+        isNew ? Text("Verwerfen") : Text("Löschen")
+    }
+
     // MARK: - Hinweistexte
 
     /// Alle Leistungen derselben Teilnote — sie teilen sich die 100 %.
+    ///
+    /// Ein Entwurf hängt noch an keinem Halbjahr und steht deshalb nicht in
+    /// ``semesterEntries``; er wird hier hinzugenommen, damit der Hinweis schon
+    /// beim Eintippen die Aufteilung nennt, die nach dem Bestätigen gilt.
     private var siblings: [GradeEntry] {
-        (entry.semester?.entries ?? [])
+        var all = entry.semester?.entries ?? semesterEntries
+        if !all.contains(where: { $0 === entry }) { all.append(entry) }
+        return all
             .filter { $0.kind == entry.kind }
             .sorted { $0.createdAt < $1.createdAt }
     }
@@ -204,7 +239,9 @@ struct GradeEntrySheet: View {
     /// Der Anteil, den diese Leistung nach der Verteilung tatsächlich hat.
     private var effectiveShare: Int {
         let shares = SubjectMath.effectiveShares(for: siblings.map(GradeInput.init))
-        guard let index = siblings.firstIndex(where: { $0.persistentModelID == entry.persistentModelID }),
+        // Verglichen wird die Objektidentität und nicht die `persistentModelID`:
+        // ein Entwurf hat noch keine endgültige.
+        guard let index = siblings.firstIndex(where: { $0 === entry }),
               shares.indices.contains(index) else { return 0 }
         return Int(shares[index].rounded())
     }

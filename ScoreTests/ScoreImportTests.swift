@@ -166,6 +166,52 @@ struct ScoreImportTests {
         #expect(allCustom)
     }
 
+    @Test("Zusammenführen gibt jedem Fach einen eigenen Platz")
+    func mergingNeverCollidesOnTheSortIndex() throws {
+        let context = try Self.makeContext()
+
+        // Der Bestand belegt die Plätze 0 und 1 …
+        for (offset, name) in ["Deutsch", "Mathematik"].enumerated() {
+            let subject = Subject(
+                name: name,
+                abbreviation: String(name.prefix(2)),
+                colorValue: 0x3E7CA6,
+                kind: .pflichtBasisfach,
+                sortIndex: offset
+            )
+            context.insert(subject)
+        }
+
+        // … und die Datei will genau dieselben Plätze für andere Fächer.
+        let source = try Self.makeContext()
+        for (offset, name) in ["Physik", "Chemie"].enumerated() {
+            let subject = Subject(
+                name: name,
+                abbreviation: String(name.prefix(2)),
+                colorValue: 0x3E7CA6,
+                kind: .wahlBasisfach,
+                sortIndex: offset
+            )
+            source.insert(subject)
+        }
+
+        let data = try ScoreExport(
+            profile: nil,
+            subjects: try Self.fetchSubjects(in: source)
+        ).encoded()
+
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .merge, in: context, profile: nil)
+
+        let merged = try Self.fetchSubjects(in: context)
+        let order = merged.map { $0.sortIndex }
+        let names = merged.map { $0.name }
+
+        #expect(Set(order).count == order.count)
+        // Der Bestand behält seine Plätze, das Neue kommt dahinter.
+        #expect(names == ["Deutsch", "Mathematik", "Physik", "Chemie"])
+        #expect(order == [0, 1, 2, 3])
+    }
+
     // MARK: - Hin und zurück
 
     @Test("Ausgabe und Einlesen ergeben denselben Bestand")

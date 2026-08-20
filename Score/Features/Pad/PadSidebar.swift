@@ -154,7 +154,7 @@ struct PadSidebar: View {
     /// ist eine Aussage über die Fächer, keine eigene Abteilung der App. Die
     /// Zeile nennt den Stand, damit man ohne Tippen sieht, ob die Angabe fehlt.
     private var oralExamButton: some View {
-        let chosen = summaries.map(\.subject).filter(\.isOralExamSubject)
+        let chosen = summaries.map(\.subject).filter(\.countsAsOralExamSubject)
 
         return Button {
             route = .oralExamSubjects
@@ -259,7 +259,7 @@ struct PadSidebar: View {
                     .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                if subject.isOralExamSubject {
+                if subject.countsAsOralExamSubject {
                     OralExamBadge(isCompact: true)
                 }
 

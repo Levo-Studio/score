@@ -236,6 +236,18 @@ extension Subject {
         kind != .leistungsfach
     }
 
+    /// Ob dieses Fach gerade tatsächlich als mündliches Prüfungsfach zählt.
+    ///
+    /// ``isOralExamSubject`` bleibt beim Wechsel des Fachtyps stehen und wird
+    /// nicht gelöscht — wer sein Prüfungsfach kurz zum Leistungsfach macht,
+    /// findet die Angabe danach wieder vor. Solange es Leistungsfach ist, zählt
+    /// sie aber nicht: Überall dort, wo gezählt oder angezeigt wird, gilt diese
+    /// Frage und nicht das rohe Feld — sonst stünden nach einem Hin und Her drei
+    /// mündliche Prüfungsfächer.
+    var countsAsOralExamSubject: Bool {
+        isOralExamSubject && canBeOralExamSubject
+    }
+
     /// Ob das Fach im angegebenen Halbjahr belegt ist.
     func isActive(in semesterIndex: Int) -> Bool {
         activeSemesters.contains(semesterIndex)

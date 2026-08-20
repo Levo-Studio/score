@@ -154,6 +154,14 @@ enum ScoreImport {
 
         var existing = try context.fetch(FetchDescriptor<Subject>())
 
+        // Ist der Bestand leer — beim Ersetzen immer —, bestimmt die Datei die
+        // Reihenfolge vollständig. Steht dagegen schon etwas da, bekommt jedes
+        // neue Fach einen Platz hinter dem letzten: Der Wert aus der Datei würde
+        // mit dem Bestand kollidieren, und zwei Fächer auf demselben Platz sind
+        // eine Reihenfolge, die keine ist.
+        let fileDecidesOrder = existing.isEmpty
+        var nextSortIndex = (existing.map(\.sortIndex).max() ?? -1) + 1
+
         for (offset, imported) in export.subjects.enumerated() {
             let name = imported.name.trimmingCharacters(in: .whitespacesAndNewlines)
             if let match = existing.first(where: {
@@ -162,7 +170,14 @@ enum ScoreImport {
             }) {
                 merge(imported, into: match, in: context)
             } else {
-                existing.append(create(imported, sortIndex: offset, in: context))
+                let position: Int
+                if fileDecidesOrder {
+                    position = imported.sortIndex ?? offset
+                } else {
+                    position = nextSortIndex
+                    nextSortIndex += 1
+                }
+                existing.append(create(imported, sortIndex: position, in: context))
             }
         }
 
@@ -206,8 +221,9 @@ enum ScoreImport {
             isDoubleWeighted: imported.isDoubleWeighted ?? false,
             writtenExamPoints: imported.writtenExamPoints.map(GradeEntry.clamp),
             oralExamPoints: imported.oralExamPoints.map(GradeEntry.clamp),
-            // Die Reihenfolge aus der Datei, sonst die Position im Array.
-            sortIndex: imported.sortIndex ?? sortIndex
+            // Der Platz, den die Aufrufstelle vergeben hat: aus der Datei, wenn
+            // sie die Reihenfolge bestimmt, sonst hinter dem Bestand.
+            sortIndex: sortIndex
         )
         context.insert(subject)
 

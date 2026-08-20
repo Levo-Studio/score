@@ -112,7 +112,7 @@ struct PadSubjectDetailView: View {
                 isHighlighted: subject.kind == .leistungsfach
             )
 
-            if subject.isOralExamSubject {
+            if subject.countsAsOralExamSubject {
                 OralExamBadge()
             }
 

@@ -93,6 +93,77 @@ struct SecondOnboardingRolesTests {
         #expect(after.orderedSemesters.count == Semester.allIndices.count)
     }
 
+    @Test("Ein Fach, das nicht mehr vorkommt, ist kein Leistungsfach mehr")
+    func aSubjectThatIsGoneFromTheChoiceLosesItsRole() throws {
+        let context = try Self.makeContext()
+        Self.runFirstOnboarding(in: context)
+
+        // Biologie war Leistungsfach, Englisch mündliches Prüfungsfach. Der
+        // dritte Durchlauf nennt beide gar nicht mehr.
+        let model = OnboardingViewModel()
+        model.firstName = "Nils"
+        model.advancedSubjects = ["Deutsch", "Mathematik", "Geschichte"]
+        model.requiredBasicSubjects = []
+        model.oralExamSubjects = []
+        model.finish(in: context)
+
+        let biology = try Self.subject(named: "Biologie", in: context)
+        let english = try Self.subject(named: "Englisch", in: context)
+
+        #expect(biology.kind == .wahlBasisfach)
+        #expect(english.kind == .wahlBasisfach)
+        #expect(!english.isOralExamSubject)
+    }
+
+    @Test("Nach dem zweiten Durchlauf stehen genau drei Leistungsfächer")
+    func exactlyThreeAdvancedSubjectsRemain() throws {
+        let context = try Self.makeContext()
+        Self.runFirstOnboarding(in: context)
+        Self.runSecondOnboarding(in: context)
+
+        let all = try context.fetch(FetchDescriptor<Subject>())
+        let advanced = all.filter { $0.kind == .leistungsfach }.map { $0.name }.sorted()
+        let oral = all.filter { $0.countsAsOralExamSubject }.map { $0.name }
+
+        #expect(advanced == ["Deutsch", "Englisch", "Mathematik"])
+        #expect(oral == ["Geschichte"])
+    }
+
+    @Test("Das Zurückstufen lässt Noten und Einstellungen stehen")
+    func demotionKeepsGradesAndSettings() throws {
+        let context = try Self.makeContext()
+        Self.runFirstOnboarding(in: context)
+
+        let biology = try Self.subject(named: "Biologie", in: context)
+        biology.maximumContributedCourses = 2
+        biology.writtenExamPoints = 13
+        let semester = try #require(biology.semester(at: 0))
+        let entry = GradeEntry(
+            title: "Klausur",
+            points: 12,
+            kind: .written,
+            category: .exam,
+            share: 100,
+            usesAutomaticShare: true
+        )
+        entry.semester = semester
+        context.insert(entry)
+
+        let model = OnboardingViewModel()
+        model.firstName = "Nils"
+        model.advancedSubjects = ["Deutsch", "Mathematik", "Geschichte"]
+        model.finish(in: context)
+
+        let after = try Self.subject(named: "Biologie", in: context)
+        let points = after.semester(at: 0)?.orderedEntries.map { $0.points }
+
+        #expect(after.kind == .wahlBasisfach)
+        #expect(points == [12])
+        #expect(after.maximumContributedCourses == 2)
+        #expect(after.writtenExamPoints == 13)
+        #expect(after.orderedSemesters.count == Semester.allIndices.count)
+    }
+
     @Test("Es entsteht keine Dublette")
     func nothingIsCreatedTwice() throws {
         let context = try Self.makeContext()

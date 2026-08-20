@@ -118,9 +118,15 @@ struct SubjectDraft {
 
     /// Die mündliche Prüfungsfach-Angabe, wie sie gespeichert wird.
     ///
-    /// Bei einem Leistungsfach immer `false`: es wird bereits schriftlich
-    /// geprüft, und beide Kennzeichen zugleich wären ein Widerspruch im Datensatz.
-    var resolvedOralExamSubject: Bool { kind != .leistungsfach && isOralExamSubject }
+    /// Passt der Fachtyp nicht, wird die Angabe **ignoriert und nicht gelöscht** —
+    /// dieselbe Regel wie bei Kursgrenze, Doppelwertung und den Prüfungsergebnissen.
+    /// Wer sein mündliches Prüfungsfach kurz zum Leistungsfach macht und zurück,
+    /// hatte sonst seine Wahl verloren, ohne sie je angefasst zu haben.
+    ///
+    /// Dass eine liegengebliebene Angabe nirgends mitzählt, entscheiden zwei
+    /// Stellen: ``Subject/countsAsOralExamSubject`` überall dort, wo gezählt und
+    /// angezeigt wird, und ``BlockTwoCalculator/exams(in:)`` im Prüfungsblock.
+    var resolvedOralExamSubject: Bool { isOralExamSubject }
 
     /// Die wählbaren Grenzen: von einem Kurs bis „alle".
     ///

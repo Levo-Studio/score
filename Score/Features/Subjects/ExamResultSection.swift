@@ -272,7 +272,7 @@ enum ExamResultCopy {
     /// Bei einem Leistungsfach nie: dort ist das Mündliche eine Nachprüfung zur
     /// schriftlichen und keine eigene Prüfung.
     static func hasOralExam(_ subject: Subject) -> Bool {
-        subject.kind != .leistungsfach && subject.isOralExamSubject
+        subject.countsAsOralExamSubject
     }
 
     static func title(of slot: ExamResultSlot, in subject: Subject) -> Text {

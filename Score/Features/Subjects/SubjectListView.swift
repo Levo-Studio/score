@@ -82,7 +82,7 @@ struct SubjectListView: View {
 
     /// Ob beide mündlichen Prüfungsfächer gewählt sind.
     private var isOralExamChoiceComplete: Bool {
-        subjects.count(where: \.isOralExamSubject) >= OralExamSubjectSelection.requiredCount
+        subjects.count(where: \.countsAsOralExamSubject) >= OralExamSubjectSelection.requiredCount
     }
 
     /// Der Einstieg in die Wahl der mündlichen Prüfungsfächer — als Karte,
@@ -173,7 +173,7 @@ struct SubjectListView: View {
     /// Der Stand auf der Karte. Sie steht nur, solange die Wahl offen ist —
     /// entweder fehlt sie ganz, oder es fehlt noch eins von beiden.
     private var oralExamNote: Text {
-        let chosen = subjects.filter(\.isOralExamSubject)
+        let chosen = subjects.filter(\.countsAsOralExamSubject)
         guard !chosen.isEmpty else {
             return Text("Noch nicht gewählt. Ihre Halbjahre sind anrechnungspflichtig — ohne die Angabe rechnet Score zu gut.")
         }
@@ -261,7 +261,7 @@ private struct SubjectListRow: View {
                     // Gedrängt: In der Zeile steht nur das Siegel. Seit der
                     // Hinweis unten verschwindet, sobald die Wahl steht, ist die
                     // Liste der einzige Ort, an dem man sie im Vorbeigehen sieht.
-                    if subject.isOralExamSubject {
+                    if subject.countsAsOralExamSubject {
                         OralExamBadge(isCompact: true)
                     }
                 }

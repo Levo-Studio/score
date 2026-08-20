@@ -261,7 +261,7 @@ enum OralExamSubjects {
 
     /// Die Kennungen der gewählten Fächer.
     static func selection(in subjects: [Subject]) -> Set<String> {
-        Set(subjects.filter(\.isOralExamSubject).map(\.identifier.uuidString))
+        Set(subjects.filter(\.countsAsOralExamSubject).map(\.identifier.uuidString))
     }
 
     /// Wählt ein Fach an oder ab.

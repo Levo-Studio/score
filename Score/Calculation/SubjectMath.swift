@@ -268,6 +268,15 @@ struct SubjectInput: Sendable, Equatable, Identifiable {
         kind == .leistungsfach || isOralExamSubject
     }
 
+    /// Ob dieses Fach gerade tatsächlich als mündliches Prüfungsfach zählt.
+    ///
+    /// Ein Leistungsfach wird schriftlich geprüft; eine dort liegengebliebene
+    /// Angabe bleibt stehen, zählt aber nicht. Siehe
+    /// ``Subject/countsAsOralExamSubject``.
+    var countsAsOralExamSubject: Bool {
+        isOralExamSubject && kind != .leistungsfach
+    }
+
     /// Ob sich die Kurse dieses Fachs überhaupt klammern lassen.
     ///
     /// Prüfungsfächer sind anrechnungspflichtig: weder von Hand noch automatisch

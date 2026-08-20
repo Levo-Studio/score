@@ -333,7 +333,7 @@ struct BlockOneBreakdown {
                     )
                 },
                 courseLimit: input.effectiveCourseLimit,
-                isOralExamSubject: input.isOralExamSubject,
+                isOralExamSubject: input.countsAsOralExamSubject,
                 allowsBracketing: input.allowsBracketing
             )
         }

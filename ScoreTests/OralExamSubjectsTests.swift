@@ -280,6 +280,74 @@ struct OralExamSubjectsTests {
         #expect(sport.effectiveCourseLimit == nil)
         #expect(sport.maximumContributedCourses == 2)
     }
+
+    // MARK: - Der Fachtyp-Wechsel
+
+    @Test("Ein Wechsel zum Leistungsfach löscht die Angabe nicht")
+    func switchingToAnAdvancedSubjectKeepsTheFlag() throws {
+        let (context, subjects) = try Self.makeSubjects()
+        let english = try subject("Englisch", in: subjects)
+        let history = try subject("Geschichte", in: subjects)
+        english.isOralExamSubject = true
+        history.isOralExamSubject = true
+
+        var draft = SubjectDraft(subject: english)
+        draft.kind = .leistungsfach
+        draft.save(to: english, in: context, existingSubjects: subjects)
+
+        // Die Angabe steht noch — gelöscht wird sie nicht.
+        #expect(english.isOralExamSubject)
+        // Gezählt wird sie nicht: sonst stünden hier drei.
+        #expect(!english.countsAsOralExamSubject)
+        #expect(OralExamSubjects.selection(in: subjects).count == 1)
+
+        var back = SubjectDraft(subject: english)
+        back.kind = .pflichtBasisfach
+        back.save(to: english, in: context, existingSubjects: subjects)
+
+        #expect(english.countsAsOralExamSubject)
+        #expect(OralExamSubjects.selection(in: subjects).count == 2)
+    }
+
+    @Test("Die Zählung steht nie bei drei")
+    func theCountNeverReachesThree() throws {
+        let (context, subjects) = try Self.makeSubjects()
+        let english = try subject("Englisch", in: subjects)
+        let history = try subject("Geschichte", in: subjects)
+        english.isOralExamSubject = true
+        history.isOralExamSubject = true
+
+        var draft = SubjectDraft(subject: english)
+        draft.kind = .leistungsfach
+        draft.save(to: english, in: context, existingSubjects: subjects)
+
+        // Solange Englisch Leistungsfach ist, ist ein Platz frei — Sport lässt
+        // sich wählen, und die Zählung bleibt bei zwei.
+        OralExamSubjects.toggle(try identifier("Sport", in: subjects), in: subjects)
+
+        let raw = subjects.count { $0.isOralExamSubject }
+        let counted = subjects.count { $0.countsAsOralExamSubject }
+
+        #expect(OralExamSubjects.selection(in: subjects).count == 2)
+        #expect(raw == 3)
+        #expect(counted == 2)
+    }
+
+    @Test("Ein liegengebliebenes Kennzeichen bleibt aus dem Prüfungsblock heraus")
+    func aStaleFlagStaysOutOfTheExamBlock() throws {
+        let (context, subjects) = try Self.makeSubjects()
+        let english = try subject("Englisch", in: subjects)
+        english.isOralExamSubject = true
+
+        var draft = SubjectDraft(subject: english)
+        draft.kind = .leistungsfach
+        draft.save(to: english, in: context, existingSubjects: subjects)
+
+        let exams = BlockTwoCalculator.exams(in: subjects.map(SubjectInput.init))
+        let oral = exams.filter { $0.role == .oral }
+
+        #expect(oral.isEmpty)
+    }
 }
 
 // MARK: - Der Schritt im Onboarding

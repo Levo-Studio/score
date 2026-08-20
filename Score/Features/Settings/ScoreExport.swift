@@ -14,7 +14,8 @@ import UniformTypeIdentifiers
 /// die Sicherung. Eine Sicherung, der etwas fehlt, ist keine — deshalb steht hier
 /// **jede Angabe, die sich von Hand eintragen lässt**: Farbe, Kursgrenze,
 /// Doppelwertung, die beiden Abiturprüfungsergebnisse und die Handklammerung
-/// jedes Halbjahres.
+/// jedes Halbjahres — dazu die Herkunft jedes Fachs und seine Position in der
+/// Liste.
 ///
 /// ## Die Formatversion
 ///
@@ -27,8 +28,9 @@ struct ScoreExport: Codable, Transferable {
     /// Die Fassung, in der Score heute schreibt.
     ///
     /// 1 war die erste Fassung ohne Farbe, Kursgrenze, Doppelwertung und
-    /// Prüfungsergebnisse.
-    static let currentFormatVersion = 2
+    /// Prüfungsergebnisse. 2 hatte noch weder Herkunft noch Reihenfolge der
+    /// Fächer.
+    static let currentFormatVersion = 3
 
     /// Die Fassung, nach der diese Datei geschrieben wurde.
     ///
@@ -70,6 +72,21 @@ struct ScoreExport: Codable, Transferable {
         var writtenExamPoints: Int?
         /// Das mündliche Abiturprüfungsergebnis.
         var oralExamPoints: Int?
+
+        // Seit Fassung 3. In älteren Dateien fehlen sie und bleiben `nil`.
+
+        /// Ob der Nutzer dieses Fach selbst angelegt hat.
+        ///
+        /// Ohne die Angabe leitet der Import die Herkunft aus dem Katalog ab —
+        /// ein selbst angelegtes Fach, das zufällig einen Katalognamen trägt,
+        /// käme dann als Katalogfach zurück.
+        var isCustom: Bool?
+
+        /// Die Position des Fachs in der Liste.
+        ///
+        /// Ohne die Angabe zählt die Position im Array. Eine Sicherung, die die
+        /// selbst gewählte Reihenfolge verliert, ist keine.
+        var sortIndex: Int?
     }
 
     struct Semester: Codable {
@@ -126,7 +143,9 @@ struct ScoreExport: Codable, Transferable {
                 maximumContributedCourses: subject.maximumContributedCourses,
                 isDoubleWeighted: subject.isDoubleWeighted,
                 writtenExamPoints: subject.writtenExamPoints,
-                oralExamPoints: subject.oralExamPoints
+                oralExamPoints: subject.oralExamPoints,
+                isCustom: subject.isCustom,
+                sortIndex: subject.sortIndex
             )
         }
     }

@@ -196,7 +196,9 @@ enum ScoreImport {
                 ?? template?.colorValue
                 ?? Int(ScorePalette.subjectColorValues[0]),
             kind: SubjectKind(rawValue: imported.kind) ?? .wahlBasisfach,
-            isCustom: template == nil,
+            // Steht die Herkunft in der Datei, gilt sie. Ältere Dateien kannten
+            // das Feld nicht — dann bleibt es bei der Ableitung aus dem Katalog.
+            isCustom: imported.isCustom ?? (template == nil),
             writtenShare: imported.writtenShare,
             activeSemesters: imported.activeSemesters.sorted(),
             maximumContributedCourses: imported.maximumContributedCourses,
@@ -204,7 +206,8 @@ enum ScoreImport {
             isDoubleWeighted: imported.isDoubleWeighted ?? false,
             writtenExamPoints: imported.writtenExamPoints.map(GradeEntry.clamp),
             oralExamPoints: imported.oralExamPoints.map(GradeEntry.clamp),
-            sortIndex: sortIndex
+            // Die Reihenfolge aus der Datei, sonst die Position im Array.
+            sortIndex: imported.sortIndex ?? sortIndex
         )
         context.insert(subject)
 

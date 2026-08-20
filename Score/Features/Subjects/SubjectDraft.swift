@@ -75,16 +75,25 @@ struct SubjectDraft {
 
     /// Das schriftliche Prüfungsergebnis, wie es gespeichert wird.
     ///
-    /// Nur Leistungsfächer werden schriftlich geprüft; bei allen anderen bleibt
-    /// das Feld leer, damit kein Ergebnis stehen bleibt, das in die Rechnung
-    /// einginge, sobald das Fach wieder Leistungsfach wird.
+    /// Nur Leistungsfächer werden schriftlich geprüft. Passt der Fachtyp nicht,
+    /// wird das Ergebnis **ignoriert und nicht gelöscht** — genau wie Klammerung,
+    /// Kursgrenze und Doppelwertung darüber. Wer sein Leistungsfach kurz auf
+    /// Pflicht-Basisfach stellt und zurück, hatte sonst seine Abiturnote
+    /// verloren, ohne sie je angefasst zu haben.
+    ///
+    /// Dass ein liegengebliebenes Ergebnis nicht mitzählt, entscheidet der
+    /// Rechenkern: ``BlockTwoCalculator/exams(in:)`` stellt die schriftlichen
+    /// Prüfungen ausschliesslich aus den Leistungsfächern zusammen.
     var resolvedWrittenExamPoints: Int? {
-        hasWrittenExam ? writtenExamPoints.map(GradeEntry.clamp) : nil
+        writtenExamPoints.map(GradeEntry.clamp)
     }
 
     /// Das mündliche Prüfungsergebnis, wie es gespeichert wird.
+    ///
+    /// Dieselbe Regel: bleibt stehen, auch wenn in diesem Fach gerade nicht
+    /// mündlich geprüft wird.
     var resolvedOralExamPoints: Int? {
-        hasOralExam ? oralExamPoints.map(GradeEntry.clamp) : nil
+        oralExamPoints.map(GradeEntry.clamp)
     }
 
     // MARK: - Kursgrenze

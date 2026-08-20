@@ -25,7 +25,7 @@ import Foundation
 ///    so geklammerter Kurs geht **nie** ein, egal wie gut er ist. Seine
 ///    Entscheidung steht über allem, was Score von sich aus täte.
 /// 2. **Automatisch geklammert.** Von den danach übrigen Kursen fallen die
-///    schlechtesten heraus, bis 42 stehen bleiben.
+///    schlechtesten heraus, bis 40 stehen bleiben.
 ///
 /// ## Was sich nicht klammern lässt
 ///
@@ -40,6 +40,13 @@ import Foundation
 ///   Naturwissenschaft sind nicht abwählbar; Score streicht sie deshalb nie von
 ///   sich aus. Von Hand klammern lassen sie sich trotzdem — wer weiss, dass sein
 ///   Pflicht-Basisfach anders belegt ist, als Score annimmt, soll das ausdrücken können.
+///
+/// Der Schutz der Pflicht-Basisfächer endet an den 40. Wer so viele nicht
+/// abwählbare Kurse erfasst hat, dass sie allein die Grenze sprengen, bekommt
+/// keine Rechnung über 44 Kurse — dann fallen auch von ihnen die schwächsten
+/// heraus, mit dem eigenen Grund ``BracketReason/beyondCourseCap``. Die Kurse der
+/// Prüfungsfächer gehen dabei vor: sie sind anrechnungspflichtig und zusammen nie
+/// mehr als 12 + 8 = 20.
 ///
 /// ## Die Prüfungsfächer
 ///
@@ -159,17 +166,26 @@ enum BlockOneCalculator {
 
     /// Warum ein erfasster Kurs nicht in Block I eingeht.
     ///
-    /// Drei Gründe, die die Aufschlüsselung auseinanderhalten muss — sie führen
+    /// Vier Gründe, die die Aufschlüsselung auseinanderhalten muss — sie führen
     /// zum selben Ergebnis, aber „ich habe das so entschieden" und „dafür reichte
     /// es nicht" sind für den Leser zwei verschiedene Sätze.
     enum BracketReason: Sendable, Equatable, Hashable {
         /// Der Nutzer hat diesen Kurs selbst geklammert.
         case manual
-        /// Score hat geklammert, weil sonst mehr als 42 Kurse eingingen und
+        /// Score hat geklammert, weil sonst mehr als 40 Kurse eingingen und
         /// dieser hier zu den schwächsten gehörte.
         case automatic
         /// Das eigene Fach bringt nur eine bestimmte Zahl seiner Ergebnisse ein.
         case beyondSubjectLimit
+        /// Der Kurs wäre eigentlich geschützt gewesen — aber es zählen nur 40,
+        /// und selbst die geschützten Kurse passen nicht alle hinein.
+        ///
+        /// Ein eigener Grund und nicht ``automatic``: dort hat der Kurs den
+        /// Wettbewerb verloren, hier gab es gar keinen. Wer sechs
+        /// Pflicht-Basisfächer neben drei Leistungsfächern belegt, hat mehr
+        /// nicht abwählbare Kurse als Plätze — das ist keine Entscheidung von
+        /// Score über eine schwache Leistung, sondern eine Grenze der Verordnung.
+        case beyondCourseCap
     }
 
     /// Das Ergebnis der Rechnung.
@@ -234,6 +250,14 @@ enum BlockOneCalculator {
             courses(with: .beyondSubjectLimit)
         }
 
+        /// Die geschützten Kurse, für die in den 40 kein Platz mehr war.
+        ///
+        /// Im Normalfall leer: zwölf Leistungsfach- und acht mündliche
+        /// Prüfungskurse plus die Pflicht-Basisfächer bleiben unter 40.
+        var coursesBeyondCourseCap: Set<CourseIdentifier> {
+            courses(with: .beyondCourseCap)
+        }
+
         private func courses(with reason: BracketReason) -> Set<CourseIdentifier> {
             Set(bracketReasons.filter { $0.value == reason }.keys)
         }
@@ -272,32 +296,54 @@ enum BlockOneCalculator {
         // Schritt 3: die automatische Klammerung füllt auf. Von den übrigen
         // Kursen fallen die schlechtesten heraus, bis 40 stehen bleiben.
         //
-        // Nicht alle stehen dabei zur Disposition: Prüfungsfächer sind
-        // anrechnungspflichtig, Pflicht-Basisfächer nicht abwählbar. Sie bleiben, auch
-        // wenn dadurch mehr als 40 Kurse zusammenkommen — die Klammerung kann
-        // schwer nur streichen, was streichbar ist.
-        let (protected, bracketable) = remaining.partitioned {
-            $0.kind == .wahlBasisfach && !$0.isExamCourse
-        }
+        // Es gehen **nie mehr als 40** Kurse ein. Das ist keine Zielgrösse,
+        // sondern die Obergrenze der Verordnung: eine Rechnung über 44 Kurse
+        // gibt es nicht, auch nicht, wenn der Nutzer 44 anrechnungspflichtige
+        // Kurse erfasst hat.
+        //
+        // Geschützt sind nicht alle gleich stark, und die Reihenfolge
+        // entscheidet:
+        //
+        // 1. **Anrechnungspflichtig** sind die Kurse der Leistungsfächer und der
+        //    mündlichen Prüfungsfächer. Zusammen höchstens 12 + 8 = 20 — das
+        //    passt immer.
+        // 2. **Nur vor der automatischen Klammerung geschützt** sind die
+        //    Pflicht-Basisfächer. Reicht der Platz nicht, fallen auch von ihnen
+        //    die schwächsten heraus.
+        // 3. Alles Übrige tritt um die verbleibenden Plätze an.
+        let (nonExam, mandatory) = remaining.partitioned(by: \.isExamCourse)
+        let (optional, shielded) = nonExam.partitioned { $0.kind == .pflichtBasisfach }
 
-        // Bestes Ergebnis zuerst. Bei Gleichstand entscheidet die Fachkennung und
-        // danach das Halbjahr, damit die Auswahl deterministisch bleibt und nicht
-        // bei jedem Aufruf zwischen zwei gleich guten Kursen springt.
-        let ranked = bracketable.sorted { left, right in
-            if left.points != right.points { return left.points > right.points }
-            if left.id.subjectID != right.id.subjectID {
-                return left.id.subjectID < right.id.subjectID
+        var included: [Course] = []
+        var openCourseCount = totalCourseCount
+
+        // Innerhalb jeder Stufe zählt die Stärke: bestes Ergebnis zuerst. Bei
+        // Gleichstand entscheidet die Fachkennung und danach das Halbjahr, damit
+        // die Auswahl deterministisch bleibt und nicht bei jedem Aufruf zwischen
+        // zwei gleich guten Kursen springt.
+        //
+        // Die erste Stufe bekommt denselben Grund wie die zweite: fällt dort
+        // etwas heraus, dann nicht wegen eines verlorenen Wettbewerbs, sondern
+        // weil nur 40 Kurse zählen.
+        let tiers: [(courses: [Course], reason: BracketReason)] = [
+            (mandatory, .beyondCourseCap),
+            (shielded, .beyondCourseCap),
+            (optional, .automatic)
+        ]
+
+        for tier in tiers {
+            let ranked = tier.courses.sorted(by: isStrongerFirst)
+            included += ranked.prefix(openCourseCount)
+            for course in ranked.dropFirst(openCourseCount) {
+                reasons[course.id] = tier.reason
             }
-            return left.id.semesterIndex < right.id.semesterIndex
+            openCourseCount = max(0, openCourseCount - ranked.count)
         }
 
-        let openCourseCount = max(0, totalCourseCount - protected.count)
-        let selected = ranked.prefix(openCourseCount)
-        for course in ranked.dropFirst(openCourseCount) {
-            reasons[course.id] = .automatic
-        }
-
-        let included = protected + selected
+        // Die Auswahl ist damit fertig; die Reihenfolge der Stufen ist es nur für
+        // die Auswahl. Nach aussen geht die feste Ordnung nach Fach und Halbjahr —
+        // sonst hinge die Reihenfolge der eingebrachten Kurse an ihrer Punktzahl.
+        included.sort(by: isOrderedBefore)
 
         // Schritt 4: die Doppelwertung. Sie kommt zum Schluss, weil sie an der
         // Auswahl nichts mehr ändert — die zwölf Leistungsfachkurse sind ohnehin
@@ -418,6 +464,15 @@ enum BlockOneCalculator {
         // ist sie gleichgültig — die klammerbaren Kurse werden ohnehin sortiert —,
         // für reproduzierbare Ergebnisse aber nicht.
         return (within.sorted(by: isOrderedBefore), beyond.sorted(by: isOrderedBefore))
+    }
+
+    /// Die Rangfolge zweier Kurse in der Klammerung: bestes Ergebnis zuerst.
+    ///
+    /// Bei Gleichstand entscheidet die feste Ordnung nach Fach und Halbjahr —
+    /// zwei gleich gute Kurse sollen nicht bei jedem Aufruf die Plätze tauschen.
+    private static func isStrongerFirst(_ left: Course, _ right: Course) -> Bool {
+        if left.points != right.points { return left.points > right.points }
+        return isOrderedBefore(left, right)
     }
 
     /// Die feste Reihenfolge zweier Kurse: erst nach Fach, dann nach Halbjahr.

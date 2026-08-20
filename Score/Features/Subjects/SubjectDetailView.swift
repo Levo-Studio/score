@@ -19,7 +19,7 @@ struct SubjectDetailView: View {
     private var semesterIndex = SubjectPreference.defaultSemesterIndex
 
     @State private var isEditorPresented = false
-    @State private var editedEntry: GradeEntry?
+    @State private var editedEntry: GradeEntryEdit?
 
     /// Die zuletzt gelöschte Leistung, solange sie sich zurückholen lässt.
     @State private var pendingUndo: GradeEntryUndo?
@@ -71,10 +71,15 @@ struct SubjectDetailView: View {
             SubjectEditorView(target: .existing(subject)) { dismiss() }
         }
         // Mittig und nicht von unten: siehe ``ScoreOverlaySheet``.
-        .scoreOverlaySheet(item: $editedEntry) { entry in
-            GradeEntrySheet(entry: entry, subject: subject) {
-                delete(entry)
-            }
+        .scoreOverlaySheet(item: $editedEntry) { edit in
+            GradeEntrySheet(
+                entry: edit.entry,
+                subject: subject,
+                semesterEntries: currentSemester?.entries ?? [],
+                onDelete: { discard(edit) },
+                onConfirm: { edit.commit(to: modelContext) },
+                isNew: edit.isNew
+            )
         }
     }
 
@@ -342,6 +347,7 @@ struct SubjectDetailView: View {
         case .manual: return "von dir geklammert"
         case .automatic: return "geklammert"
         case .beyondSubjectLimit: return "über der Kursgrenze"
+        case .beyondCourseCap: return "über den 40 Kursen"
         case .none: return nil
         }
     }
@@ -399,7 +405,7 @@ struct SubjectDetailView: View {
                 SwipeToDelete(
                     accessibilityLabel: Text("\(entry.title) löschen"),
                     onDelete: { delete(entry) },
-                    onTap: { editedEntry = entry }
+                    onTap: { editedEntry = .existing(entry) }
                 ) {
                     entryRow(entry, share: share)
                 }
@@ -462,18 +468,20 @@ struct SubjectDetailView: View {
 
     // MARK: - Ändern
 
-    /// Legt eine Leistung an und öffnet sie sofort im Eingabe-Sheet.
+    /// Öffnet das Eingabe-Blatt für eine neue Leistung.
     ///
-    /// Ein leerer Datensatz auf der Liste wäre eine Sackgasse — wer hinzufügt,
-    /// will eintragen.
+    /// Angelegt wird noch nichts: Der Entwurf lebt bis zum Bestätigen nur im
+    /// Speicher. Wer das Blatt herunterzieht, ohne etwas zu tippen, lässt nichts
+    /// zurück — die Begründung steht in ``GradeEntryEdit``.
     private func addEntry(category: GradeCategory, kind: GradeKind) {
         guard let semester = currentSemester else { return }
 
-        let entry = GradeEntry(category: category, title: defaultTitle(for: category, kind: kind))
-        entry.kind = kind
-        entry.semester = semester
-        modelContext.insert(entry)
-        editedEntry = entry
+        editedEntry = .draft(
+            category: category,
+            kind: kind,
+            title: defaultTitle(for: category, kind: kind),
+            in: semester
+        )
     }
 
     private func defaultTitle(for category: GradeCategory, kind: GradeKind) -> String {
@@ -482,6 +490,19 @@ struct SubjectDetailView: View {
         case .exam: return String.scoreLocalized("Klassenarbeit \(existing)")
         case .test: return String.scoreLocalized("Test \(existing)")
         case .other: return String.scoreLocalized("Mündliche Note \(existing)")
+        }
+    }
+
+    /// Die Schaltfläche unten im Blatt: ein Entwurf wird verworfen, eine
+    /// bestehende Leistung gelöscht.
+    ///
+    /// Ein Entwurf steht in keinem Kontext — es gibt nichts zu löschen und
+    /// nichts zurückzunehmen, also auch keinen Streifen.
+    private func discard(_ edit: GradeEntryEdit) {
+        if edit.isNew {
+            editedEntry = nil
+        } else {
+            delete(edit.entry)
         }
     }
 

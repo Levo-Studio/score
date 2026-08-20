@@ -179,25 +179,29 @@ struct BlockOneCalculatorTests {
         // 12 Leistungsfach- und 32 Pflicht-Basisfach-Kurse sind schon mehr als die
         // 40: kein freier Platz, alle acht Wahl-Basisfach-Kurse fallen heraus —
         // auch die mit 15 Punkten.
-        #expect(outcome.excludedCourses.count == 8)
         for index in 1...2 {
             for semesterIndex in 0..<4 {
-                #expect(outcome.excludedCourses.contains(course("bf-\(index)", semesterIndex)))
+                #expect(outcome.automaticallyBracketedCourses.contains(course("bf-\(index)", semesterIndex)))
             }
         }
 
-        // Gesetzte Kurse werden nie gekürzt, deshalb liegt die Zahl der
-        // eingebrachten Kurse hier über den nominellen 40.
-        #expect(outcome.includedCount == 44)
+        // Es zählen nur 40 Kurse. Die zwölf Leistungsfachkurse sind
+        // anrechnungspflichtig, für die 32 Pflicht-Basisfach-Kurse bleiben 28 —
+        // vier von ihnen fallen mit dem eigenen Grund heraus.
+        #expect(outcome.includedCount == 40)
+        #expect(outcome.coursesBeyondCourseCap.count == 4)
+        #expect(outcome.excludedCourses.count == 12)
 
-        // (12*12 + 32*10) = 464 über 44 Kurse. Alle drei Leistungsfächer stehen
+        // (12*12 + 28*10) = 424 über 40 Kurse. Alle drei Leistungsfächer stehen
         // gleich; bei Gleichstand entscheidet die Fachkennung, also lf-1 und lf-2
         // mit zusammen 96 zusätzlichen Punkten.
         //
-        // 464 + 96 = 560 auf 52 Wertungen = 10,769…
+        // 424 + 96 = 520 auf 48 Wertungen = 10,833…
         #expect(outcome.doubleWeightedSubjectIDs == ["lf-1", "lf-2"])
-        #expect(isClose(outcome.averagePoints, 10.7692, tolerance: 0.001))
-        #expect(outcome.points == 431)
+        #expect(outcome.weightedPointsTotal == 520)
+        #expect(outcome.effectiveWeightingCount == 48)
+        #expect(isClose(outcome.averagePoints, 520.0 / 48.0))
+        #expect(outcome.points == 433)
     }
 
     // MARK: - Stabilität
@@ -808,5 +812,102 @@ struct OralExamSubjectTests {
             BlockOneCalculator.calculate(for: plain).includedCourses
                 == BlockOneCalculator.calculate(for: flagged).includedCourses
         )
+    }
+}
+
+/// Dass in Block I nie mehr als 40 Kurse eingehen — auch dann nicht, wenn
+/// mehr Kurse geschützt sind, als hineinpassen.
+@Suite("Die Obergrenze von 40 Kursen")
+struct CourseCapTests {
+
+    /// Ein Jahrgang, der nur aus geschützten Kursen besteht: drei
+    /// Leistungsfächer, zwei mündliche Prüfungsfächer und neun
+    /// Pflicht-Basisfächer — 56 Kurse, alle vor der automatischen Klammerung
+    /// geschützt. Mit den Vorgaben des Onboardings ist das erreichbar.
+    static func protectedOnlyYear(mandatoryCount: Int) -> [SubjectInput] {
+        (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 12) }
+            + (1...2).map { subject("mp-\($0)", .wahlBasisfach, allPoints: 11, isOralExam: true) }
+            + (0..<mandatoryCount).map { subject("kf-\($0 + 1)", .pflichtBasisfach, allPoints: $0 + 1) }
+    }
+
+    @Test("Mehr geschützte Kurse als Plätze bringen trotzdem nur 40 ein")
+    func protectedCoursesNeverExceedTheCap() {
+        // 12 + 8 = 20 anrechnungspflichtige Kurse, dazu 36 aus neun
+        // Pflicht-Basisfächern: 56 geschützte Kurse auf 40 Plätze.
+        let outcome = BlockOneCalculator.calculate(for: Self.protectedOnlyYear(mandatoryCount: 9))
+
+        #expect(outcome.recordedCount == 56)
+        #expect(outcome.includedCount == BlockOneCalculator.totalCourseCount)
+        #expect(outcome.coursesBeyondCourseCap.count == 16)
+        #expect(outcome.automaticallyBracketedCourses.isEmpty)
+    }
+
+    @Test("Die Kurse der Prüfungsfächer bleiben, wenn die 40 nicht reichen")
+    func examCoursesSurviveTheCap() {
+        let outcome = BlockOneCalculator.calculate(for: Self.protectedOnlyYear(mandatoryCount: 9))
+
+        for index in Semester.allIndices {
+            for identifier in ["lf-1", "lf-2", "lf-3", "mp-1", "mp-2"] {
+                #expect(outcome.includedCourses.contains(course(identifier, index)))
+            }
+        }
+    }
+
+    @Test("Über der Grenze fallen von den Pflicht-Basisfächern die schwächsten heraus")
+    func theCapDropsTheWeakestMandatoryCourses() {
+        let outcome = BlockOneCalculator.calculate(for: Self.protectedOnlyYear(mandatoryCount: 9))
+
+        // Neun Pflicht-Basisfächer mit 1 bis 9 Punkten, 20 Plätze bleiben:
+        // die Fächer mit 1 bis 4 Punkten fallen ganz heraus.
+        for index in Semester.allIndices {
+            for identifier in ["kf-1", "kf-2", "kf-3", "kf-4"] {
+                #expect(outcome.coursesBeyondCourseCap.contains(course(identifier, index)))
+            }
+            #expect(outcome.includedCourses.contains(course("kf-9", index)))
+        }
+    }
+
+    @Test("Genau 40 geschützte Kurse gehen vollständig ein")
+    func exactlyFortyProtectedCoursesAllCount() {
+        // 20 anrechnungspflichtige plus fünf Pflicht-Basisfächer zu vier Kursen.
+        let outcome = BlockOneCalculator.calculate(for: Self.protectedOnlyYear(mandatoryCount: 5))
+
+        #expect(outcome.recordedCount == 40)
+        #expect(outcome.includedCount == 40)
+        #expect(outcome.excludedCourses.isEmpty)
+    }
+
+    @Test("Unter 40 geschützten Kursen bleibt Platz für die Wahl-Basisfächer")
+    func belowTheCapTheElectivesStillCompete() {
+        let subjects = Self.protectedOnlyYear(mandatoryCount: 4)
+            + [subject("bf-stark", .wahlBasisfach, allPoints: 15),
+               subject("bf-schwach", .wahlBasisfach, allPoints: 2)]
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        // 36 geschützte Kurse, vier Plätze offen — die bekommt das starke Fach.
+        #expect(outcome.includedCount == 40)
+        #expect(outcome.coursesBeyondCourseCap.isEmpty)
+        #expect(outcome.automaticallyBracketedCourses.count == 4)
+        for index in Semester.allIndices {
+            #expect(outcome.includedCourses.contains(course("bf-stark", index)))
+        }
+    }
+
+    @Test("Keine Kurswahl bringt mehr als 40 Kurse ein")
+    func noScenarioExceedsTheCap() {
+        let scenarios: [[SubjectInput]] = [
+            BlockOneCalculatorTests.fullYear,
+            Self.protectedOnlyYear(mandatoryCount: 9),
+            Self.protectedOnlyYear(mandatoryCount: 5),
+            Self.protectedOnlyYear(mandatoryCount: 0),
+            // Mehr Leistungsfächer, als es geben darf — ein Datensatz von einem
+            // anderen Gerät könnte so aussehen. Auch dann keine 44.
+            (1...12).map { subject("lf-\($0)", .leistungsfach, allPoints: 10) }
+        ]
+
+        for scenario in scenarios {
+            #expect(BlockOneCalculator.calculate(for: scenario).includedCount <= 40)
+        }
     }
 }

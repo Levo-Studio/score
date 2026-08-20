@@ -227,6 +227,16 @@ struct PadSettingsView: View {
             }
             .buttonStyle(.plain)
 
+            // Neben dem Export und nicht neben dem Löschen: Export und Import
+            // sind zwei Richtungen derselben Sache.
+            ImportDataButton(profile: profile) {
+                PadSettingsRow(title: "Daten importieren", isFirst: false) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(ScorePalette.inkSecondary)
+                }
+            }
+
             DeleteAllDataButton {
                 PadSettingsRow(title: "Alle Daten löschen", isFirst: false, titleColor: ScorePalette.warn) {
                     EmptyView()

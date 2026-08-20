@@ -352,6 +352,7 @@ struct BlockOneBreakdownView: View {
         let parts: [(Int, String.LocalizationValue)] = [
             (outcome.manuallyBracketedCourses.count, "\(outcome.manuallyBracketedCourses.count) von dir"),
             (outcome.coursesBeyondSubjectLimit.count, "\(outcome.coursesBeyondSubjectLimit.count) über der Fachgrenze"),
+            (outcome.coursesBeyondCourseCap.count, "\(outcome.coursesBeyondCourseCap.count) über den 40 Kursen"),
             (outcome.automaticallyBracketedCourses.count, "\(outcome.automaticallyBracketedCourses.count) von Score")
         ]
 
@@ -895,6 +896,8 @@ struct BlockOneBreakdownView: View {
         case .beyondSubjectLimit:
             let limit = group.courseLimit ?? group.courses.count
             return Text("Dieses Fach bringt nur \(limit) Kurse ein. Score behält die besten und klammert diese hier.")
+        case .beyondCourseCap:
+            return Text("Es zählen nur \(BlockOneCalculator.totalCourseCount) Kurse. Dieser Kurs wäre geschützt gewesen — aber du hast mehr nicht abwählbare Kurse belegt, als hineinpassen.")
         case .automatic:
             return Text("Automatisch geklammert: Es zählen nur \(BlockOneCalculator.totalCourseCount) Kurse, und dieser gehört zu den schwächsten. Ab \(breakdown.optionalThreshold ?? 0) Punkten bleibt ein Wahl-Basisfach-Kurs drin.")
         }
@@ -1015,6 +1018,7 @@ struct BlockOneBreakdownView: View {
         case .manual: "von dir"
         case .automatic: "geklammert"
         case .beyondSubjectLimit: "über Grenze"
+        case .beyondCourseCap: "über 40"
         }
     }
 

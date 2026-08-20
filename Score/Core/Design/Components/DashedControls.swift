@@ -32,6 +32,15 @@ struct DashedChip: View {
     let onCommit: () -> Void
 
     @State private var isEditing = false
+
+    /// Ob der leeren Eingabe der Fokus schon einmal zurückgeholt wurde.
+    ///
+    /// Der Fokus geht nicht nur verloren, wenn der Nutzer die Eingabe verlässt.
+    /// Er geht auch verloren, während die Tastatur vom vorigen Anlegen noch
+    /// schliesst — dieser Widerruf trifft dann die gerade erst geöffnete
+    /// Eingabe. Einmal wird er deshalb ignoriert und der Fokus zurückgeholt.
+    @State private var hasReclaimedFocus = false
+
     @FocusState private var isFocused: Bool
 
     private var canCommit: Bool {
@@ -73,6 +82,7 @@ struct DashedChip: View {
     private var idle: some View {
         Button {
             isEditing = true
+            hasReclaimedFocus = false
             isFocused = true
         } label: {
             shell {
@@ -122,10 +132,30 @@ struct DashedChip: View {
         }
         .onChange(of: isFocused) { _, focused in
             guard !focused else { return }
-            // Wer die Eingabe verlässt, verliert den eingetippten Namen nicht —
-            // er wird übernommen. Ohne Text kommt der ruhige Tag zurück statt
-            // eines leeren Feldes in der Wolke.
-            commit()
+
+            // Wer die Eingabe mit einem Namen darin verlässt, verliert ihn
+            // nicht — er wird übernommen.
+            if canCommit {
+                commit()
+                return
+            }
+
+            // Eine leere Eingabe verliert den Fokus selten durch den Nutzer.
+            // Meist widerruft ihn die Tastatur, die vom vorigen Anlegen noch
+            // schliesst — der Widerruf landet dann in der frisch geöffneten
+            // Eingabe. Genau daran verpuffte jedes weitere eigene Fach: der
+            // Tag klappte zu, ehe getippt werden konnte, und das erste blieb
+            // das einzige. Der erste Verlust holt den Fokus deshalb zurück.
+            // Wer die Eingabe wirklich leer verlässt, schliesst sie damit beim
+            // zweiten Mal — ein Tipp mehr, aber kein verlorenes Fach.
+            guard hasReclaimedFocus else {
+                hasReclaimedFocus = true
+                isFocused = true
+                return
+            }
+
+            // Ohne Text kommt der ruhige Tag zurück statt eines leeren Feldes
+            // in der Wolke.
             isEditing = false
         }
     }
@@ -134,6 +164,7 @@ struct DashedChip: View {
         guard canCommit else { return }
         onCommit()
         isEditing = false
+        hasReclaimedFocus = false
         isFocused = false
     }
 }

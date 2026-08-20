@@ -228,6 +228,16 @@ struct SettingsView: View {
             }
             .buttonStyle(.plain)
 
+            // Neben dem Export und nicht neben dem Löschen: Export und Import
+            // sind zwei Richtungen derselben Sache.
+            ImportDataButton(profile: profile) {
+                SettingsRowLabel(title: "Daten importieren") {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(ScorePalette.inkSecondary)
+                }
+            }
+
             DeleteAllDataButton {
                 SettingsRowLabel(title: "Alle Daten löschen", titleColor: ScorePalette.warn) {
                     EmptyView()
@@ -495,100 +505,6 @@ struct OpenRingMark: View {
             .frame(width: geometry.size.width, height: geometry.size.height)
         }
         .aspectRatio(1, contentMode: .fit)
-    }
-}
-
-// MARK: - Export
-
-/// Der JSON-Export aller Fächer und Noten.
-///
-/// Bewusst ein reiner Datenabzug ohne gerechnete Ergebnisse: die Rechnung kann
-/// sich mit einer neuen Version ändern, die eingetragenen Punkte nicht. Wer den
-/// Export später wieder einliest, soll dieselben Zahlen sehen, die er eingegeben hat.
-struct ScoreExport: Codable, Transferable {
-
-    var exportedAt: Date
-    var profile: Profile?
-    var subjects: [Subject]
-
-    struct Profile: Codable {
-        var firstName: String
-        var federalState: String
-        var graduationYear: Int
-        var classLevel: String
-    }
-
-    struct Subject: Codable {
-        var name: String
-        var abbreviation: String
-        var kind: String
-        var writtenShare: Int
-        var activeSemesters: [Int]
-        var isOralExamSubject: Bool
-        var semesters: [Semester]
-    }
-
-    struct Semester: Codable {
-        var index: Int
-        var isManuallyBracketed: Bool
-        var entries: [Entry]
-    }
-
-    struct Entry: Codable {
-        var title: String
-        var points: Int
-        var kind: String
-        var category: String
-        var share: Int
-        var usesAutomaticShare: Bool
-    }
-
-    init(profile: StudentProfile?, subjects: [Score.Subject]) {
-        self.exportedAt = .now
-        self.profile = profile.map {
-            Profile(
-                firstName: $0.firstName,
-                federalState: $0.federalState,
-                graduationYear: $0.graduationYear,
-                classLevel: $0.classLevel.rawValue
-            )
-        }
-        self.subjects = subjects.map { subject in
-            Subject(
-                name: subject.name,
-                abbreviation: subject.abbreviation,
-                kind: subject.kind.rawValue,
-                writtenShare: subject.writtenShare,
-                activeSemesters: subject.activeSemesters,
-                isOralExamSubject: subject.isOralExamSubject,
-                semesters: subject.orderedSemesters.map { semester in
-                    Semester(
-                        index: semester.index,
-                        isManuallyBracketed: semester.isManuallyBracketed,
-                        entries: semester.orderedEntries.map { entry in
-                            Entry(
-                                title: entry.title,
-                                points: entry.points,
-                                kind: entry.kind.rawValue,
-                                category: entry.category.rawValue,
-                                share: entry.share,
-                                usesAutomaticShare: entry.usesAutomaticShare
-                            )
-                        }
-                    )
-                }
-            )
-        }
-    }
-
-    static var transferRepresentation: some TransferRepresentation {
-        DataRepresentation(exportedContentType: .json) { export in
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-            encoder.dateEncodingStrategy = .iso8601
-            return try encoder.encode(export)
-        }
-        .suggestedFileName("score-export.json")
     }
 }
 

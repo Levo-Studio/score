@@ -1392,6 +1392,23 @@
         }
       }
     },
+    "Alles, was du hast, wird gelöscht und durch die Datei ersetzt." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles, was du hast, wird gelöscht und durch die Datei ersetzt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everything you have is deleted and replaced by the file."
+          }
+        }
+      }
+    },
     "Als %@ fortfahren" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1772,6 +1789,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ready"
+          }
+        }
+      }
+    },
+    "Bestand wirklich ersetzen?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestand wirklich ersetzen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Really replace everything?"
           }
         }
       }
@@ -2434,6 +2468,23 @@
         }
       }
     },
+    "Datei nicht lesbar" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datei nicht lesbar"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File cannot be read"
+          }
+        }
+      }
+    },
     "Daten exportieren" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2447,6 +2498,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Export data"
+          }
+        }
+      }
+    },
+    "Daten importieren" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daten importieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import data"
           }
         }
       }
@@ -2498,6 +2566,187 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your profile"
+          }
+        }
+      }
+    },
+    "Deine %lld Fächer mit %lld Leistungen werden gelöscht. Aus der Datei kommen %lld Fächer mit %lld Leistungen. Rückgängig machen lässt sich das nicht." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine %1$#@current@ mit %2$#@currentGrades@ werden gelöscht. Aus der Datei kommen %3$#@incoming@ mit %4$#@incomingGrades@. Rückgängig machen lässt sich das nicht."
+          },
+          "substitutions" : {
+            "current" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Fach"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Fächer"
+                    }
+                  }
+                }
+              }
+            },
+            "currentGrades" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Leistung"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Leistungen"
+                    }
+                  }
+                }
+              }
+            },
+            "incoming" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Fach"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Fächer"
+                    }
+                  }
+                }
+              }
+            },
+            "incomingGrades" : {
+              "argNum" : 4,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Leistung"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Leistungen"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your %1$#@current@ with %2$#@currentGrades@ will be deleted. The file brings %3$#@incoming@ with %4$#@incomingGrades@. This cannot be undone."
+          },
+          "substitutions" : {
+            "current" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg subject"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg subjects"
+                    }
+                  }
+                }
+              }
+            },
+            "currentGrades" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg grade"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg grades"
+                    }
+                  }
+                }
+              }
+            },
+            "incoming" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg subject"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg subjects"
+                    }
+                  }
+                }
+              }
+            },
+            "incomingGrades" : {
+              "argNum" : 4,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg grade"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg grades"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -3168,6 +3417,23 @@
         }
       }
     },
+    "Ersetzen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersetzen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replace"
+          }
+        }
+      }
+    },
     "Erwarteter Abischnitt" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3833,6 +4099,187 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your iCloud storage is full."
+          }
+        }
+      }
+    },
+    "In der Datei stehen %lld Fächer mit %lld Leistungen. Bei dir sind es %lld Fächer mit %lld Leistungen." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In der Datei stehen %1$#@incoming@ mit %2$#@incomingGrades@. Bei dir sind es %3$#@current@ mit %4$#@currentGrades@."
+          },
+          "substitutions" : {
+            "incoming" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Fach"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Fächer"
+                    }
+                  }
+                }
+              }
+            },
+            "incomingGrades" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Leistung"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Leistungen"
+                    }
+                  }
+                }
+              }
+            },
+            "current" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Fach"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Fächer"
+                    }
+                  }
+                }
+              }
+            },
+            "currentGrades" : {
+              "argNum" : 4,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Leistung"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Leistungen"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The file holds %1$#@incoming@ with %2$#@incomingGrades@. You currently have %3$#@current@ with %4$#@currentGrades@."
+          },
+          "substitutions" : {
+            "incoming" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg subject"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg subjects"
+                    }
+                  }
+                }
+              }
+            },
+            "incomingGrades" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg grade"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg grades"
+                    }
+                  }
+                }
+              }
+            },
+            "current" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg subject"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg subjects"
+                    }
+                  }
+                }
+              }
+            },
+            "currentGrades" : {
+              "argNum" : 4,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg grade"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg grades"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -6057,6 +6504,23 @@
         }
       }
     },
+    "Score konnte aus dieser Datei nichts lesen. An deinen Daten hat sich nichts geändert." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score konnte aus dieser Datei nichts lesen. An deinen Daten hat sich nichts geändert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score could not read anything from this file. Nothing in your data has changed."
+          }
+        }
+      }
+    },
     "Score nimmt die besten %lld Kurse dieses Fachs, die übrigen bleiben aussen vor." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6698,6 +7162,23 @@
         }
       }
     },
+    "Was du hast, bleibt. Was in der Datei zusätzlich steht, kommt dazu." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was du hast, bleibt. Was in der Datei zusätzlich steht, kommt dazu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What you have stays. Whatever the file adds on top comes in."
+          }
+        }
+      }
+    },
     "Was geklammert ist" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -7034,6 +7515,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Back"
+          }
+        }
+      }
+    },
+    "Zusammenführen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zusammenführen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merge"
           }
         }
       }

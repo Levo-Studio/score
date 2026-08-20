@@ -164,6 +164,71 @@ struct SecondOnboardingRolesTests {
         #expect(after.orderedSemesters.count == Semester.allIndices.count)
     }
 
+    @Test("Was nie zur Wahl stand, bleibt unangetastet")
+    func subjectsOutsideTheChoiceKeepTheirRoles() throws {
+        let context = try Self.makeContext()
+
+        // Der erste Durchlauf legt zwei Fächer an, die der Katalog nicht kennt:
+        // eines als Leistungsfach, eines als mündliches Prüfungsfach.
+        let first = OnboardingViewModel()
+        first.firstName = "Jonas"
+        first.advancedSubjects = ["Deutsch", "Mathematik"]
+        first.requiredBasicSubjects = ["Englisch", "Geschichte"]
+
+        first.step = .advancedSubjects
+        first.customSubjectDraft = "Schulgarten"
+        first.commitCustomSubject()
+
+        first.step = .oralExamSubjects
+        first.customSubjectDraft = "Chorprobe"
+        first.commitCustomSubject()
+
+        first.finish(in: context)
+
+        #expect(try Self.subject(named: "Schulgarten", in: context).kind == .leistungsfach)
+        #expect(try Self.subject(named: "Chorprobe", in: context).isOralExamSubject)
+
+        // Der zweite Durchlauf bietet beide nirgends an — er kennt die
+        // eingetippten Namen nicht.
+        let second = OnboardingViewModel()
+        second.firstName = "Mara"
+        second.advancedSubjects = ["Deutsch", "Mathematik", "Englisch"]
+        second.requiredBasicSubjects = ["Geschichte"]
+        second.oralExamSubjects = ["Geschichte"]
+        second.finish(in: context)
+
+        // Nicht gewählt zu haben, heisst nur dort etwas, wo zu wählen war.
+        #expect(try Self.subject(named: "Schulgarten", in: context).kind == .leistungsfach)
+        #expect(try Self.subject(named: "Chorprobe", in: context).isOralExamSubject)
+    }
+
+    @Test("Von zwei Fächern gleichen Namens werden beide zurückgestuft")
+    func bothSubjectsWithTheSameNameAreDemoted() throws {
+        let context = try Self.makeContext()
+        Self.runFirstOnboarding(in: context)
+
+        // Der Fach-Editor lässt Namensdubletten zu, der Fall ist also echt.
+        let twin = Subject(
+            name: "Biologie",
+            abbreviation: "Bio",
+            colorValue: 0x1C_6B_6E,
+            kind: .leistungsfach,
+            isOralExamSubject: false,
+            sortIndex: 99
+        )
+        context.insert(twin)
+
+        let model = OnboardingViewModel()
+        model.firstName = "Nils"
+        model.advancedSubjects = ["Deutsch", "Mathematik", "Geschichte"]
+        model.finish(in: context)
+
+        let biologies = try context.fetch(FetchDescriptor<Subject>()).filter { $0.name == "Biologie" }
+
+        #expect(biologies.count == 2)
+        #expect(biologies.allSatisfy { $0.kind == .wahlBasisfach })
+    }
+
     @Test("Es entsteht keine Dublette")
     func nothingIsCreatedTwice() throws {
         let context = try Self.makeContext()

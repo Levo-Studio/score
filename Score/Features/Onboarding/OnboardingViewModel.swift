@@ -351,12 +351,15 @@ final class OnboardingViewModel {
     /// Rückmeldung.
     ///
     /// Umgestellt wird die **ganze Konstellation** und nicht nur das Gewählte:
-    /// Ein Fach, das in diesem Durchlauf gar nicht vorkommt, fällt auf
+    /// Ein Fach, das zur Wahl stand und nicht gewählt wurde, fällt auf
     /// Wahl-Basisfach zurück und verliert die mündliche Prüfungsangabe. Sonst
     /// stünden nach dem zweiten Durchlauf vier Leistungsfächer im Bestand — die
     /// Rechnung geht von dreien aus, und die Doppelwertung suchte sich zwei aus
     /// vieren. Halbjahre, Noten und alle übrigen Einstellungen bleiben dabei
     /// unangetastet.
+    ///
+    /// Was in diesem Durchlauf gar nicht **zur Wahl stand**, bleibt unangetastet
+    /// — die Begründung steht bei ``resetRolesOfUnchosenSubjects(among:)``.
     ///
     /// - Returns: Das angelegte Profil, damit die Aufrufstelle es zum aktiven
     ///   Profil dieses Geräts machen kann.
@@ -375,8 +378,9 @@ final class OnboardingViewModel {
 
         // Einmal abgefragt und nicht je Fach: Ein `fetch` pro Fachname wären ein
         // Dutzend Abfragen für eine Auskunft, die sich nicht ändert.
+        let stock = (try? context.fetch(FetchDescriptor<Subject>())) ?? []
         var existing = [String: Subject]()
-        for subject in (try? context.fetch(FetchDescriptor<Subject>())) ?? [] {
+        for subject in stock {
             existing[subject.name] = subject
         }
 
@@ -391,24 +395,42 @@ final class OnboardingViewModel {
             insertSubject(named: name, kind: .wahlBasisfach, sortIndex: &sortIndex, existing: existing, in: context)
         }
 
-        resetRolesOfUnchosenSubjects(among: existing)
+        resetRolesOfUnchosenSubjects(among: stock)
 
         return profile
     }
 
-    /// Nimmt allen Fächern die Rolle, die in diesem Durchlauf nicht vorkamen.
+    /// Nimmt den Fächern die Rolle, die in diesem Durchlauf **zur Wahl standen**
+    /// und nicht gewählt wurden.
     ///
     /// Wahl-Basisfach ist die Rolle ohne Anspruch: kein Prüfungsfach, keine
     /// Anrechnungspflicht, keine Doppelwertung. Ein Fach, das der Nutzer eben
     /// nicht gewählt hat, soll genau das sein — nicht das Leistungsfach des
     /// vorigen Profils. Angefasst wird nur die Rolle; Halbjahre, Noten,
     /// Kursgrenze und Prüfungsergebnisse bleiben stehen.
-    private func resetRolesOfUnchosenSubjects(among existing: [String: Subject]) {
+    ///
+    /// Entscheidend ist „stand zur Wahl". Nicht gewählt zu haben, heisst nur
+    /// dort etwas, wo überhaupt zu wählen war: Ein selbst angelegtes „Ethik",
+    /// das der Katalog nicht führt und das in keiner Auswahlliste dieses
+    /// Durchlaufs auftauchte, hat der Nutzer nicht abgewählt — er bekam es nie
+    /// zu sehen. Ihm die Rolle zu nehmen, wäre eine Antwort auf eine Frage, die
+    /// nie gestellt wurde.
+    ///
+    /// Gearbeitet wird auf der Fächerliste und nicht auf einer Tabelle nach
+    /// Namen: Zwei Fächer gleichen Namens sind im Fach-Editor erlaubt, und eine
+    /// Tabelle behielte nur eines von beiden — das andere behielte still seine
+    /// alte Rolle.
+    private func resetRolesOfUnchosenSubjects(among stock: [Subject]) {
         let chosen = Set(advancedSubjects)
             .union(sortedRequiredBasicSubjects)
             .union(sortedElectiveBasicSubjects)
 
-        for (name, subject) in existing where !chosen.contains(name) {
+        let offered = Set(advancedOptions)
+            .union(requiredBasicOptions)
+            .union(electiveBasicOptions)
+            .union(oralExamOptions)
+
+        for subject in stock where offered.contains(subject.name) && !chosen.contains(subject.name) {
             subject.kind = .wahlBasisfach
             subject.isOralExamSubject = false
         }

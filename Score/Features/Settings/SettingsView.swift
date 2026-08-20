@@ -37,7 +37,7 @@ struct SettingsView: View {
     /// Welches Profil dieses Gerät führt. Gerätesache, deshalb `AppStorage`.
     @AppStorage(ActiveProfile.identifierKey) private var activeProfileIdentifier = ""
 
-    /// Der Zustandsautomat der Wurzel, für „Neu registrieren". Optional, weil
+    /// Der Zustandsautomat der Wurzel, für „Neues Profil, gleiche Fächer". Optional, weil
     /// Vorschauen und Belegbilder diesen Bildschirm ohne ihn zeigen.
     @Environment(ProfileHandoffModel.self) private var handoff: ProfileHandoffModel?
 
@@ -107,7 +107,7 @@ struct SettingsView: View {
     /// Die Zeile steht direkt unter der Profilkarte, weil sie dieselbe Frage
     /// beantwortet wie diese — wessen Einstellungen das hier sind — nur eben
     /// veränderlich. Sie steht auch dann da, wenn es nur ein Profil gibt: Über
-    /// sie führt der Weg zu „Neu registrieren", und eine Zeile, die je nach
+    /// sie führt der Weg zu „Neues Profil, gleiche Fächer", und eine Zeile, die je nach
     /// Datenlage verschwindet, findet niemand wieder.
     private var accountCard: some View {
         SettingsGroup {

@@ -5569,23 +5569,6 @@
         }
       }
     },
-    "Neu registrieren" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Neu registrieren"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Register new"
-          }
-        }
-      }
-    },
     "Neues Fach" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5599,6 +5582,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "New subject"
+          }
+        }
+      }
+    },
+    "Neues Profil, gleiche Fächer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neues Profil, gleiche Fächer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New profile, same subjects"
           }
         }
       }
@@ -5871,6 +5871,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Just your first name, and only for the greeting. Score creates no account and sends nothing to a server."
+          }
+        }
+      }
+    },
+    "Nur Name, Bild und Klassenstufe sind neu. Fächer und Noten bleiben gemeinsam." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur Name, Bild und Klassenstufe sind neu. Fächer und Noten bleiben gemeinsam."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only the name, picture and year level are new. Subjects and grades stay shared."
           }
         }
       }

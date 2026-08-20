@@ -35,7 +35,7 @@ struct PadSettingsView: View {
     /// Welches Profil dieses Gerät führt. Gerätesache, deshalb `AppStorage`.
     @AppStorage(ActiveProfile.identifierKey) private var activeProfileIdentifier = ""
 
-    /// Der Zustandsautomat der Wurzel, für „Neu registrieren". Optional, weil
+    /// Der Zustandsautomat der Wurzel, für „Neues Profil, gleiche Fächer". Optional, weil
     /// Vorschauen und Belegbilder diesen Bildschirm ohne ihn zeigen.
     @Environment(ProfileHandoffModel.self) private var handoff: ProfileHandoffModel?
 

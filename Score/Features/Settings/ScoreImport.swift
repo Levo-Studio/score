@@ -209,13 +209,27 @@ enum ScoreImport {
         let fileDecidesOrder = stock.isEmpty
         var nextSortIndex = (stock.map(\.sortIndex).max() ?? -1) + 1
 
+        // Wie viele mündliche Prüfungsfächer die Datei überhaupt noch setzen
+        // darf. Die Grenze ist dieselbe, die auch der Fach-Editor zieht, und sie
+        // steht nur an einer Stelle — hier eine 2 hinzuschreiben hiesse, sie
+        // beim nächsten Mal an zwei Orten zu ändern.
+        //
+        // Der vorhandene Bestand zählt zuerst: Was schon als Prüfungsfach
+        // dasteht, behält seinen Platz, und die Datei bekommt nur, was danach
+        // übrig bleibt. Beim Ersetzen ist der Bestand leer, dort entscheidet
+        // allein die Reihenfolge der Datei. Gezählt wird über
+        // ``Subject/countsAsOralExamSubject`` — an einem Leistungsfach zählt
+        // das rohe Feld nicht und verbraucht deshalb auch keinen Platz.
+        var remainingOralExamSlots = OralExamSubjectSelection.requiredCount
+            - stock.count(where: \.countsAsOralExamSubject)
+
         for (offset, imported) in export.subjects.enumerated() {
             let name = imported.name.trimmingCharacters(in: .whitespacesAndNewlines)
             if let match = stock.first(where: {
                 $0.name.trimmingCharacters(in: .whitespacesAndNewlines)
                     .localizedCaseInsensitiveCompare(name) == .orderedSame
             }) {
-                merge(imported, into: match, in: context)
+                merge(imported, into: match, in: context, oralExamSlots: &remainingOralExamSlots)
             } else {
                 let position: Int
                 if fileDecidesOrder {
@@ -224,7 +238,12 @@ enum ScoreImport {
                     position = nextSortIndex
                     nextSortIndex += 1
                 }
-                create(imported, sortIndex: position, in: context)
+                create(
+                    imported,
+                    sortIndex: position,
+                    in: context,
+                    oralExamSlots: &remainingOralExamSlots
+                )
             }
         }
 
@@ -254,11 +273,16 @@ enum ScoreImport {
     // MARK: - Ein Fach anlegen
 
     /// Legt ein Fach aus der Datei neu an, mit allem, was darin steht.
+    ///
+    /// - Parameter oralExamSlots: Wie viele mündliche Prüfungsfächer noch
+    ///   dazukommen dürfen. Ist keiner mehr frei, entsteht das Fach ohne dieses
+    ///   Kennzeichen — siehe ``claimOralExamSlot(for:wanted:slots:)``.
     @discardableResult
     private static func create(
         _ imported: ScoreExport.Subject,
         sortIndex: Int,
-        in context: ModelContext
+        in context: ModelContext,
+        oralExamSlots: inout Int
     ) -> Subject {
         let name = imported.name.trimmingCharacters(in: .whitespacesAndNewlines)
         let template = SubjectCatalog.template(named: name)
@@ -281,7 +305,10 @@ enum ScoreImport {
             writtenShare: imported.writtenShare,
             activeSemesters: imported.activeSemesters.sorted(),
             maximumContributedCourses: imported.maximumContributedCourses,
-            isOralExamSubject: imported.isOralExamSubject,
+            // Das Kennzeichen wird nicht hier gesetzt, sondern gleich unten
+            // gegen die verbleibenden Plätze — sonst stünde es schon im
+            // Datensatz, ehe die Grenze überhaupt gefragt wurde.
+            isOralExamSubject: false,
             isDoubleWeighted: imported.isDoubleWeighted ?? false,
             writtenExamPoints: imported.writtenExamPoints.map(GradeEntry.clamp),
             oralExamPoints: imported.oralExamPoints.map(GradeEntry.clamp),
@@ -299,8 +326,35 @@ enum ScoreImport {
             context.insert(semester)
         }
 
-        merge(imported, into: subject, in: context)
+        merge(imported, into: subject, in: context, oralExamSlots: &oralExamSlots)
         return subject
+    }
+
+    // MARK: - Die Grenze der mündlichen Prüfungsfächer
+
+    /// Setzt das Kennzeichen für das mündliche Prüfungsfach, solange die Grenze
+    /// das hergibt, und verbraucht dabei einen Platz.
+    ///
+    /// Ohne diese Grenze konnte eine Datei drei und mehr mündliche
+    /// Prüfungsfächer in den Bestand tragen. Die Folge ist dieselbe wie auf dem
+    /// Weg über den Editor: ``BlockTwoCalculator`` zählte mehr als fünf
+    /// Prüfungen, `isComplete` wurde nie wahr, Block II konnte über 300 Punkte
+    /// steigen, und ab 900 Gesamtpunkten verschwand die Note.
+    ///
+    /// Gefragt wird nach ``Subject/countsAsOralExamSubject`` und nicht nach dem
+    /// rohen Feld — dieselbe Frage, die auch der Editor stellt. An einem
+    /// Leistungsfach zählt das Kennzeichen ohnehin nicht; es bekäme sonst einen
+    /// Platz, den es gar nicht einnimmt.
+    private static func claimOralExamSlot(
+        for subject: Subject,
+        wanted: Bool,
+        slots: inout Int
+    ) {
+        guard wanted, !subject.countsAsOralExamSubject, subject.canBeOralExamSubject else { return }
+        guard slots > 0 else { return }
+
+        subject.isOralExamSubject = true
+        slots -= 1
     }
 
     // MARK: - Ein Fach zusammenführen
@@ -310,10 +364,15 @@ enum ScoreImport {
     /// Was im Bestand schon steht, bleibt stehen: Wer zusammenführt, will
     /// ergänzen, nicht überschrieben werden. Gesetzt werden deshalb nur Angaben,
     /// zu denen im Bestand **nichts** steht.
+    ///
+    /// Eine Ausnahme macht das mündliche Prüfungsfach: Es kommt nur dazu,
+    /// solange die Grenze das hergibt — siehe
+    /// ``claimOralExamSlot(for:wanted:slots:)``.
     private static func merge(
         _ imported: ScoreExport.Subject,
         into subject: Subject,
-        in context: ModelContext
+        in context: ModelContext,
+        oralExamSlots: inout Int
     ) {
         // Belegte Halbjahre kommen dazu, keines fällt weg.
         subject.activeSemesters = Set(subject.activeSemesters)
@@ -332,9 +391,7 @@ enum ScoreImport {
         if !subject.isDoubleWeighted {
             subject.isDoubleWeighted = imported.isDoubleWeighted ?? false
         }
-        if !subject.isOralExamSubject {
-            subject.isOralExamSubject = imported.isOralExamSubject
-        }
+        claimOralExamSlot(for: subject, wanted: imported.isOralExamSubject, slots: &oralExamSlots)
 
         for importedSemester in imported.semesters {
             let semester = subject.semester(at: importedSemester.index)

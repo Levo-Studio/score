@@ -107,10 +107,19 @@ struct ProfileSwitchSheet: View {
         )
     }
 
-    // MARK: - Neu registrieren
+    // MARK: - Ein weiteres Namensschild
 
     /// Gestrichelt umrandet wie der „Eigenes Fach"-Tag: Was hier entsteht, gibt
     /// es noch nicht — dieselbe Aussage, dieselbe Form.
+    ///
+    /// Die Beschriftung sagt, was entsteht, und die Zeile darunter, was das für
+    /// die Fächer heisst. „Neu registrieren" klang nach einem zweiten
+    /// Bildungsgang mit eigenen Kursen; es ist aber ein zweites Namensschild
+    /// über demselben Bestand. Aus dieser Erwartung kam die Nacharbeit an dieser
+    /// Stelle, und ein Satz ist billiger als eine Erwartung, die enttäuscht.
+    ///
+    /// Zwei Zeilen übereinander, genau wie in ``ProfileSwitchRow``: die Form
+    /// steht schon da, sie bekommt hier nur einen anderen Text.
     private var registerRow: some View {
         Button {
             onRegisterNew?()
@@ -124,11 +133,17 @@ struct ProfileSwitchSheet: View {
                     .background(ScorePalette.fill)
                     .clipShape(Circle())
 
-                Text("Neu registrieren")
-                    .font(.settingsRowTitle)
-                    .foregroundStyle(ScorePalette.ink)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Neues Profil, gleiche Fächer")
+                        .font(.settingsRowTitle)
+                        .foregroundStyle(ScorePalette.ink)
 
-                Spacer(minLength: 0)
+                    Text("Nur Name, Bild und Klassenstufe sind neu. Fächer und Noten bleiben gemeinsam.")
+                        .font(.meta)
+                        .foregroundStyle(ScorePalette.inkSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))

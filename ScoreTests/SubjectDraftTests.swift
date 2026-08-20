@@ -99,6 +99,64 @@ struct SubjectDraftTests {
         #expect(subject.oralExamPoints == 0)
     }
 
+    // MARK: - Der Wechsel der Prüfungsrolle
+
+    /// Ein mündliches Prüfungsfach mit eingetragenem Ergebnis.
+    private static func makeOralExamSubject(in context: ModelContext) -> Subject {
+        let subject = Subject(
+            name: "Geschichte",
+            abbreviation: "G",
+            colorValue: 0x1C_6B_6E,
+            kind: .pflichtBasisfach,
+            isOralExamSubject: true,
+            oralExamPoints: 5
+        )
+        context.insert(subject)
+        return subject
+    }
+
+    @Test("Aus einem mündlichen Prüfungsfach wird ein Leistungsfach ohne Nachprüfung")
+    func becomingAnAdvancedSubjectDropsTheOralExam() throws {
+        let context = try Self.makeContext()
+        let subject = Self.makeOralExamSubject(in: context)
+
+        var draft = SubjectDraft(subject: subject)
+        draft.kind = .leistungsfach
+        draft.save(to: subject, in: context, existingSubjects: [subject])
+
+        // Kennzeichen und Ergebnis sind weg: In der neuen Rolle stünde dieselbe
+        // Zahl für die mündliche Nachprüfung und damit für etwas anderes.
+        #expect(!subject.isOralExamSubject)
+        #expect(subject.oralExamPoints == nil)
+
+        // Und es erscheint keine Nachprüfung.
+        #expect(!ExamResultCopy.hasOralExam(subject))
+
+        // Ein danach eingetragenes schriftliches Ergebnis zählt einfach × 4.
+        subject.writtenExamPoints = 12
+        let outcome = BlockTwoCalculator.calculate(for: [SubjectInput(subject)])
+        #expect(outcome.points == 48)
+    }
+
+    @Test("Aus einem Leistungsfach wird ein mündliches Prüfungsfach ohne altes Ergebnis")
+    func becomingAnOralExamSubjectDropsTheRetakeResult() throws {
+        let context = try Self.makeContext()
+        let subject = Self.makeAdvancedSubject(in: context)
+
+        var draft = SubjectDraft(subject: subject)
+        draft.kind = .wahlBasisfach
+        draft.isOralExamSubject = true
+        draft.save(to: subject, in: context, existingSubjects: [subject])
+
+        // Die Wahl gilt, die Nachprüfung von vorhin nicht: Sie wäre jetzt eine
+        // mündliche Prüfung und stünde damit für etwas anderes.
+        #expect(subject.isOralExamSubject)
+        #expect(subject.oralExamPoints == nil)
+
+        // Das schriftliche Ergebnis bleibt liegen — es bedeutet überall dasselbe.
+        #expect(subject.writtenExamPoints == 13)
+    }
+
     // MARK: - Doppelwertung
 
     @Test("Ein Wechsel auf Pflicht-Basisfach löscht die Doppelwertung nicht")

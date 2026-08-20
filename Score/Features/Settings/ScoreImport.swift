@@ -22,7 +22,9 @@ import SwiftData
 ///
 /// - **Zusammenführen** ergänzt. Fächer werden über den Namen zugeordnet, und
 ///   was schon steht, bleibt stehen. Derselbe Import zweimal hintereinander
-///   ändert beim zweiten Mal nichts mehr.
+///   ändert beim zweiten Mal nichts mehr. Zugeordnet wird dabei nur gegen den
+///   Bestand, wie er **vor** dem Import war — was in der Datei zweimal steht,
+///   entsteht zweimal.
 /// - **Ersetzen** löscht erst alles und liest dann ein. Gelöscht wird über
 ///   ``SubjectDeletion``, also blattweise über den Kontext — nur so bekommt
 ///   CloudKit seine Tombstones.
@@ -37,12 +39,22 @@ enum ScoreImport {
 
     /// Warum eine Datei nicht eingelesen werden konnte.
     ///
-    /// Nur ein einziger Fall, und ohne Nutzlast: Der Nutzer bekommt einen knappen
-    /// Satz und keinen Fehlercode, keinen Dateipfad, kein „Parsing error". Was er
-    /// mit der Auskunft anfangen soll, wäre ohnehin dasselbe — eine andere Datei
-    /// wählen.
+    /// Beide Fälle sind ohne Nutzlast: Der Nutzer bekommt einen knappen Satz und
+    /// keinen Fehlercode, keinen Dateipfad, kein „Parsing error". Unterschieden
+    /// wird nur, was er wissen muss — ob sein Bestand angefasst wurde.
     enum Failure: Error, Equatable {
+        /// Aus der Datei liess sich nichts lesen. Geschrieben wurde nichts.
         case unreadable
+
+        /// Die Datei war in Ordnung, der neue Bestand liess sich aber nicht
+        /// schreiben. Beides zusammen — das Wegräumen des alten Bestands und
+        /// der Aufbau des neuen — wurde zurückgenommen.
+        ///
+        /// Ein eigener Fall, weil die Oberfläche darüber etwas anderes sagen
+        /// muss: „Datei nicht lesbar" wäre schlicht falsch, und „an deinen Daten
+        /// hat sich nichts geändert" ist eine Zusage, die hier niemand geben
+        /// kann.
+        case notWritten
     }
 
     /// Wie eingelesen wird.
@@ -140,31 +152,59 @@ enum ScoreImport {
     ///   - profile: Das **aktive** Profil, das die Angaben der Datei übernimmt.
     ///     `nil`, wenn es noch keines gibt — dann bleibt der Profilteil liegen,
     ///     statt ein zweites anzulegen.
+    ///   - interruption: Ein Haken, der nach dem Aufbauen und **vor** dem
+    ///     Speichern läuft. Er ist der einzige Weg, das Scheitern der
+    ///     Aufbauphase nachzustellen und damit zu prüfen, dass ein
+    ///     abgebrochenes Ersetzen den alten Bestand vollständig stehen lässt.
+    ///     Im Betrieb tut er nichts.
+    ///
+    /// - Throws: ``Failure/notWritten``, wenn der neue Bestand nicht geschrieben
+    ///   werden konnte. Der alte steht dann unverändert.
     static func apply(
         _ export: ScoreExport,
         mode: Mode,
         in context: ModelContext,
-        profile: StudentProfile?
+        profile: StudentProfile?,
+        interruption: () throws -> Void = {}
     ) throws {
+        // Was das Ersetzen wegräumt. Weggeräumt wird es aber erst ganz zum
+        // Schluss: Löschen und Aufbauen sind **ein** Vorgang mit **einem**
+        // abschliessenden Speichern, und was zuerst kommt, entscheidet, was ein
+        // Abbruch hinterlässt. Erst aufbauen und dann löschen heisst: Scheitert
+        // der Aufbau, ist der alte Bestand noch nicht einmal angefasst.
+        let obsolete: [Subject]
         if mode == .replace {
-            for subject in try context.fetch(FetchDescriptor<Subject>()) {
-                try SubjectDeletion.delete(subject, in: context)
-            }
+            obsolete = try context.fetch(FetchDescriptor<Subject>())
+        } else {
+            obsolete = []
         }
 
-        var existing = try context.fetch(FetchDescriptor<Subject>())
+        // Der Bestand, dem sich Eingelesenes zuordnen lässt — er wächst während
+        // der Schleife bewusst nicht mit: Sonst fände der zweite Datensatz
+        // gleichen Namens das gerade angelegte erste Fach und würde in es
+        // hineingefaltet. Der Fach-Editor lässt Namensdubletten zu — was in der
+        // Datei zweimal steht, muss zweimal entstehen.
+        //
+        // Beim Ersetzen ist er leer: alles Vorhandene verschwindet gleich, und
+        // was verschwindet, ist nichts, dem sich etwas zuordnen liesse.
+        let stock: [Subject]
+        if mode == .replace {
+            stock = []
+        } else {
+            stock = try context.fetch(FetchDescriptor<Subject>())
+        }
 
         // Ist der Bestand leer — beim Ersetzen immer —, bestimmt die Datei die
         // Reihenfolge vollständig. Steht dagegen schon etwas da, bekommt jedes
         // neue Fach einen Platz hinter dem letzten: Der Wert aus der Datei würde
         // mit dem Bestand kollidieren, und zwei Fächer auf demselben Platz sind
         // eine Reihenfolge, die keine ist.
-        let fileDecidesOrder = existing.isEmpty
-        var nextSortIndex = (existing.map(\.sortIndex).max() ?? -1) + 1
+        let fileDecidesOrder = stock.isEmpty
+        var nextSortIndex = (stock.map(\.sortIndex).max() ?? -1) + 1
 
         for (offset, imported) in export.subjects.enumerated() {
             let name = imported.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            if let match = existing.first(where: {
+            if let match = stock.first(where: {
                 $0.name.trimmingCharacters(in: .whitespacesAndNewlines)
                     .localizedCaseInsensitiveCompare(name) == .orderedSame
             }) {
@@ -177,7 +217,7 @@ enum ScoreImport {
                     position = nextSortIndex
                     nextSortIndex += 1
                 }
-                existing.append(create(imported, sortIndex: position, in: context))
+                create(imported, sortIndex: position, in: context)
             }
         }
 
@@ -185,12 +225,29 @@ enum ScoreImport {
             apply(imported, to: profile)
         }
 
-        try context.save()
+        do {
+            try interruption()
+
+            // Jetzt erst, und ohne Zwischenspeichern: Was hier verschwindet,
+            // verschwindet zusammen mit dem Aufbau oder gar nicht.
+            for subject in obsolete {
+                SubjectDeletion.markForDeletion(subject, in: context)
+            }
+
+            try context.save()
+        } catch {
+            // Alles oder nichts: Was der Vorgang angefasst hat — die Löschungen
+            // eingeschlossen —, wird zurückgenommen. Der Nutzer steht danach vor
+            // demselben Bestand wie vorher.
+            context.rollback()
+            throw Failure.notWritten
+        }
     }
 
     // MARK: - Ein Fach anlegen
 
     /// Legt ein Fach aus der Datei neu an, mit allem, was darin steht.
+    @discardableResult
     private static func create(
         _ imported: ScoreExport.Subject,
         sortIndex: Int,
@@ -302,6 +359,16 @@ enum ScoreImport {
     /// Regel verdoppelte derselbe Import beim zweiten Mal alles, und der Nutzer
     /// stünde vor einem Bestand, den er nicht mehr entwirren kann.
     ///
+    /// Verglichen wird ausschliesslich gegen den **vorhandenen Bestand**, nie
+    /// gegen andere Zeilen derselben Datei. Zwei mündliche Noten mit demselben
+    /// Vorgabetitel und derselben Punktzahl sind der Normalfall — kaum jemand
+    /// ändert die Vorgabetitel —, und wer eine Sicherung in einen leeren Bestand
+    /// zurückspielt, bekäme sonst still eine davon weniger zurück. Was in der
+    /// Datei steht, kommt vollständig an.
+    ///
+    /// „Zweimal dieselbe Datei einlesen verdoppelt nichts" bleibt davon
+    /// unberührt: beim zweiten Mal steht das Eingelesene ja schon im Bestand.
+    ///
     /// Der Zeitstempel ist bewusst **nicht** Teil des Vergleichs: er wird beim
     /// Anlegen gesetzt und steht gar nicht in der Datei.
     private static func merge(
@@ -309,7 +376,7 @@ enum ScoreImport {
         into semester: SemesterResult,
         in context: ModelContext
     ) {
-        var known = Set((semester.entries ?? []).map { fingerprint(of: $0) })
+        let known = Set((semester.entries ?? []).map { fingerprint(of: $0) })
 
         for entry in imported {
             guard let kind = GradeKind(rawValue: entry.kind),
@@ -322,7 +389,7 @@ enum ScoreImport {
                 kind: kind,
                 category: category
             )
-            guard known.insert(mark).inserted else { continue }
+            guard !known.contains(mark) else { continue }
 
             let created = GradeEntry(
                 title: entry.title,

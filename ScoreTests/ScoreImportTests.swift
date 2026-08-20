@@ -250,6 +250,95 @@ struct ScoreImportTests {
         #expect(try target.fetchCount(FetchDescriptor<GradeEntry>()) == 4)
     }
 
+    @Test("Zwei gleiche Leistungen in der Datei kommen beide an")
+    func identicalEntriesInOneFileBothArrive() throws {
+        let source = try Self.makeContext()
+        let subject = Subject(
+            name: "Geschichte",
+            abbreviation: "G",
+            colorValue: 0x33_44_55,
+            kind: .pflichtBasisfach,
+            activeSemesters: [0]
+        )
+        source.insert(subject)
+
+        let semester = SemesterResult(index: 0)
+        semester.subject = subject
+        source.insert(semester)
+
+        // Zweimal derselbe Vorgabetitel mit derselben Punktzahl — der Normalfall
+        // bei mündlichen Noten, weil kaum jemand die Vorgabetitel ändert.
+        for _ in 0..<2 {
+            let entry = GradeEntry(
+                title: "Mündliche Note",
+                points: 11,
+                kind: .oral,
+                category: .other,
+                share: 50,
+                usesAutomaticShare: true
+            )
+            entry.semester = semester
+            source.insert(entry)
+        }
+
+        let data = try ScoreExport(profile: nil, subjects: try Self.fetchSubjects(in: source)).encoded()
+
+        let target = try Self.makeContext()
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .merge, in: target, profile: nil)
+
+        // Beide entstehen: die Datei kommt vollständig an.
+        #expect(try target.fetchCount(FetchDescriptor<GradeEntry>()) == 2)
+
+        // Und dieselbe Datei ein zweites Mal legt trotzdem nichts nach.
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .merge, in: target, profile: nil)
+        #expect(try target.fetchCount(FetchDescriptor<GradeEntry>()) == 2)
+        #expect(try target.fetchCount(FetchDescriptor<Subject>()) == 1)
+    }
+
+    @Test("Zwei Fächer gleichen Namens in der Datei bleiben zwei")
+    func twoSubjectsWithTheSameNameBothArrive() throws {
+        let source = try Self.makeContext()
+
+        // Der Fach-Editor lässt Namensdubletten zu, der Fall ist also echt.
+        for index in 0..<2 {
+            let subject = Subject(
+                name: "Sport",
+                abbreviation: "Sp",
+                colorValue: 0x22_33_44,
+                kind: .wahlBasisfach,
+                activeSemesters: [index],
+                sortIndex: index
+            )
+            source.insert(subject)
+
+            let semester = SemesterResult(index: index)
+            semester.subject = subject
+            source.insert(semester)
+
+            let entry = GradeEntry(
+                title: "Arbeit \(index + 1)",
+                points: 8 + index,
+                kind: .written,
+                category: .exam,
+                share: 50,
+                usesAutomaticShare: true
+            )
+            entry.semester = semester
+            source.insert(entry)
+        }
+
+        let data = try ScoreExport(profile: nil, subjects: try Self.fetchSubjects(in: source)).encoded()
+
+        let target = try Self.makeContext()
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .replace, in: target, profile: nil)
+
+        let imported = try Self.fetchSubjects(in: target)
+        #expect(imported.count == 2)
+        #expect(imported.allSatisfy { $0.name == "Sport" })
+        #expect(imported.map(\.activeSemesters) == [[0], [1]])
+        #expect(try target.fetchCount(FetchDescriptor<GradeEntry>()) == 2)
+    }
+
     // MARK: - Zusammenführen ergänzt, es überschreibt nicht
 
     @Test("Zusammenführen überschreibt keine vorhandenen Werte")
@@ -316,6 +405,45 @@ struct ScoreImportTests {
         #expect(subjects.count == 1)
         #expect(subjects.first?.name == "Physik")
         #expect(try target.fetchCount(FetchDescriptor<GradeEntry>()) == 4)
+    }
+
+    @Test("Ein gescheitertes Ersetzen lässt den alten Bestand vollständig stehen")
+    func afailedReplacementKeepsEverything() throws {
+        let source = try Self.makeContext()
+        Self.makeSubject(in: source)
+        let data = try ScoreExport(profile: nil, subjects: try Self.fetchSubjects(in: source)).encoded()
+
+        let target = try Self.makeContext()
+        Self.makeSubject(in: target)
+        let stale = Subject(name: "Geschichte", abbreviation: "G", colorValue: 0x22_22_22, kind: .pflichtBasisfach)
+        target.insert(stale)
+        let semester = SemesterResult(index: 0)
+        semester.subject = stale
+        target.insert(semester)
+        let entry = GradeEntry(category: .exam, title: "Alte Arbeit")
+        entry.semester = semester
+        target.insert(entry)
+        try target.save()
+
+        let before = Self.snapshot(of: try Self.fetchSubjects(in: target))
+
+        struct Interrupted: Error {}
+
+        #expect(throws: ScoreImport.Failure.notWritten) {
+            try ScoreImport.apply(
+                try ScoreImport.read(data),
+                mode: .replace,
+                in: target,
+                profile: nil,
+                interruption: { throw Interrupted() }
+            )
+        }
+
+        // Der alte Bestand steht vollständig und unverändert: Das Löschen war
+        // nie für sich allein gespeichert.
+        #expect(Self.snapshot(of: try Self.fetchSubjects(in: target)) == before)
+        #expect(try target.fetchCount(FetchDescriptor<Subject>()) == 2)
+        #expect(try target.fetchCount(FetchDescriptor<GradeEntry>()) == 5)
     }
 
     // MARK: - Ältere Dateien

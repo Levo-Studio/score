@@ -72,6 +72,23 @@ enum SubjectDeletion {
     /// Gelöscht wird deshalb von den Blättern zur Wurzel: erst die Leistungen,
     /// dann die Halbjahre, dann das Fach.
     static func delete(_ subject: Subject, in context: ModelContext) throws {
+        markForDeletion(subject, in: context)
+        try context.save()
+    }
+
+    /// Dasselbe Löschen, **ohne** zu speichern.
+    ///
+    /// Für Abläufe, die mehr tun als ein Fach wegzunehmen und deshalb nur ein
+    /// einziges abschliessendes Speichern haben dürfen — das Ersetzen beim
+    /// Import löscht erst den ganzen Bestand und baut ihn dann neu auf. Würde
+    /// dort je Fach gespeichert, wäre das Löschen längst dauerhaft, wenn der
+    /// Aufbau danach scheitert: Datenverlust mitten in einem Vorgang, der als
+    /// Ganzes gedacht war.
+    ///
+    /// Gelöscht wird trotzdem Objekt für Objekt über den Kontext und nicht über
+    /// die Kaskade — die Begründung steht bei ``delete(_:in:)``, sie gilt hier
+    /// unverändert: nur so bekommt CloudKit seine Tombstones.
+    static func markForDeletion(_ subject: Subject, in context: ModelContext) {
         for semester in subject.semesters ?? [] {
             for entry in semester.entries ?? [] {
                 context.delete(entry)
@@ -79,7 +96,5 @@ enum SubjectDeletion {
             context.delete(semester)
         }
         context.delete(subject)
-
-        try context.save()
     }
 }

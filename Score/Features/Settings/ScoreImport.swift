@@ -22,7 +22,9 @@ import SwiftData
 ///
 /// - **Zusammenführen** ergänzt. Fächer werden über den Namen zugeordnet, und
 ///   was schon steht, bleibt stehen. Derselbe Import zweimal hintereinander
-///   ändert beim zweiten Mal nichts mehr.
+///   ändert beim zweiten Mal nichts mehr. Zugeordnet wird dabei nur gegen den
+///   Bestand, wie er **vor** dem Import war — was in der Datei zweimal steht,
+///   entsteht zweimal.
 /// - **Ersetzen** löscht erst alles und liest dann ein. Gelöscht wird über
 ///   ``SubjectDeletion``, also blattweise über den Kontext — nur so bekommt
 ///   CloudKit seine Tombstones.
@@ -152,19 +154,24 @@ enum ScoreImport {
             }
         }
 
-        var existing = try context.fetch(FetchDescriptor<Subject>())
+        // Der Bestand, wie er **vor** dem Import war. Er wächst während der
+        // Schleife bewusst nicht mit: Sonst fände der zweite Datensatz gleichen
+        // Namens das gerade angelegte erste Fach und würde in es hineingefaltet.
+        // Der Fach-Editor lässt Namensdubletten zu — was in der Datei zweimal
+        // steht, muss zweimal entstehen.
+        let stock = try context.fetch(FetchDescriptor<Subject>())
 
         // Ist der Bestand leer — beim Ersetzen immer —, bestimmt die Datei die
         // Reihenfolge vollständig. Steht dagegen schon etwas da, bekommt jedes
         // neue Fach einen Platz hinter dem letzten: Der Wert aus der Datei würde
         // mit dem Bestand kollidieren, und zwei Fächer auf demselben Platz sind
         // eine Reihenfolge, die keine ist.
-        let fileDecidesOrder = existing.isEmpty
-        var nextSortIndex = (existing.map(\.sortIndex).max() ?? -1) + 1
+        let fileDecidesOrder = stock.isEmpty
+        var nextSortIndex = (stock.map(\.sortIndex).max() ?? -1) + 1
 
         for (offset, imported) in export.subjects.enumerated() {
             let name = imported.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            if let match = existing.first(where: {
+            if let match = stock.first(where: {
                 $0.name.trimmingCharacters(in: .whitespacesAndNewlines)
                     .localizedCaseInsensitiveCompare(name) == .orderedSame
             }) {
@@ -177,7 +184,7 @@ enum ScoreImport {
                     position = nextSortIndex
                     nextSortIndex += 1
                 }
-                existing.append(create(imported, sortIndex: position, in: context))
+                create(imported, sortIndex: position, in: context)
             }
         }
 
@@ -191,6 +198,7 @@ enum ScoreImport {
     // MARK: - Ein Fach anlegen
 
     /// Legt ein Fach aus der Datei neu an, mit allem, was darin steht.
+    @discardableResult
     private static func create(
         _ imported: ScoreExport.Subject,
         sortIndex: Int,

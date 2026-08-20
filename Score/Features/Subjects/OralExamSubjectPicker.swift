@@ -270,12 +270,18 @@ enum OralExamSubjects {
     /// statt still die erste zu verdrängen — genauso wie bei den drei
     /// Leistungsfächern im Onboarding. Was verschwindet, ohne dass man es
     /// angefasst hat, verwirrt mehr, als es hilft.
+    ///
+    /// Gefragt wird dabei nach ``Subject/countsAsOralExamSubject`` und nicht nach
+    /// dem rohen Feld — dieselbe Frage, die auch ``selection(in:)`` stellt.
+    /// Schreiben und Zählen dürfen nicht auseinanderlaufen: Ein Fach, das als
+    /// gewählt gezählt wird, muss sich abwählen lassen, und eines, das nicht
+    /// zählt, darf keinen Platz belegen.
     static func toggle(_ identifier: String, in subjects: [Subject]) {
         guard let subject = subjects.first(where: { $0.identifier.uuidString == identifier }),
               subject.canBeOralExamSubject
         else { return }
 
-        if subject.isOralExamSubject {
+        if subject.countsAsOralExamSubject {
             subject.isOralExamSubject = false
         } else if selection(in: subjects).count < OralExamSubjectSelection.requiredCount {
             subject.isOralExamSubject = true

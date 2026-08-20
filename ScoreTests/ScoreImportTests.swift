@@ -612,4 +612,95 @@ struct ScoreImportTests {
         #expect(active.classLevel == .kursstufe2)
         #expect(try target.fetchCount(FetchDescriptor<StudentProfile>()) == 1)
     }
+
+    // MARK: - Die Grenze der mündlichen Prüfungsfächer
+
+    /// Eine Datei mit drei Leistungsfächern und **drei** mündlichen
+    /// Prüfungsfächern — eines zu viel.
+    ///
+    /// So etwas entsteht nicht im Editor, aber in einer von Hand geänderten
+    /// Datei oder in einer Sicherung aus einer Fassung, die die Grenze noch
+    /// nicht zog.
+    private static func fileWithThreeOralExamSubjects() throws -> Data {
+        let source = try makeContext()
+
+        let advanced = ["Deutsch", "Mathematik", "Biologie"]
+        let oral = ["Englisch", "Geschichte", "Sport"]
+
+        for (index, name) in (advanced + oral).enumerated() {
+            let subject = Subject(
+                name: name,
+                abbreviation: String(name.prefix(2)),
+                colorValue: 0x3E_7C_A6,
+                kind: advanced.contains(name) ? .leistungsfach : .pflichtBasisfach,
+                activeSemesters: Semester.allIndices,
+                isOralExamSubject: oral.contains(name),
+                sortIndex: index
+            )
+            source.insert(subject)
+            for semesterIndex in Semester.allIndices {
+                let semester = SemesterResult(index: semesterIndex)
+                semester.subject = subject
+                source.insert(semester)
+            }
+        }
+
+        return try ScoreExport(profile: nil, subjects: try fetchSubjects(in: source)).encoded()
+    }
+
+    @Test("Der Import setzt nie mehr als zwei mündliche Prüfungsfächer", arguments: [
+        ScoreImport.Mode.merge, .replace,
+    ])
+    func theImportNeverExceedsTheOralExamLimit(mode: ScoreImport.Mode) throws {
+        let data = try Self.fileWithThreeOralExamSubjects()
+
+        let target = try Self.makeContext()
+        try ScoreImport.apply(try ScoreImport.read(data), mode: mode, in: target, profile: nil)
+
+        let subjects = try Self.fetchSubjects(in: target)
+
+        // Nicht nur die Zählung: auch das rohe Kennzeichen darf nicht öfter
+        // dastehen — es wanderte sonst beim nächsten Umstellen wieder hervor.
+        #expect(subjects.count { $0.countsAsOralExamSubject } == OralExamSubjectSelection.requiredCount)
+        #expect(subjects.count(where: \.isOralExamSubject) == OralExamSubjectSelection.requiredCount)
+
+        // Fünf Prüfungen, also bleibt der Prüfungsblock überhaupt
+        // abschliessbar: Bei sechs wurde `isComplete` nie wahr und Block II
+        // konnte über 300 Punkte steigen.
+        let outcome = BlockTwoCalculator.calculate(for: subjects.map(SubjectInput.init))
+        #expect(outcome.expectedExamCount == 5)
+
+        // Nachvollziehbar und nicht von einer Wörterbuch-Reihenfolge abhängig:
+        // Es gewinnen die beiden, die in der Datei zuerst stehen.
+        let chosen = subjects.filter(\.countsAsOralExamSubject).map(\.name).sorted()
+        #expect(chosen == ["Englisch", "Geschichte"])
+    }
+
+    @Test("Beim Zusammenführen behält der Bestand seine Prüfungsfächer")
+    func mergingLeavesTheExistingOralExamSubjectsInPlace() throws {
+        let data = try Self.fileWithThreeOralExamSubjects()
+
+        // Der Bestand hat seine beiden Plätze schon vergeben. Für die Datei
+        // bleibt keiner übrig.
+        let target = try Self.makeContext()
+        for (index, name) in ["Musik", "Sport"].enumerated() {
+            let subject = Subject(
+                name: name,
+                abbreviation: String(name.prefix(2)),
+                colorValue: 0x3E_7C_A6,
+                kind: .wahlBasisfach,
+                isOralExamSubject: true,
+                sortIndex: index
+            )
+            target.insert(subject)
+        }
+
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .merge, in: target, profile: nil)
+
+        let subjects = try Self.fetchSubjects(in: target)
+        let chosen = subjects.filter(\.countsAsOralExamSubject).map(\.name).sorted()
+
+        #expect(chosen == ["Musik", "Sport"])
+        #expect(BlockTwoCalculator.calculate(for: subjects.map(SubjectInput.init)).expectedExamCount == 5)
+    }
 }

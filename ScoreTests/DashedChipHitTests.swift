@@ -202,6 +202,42 @@ struct DashedChipHitTests {
         }
     }
 
+    @Test("Der erste Tipp neben die leere Eingabe schliesst sie")
+    func tappingBesideTheEmptyEditorClosesIt() async throws {
+        let model = OnboardingViewModel()
+        model.step = .electiveBasicSubjects
+
+        try await withStep(model) { window in
+            let tag = try #require(Self.node(labelled: "Eigenes Fach", in: window))
+            #expect(tag.accessibilityActivate())
+            try await Self.settle()
+
+            #expect(
+                !Self.textFields(in: window).isEmpty,
+                "Ein Tipp auf den Tag muss die Eingabe öffnen"
+            )
+
+            // Der Nutzer tippt nichts und tippt dann daneben — aber erst,
+            // nachdem die Spanne für die schliessende Tastatur verstrichen ist.
+            // Genau daran hängt der Unterschied: Was so spät kommt, ist kein
+            // Widerruf der Tastatur mehr, sondern eine Entscheidung.
+            try await Self.settle(seconds: 0.9)
+
+            let field = try #require(Self.textFields(in: window).first)
+            _ = field.resignFirstResponder()
+            try await Self.settle()
+
+            #expect(
+                Self.textFields(in: window).isEmpty,
+                "Der erste Tipp neben die leere Eingabe muss sie schliessen"
+            )
+            #expect(
+                Self.node(labelled: "Eigenes Fach", in: window) != nil,
+                "Statt der Eingabe steht wieder der ruhige Tag"
+            )
+        }
+    }
+
     @Test("Wer nach dem Tippen gleich weiterblättert, behält sein Fach")
     func advancingKeepsTheTypedSubject() async throws {
         let model = OnboardingViewModel()

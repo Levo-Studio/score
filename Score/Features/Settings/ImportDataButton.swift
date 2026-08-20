@@ -99,10 +99,10 @@ struct ImportDataButton<Label: View>: View {
         } message: { candidate in
             Text("Deine \(candidate.current.subjectCount) Fächer mit \(candidate.current.gradeCount) Leistungen werden gelöscht. Aus der Datei kommen \(candidate.incoming.subjectCount) Fächer mit \(candidate.incoming.gradeCount) Leistungen. Rückgängig machen lässt sich das nicht.")
         }
-        .alert("Datei nicht lesbar", isPresented: isShowingFailure) {
+        .alert(failureTitle, isPresented: isShowingFailure, presenting: failure) { _ in
             Button("OK", role: .cancel) {}
-        } message: {
-            Text("Score konnte aus dieser Datei nichts lesen. An deinen Daten hat sich nichts geändert.")
+        } message: { failure in
+            failure.message
         }
     }
 
@@ -113,6 +113,15 @@ struct ImportDataButton<Label: View>: View {
             get: { replacement != nil },
             set: { if !$0 { replacement = nil } }
         )
+    }
+
+    /// Die Überschrift des Fehlerdialogs.
+    ///
+    /// Sie hängt am Fall und nicht am blossen „irgendetwas ging schief":
+    /// „Datei nicht lesbar" über einem gescheiterten Schreibvorgang wäre eine
+    /// Auskunft, die in die falsche Richtung zeigt.
+    private var failureTitle: LocalizedStringKey {
+        failure?.title ?? ImportFailure(reason: .unreadable).title
     }
 
     private var isShowingFailure: Binding<Bool> {
@@ -126,7 +135,7 @@ struct ImportDataButton<Label: View>: View {
     private func read(_ result: Result<[URL], Error>) {
         guard case let .success(urls) = result, let url = urls.first else {
             // Abgebrochen ist kein Fehler — nur ein „doch nicht".
-            if case .failure = result { failure = ImportFailure() }
+            if case .failure = result { failure = ImportFailure(reason: .unreadable) }
             return
         }
 
@@ -151,7 +160,9 @@ struct ImportDataButton<Label: View>: View {
                 pending = candidate
             }
         } catch {
-            failure = ImportFailure()
+            // Hier ist noch nichts geschrieben worden: Gelesen und geprüft wird
+            // vor jedem Zugriff auf den Bestand.
+            failure = ImportFailure(reason: .unreadable)
         }
     }
 
@@ -170,11 +181,17 @@ struct ImportDataButton<Label: View>: View {
         }
     }
 
+    /// Schreibt die bereits geprüfte Datei in den Bestand.
+    ///
+    /// Was hier scheitert, scheitert **beim Schreiben** — die Datei war in
+    /// Ordnung, sonst käme der Ablauf gar nicht bis hierher. „Datei nicht
+    /// lesbar" wäre also falsch, und „an deinen Daten hat sich nichts geändert"
+    /// eine Zusage, die niemand geben kann.
     private func apply(_ export: ScoreExport, mode: ScoreImport.Mode) {
         do {
             try ScoreImport.apply(export, mode: mode, in: modelContext, profile: profile)
         } catch {
-            failure = ImportFailure()
+            failure = ImportFailure(reason: .notWritten)
         }
     }
 }
@@ -193,10 +210,38 @@ struct PendingImport: Identifiable {
 
 /// Dass etwas schiefging — mehr steht dem Nutzer nicht zu.
 ///
-/// Kein Fehlercode, kein Dateipfad, kein „Parsing error": Was er damit anfangen
-/// soll, wäre ohnehin dasselbe — eine andere Datei wählen.
+/// Kein Fehlercode, kein Dateipfad, kein „Parsing error". Unterschieden wird nur
+/// das eine, was er wissen muss: ob sein Bestand dabei angefasst wurde. „An
+/// deinen Daten hat sich nichts geändert" ist eine Zusage — sie darf nur da
+/// stehen, wo sie stimmt.
 struct ImportFailure: Identifiable {
+
+    /// Woran es lag — soweit es den Nutzer betrifft.
+    enum Reason {
+        /// Die Datei liess sich nicht lesen. Geschrieben wurde nichts.
+        case unreadable
+        /// Die Datei war in Ordnung, das Schreiben scheiterte.
+        case notWritten
+    }
+
     let id = UUID()
+    let reason: Reason
+
+    var title: LocalizedStringKey {
+        switch reason {
+        case .unreadable: "Datei nicht lesbar"
+        case .notWritten: "Import fehlgeschlagen"
+        }
+    }
+
+    var message: Text {
+        switch reason {
+        case .unreadable:
+            Text("Score konnte aus dieser Datei nichts lesen. An deinen Daten hat sich nichts geändert.")
+        case .notWritten:
+            Text("Score konnte die Datei lesen, aber nicht in deinen Bestand schreiben. Sieh in deinen Fächern nach, bevor du es noch einmal versuchst.")
+        }
+    }
 }
 
 // MARK: - Das Blatt mit den beiden Wegen

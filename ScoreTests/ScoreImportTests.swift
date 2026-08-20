@@ -407,6 +407,45 @@ struct ScoreImportTests {
         #expect(try target.fetchCount(FetchDescriptor<GradeEntry>()) == 4)
     }
 
+    @Test("Ein gescheitertes Ersetzen lässt den alten Bestand vollständig stehen")
+    func afailedReplacementKeepsEverything() throws {
+        let source = try Self.makeContext()
+        Self.makeSubject(in: source)
+        let data = try ScoreExport(profile: nil, subjects: try Self.fetchSubjects(in: source)).encoded()
+
+        let target = try Self.makeContext()
+        Self.makeSubject(in: target)
+        let stale = Subject(name: "Geschichte", abbreviation: "G", colorValue: 0x22_22_22, kind: .pflichtBasisfach)
+        target.insert(stale)
+        let semester = SemesterResult(index: 0)
+        semester.subject = stale
+        target.insert(semester)
+        let entry = GradeEntry(category: .exam, title: "Alte Arbeit")
+        entry.semester = semester
+        target.insert(entry)
+        try target.save()
+
+        let before = Self.snapshot(of: try Self.fetchSubjects(in: target))
+
+        struct Interrupted: Error {}
+
+        #expect(throws: ScoreImport.Failure.notWritten) {
+            try ScoreImport.apply(
+                try ScoreImport.read(data),
+                mode: .replace,
+                in: target,
+                profile: nil,
+                interruption: { throw Interrupted() }
+            )
+        }
+
+        // Der alte Bestand steht vollständig und unverändert: Das Löschen war
+        // nie für sich allein gespeichert.
+        #expect(Self.snapshot(of: try Self.fetchSubjects(in: target)) == before)
+        #expect(try target.fetchCount(FetchDescriptor<Subject>()) == 2)
+        #expect(try target.fetchCount(FetchDescriptor<GradeEntry>()) == 5)
+    }
+
     // MARK: - Ältere Dateien
 
     @Test("Eine Datei ohne die neuen Felder lässt sich lesen")

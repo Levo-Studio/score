@@ -39,12 +39,22 @@ enum ScoreImport {
 
     /// Warum eine Datei nicht eingelesen werden konnte.
     ///
-    /// Nur ein einziger Fall, und ohne Nutzlast: Der Nutzer bekommt einen knappen
-    /// Satz und keinen Fehlercode, keinen Dateipfad, kein „Parsing error". Was er
-    /// mit der Auskunft anfangen soll, wäre ohnehin dasselbe — eine andere Datei
-    /// wählen.
+    /// Beide Fälle sind ohne Nutzlast: Der Nutzer bekommt einen knappen Satz und
+    /// keinen Fehlercode, keinen Dateipfad, kein „Parsing error". Unterschieden
+    /// wird nur, was er wissen muss — ob sein Bestand angefasst wurde.
     enum Failure: Error, Equatable {
+        /// Aus der Datei liess sich nichts lesen. Geschrieben wurde nichts.
         case unreadable
+
+        /// Die Datei war in Ordnung, der neue Bestand liess sich aber nicht
+        /// schreiben. Beides zusammen — das Wegräumen des alten Bestands und
+        /// der Aufbau des neuen — wurde zurückgenommen.
+        ///
+        /// Ein eigener Fall, weil die Oberfläche darüber etwas anderes sagen
+        /// muss: „Datei nicht lesbar" wäre schlicht falsch, und „an deinen Daten
+        /// hat sich nichts geändert" ist eine Zusage, die hier niemand geben
+        /// kann.
+        case notWritten
     }
 
     /// Wie eingelesen wird.
@@ -142,24 +152,47 @@ enum ScoreImport {
     ///   - profile: Das **aktive** Profil, das die Angaben der Datei übernimmt.
     ///     `nil`, wenn es noch keines gibt — dann bleibt der Profilteil liegen,
     ///     statt ein zweites anzulegen.
+    ///   - interruption: Ein Haken, der nach dem Aufbauen und **vor** dem
+    ///     Speichern läuft. Er ist der einzige Weg, das Scheitern der
+    ///     Aufbauphase nachzustellen und damit zu prüfen, dass ein
+    ///     abgebrochenes Ersetzen den alten Bestand vollständig stehen lässt.
+    ///     Im Betrieb tut er nichts.
+    ///
+    /// - Throws: ``Failure/notWritten``, wenn der neue Bestand nicht geschrieben
+    ///   werden konnte. Der alte steht dann unverändert.
     static func apply(
         _ export: ScoreExport,
         mode: Mode,
         in context: ModelContext,
-        profile: StudentProfile?
+        profile: StudentProfile?,
+        interruption: () throws -> Void = {}
     ) throws {
+        // Was das Ersetzen wegräumt. Weggeräumt wird es aber erst ganz zum
+        // Schluss: Löschen und Aufbauen sind **ein** Vorgang mit **einem**
+        // abschliessenden Speichern, und was zuerst kommt, entscheidet, was ein
+        // Abbruch hinterlässt. Erst aufbauen und dann löschen heisst: Scheitert
+        // der Aufbau, ist der alte Bestand noch nicht einmal angefasst.
+        let obsolete: [Subject]
         if mode == .replace {
-            for subject in try context.fetch(FetchDescriptor<Subject>()) {
-                try SubjectDeletion.delete(subject, in: context)
-            }
+            obsolete = try context.fetch(FetchDescriptor<Subject>())
+        } else {
+            obsolete = []
         }
 
-        // Der Bestand, wie er **vor** dem Import war. Er wächst während der
-        // Schleife bewusst nicht mit: Sonst fände der zweite Datensatz gleichen
-        // Namens das gerade angelegte erste Fach und würde in es hineingefaltet.
-        // Der Fach-Editor lässt Namensdubletten zu — was in der Datei zweimal
-        // steht, muss zweimal entstehen.
-        let stock = try context.fetch(FetchDescriptor<Subject>())
+        // Der Bestand, dem sich Eingelesenes zuordnen lässt — er wächst während
+        // der Schleife bewusst nicht mit: Sonst fände der zweite Datensatz
+        // gleichen Namens das gerade angelegte erste Fach und würde in es
+        // hineingefaltet. Der Fach-Editor lässt Namensdubletten zu — was in der
+        // Datei zweimal steht, muss zweimal entstehen.
+        //
+        // Beim Ersetzen ist er leer: alles Vorhandene verschwindet gleich, und
+        // was verschwindet, ist nichts, dem sich etwas zuordnen liesse.
+        let stock: [Subject]
+        if mode == .replace {
+            stock = []
+        } else {
+            stock = try context.fetch(FetchDescriptor<Subject>())
+        }
 
         // Ist der Bestand leer — beim Ersetzen immer —, bestimmt die Datei die
         // Reihenfolge vollständig. Steht dagegen schon etwas da, bekommt jedes
@@ -192,7 +225,23 @@ enum ScoreImport {
             apply(imported, to: profile)
         }
 
-        try context.save()
+        do {
+            try interruption()
+
+            // Jetzt erst, und ohne Zwischenspeichern: Was hier verschwindet,
+            // verschwindet zusammen mit dem Aufbau oder gar nicht.
+            for subject in obsolete {
+                SubjectDeletion.markForDeletion(subject, in: context)
+            }
+
+            try context.save()
+        } catch {
+            // Alles oder nichts: Was der Vorgang angefasst hat — die Löschungen
+            // eingeschlossen —, wird zurückgenommen. Der Nutzer steht danach vor
+            // demselben Bestand wie vorher.
+            context.rollback()
+            throw Failure.notWritten
+        }
     }
 
     // MARK: - Ein Fach anlegen

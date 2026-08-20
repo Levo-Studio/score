@@ -339,6 +339,65 @@ struct ScoreImportTests {
         #expect(try target.fetchCount(FetchDescriptor<GradeEntry>()) == 2)
     }
 
+    @Test("Beim Zusammenführen landen zwei gleichnamige Einträge im vorhandenen Fach")
+    func mergingFoldsBothNamesakesIntoTheExistingSubject() throws {
+        let source = try Self.makeContext()
+
+        // Dieselbe Datei wie oben: zwei Fächer namens „Sport", jedes mit einer
+        // Note. Beim Ersetzen bleiben daraus zwei Fächer.
+        for index in 0..<2 {
+            let subject = Subject(
+                name: "Sport",
+                abbreviation: "Sp",
+                colorValue: 0x22_33_44,
+                kind: .wahlBasisfach,
+                activeSemesters: [index],
+                sortIndex: index
+            )
+            source.insert(subject)
+
+            let semester = SemesterResult(index: index)
+            semester.subject = subject
+            source.insert(semester)
+
+            let entry = GradeEntry(
+                title: "Arbeit \(index + 1)",
+                points: 8 + index,
+                kind: .written,
+                category: .exam,
+                share: 50,
+                usesAutomaticShare: true
+            )
+            entry.semester = semester
+            source.insert(entry)
+        }
+
+        let data = try ScoreExport(profile: nil, subjects: try Self.fetchSubjects(in: source)).encoded()
+
+        // Im Bestand steht der Name bereits. Zugeordnet wird über ihn — also
+        // fliessen beide Datei-Einträge in dieses eine Fach, und ihre Noten
+        // stehen danach nebeneinander darin. Das ist die Folge der Regel und
+        // festgehalten, damit sie niemand für einen Fehler hält.
+        let target = try Self.makeContext()
+        let existing = Subject(
+            name: "Sport",
+            abbreviation: "Sp",
+            colorValue: 0x11_22_33,
+            kind: .wahlBasisfach,
+            activeSemesters: [],
+            sortIndex: 0
+        )
+        target.insert(existing)
+        try target.save()
+
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .merge, in: target, profile: nil)
+
+        let merged = try Self.fetchSubjects(in: target)
+        #expect(merged.count == 1)
+        #expect(merged.first?.name == "Sport")
+        #expect(try target.fetchCount(FetchDescriptor<GradeEntry>()) == 2)
+    }
+
     // MARK: - Zusammenführen ergänzt, es überschreibt nicht
 
     @Test("Zusammenführen überschreibt keine vorhandenen Werte")
@@ -435,7 +494,7 @@ struct ScoreImportTests {
                 mode: .replace,
                 in: target,
                 profile: nil,
-                interruption: { throw Interrupted() }
+                failAfterBuild: { throw Interrupted() }
             )
         }
 

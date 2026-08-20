@@ -102,6 +102,116 @@ struct GradeEntryEditTests {
         #expect(edit.entry.category == .exam)
     }
 
+    // MARK: - Beim Schliessen geht getippte Arbeit nicht verloren
+
+    /// Der Weg, den ein heruntergezogenes Blatt nimmt: Was ``hasInput`` sagt,
+    /// entscheidet, ob die Leistung entsteht.
+    private static func closeSheet(_ edit: GradeEntryEdit, in context: ModelContext) {
+        guard edit.isNew, edit.hasInput else { return }
+        edit.commit(to: context)
+    }
+
+    @Test("Ein unangetasteter Entwurf lässt beim Schliessen nichts zurück")
+    func closingAnUntouchedDraftCreatesNothing() throws {
+        let (context, _, semester) = try Self.makeSubject()
+
+        let edit = GradeEntryEdit.draft(
+            category: .exam,
+            kind: .written,
+            title: "Klassenarbeit 1",
+            in: semester
+        )
+
+        #expect(!edit.hasInput)
+        Self.closeSheet(edit, in: context)
+        #expect(try Self.entryCount(in: context) == 0)
+    }
+
+    @Test("Eine getippte Punktzahl überlebt das Schliessen")
+    func closingAfterTypingPointsCreatesTheEntry() throws {
+        let (context, _, semester) = try Self.makeSubject()
+
+        let edit = GradeEntryEdit.draft(
+            category: .exam,
+            kind: .written,
+            title: "Klassenarbeit 1",
+            in: semester
+        )
+        edit.entry.points = 5
+
+        #expect(edit.hasInput)
+        Self.closeSheet(edit, in: context)
+
+        #expect(try Self.entryCount(in: context) == 1)
+        #expect(edit.entry.points == 5)
+        #expect(edit.entry.semester === semester)
+    }
+
+    @Test("Ein getippter Titel, eine andere Art und eine andere Kategorie zählen auch")
+    func titleKindAndCategoryCountAsInput() throws {
+        let (_, _, semester) = try Self.makeSubject()
+
+        func draft() -> GradeEntryEdit {
+            .draft(category: .exam, kind: .written, title: "Klassenarbeit 1", in: semester)
+        }
+
+        let titled = draft()
+        titled.entry.title = "Nachschrift"
+        #expect(titled.hasInput)
+
+        let switchedKind = draft()
+        switchedKind.entry.kind = .oral
+        #expect(switchedKind.hasInput)
+
+        let switchedCategory = draft()
+        switchedCategory.entry.category = .test
+        #expect(switchedCategory.hasInput)
+
+        // Ein leer geräumter Titel ist kein Beitrag, sondern eine Lücke.
+        let cleared = draft()
+        cleared.entry.title = "   "
+        #expect(!cleared.hasInput)
+    }
+
+    @Test("Die beim Schliessen angelegte Leistung lässt sich zurücknehmen")
+    func theKeptEntryCanBeUndone() throws {
+        let (context, subject, semester) = try Self.makeSubject()
+
+        let edit = GradeEntryEdit.draft(
+            category: .exam,
+            kind: .written,
+            title: "Klassenarbeit 1",
+            in: semester
+        )
+        edit.entry.points = 5
+        Self.closeSheet(edit, in: context)
+
+        let pending = PendingGradeEntryUndo.creation(of: edit.entry)
+        pending.undo(subject, context)
+        try context.save()
+
+        #expect(try Self.entryCount(in: context) == 0)
+    }
+
+    @Test("Verwerfen legt auch bei getippten Punkten nichts an")
+    func discardingNeverCreatesAnything() throws {
+        let (context, _, semester) = try Self.makeSubject()
+
+        let edit = GradeEntryEdit.draft(
+            category: .exam,
+            kind: .written,
+            title: "Klassenarbeit 1",
+            in: semester
+        )
+        edit.entry.points = 5
+
+        // Der Entwurf wäre beim Schliessen angelegt worden — „Verwerfen" räumt
+        // das Blatt aber ab, ohne `commit(to:)` zu rufen.
+        #expect(edit.hasInput)
+        #expect(try Self.entryCount(in: context) == 0)
+        #expect((semester.entries ?? []).isEmpty)
+    }
+
     @Test("Eine bestehende Leistung wird durch das Bestätigen nicht verdoppelt")
     func committingAnExistingEntryChangesNothing() throws {
         let (context, _, semester) = try Self.makeSubject()

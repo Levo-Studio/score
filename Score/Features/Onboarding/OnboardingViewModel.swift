@@ -336,10 +336,19 @@ final class OnboardingViewModel {
     /// wer in Kursstufe 1 einsteigt, hat 3/4 und 4/4 noch vor sich, soll sie aber
     /// später nicht neu anlegen müssen.
     ///
-    /// Fächer, die es unter diesem Namen schon gibt, werden übersprungen. Das
-    /// greift beim zweiten Durchlauf: Wer aus den Einstellungen heraus ein
+    /// Fächer, die es unter diesem Namen schon gibt, werden nicht noch einmal
+    /// angelegt, sondern **umgestellt**: Sie bekommen den hier gewählten Fachtyp
+    /// und die mündliche Prüfungsangabe, behalten aber Halbjahre, Noten und alle
+    /// übrigen Einstellungen.
+    ///
+    /// Das greift beim zweiten Durchlauf: Wer aus den Einstellungen heraus ein
     /// weiteres Profil anlegt, bekommt kein zweites „Mathematik" daneben — die
     /// Fächer hängen an der iCloud und nicht am Profil, sie sind also schon da.
+    /// Zwei Profile sind zwei Namensschilder über einem gemeinsamen Bestand.
+    /// Unter dieser Voraussetzung ist „die letzte Wahl gilt" das ehrlichste
+    /// Verhalten — wer im zweiten Durchlauf andere Leistungsfächer wählt, sah
+    /// bisher unverändert die Konstellation des ersten Profils, ohne jede
+    /// Rückmeldung.
     ///
     /// - Returns: Das angelegte Profil, damit die Aufrufstelle es zum aktiven
     ///   Profil dieses Geräts machen kann.
@@ -358,19 +367,20 @@ final class OnboardingViewModel {
 
         // Einmal abgefragt und nicht je Fach: Ein `fetch` pro Fachname wären ein
         // Dutzend Abfragen für eine Auskunft, die sich nicht ändert.
-        let existing = Set(
-            ((try? context.fetch(FetchDescriptor<Subject>())) ?? []).map(\.name)
-        )
+        var existing = [String: Subject]()
+        for subject in (try? context.fetch(FetchDescriptor<Subject>())) ?? [] {
+            existing[subject.name] = subject
+        }
 
         var sortIndex = 0
         for name in advancedSubjects {
-            insertSubject(named: name, kind: .leistungsfach, sortIndex: &sortIndex, skipping: existing, in: context)
+            insertSubject(named: name, kind: .leistungsfach, sortIndex: &sortIndex, existing: existing, in: context)
         }
         for name in sortedRequiredBasicSubjects {
-            insertSubject(named: name, kind: .pflichtBasisfach, sortIndex: &sortIndex, skipping: existing, in: context)
+            insertSubject(named: name, kind: .pflichtBasisfach, sortIndex: &sortIndex, existing: existing, in: context)
         }
         for name in sortedElectiveBasicSubjects {
-            insertSubject(named: name, kind: .wahlBasisfach, sortIndex: &sortIndex, skipping: existing, in: context)
+            insertSubject(named: name, kind: .wahlBasisfach, sortIndex: &sortIndex, existing: existing, in: context)
         }
 
         return profile
@@ -380,10 +390,22 @@ final class OnboardingViewModel {
         named name: String,
         kind: SubjectKind,
         sortIndex: inout Int,
-        skipping existing: Set<String>,
+        existing: [String: Subject],
         in context: ModelContext
     ) {
-        guard !existing.contains(name) else { return }
+        // Ein Leistungsfach wird bereits schriftlich geprüft; die mündliche
+        // Angabe hätte dort keine Bedeutung und bliebe im Datensatz als
+        // Widerspruch stehen.
+        let isOralExamSubject = kind != .leistungsfach && oralExamSubjects.contains(name)
+
+        // Gibt es das Fach schon, wirkt die getroffene Wahl trotzdem: Rolle
+        // umstellen, alles andere unangetastet lassen. Auch die Sortierposition
+        // bleibt — sie gehört zum Bestand und nicht zu diesem Durchlauf.
+        if let subject = existing[name] {
+            subject.kind = kind
+            subject.isOralExamSubject = isOralExamSubject
+            return
+        }
 
         let template = SubjectCatalog.template(named: name)
 
@@ -404,10 +426,7 @@ final class OnboardingViewModel {
             // darüber entscheiden, wie lange ein Fach belegt ist — das ist eine
             // Aussage über das Fach, keine über den heutigen Tag.
             activeSemesters: Semester.allIndices,
-            // Ein Leistungsfach wird bereits schriftlich geprüft; die Angabe
-            // hätte dort keine Bedeutung und bliebe im Datensatz als Widerspruch
-            // stehen.
-            isOralExamSubject: kind != .leistungsfach && oralExamSubjects.contains(name),
+            isOralExamSubject: isOralExamSubject,
             sortIndex: sortIndex
         )
         context.insert(subject)

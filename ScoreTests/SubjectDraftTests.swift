@@ -98,4 +98,99 @@ struct SubjectDraftTests {
         #expect(subject.writtenExamPoints == 15)
         #expect(subject.oralExamPoints == 0)
     }
+
+    // MARK: - Doppelwertung
+
+    @Test("Ein Wechsel auf Pflicht-Basisfach löscht die Doppelwertung nicht")
+    func switchingKindKeepsTheDoubleWeighting() throws {
+        let context = try Self.makeContext()
+        let subject = Self.makeAdvancedSubject(in: context)
+
+        var draft = SubjectDraft(subject: subject)
+        draft.kind = .pflichtBasisfach
+        draft.save(to: subject, in: context, existingSubjects: [subject])
+
+        #expect(subject.isDoubleWeighted)
+    }
+
+    @Test("Nach dem Zurückwechseln steht die Doppelwertung wieder")
+    func switchingBackRestoresTheDoubleWeighting() throws {
+        let context = try Self.makeContext()
+        let subject = Self.makeAdvancedSubject(in: context)
+
+        var away = SubjectDraft(subject: subject)
+        away.kind = .pflichtBasisfach
+        away.save(to: subject, in: context, existingSubjects: [subject])
+
+        var back = SubjectDraft(subject: subject)
+        back.kind = .leistungsfach
+        back.save(to: subject, in: context, existingSubjects: [subject])
+
+        #expect(subject.isDoubleWeighted)
+        #expect(subject.kind == .leistungsfach)
+    }
+
+    @Test("Eine liegengebliebene Doppelwertung wird nicht mitgezählt")
+    func aStaleDoubleWeightingStaysOutOfTheCalculation() throws {
+        let context = try Self.makeContext()
+        let subject = Self.makeAdvancedSubject(in: context)
+
+        var draft = SubjectDraft(subject: subject)
+        draft.kind = .pflichtBasisfach
+        draft.save(to: subject, in: context, existingSubjects: [subject])
+
+        let chosen = BlockOneCalculator.doubleWeightedSubjects(
+            in: [SubjectInput(subject)],
+            among: []
+        )
+
+        #expect(!chosen.identifiers.contains(subject.identifier.uuidString))
+    }
+
+    // MARK: - Kursgrenze
+
+    @Test("Ein Wechsel auf Prüfungsfach löscht die Kursgrenze nicht")
+    func switchingKindKeepsTheCourseLimit() throws {
+        let context = try Self.makeContext()
+        let subject = Subject(
+            name: "Geographie",
+            abbreviation: "Geo",
+            colorValue: 0x1C6B6E,
+            kind: .wahlBasisfach,
+            maximumContributedCourses: 2
+        )
+        context.insert(subject)
+
+        var draft = SubjectDraft(subject: subject)
+        draft.isOralExamSubject = true
+        draft.save(to: subject, in: context, existingSubjects: [subject])
+
+        #expect(subject.maximumContributedCourses == 2)
+
+        var back = SubjectDraft(subject: subject)
+        back.isOralExamSubject = false
+        back.save(to: subject, in: context, existingSubjects: [subject])
+
+        #expect(subject.maximumContributedCourses == 2)
+        #expect(SubjectInput(subject).effectiveCourseLimit == 2)
+    }
+
+    @Test("Eine liegengebliebene Kursgrenze wirkt sich nicht auf die Rechnung aus")
+    func aStaleCourseLimitStaysOutOfTheCalculation() throws {
+        let context = try Self.makeContext()
+        let subject = Subject(
+            name: "Geographie",
+            abbreviation: "Geo",
+            colorValue: 0x1C6B6E,
+            kind: .wahlBasisfach,
+            maximumContributedCourses: 2
+        )
+        context.insert(subject)
+
+        var draft = SubjectDraft(subject: subject)
+        draft.isOralExamSubject = true
+        draft.save(to: subject, in: context, existingSubjects: [subject])
+
+        #expect(SubjectInput(subject).effectiveCourseLimit == nil)
+    }
 }

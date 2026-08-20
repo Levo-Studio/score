@@ -123,6 +123,47 @@ struct ScoreImportTests {
         #expect(exported.oralExamPoints == 9)
         #expect(exported.semesters.first { $0.index == 2 }?.isManuallyBracketed == true)
         #expect(exported.semesters.first { $0.index == 0 }?.isManuallyBracketed == false)
+        #expect(exported.isCustom == false)
+        #expect(exported.sortIndex == 0)
+    }
+
+    // MARK: - Reihenfolge und Herkunft
+
+    @Test("Ausgabe und Einlesen erhalten Reihenfolge und Herkunft")
+    func aRoundTripRestoresOrderAndOrigin() throws {
+        let context = try Self.makeContext()
+
+        // „Musik" steht im Katalog — selbst angelegt käme es sonst als
+        // Katalogfach zurück. Die Reihenfolge ist bewusst nicht alphabetisch.
+        let names = ["Musik", "Astronomie", "Physik"]
+        for (offset, name) in names.enumerated() {
+            let subject = Subject(
+                name: name,
+                abbreviation: String(name.prefix(2)),
+                colorValue: 0x3E7CA6,
+                kind: .wahlBasisfach,
+                isCustom: true,
+                sortIndex: offset
+            )
+            context.insert(subject)
+        }
+
+        let data = try ScoreExport(
+            profile: nil,
+            subjects: try Self.fetchSubjects(in: context)
+        ).encoded()
+
+        let target = try Self.makeContext()
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .replace, in: target, profile: nil)
+
+        let restored = try Self.fetchSubjects(in: target)
+        let restoredNames = restored.map { $0.name }
+        let restoredOrder = restored.map { $0.sortIndex }
+        let allCustom = restored.allSatisfy { $0.isCustom }
+
+        #expect(restoredNames == names)
+        #expect(restoredOrder == [0, 1, 2])
+        #expect(allCustom)
     }
 
     // MARK: - Hin und zurück
@@ -285,6 +326,10 @@ struct ScoreImportTests {
         #expect(subject.oralExamPoints == nil)
         // Die Farbe kommt aus dem Katalog, weil die Datei keine trägt.
         #expect(subject.colorValue == SubjectCatalog.template(named: "Musik")?.colorValue)
+        // Ohne Angabe bleibt es beim heutigen Verhalten: Herkunft aus dem
+        // Katalog, Reihenfolge aus der Position im Array.
+        #expect(!subject.isCustom)
+        #expect(subject.sortIndex == 0)
     }
 
     // MARK: - Eine kaputte Datei ändert nichts

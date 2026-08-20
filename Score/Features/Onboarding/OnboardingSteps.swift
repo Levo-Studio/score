@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 // MARK: - Willkommen
 
@@ -256,6 +257,14 @@ struct AdvancedSubjectsStep: View {
 
     @Bindable var model: OnboardingViewModel
 
+    /// Die Fächer, die schon im Bestand liegen.
+    ///
+    /// Gebraucht wird nur, **ob** welche da sind: Dann läuft dieses Onboarding
+    /// nicht zum ersten Mal, sondern aus „weiteres Profil anlegen" heraus — und
+    /// die Wahl auf diesem Schritt stellt einen Bestand um, der schon jemandem
+    /// gehört.
+    @Query private var existingSubjects: [Subject]
+
     var body: some View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
             OnboardingHeader(
@@ -263,6 +272,10 @@ struct AdvancedSubjectsStep: View {
                 title: "Deine drei Leistungsfächer",
                 text: "Fünfstündig, zwölf Kurse, größtes Gewicht im Schnitt."
             )
+
+            if !existingSubjects.isEmpty {
+                sharedSubjectsHint
+            }
 
             SubjectSelectionSection(
                 counter: "\(model.advancedSubjects.count) von \(OnboardingViewModel.requiredAdvancedSubjectCount) gewählt",
@@ -274,6 +287,20 @@ struct AdvancedSubjectsStep: View {
                 note: "Danach kommen die Basisfächer: erst die, die du belegen musst, dann die, die du frei dazuwählst."
             )
         }
+    }
+
+    /// Der Hinweis für den zweiten Durchlauf.
+    ///
+    /// Ruhig und ohne Warnfarbe: Es ist keine Fehlbedienung, sondern eine
+    /// Auskunft darüber, wie weit die Wahl reicht. Fächer gehören keinem Profil —
+    /// zwei Profile sind zwei Namensschilder über einem gemeinsamen Bestand.
+    private var sharedSubjectsHint: some View {
+        Text("Fächer und Noten gelten für alle Profile gemeinsam. Deine Wahl hier stellt den gemeinsamen Bestand um.")
+            .font(.optionMeta)
+            .lineSpacing(5.5)
+            .foregroundStyle(ScorePalette.inkSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .staggeredAppearance(index: 2)
     }
 }
 

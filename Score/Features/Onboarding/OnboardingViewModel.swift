@@ -350,6 +350,14 @@ final class OnboardingViewModel {
     /// bisher unverändert die Konstellation des ersten Profils, ohne jede
     /// Rückmeldung.
     ///
+    /// Umgestellt wird die **ganze Konstellation** und nicht nur das Gewählte:
+    /// Ein Fach, das in diesem Durchlauf gar nicht vorkommt, fällt auf
+    /// Wahl-Basisfach zurück und verliert die mündliche Prüfungsangabe. Sonst
+    /// stünden nach dem zweiten Durchlauf vier Leistungsfächer im Bestand — die
+    /// Rechnung geht von dreien aus, und die Doppelwertung suchte sich zwei aus
+    /// vieren. Halbjahre, Noten und alle übrigen Einstellungen bleiben dabei
+    /// unangetastet.
+    ///
     /// - Returns: Das angelegte Profil, damit die Aufrufstelle es zum aktiven
     ///   Profil dieses Geräts machen kann.
     @discardableResult
@@ -383,7 +391,27 @@ final class OnboardingViewModel {
             insertSubject(named: name, kind: .wahlBasisfach, sortIndex: &sortIndex, existing: existing, in: context)
         }
 
+        resetRolesOfUnchosenSubjects(among: existing)
+
         return profile
+    }
+
+    /// Nimmt allen Fächern die Rolle, die in diesem Durchlauf nicht vorkamen.
+    ///
+    /// Wahl-Basisfach ist die Rolle ohne Anspruch: kein Prüfungsfach, keine
+    /// Anrechnungspflicht, keine Doppelwertung. Ein Fach, das der Nutzer eben
+    /// nicht gewählt hat, soll genau das sein — nicht das Leistungsfach des
+    /// vorigen Profils. Angefasst wird nur die Rolle; Halbjahre, Noten,
+    /// Kursgrenze und Prüfungsergebnisse bleiben stehen.
+    private func resetRolesOfUnchosenSubjects(among existing: [String: Subject]) {
+        let chosen = Set(advancedSubjects)
+            .union(sortedRequiredBasicSubjects)
+            .union(sortedElectiveBasicSubjects)
+
+        for (name, subject) in existing where !chosen.contains(name) {
+            subject.kind = .wahlBasisfach
+            subject.isOralExamSubject = false
+        }
     }
 
     private func insertSubject(

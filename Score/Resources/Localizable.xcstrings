@@ -3705,6 +3705,23 @@
         }
       }
     },
+    "Fächer und Noten gelten für alle Profile gemeinsam. Deine Wahl hier stellt den gemeinsamen Bestand um." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fächer und Noten gelten für alle Profile gemeinsam. Deine Wahl hier stellt den gemeinsamen Bestand um."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subjects and grades are shared by every profile. What you choose here changes them for all of them."
+          }
+        }
+      }
+    },
     "Fächer und Noten hängen an deiner iCloud, nicht am Profil. Beide Profile zeigen dieselben Kurse — egal, wofür du dich entscheidest." : {
       "extractionState" : "manual",
       "localizations" : {

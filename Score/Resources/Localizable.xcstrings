@@ -787,6 +787,23 @@
         }
       }
     },
+    "%lld über den 40 Kursen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld über den 40 Kursen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld over the 40 courses"
+          }
+        }
+      }
+    },
     "%lld über der Fachgrenze" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3164,6 +3181,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Expected final grade"
+          }
+        }
+      }
+    },
+    "Es zählen nur %lld Kurse. Dieser Kurs wäre geschützt gewesen — aber du hast mehr nicht abwählbare Kurse belegt, als hineinpassen." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es zählen nur %lld Kurse. Dieser Kurs wäre geschützt gewesen — aber du hast mehr nicht abwählbare Kurse belegt, als hineinpassen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only %lld courses count. This one would have been protected — but you have taken more compulsory courses than fit."
           }
         }
       }
@@ -7140,6 +7174,23 @@
         }
       }
     },
+    "Zählt nicht mit: Es zählen nur %lld Kurse, und deine nicht abwählbaren Kurse füllen sie schon." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zählt nicht mit: Es zählen nur %lld Kurse, und deine nicht abwählbaren Kurse füllen sie schon."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Does not count: only %lld courses count, and your compulsory courses already fill them."
+          }
+        }
+      }
+    },
     "Zählt nicht mit: Score hat den Kurs automatisch geklammert, weil nur %lld Kurse zählen." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -7531,6 +7582,23 @@
         }
       }
     },
+    "über 40" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "über 40"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "over 40"
+          }
+        }
+      }
+    },
     "über Grenze" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -7544,6 +7612,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "over limit"
+          }
+        }
+      }
+    },
+    "über den 40 Kursen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "über den 40 Kursen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "over the 40 courses"
           }
         }
       }

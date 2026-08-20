@@ -73,6 +73,8 @@ struct CourseBracketRow: View {
             return Text("Zählt nicht mit: Score hat den Kurs automatisch geklammert, weil nur \(BlockOneCalculator.totalCourseCount) Kurse zählen.")
         case .beyondSubjectLimit:
             return Text("Zählt nicht mit: Dieses Fach bringt nur eine begrenzte Zahl seiner Kurse ein.")
+        case .beyondCourseCap:
+            return Text("Zählt nicht mit: Es zählen nur \(BlockOneCalculator.totalCourseCount) Kurse, und deine nicht abwählbaren Kurse füllen sie schon.")
         case .manual, .none:
             return Text("Zählt mit. Klammern nimmt den Kurs heraus, ohne die Noten zu löschen.")
         }

@@ -364,6 +364,7 @@ struct PadSubjectDetailView: View {
         case .manual: return "von dir geklammert"
         case .automatic: return "geklammert"
         case .beyondSubjectLimit: return "über der Kursgrenze"
+        case .beyondCourseCap: return "über den 40 Kursen"
         case .none: return nil
         }
     }

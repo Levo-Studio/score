@@ -302,6 +302,16 @@ enum ScoreImport {
     /// Regel verdoppelte derselbe Import beim zweiten Mal alles, und der Nutzer
     /// stünde vor einem Bestand, den er nicht mehr entwirren kann.
     ///
+    /// Verglichen wird ausschliesslich gegen den **vorhandenen Bestand**, nie
+    /// gegen andere Zeilen derselben Datei. Zwei mündliche Noten mit demselben
+    /// Vorgabetitel und derselben Punktzahl sind der Normalfall — kaum jemand
+    /// ändert die Vorgabetitel —, und wer eine Sicherung in einen leeren Bestand
+    /// zurückspielt, bekäme sonst still eine davon weniger zurück. Was in der
+    /// Datei steht, kommt vollständig an.
+    ///
+    /// „Zweimal dieselbe Datei einlesen verdoppelt nichts" bleibt davon
+    /// unberührt: beim zweiten Mal steht das Eingelesene ja schon im Bestand.
+    ///
     /// Der Zeitstempel ist bewusst **nicht** Teil des Vergleichs: er wird beim
     /// Anlegen gesetzt und steht gar nicht in der Datei.
     private static func merge(
@@ -309,7 +319,7 @@ enum ScoreImport {
         into semester: SemesterResult,
         in context: ModelContext
     ) {
-        var known = Set((semester.entries ?? []).map { fingerprint(of: $0) })
+        let known = Set((semester.entries ?? []).map { fingerprint(of: $0) })
 
         for entry in imported {
             guard let kind = GradeKind(rawValue: entry.kind),
@@ -322,7 +332,7 @@ enum ScoreImport {
                 kind: kind,
                 category: category
             )
-            guard known.insert(mark).inserted else { continue }
+            guard !known.contains(mark) else { continue }
 
             let created = GradeEntry(
                 title: entry.title,

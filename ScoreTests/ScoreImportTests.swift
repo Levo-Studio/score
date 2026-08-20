@@ -250,6 +250,51 @@ struct ScoreImportTests {
         #expect(try target.fetchCount(FetchDescriptor<GradeEntry>()) == 4)
     }
 
+    @Test("Zwei gleiche Leistungen in der Datei kommen beide an")
+    func identicalEntriesInOneFileBothArrive() throws {
+        let source = try Self.makeContext()
+        let subject = Subject(
+            name: "Geschichte",
+            abbreviation: "G",
+            colorValue: 0x33_44_55,
+            kind: .pflichtBasisfach,
+            activeSemesters: [0]
+        )
+        source.insert(subject)
+
+        let semester = SemesterResult(index: 0)
+        semester.subject = subject
+        source.insert(semester)
+
+        // Zweimal derselbe Vorgabetitel mit derselben Punktzahl — der Normalfall
+        // bei mündlichen Noten, weil kaum jemand die Vorgabetitel ändert.
+        for _ in 0..<2 {
+            let entry = GradeEntry(
+                title: "Mündliche Note",
+                points: 11,
+                kind: .oral,
+                category: .other,
+                share: 50,
+                usesAutomaticShare: true
+            )
+            entry.semester = semester
+            source.insert(entry)
+        }
+
+        let data = try ScoreExport(profile: nil, subjects: try Self.fetchSubjects(in: source)).encoded()
+
+        let target = try Self.makeContext()
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .merge, in: target, profile: nil)
+
+        // Beide entstehen: die Datei kommt vollständig an.
+        #expect(try target.fetchCount(FetchDescriptor<GradeEntry>()) == 2)
+
+        // Und dieselbe Datei ein zweites Mal legt trotzdem nichts nach.
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .merge, in: target, profile: nil)
+        #expect(try target.fetchCount(FetchDescriptor<GradeEntry>()) == 2)
+        #expect(try target.fetchCount(FetchDescriptor<Subject>()) == 1)
+    }
+
     // MARK: - Zusammenführen ergänzt, es überschreibt nicht
 
     @Test("Zusammenführen überschreibt keine vorhandenen Werte")

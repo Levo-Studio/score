@@ -283,8 +283,8 @@ struct OralExamSubjectsTests {
 
     // MARK: - Der Fachtyp-Wechsel
 
-    @Test("Ein Wechsel zum Leistungsfach löscht die Angabe nicht")
-    func switchingToAnAdvancedSubjectKeepsTheFlag() throws {
+    @Test("Ein Wechsel zum Leistungsfach löscht die Angabe")
+    func switchingToAnAdvancedSubjectClearsTheFlag() throws {
         let (context, subjects) = try Self.makeSubjects()
         let english = try subject("Englisch", in: subjects)
         let history = try subject("Geschichte", in: subjects)
@@ -295,18 +295,21 @@ struct OralExamSubjectsTests {
         draft.kind = .leistungsfach
         draft.save(to: english, in: context, existingSubjects: subjects)
 
-        // Die Angabe steht noch — gelöscht wird sie nicht.
-        #expect(english.isOralExamSubject)
-        // Gezählt wird sie nicht: sonst stünden hier drei.
+        // In einem Leistungsfach wird schriftlich geprüft — „mündliches
+        // Prüfungsfach" ist dort kein liegengebliebener Wert, sondern ein
+        // Widerspruch. Geschrieben und gezählt wird deshalb dasselbe.
+        #expect(!english.isOralExamSubject)
         #expect(!english.countsAsOralExamSubject)
         #expect(OralExamSubjects.selection(in: subjects).count == 1)
 
+        // Und beim Zurückstellen kommt sie nicht wieder: Der Platz war frei und
+        // konnte in der Zwischenzeit vergeben werden.
         var back = SubjectDraft(subject: english)
         back.kind = .pflichtBasisfach
         back.save(to: english, in: context, existingSubjects: subjects)
 
-        #expect(english.countsAsOralExamSubject)
-        #expect(OralExamSubjects.selection(in: subjects).count == 2)
+        #expect(!english.countsAsOralExamSubject)
+        #expect(OralExamSubjects.selection(in: subjects).count == 1)
     }
 
     @Test("Die Zählung steht nie bei drei")
@@ -321,27 +324,33 @@ struct OralExamSubjectsTests {
         draft.kind = .leistungsfach
         draft.save(to: english, in: context, existingSubjects: subjects)
 
-        // Solange Englisch Leistungsfach ist, ist ein Platz frei — Sport lässt
-        // sich wählen, und die Zählung bleibt bei zwei.
+        // Englisch hat seinen Platz abgegeben — Sport lässt sich wählen.
         OralExamSubjects.toggle(try identifier("Sport", in: subjects), in: subjects)
+
+        // Und Englisch kommt zurück, ohne seinen alten Platz mitzubringen.
+        var back = SubjectDraft(subject: english)
+        back.kind = .pflichtBasisfach
+        back.save(to: english, in: context, existingSubjects: subjects)
 
         let raw = subjects.count { $0.isOralExamSubject }
         let counted = subjects.count { $0.countsAsOralExamSubject }
 
         #expect(OralExamSubjects.selection(in: subjects).count == 2)
-        #expect(raw == 3)
+        #expect(raw == 2)
         #expect(counted == 2)
+        #expect(BlockTwoCalculator.calculate(for: subjects.map(SubjectInput.init)).expectedExamCount == 5)
     }
 
     @Test("Ein liegengebliebenes Kennzeichen bleibt aus dem Prüfungsblock heraus")
     func aStaleFlagStaysOutOfTheExamBlock() throws {
-        let (context, subjects) = try Self.makeSubjects()
+        let (_, subjects) = try Self.makeSubjects()
         let english = try subject("Englisch", in: subjects)
-        english.isOralExamSubject = true
 
-        var draft = SubjectDraft(subject: english)
-        draft.kind = .leistungsfach
-        draft.save(to: english, in: context, existingSubjects: subjects)
+        // Der Editor schreibt beides nicht mehr zugleich. Ankommen kann es
+        // trotzdem — aus einem Datensatz eines anderen Geräts oder aus einer
+        // eingelesenen Datei.
+        english.kind = .leistungsfach
+        english.isOralExamSubject = true
 
         let exams = BlockTwoCalculator.exams(in: subjects.map(SubjectInput.init))
         let oral = exams.filter { $0.role == .oral }

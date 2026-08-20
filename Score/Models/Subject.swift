@@ -238,12 +238,12 @@ extension Subject {
 
     /// Ob dieses Fach gerade tatsächlich als mündliches Prüfungsfach zählt.
     ///
-    /// ``isOralExamSubject`` bleibt beim Wechsel des Fachtyps stehen und wird
-    /// nicht gelöscht — wer sein Prüfungsfach kurz zum Leistungsfach macht,
-    /// findet die Angabe danach wieder vor. Solange es Leistungsfach ist, zählt
-    /// sie aber nicht: Überall dort, wo gezählt oder angezeigt wird, gilt diese
-    /// Frage und nicht das rohe Feld — sonst stünden nach einem Hin und Her drei
-    /// mündliche Prüfungsfächer.
+    /// Der Editor schreibt an einem Leistungsfach gar kein `isOralExamSubject`
+    /// mehr — siehe ``SubjectDraft/resolvedOralExamSubject``. Beides zugleich
+    /// kann trotzdem noch ankommen: aus einem Datensatz eines anderen Geräts oder
+    /// aus einer eingelesenen Datei. Überall dort, wo gezählt oder angezeigt
+    /// wird, gilt deshalb diese Frage und nicht das rohe Feld — sonst stünden
+    /// drei mündliche Prüfungsfächer da.
     var countsAsOralExamSubject: Bool {
         isOralExamSubject && canBeOralExamSubject
     }

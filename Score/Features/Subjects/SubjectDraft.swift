@@ -67,11 +67,16 @@ struct SubjectDraft {
 
     /// Die Doppelwertung, wie sie gespeichert wird.
     ///
-    /// Bei allem, was kein Leistungsfach ist, immer `false`: doppelt gewertet
-    /// werden nur Leistungsfächer. Der Wert wird nicht gelöscht, sondern beim
-    /// Sichern ausgewertet — wer den Fachtyp kurz umstellt, findet seine Wahl
-    /// danach wieder vor.
-    var resolvedDoubleWeighted: Bool { allowsDoubleWeighting && isDoubleWeighted }
+    /// Doppelt gewertet werden nur Leistungsfächer. Passt der Fachtyp nicht,
+    /// wird die Wahl **ignoriert und nicht gelöscht** — genau wie die
+    /// Prüfungsergebnisse. Wer sein Leistungsfach kurz auf Pflicht-Basisfach
+    /// stellt und zurück, hatte sonst seine Doppelwertung verloren, ohne sie je
+    /// angefasst zu haben.
+    ///
+    /// Dass eine liegengebliebene Wahl nicht mitzählt, entscheidet der
+    /// Rechenkern: ``BlockOneCalculator/doubleWeightedSubjects(in:among:)``
+    /// betrachtet ausschliesslich Leistungsfächer.
+    var resolvedDoubleWeighted: Bool { isDoubleWeighted }
 
     /// Das schriftliche Prüfungsergebnis, wie es gespeichert wird.
     ///
@@ -132,8 +137,12 @@ struct SubjectDraft {
     /// Wer ein Halbjahr abwählt, kann eine Grenze zurücklassen, die alle
     /// verbliebenen Kurse umfasst — das ist dasselbe wie „alle" und wird auch so
     /// angezeigt, statt eine Zahl zu zeigen, die nichts mehr bewirkt.
+    ///
+    /// Bei einem Prüfungsfach wird die Grenze **ignoriert und nicht gelöscht**.
+    /// Dass sie dort nicht mitzählt, entscheidet der Rechenkern:
+    /// ``SubjectInput/effectiveCourseLimit`` gibt für Prüfungsfächer `nil` zurück.
     var resolvedCourseLimit: Int? {
-        guard allowsCourseLimit, let limit = maximumContributedCourses else { return nil }
+        guard let limit = maximumContributedCourses else { return nil }
         return limit < activeSemesters.count ? max(1, limit) : nil
     }
 

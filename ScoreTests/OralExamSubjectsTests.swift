@@ -173,6 +173,24 @@ struct OralExamSubjectsTests {
         #expect(created.orderedSemesters.count == Semester.allIndices.count)
     }
 
+    @Test("Ein hier angelegtes Prüfungsfach bekommt alle vier Halbjahre")
+    func addedSubjectsCoverTheWholeCourseStage() throws {
+        let (context, subjects) = try Self.makeSubjects()
+
+        // Ohne Angabe der Halbjahre — genau so ruft der Bildschirm auf, und
+        // genau das ist der Fall „in Kursstufe 1 angelegt". Die Kurse eines
+        // Prüfungsfachs sind anrechnungspflichtig; hätte das Fach nur 1/4 und
+        // 2/4 belegt, fielen die Noten des zweiten Jahres stumm heraus.
+        let created = try #require(
+            OralExamSubjects.add(named: "Astronomie", in: subjects, context: context)
+        )
+
+        #expect(created.activeSemesters == Semester.allIndices)
+        for index in Semester.allIndices {
+            #expect(created.isActive(in: index))
+        }
+    }
+
     @Test("Ein leerer Name legt nichts an")
     func blankNamesCreateNothing() throws {
         let (context, subjects) = try Self.makeSubjects()

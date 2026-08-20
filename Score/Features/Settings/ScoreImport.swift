@@ -152,11 +152,12 @@ enum ScoreImport {
     ///   - profile: Das **aktive** Profil, das die Angaben der Datei übernimmt.
     ///     `nil`, wenn es noch keines gibt — dann bleibt der Profilteil liegen,
     ///     statt ein zweites anzulegen.
-    ///   - interruption: Ein Haken, der nach dem Aufbauen und **vor** dem
-    ///     Speichern läuft. Er ist der einzige Weg, das Scheitern der
-    ///     Aufbauphase nachzustellen und damit zu prüfen, dass ein
-    ///     abgebrochenes Ersetzen den alten Bestand vollständig stehen lässt.
-    ///     Im Betrieb tut er nichts.
+    ///   - failAfterBuild: Eine Testnaht, kein Schalter für den Betrieb: Der
+    ///     Haken läuft nach dem Aufbauen und **vor** dem Speichern und steht
+    ///     nur deshalb im Produktionscode, weil sich die Alles-oder-nichts-
+    ///     Zusage sonst nicht prüfen liesse — ein Scheitern der Aufbauphase
+    ///     lässt sich von aussen nicht anders erzwingen. Im Betrieb wird er
+    ///     nie gesetzt und tut mit seinem Standardwert nichts.
     ///
     /// - Throws: ``Failure/notWritten``, wenn der neue Bestand nicht geschrieben
     ///   werden konnte. Der alte steht dann unverändert.
@@ -165,7 +166,7 @@ enum ScoreImport {
         mode: Mode,
         in context: ModelContext,
         profile: StudentProfile?,
-        interruption: () throws -> Void = {}
+        failAfterBuild: () throws -> Void = {}
     ) throws {
         // Was das Ersetzen wegräumt. Weggeräumt wird es aber erst ganz zum
         // Schluss: Löschen und Aufbauen sind **ein** Vorgang mit **einem**
@@ -226,7 +227,7 @@ enum ScoreImport {
         }
 
         do {
-            try interruption()
+            try failAfterBuild()
 
             // Jetzt erst, und ohne Zwischenspeichern: Was hier verschwindet,
             // verschwindet zusammen mit dem Aufbau oder gar nicht.

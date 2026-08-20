@@ -435,7 +435,7 @@ struct ScoreImportTests {
                 mode: .replace,
                 in: target,
                 profile: nil,
-                interruption: { throw Interrupted() }
+                failAfterBuild: { throw Interrupted() }
             )
         }
 

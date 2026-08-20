@@ -202,6 +202,104 @@ struct SecondOnboardingRolesTests {
         #expect(try Self.subject(named: "Chorprobe", in: context).isOralExamSubject)
     }
 
+    // MARK: - Der Bestand steht zur Wahl
+
+    /// Ein erster Durchlauf, der ein Fach anlegt, das der Katalog nicht führt —
+    /// als Leistungsfach.
+    private static func runFirstOnboardingWithACustomAdvancedSubject(
+        in context: ModelContext
+    ) {
+        let model = OnboardingViewModel()
+        model.firstName = "Jonas"
+        model.advancedSubjects = ["Deutsch", "Mathematik"]
+        model.requiredBasicSubjects = ["Englisch", "Geschichte"]
+
+        model.step = .advancedSubjects
+        model.customSubjectDraft = "Ethik"
+        model.commitCustomSubject()
+
+        model.finish(in: context)
+    }
+
+    @Test("Ein eigenes Fach steht im zweiten Durchlauf zur Wahl — vorausgewählt")
+    func aCustomSubjectIsOfferedAndPreselected() throws {
+        let context = try Self.makeContext()
+        Self.runFirstOnboardingWithACustomAdvancedSubject(in: context)
+
+        let second = OnboardingViewModel()
+        second.adopt(try context.fetch(FetchDescriptor<Subject>()))
+
+        // Der Katalog kennt „Ethik" nicht; bisher tauchte es nirgends auf, und
+        // der Nutzer konnte über das Fach gar nicht entscheiden.
+        #expect(second.advancedOptions.contains("Ethik"))
+        #expect(second.advancedSubjects.contains("Ethik"))
+
+        // Und die übrigen stehen in ihrer heutigen Rolle da.
+        #expect(second.advancedSubjects.sorted() == ["Deutsch", "Ethik", "Mathematik"])
+        #expect(second.requiredBasicSubjects == ["Englisch", "Geschichte"])
+
+        // Jeder Name genau einmal — der Bestand darf den Katalog nicht doppeln.
+        #expect(Set(second.advancedOptions).count == second.advancedOptions.count)
+    }
+
+    @Test("Wer nichts ändert, ändert nichts")
+    func anUntouchedSecondRunChangesNoRoles() throws {
+        let context = try Self.makeContext()
+        Self.runFirstOnboardingWithACustomAdvancedSubject(in: context)
+
+        let second = OnboardingViewModel()
+        second.firstName = "Mara"
+        second.adopt(try context.fetch(FetchDescriptor<Subject>()))
+        second.finish(in: context)
+
+        #expect(try Self.subject(named: "Ethik", in: context).kind == .leistungsfach)
+        #expect(try Self.subject(named: "Englisch", in: context).kind == .pflichtBasisfach)
+        #expect(try context.fetch(FetchDescriptor<Subject>()).count == 5)
+    }
+
+    @Test("Abgewählt verliert das eigene Fach seine Rolle")
+    func deselectingTheCustomSubjectDemotesIt() throws {
+        let context = try Self.makeContext()
+        Self.runFirstOnboardingWithACustomAdvancedSubject(in: context)
+
+        let second = OnboardingViewModel()
+        second.firstName = "Mara"
+        second.adopt(try context.fetch(FetchDescriptor<Subject>()))
+
+        // Der Nutzer sieht „Ethik" in der Wolke und tippt es weg.
+        second.toggleAdvancedSubject("Ethik")
+        second.finish(in: context)
+
+        // Jetzt hat er entschieden — anders als früher, wo das Fach nie zu
+        // sehen war und deshalb auch nicht zurückgestuft werden durfte.
+        #expect(try Self.subject(named: "Ethik", in: context).kind == .wahlBasisfach)
+    }
+
+    @Test("Nach jedem Durchlauf stehen höchstens drei Leistungsfächer")
+    func neverMoreThanThreeAdvancedSubjects() throws {
+        let context = try Self.makeContext()
+        Self.runFirstOnboardingWithACustomAdvancedSubject(in: context)
+
+        let advancedCount = {
+            try context.fetch(FetchDescriptor<Subject>()).count { $0.kind == .leistungsfach }
+        }
+        #expect(try advancedCount() <= OnboardingViewModel.requiredAdvancedSubjectCount)
+
+        // Der zweite Durchlauf tauscht: „Ethik" heraus, Englisch herein. Genau
+        // hier standen bisher vier Leistungsfächer im Bestand, und die Rechnung
+        // geht von dreien aus.
+        let second = OnboardingViewModel()
+        second.firstName = "Mara"
+        second.adopt(try context.fetch(FetchDescriptor<Subject>()))
+        second.toggleAdvancedSubject("Ethik")
+        second.toggleAdvancedSubject("Englisch")
+        second.finish(in: context)
+
+        #expect(try advancedCount() == OnboardingViewModel.requiredAdvancedSubjectCount)
+        #expect(try Self.subject(named: "Englisch", in: context).kind == .leistungsfach)
+        #expect(try Self.subject(named: "Ethik", in: context).kind == .wahlBasisfach)
+    }
+
     @Test("Von zwei Fächern gleichen Namens werden beide zurückgestuft")
     func bothSubjectsWithTheSameNameAreDemoted() throws {
         let context = try Self.makeContext()

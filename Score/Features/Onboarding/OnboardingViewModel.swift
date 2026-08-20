@@ -79,6 +79,77 @@ final class OnboardingViewModel {
     /// Der Text im Eingabefeld für ein eigenes Fach.
     var customSubjectDraft = ""
 
+    // MARK: - Der vorhandene Bestand
+
+    /// Die Namen der Fächer, die schon dastanden, als dieser Durchlauf begann —
+    /// in der Reihenfolge des Bestands.
+    ///
+    /// Sie stehen in jeder Auswahlliste mit drin. Das ist keine Bequemlichkeit,
+    /// sondern die Voraussetzung dafür, dass ``resetRolesOfUnchosenSubjects``
+    /// überhaupt greifen darf: Zurückgestuft wird nur, was zur Wahl stand, und
+    /// ein selbst angelegtes „Ethik", das der Katalog nicht führt, stand bisher
+    /// nirgends zur Wahl. Es überlebte den zweiten Durchlauf als Leistungsfach,
+    /// und danach standen vier davon im Bestand — die Rechnung geht von dreien
+    /// aus.
+    private(set) var stockNames: [String] = []
+
+    /// Die Rolle, in der ein Fach des Bestands angetroffen wurde.
+    ///
+    /// Sie entscheidet nur darüber, wo das Fach zur Wahl steht und ob es dort
+    /// vorausgewählt ist. Bei zwei Fächern gleichen Namens — der Fach-Editor
+    /// lässt das zu — gilt das erste; eine Auswahlliste kennt ohnehin nur Namen.
+    private var stockKinds: [String: SubjectKind] = [:]
+
+    /// Ob der Bestand schon übernommen wurde. Ein zweiter Aufruf soll die
+    /// Auswahl des Nutzers nicht wieder auf den Bestand zurückdrehen.
+    private var hasAdoptedStock = false
+
+    /// Übernimmt den vorhandenen Bestand in diesen Durchlauf.
+    ///
+    /// Beim ersten Durchlauf ist er leer und die Methode tut nichts. Beim
+    /// zweiten — „weiteres Profil" aus den Einstellungen — stehen die Fächer
+    /// bereits da, und der Nutzer soll sie sehen: in ihrer heutigen Rolle
+    /// vorausgewählt. Wer nichts ändert, ändert nichts.
+    func adoptExistingSubjects(in context: ModelContext) {
+        adopt((try? context.fetch(FetchDescriptor<Subject>())) ?? [])
+    }
+
+    /// Dasselbe aus einer fertigen Fächerliste heraus.
+    func adopt(_ stock: [Subject]) {
+        guard !hasAdoptedStock else { return }
+        hasAdoptedStock = true
+
+        // Nach der Sortierposition und bei Gleichstand nach dem Namen: Die
+        // Reihenfolge der Abfrage ist keine, und die Wolke soll bei jedem Start
+        // gleich aussehen.
+        let ordered = stock.sorted {
+            ($0.sortIndex, $0.name) < ($1.sortIndex, $1.name)
+        }
+
+        for subject in ordered {
+            guard stockKinds[subject.name] == nil else { continue }
+            stockNames.append(subject.name)
+            stockKinds[subject.name] = subject.kind
+
+            switch subject.kind {
+            case .leistungsfach:
+                // Über die Umschalter und nicht über ein blosses `append`: Sie
+                // ziehen die Grenzen, und ein Bestand mit vier Leistungsfächern
+                // — genau der Fall, den es zu beheben gilt — darf hier keine
+                // vierte Auswahl erzeugen.
+                toggleAdvancedSubject(subject.name)
+            case .pflichtBasisfach:
+                requiredBasicSubjects.insert(subject.name)
+            case .wahlBasisfach:
+                electiveBasicSubjects.insert(subject.name)
+            }
+
+            if subject.countsAsOralExamSubject {
+                toggleOralExamSubject(subject.name)
+            }
+        }
+    }
+
     // MARK: - Wieviele Leistungsfächer
 
     /// In Baden-Württemberg sind es genau drei — keine Wahl, sondern Vorgabe.
@@ -87,24 +158,39 @@ final class OnboardingViewModel {
     // MARK: - Auswahllisten
 
     /// Alle Fächer, die im Leistungsfach-Schritt zur Auswahl stehen.
+    ///
+    /// Der Katalog, dazu alles, was schon im Bestand steht, und zuletzt das in
+    /// diesem Durchlauf Eingetippte.
     var advancedOptions: [String] {
-        SubjectCatalog.all.map(\.name) + customAdvancedNames
+        Self.appending(stockNames + customAdvancedNames, to: SubjectCatalog.all.map(\.name))
     }
 
     /// Die Pflicht-Basisfächer, ohne die bereits als Leistungsfach gewählten.
+    ///
+    /// Aus dem Bestand kommen die dazu, die dort **als Pflicht-Basisfach**
+    /// stehen: Nur so lässt sich ihre heutige Rolle vorauswählen, ohne dass sie
+    /// beim Abschluss durch die Liste fällt.
     var requiredBasicOptions: [String] {
-        SubjectCatalog.all
-            .map(\.name)
-            .filter { SubjectCatalog.isRequiredBasicSubject($0) && !advancedSubjects.contains($0) }
-            + customCoreNames
+        let catalog = SubjectCatalog.all.map(\.name).filter(SubjectCatalog.isRequiredBasicSubject)
+        let fromStock = stockNames.filter { stockKinds[$0] == .pflichtBasisfach }
+        return Self.appending(fromStock + customCoreNames, to: catalog)
+            .filter { !advancedSubjects.contains($0) }
     }
 
     /// Alles, was weder Leistungs- noch gewähltes Pflicht-Basisfach ist.
     var electiveBasicOptions: [String] {
-        SubjectCatalog.all
-            .map(\.name)
+        Self.appending(stockNames + customBasicNames, to: SubjectCatalog.all.map(\.name))
             .filter { !advancedSubjects.contains($0) && !requiredBasicSubjects.contains($0) }
-            + customBasicNames
+    }
+
+    /// Hängt an, was noch fehlt — in der Reihenfolge der Ergänzungen und ohne
+    /// Dubletten. Eine Auswahlliste kennt jeden Namen genau einmal.
+    private static func appending(_ additions: [String], to names: [String]) -> [String] {
+        var result = names
+        for name in additions where !result.contains(name) {
+            result.append(name)
+        }
+        return result
     }
 
     /// Die Fächer, die als mündliches Prüfungsfach in Frage kommen.
@@ -256,6 +342,7 @@ final class OnboardingViewModel {
         guard !name.isEmpty else { return }
 
         let isKnown = SubjectCatalog.template(named: name) != nil
+            || stockNames.contains(name)
             || customAdvancedNames.contains(name)
             || customCoreNames.contains(name)
             || customBasicNames.contains(name)
@@ -410,11 +497,16 @@ final class OnboardingViewModel {
     /// Kursgrenze und Prüfungsergebnisse bleiben stehen.
     ///
     /// Entscheidend ist „stand zur Wahl". Nicht gewählt zu haben, heisst nur
-    /// dort etwas, wo überhaupt zu wählen war: Ein selbst angelegtes „Ethik",
-    /// das der Katalog nicht führt und das in keiner Auswahlliste dieses
-    /// Durchlaufs auftauchte, hat der Nutzer nicht abgewählt — er bekam es nie
-    /// zu sehen. Ihm die Rolle zu nehmen, wäre eine Antwort auf eine Frage, die
-    /// nie gestellt wurde.
+    /// dort etwas, wo überhaupt zu wählen war: Ein Fach, das in keiner
+    /// Auswahlliste dieses Durchlaufs auftauchte, hat der Nutzer nicht abgewählt
+    /// — er bekam es nie zu sehen. Ihm die Rolle zu nehmen, wäre eine Antwort
+    /// auf eine Frage, die nie gestellt wurde.
+    ///
+    /// Genau deshalb steht der ganze Bestand zur Wahl — siehe ``adopt(_:)``.
+    /// Ein selbst angelegtes „Ethik" ist in den Auswahllisten dabei und in
+    /// seiner heutigen Rolle vorausgewählt; wer es dort abwählt, hat entschieden,
+    /// und erst dann verliert es die Rolle. Damit ist auch der Fall „vier
+    /// Leistungsfächer nach dem zweiten Durchlauf" erledigt.
     ///
     /// Gearbeitet wird auf der Fächerliste und nicht auf einer Tabelle nach
     /// Namen: Zwei Fächer gleichen Namens sind im Fach-Editor erlaubt, und eine

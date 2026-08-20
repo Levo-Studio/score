@@ -52,6 +52,13 @@ struct OnboardingView: View {
                 }
             }
         }
+        // Der Bestand gehört in diesen Durchlauf: Beim ersten Mal ist er leer,
+        // beim zweiten stehen die Fächer schon da und sollen zur Wahl stehen —
+        // in ihrer heutigen Rolle vorausgewählt. Ohne das überlebte ein Fach,
+        // das der Katalog nicht führt, jede spätere Wahl.
+        .task {
+            model.adoptExistingSubjects(in: modelContext)
+        }
     }
 
     // MARK: - Einspaltig

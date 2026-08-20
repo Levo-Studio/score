@@ -180,11 +180,17 @@ enum ScoreImport {
             obsolete = []
         }
 
-        // Der Bestand, dem sich Eingelesenes zuordnen lässt — er wächst während
-        // der Schleife bewusst nicht mit: Sonst fände der zweite Datensatz
-        // gleichen Namens das gerade angelegte erste Fach und würde in es
-        // hineingefaltet. Der Fach-Editor lässt Namensdubletten zu — was in der
-        // Datei zweimal steht, muss zweimal entstehen.
+        // Der Bestand, dem sich Eingelesenes zuordnen lässt. Zugeordnet wird
+        // allein über den Namen: Trägt der Bestand ihn schon, fliesst der
+        // Datei-Eintrag in dieses vorhandene Fach — auch der zweite gleichen
+        // Namens, dessen Noten sich dort mit denen des ersten mischen. Das ist
+        // die Folge der Regel und kein Fehler.
+        //
+        // Der Bestand wächst während der Schleife bewusst nicht mit. Dadurch
+        // gilt für Namen, die **im Bestand fehlen**, die Zusage des
+        // Fach-Editors, der Namensdubletten zulässt: Sie entstehen so oft, wie
+        // sie in der Datei stehen, statt dass der zweite in das gerade
+        // angelegte erste Fach gefaltet würde.
         //
         // Beim Ersetzen ist er leer: alles Vorhandene verschwindet gleich, und
         // was verschwindet, ist nichts, dem sich etwas zuordnen liesse.

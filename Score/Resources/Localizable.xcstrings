@@ -950,6 +950,23 @@
         }
       }
     },
+    "Abgleich ruht" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abgleich ruht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync paused"
+          }
+        }
+      }
+    },
     "Abi %@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5671,6 +5688,23 @@
         }
       }
     },
+    "Nichts wird gespeichert" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nichts wird gespeichert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing is being saved"
+          }
+        }
+      }
+    },
     "Noch ein Fach fehlt. Score rechnet auch mit einem, weiss dann aber nur die Hälfte." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5841,6 +5875,23 @@
         }
       }
     },
+    "Nur Name, Bild und Klassenstufe sind neu. Fächer und Noten bleiben gemeinsam." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur Name, Bild und Klassenstufe sind neu. Fächer und Noten bleiben gemeinsam."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only the name, picture and year level are new. Subjects and grades stay shared."
+          }
+        }
+      }
+    },
     "Nur belegte Kurse zählen mit. Abgewählte bleiben gespeichert, gehen aber nicht in den Schnitt ein." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5871,23 +5922,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Just your first name, and only for the greeting. Score creates no account and sends nothing to a server."
-          }
-        }
-      }
-    },
-    "Nur Name, Bild und Klassenstufe sind neu. Fächer und Noten bleiben gemeinsam." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nur Name, Bild und Klassenstufe sind neu. Fächer und Noten bleiben gemeinsam."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Only the name, picture and year level are new. Subjects and grades stay shared."
           }
         }
       }
@@ -6589,6 +6623,57 @@
         }
       }
     },
+    "Score konnte deine Daten nicht öffnen. Was du jetzt einträgst, ist beim Schliessen weg. Beende Score und öffne es neu." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score konnte deine Daten nicht öffnen. Was du jetzt einträgst, ist beim Schliessen weg. Beende Score und öffne es neu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score couldn’t open your data. Anything you enter now will be gone when you close the app. Quit Score and open it again."
+          }
+        }
+      }
+    },
+    "Score konnte deine gespeicherten Daten nicht öffnen. Was du jetzt einträgst, wird nicht gesichert und ist beim Schliessen weg. Deine bisherigen Noten sind nicht gelöscht. Beende Score und öffne es neu." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score konnte deine gespeicherten Daten nicht öffnen. Was du jetzt einträgst, wird nicht gesichert und ist beim Schliessen weg. Deine bisherigen Noten sind nicht gelöscht. Beende Score und öffne es neu."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score couldn’t open your saved data. Anything you enter now isn’t saved and will be gone when you close the app. Your existing grades have not been deleted. Quit Score and open it again."
+          }
+        }
+      }
+    },
+    "Score konnte den Abgleich mit iCloud diesmal nicht starten. Alle deine Noten sind da und werden weiter auf diesem Gerät gesichert — nur der Abgleich mit deinen anderen Geräten ruht. Beende Score und öffne es neu, dann versucht es die App wieder." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score konnte den Abgleich mit iCloud diesmal nicht starten. Alle deine Noten sind da und werden weiter auf diesem Gerät gesichert — nur der Abgleich mit deinen anderen Geräten ruht. Beende Score und öffne es neu, dann versucht es die App wieder."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score couldn’t start syncing with iCloud this time. All your grades are here and are still saved on this device — only syncing with your other devices is paused. Quit Score and open it again, and it will try once more."
+          }
+        }
+      }
+    },
     "Score konnte die Datei lesen, aber nicht in deinen Bestand schreiben. Sieh in deinen Fächern nach, bevor du es noch einmal versuchst." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6811,6 +6896,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Other"
+          }
+        }
+      }
+    },
+    "Speicher nicht verfügbar" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speicher nicht verfügbar"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Storage unavailable"
           }
         }
       }

@@ -120,8 +120,15 @@ final class ManualCloudSync {
     private var reset: Task<Void, Never>?
 
     private enum Key {
-        static let lastSyncedAt = "sync.lastSyncedAt"
+        static let lastSyncedAt = ManualCloudSync.lastSyncedAtKey
     }
+
+    /// Der Schlüssel, unter dem der Zeitpunkt des letzten Abgleichs liegt.
+    ///
+    /// Nach aussen sichtbar, weil ``DataReset`` ihn kennen muss: Er gehört zu
+    /// den Daten des Nutzers und darf nach „Alle Daten löschen" nicht als
+    /// letzter Rest stehen bleiben.
+    static let lastSyncedAtKey = "sync.lastSyncedAt"
 
     /// - Parameters:
     ///   - defaults: Wo der Zeitstempel liegt. In Tests ein eigener Bereich.
@@ -288,6 +295,16 @@ final class ManualCloudSync {
 
         guard phase == .running else { return }
         finish(with: .succeeded)
+    }
+
+    /// Vergisst den Zeitpunkt des letzten Abgleichs.
+    ///
+    /// Gehört zum vollständigen Zurücksetzen: Der gespeicherte Wert wird von
+    /// ``DataReset/deleteAll(in:defaults:)`` entfernt, aber diese Instanz hält
+    /// ihn zusätzlich im Speicher und zeigte sonst weiter eine Uhrzeit an, zu
+    /// der es keine Daten mehr gibt.
+    func forgetLastSync() {
+        lastSyncedAt = nil
     }
 
     private func recordSync(at date: Date) {

@@ -31,6 +31,15 @@ enum ActiveProfile {
     /// dazu, ist das eine neue Frage und soll auch wieder gestellt werden.
     static let acknowledgedRosterKey = "acknowledgedProfileRoster"
 
+    /// Der Schlüssel, unter dem steht, ob auf diesem Gerät schon einmal ein
+    /// Profil bestätigt wurde.
+    ///
+    /// Ohne ihn käme die Begrüssung bei jedem Start wieder, auch wenn längst
+    /// gearbeitet wird. Gelesen wird er in ``ContentView``; hier steht er, weil
+    /// er zur selben Sache gehört wie die beiden Schlüssel darüber — und weil
+    /// ``DataReset`` alle drei gemeinsam abräumen muss.
+    static let acknowledgementKey = "hasAcknowledgedProfile"
+
     /// Das Profil, das dieses Gerät führt.
     ///
     /// Fällt auf das erste der Reihenfolge zurück, wenn die gemerkte UUID zu

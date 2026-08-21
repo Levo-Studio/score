@@ -82,6 +82,10 @@ struct DeleteAllDataButton<Label: View>: View {
     private func deleteAllData() {
         do {
             try DataReset.deleteAll(in: modelContext)
+            // Den gespeicherten Zeitstempel hat `DataReset` schon entfernt; die
+            // geteilte Instanz hält ihn zusätzlich im Speicher und zeigte sonst
+            // weiter eine Uhrzeit zu Daten, die es nicht mehr gibt.
+            ManualCloudSync.shared.forgetLastSync()
             // Kein Zurückspringen nötig: die Wurzelansicht hängt am Profil und
             // zeigt von selbst wieder das Onboarding, sobald keines mehr da ist.
         } catch {

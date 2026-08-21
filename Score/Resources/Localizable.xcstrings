@@ -6664,6 +6664,23 @@
         }
       }
     },
+    "Score rechnet nach der Abiturverordnung Baden-Württembergs, ist aber keine amtliche Auskunft. Verbindlich ist allein das Zeugnis deiner Schule." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score rechnet nach der Abiturverordnung Baden-Württembergs, ist aber keine amtliche Auskunft. Verbindlich ist allein das Zeugnis deiner Schule."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score follows the Baden-Württemberg Abitur regulations, but it is not an official statement. Only your school's report card is binding."
+          }
+        }
+      }
+    },
     "Score synchronisiert bis zum nächsten Start weiter. Beende die App und öffne sie neu, damit die Synchronisierung endet." : {
       "extractionState" : "manual",
       "localizations" : {

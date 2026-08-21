@@ -287,12 +287,23 @@ struct PadSettingsView: View {
                 }
             }
 
-            HStack(spacing: ScoreMetrics.Spacing.sm) {
-                OpenRingMark()
-                    .frame(width: 34, height: 34)
-                Text("Product by Levo Studio")
+            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
+                HStack(spacing: ScoreMetrics.Spacing.sm) {
+                    OpenRingMark()
+                        .frame(width: 34, height: 34)
+                    Text("Product by Levo Studio")
+                        .font(.meta)
+                        .foregroundStyle(ScorePalette.inkSecondary)
+                }
+
+                // Wortgleich mit dem iPhone-Layout und mit dem Fuss der
+                // Aufschlüsselung: Was Score nicht ist, darf nicht je nach Gerät
+                // anders klingen.
+                Text("Score rechnet nach der Abiturverordnung Baden-Württembergs, ist aber keine amtliche Auskunft. Verbindlich ist allein das Zeugnis deiner Schule.")
                     .font(.meta)
+                    .lineSpacing(4)
                     .foregroundStyle(ScorePalette.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(ScoreMetrics.Spacing.xxs)
             .accessibilityElement(children: .combine)

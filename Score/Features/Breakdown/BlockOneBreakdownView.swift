@@ -103,6 +103,8 @@ struct BlockOneBreakdownView: View {
                     .staggeredAppearance(index: 7)
                 BreakdownEdgeCases(cornerRadius: layout.cardRadius)
                     .staggeredAppearance(index: 8)
+                officialNotice
+                    .staggeredAppearance(index: 9)
             }
             .padding(.horizontal, layout.contentPadding)
             .padding(.top, layout.topPadding)
@@ -1046,6 +1048,28 @@ struct BlockOneBreakdownView: View {
 
             content()
         }
+    }
+
+    // MARK: - Fuss
+
+    /// Wer Score ist und wer Score nicht ist — der letzte Satz des Bildschirms.
+    ///
+    /// Der Bildschirm heisst „Abitur Baden-Württemberg" und beruft sich auf die
+    /// amtliche Notentabelle. Ohne diesen Satz liesse sich das als amtliche
+    /// Auskunft lesen, und das ist Score nicht: Es rechnet nach der Verordnung,
+    /// aber gerechnet wird mit den Zahlen, die der Nutzer selbst einträgt.
+    ///
+    /// Bewusst in derselben Form wie die übrigen Erläuterungen des Bildschirms —
+    /// kein Warnkasten, keine Warnfarbe, kein Ausrufezeichen. Ein Hinweis, der
+    /// wie eine Fehlermeldung aussieht, wird als Fehler gelesen und nicht als
+    /// Auskunft.
+    private var officialNotice: some View {
+        Text("Score rechnet nach der Abiturverordnung Baden-Württembergs, ist aber keine amtliche Auskunft. Verbindlich ist allein das Zeugnis deiner Schule.")
+            .font(.optionMeta)
+            .lineSpacing(4.5)
+            .foregroundStyle(ScorePalette.inkSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
 }

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Das Datenschutzmanifest der App.
+
+	  Ohne diese Datei weist App Store Connect den Upload mit ITMS-91053 zurück,
+	  sobald eine begründungspflichtige Schnittstelle im Paket vorkommt. Score
+	  benutzt genau eine: `UserDefaults`, direkt und über `@AppStorage`.
+
+	  Die Datei liegt in `Score/` und damit in der synchronisierten Gruppe des
+	  App-Ziels — sie wandert von selbst als Ressource ins gebaute `Score.app`.
+	-->
+
+	<!--
+	  Score verfolgt niemanden. Es gibt kein Analysewerkzeug, kein Werbenetz und
+	  keinen Dienst, der Daten mit denen anderer Anbieter zusammenführen könnte.
+	-->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+
+	<!--
+	  Keine Datenerhebung. Score hat kein Konto und kein Backend: Profil, Fächer
+	  und Leistungen liegen im lokalen Speicher des Geräts und in der privaten
+	  CloudKit-Datenbank des Nutzers, auf die der Entwickler keinen Zugriff hat.
+	  Daten, die das Gerät des Nutzers nie in Richtung des Entwicklers verlassen,
+	  gelten nach Apples Definition nicht als erhoben.
+	-->
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+
+	<!--
+	  `UserDefaults` — Sprache, Erscheinungsbild, aktives Profil, zuletzt
+	  gewähltes Halbjahr und der Zeitstempel des letzten Abgleichs. Gelesen und
+	  geschrieben wird ausschliesslich im eigenen Bereich der App; es gibt keine
+	  App-Gruppe und keine Erweiterung, die mitläse. Das ist genau CA92.1.
+	-->
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

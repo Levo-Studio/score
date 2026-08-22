@@ -34,7 +34,7 @@ struct ContentView: View {
 
     /// Ob dieses Gerät sein Profil kennt. Wird gesetzt, sobald die App offen ist
     /// — nach eigenem Onboarding ebenso wie nach der Übernahme aus iCloud.
-    @AppStorage("hasAcknowledgedProfile") private var hasAcknowledgedProfile = false
+    @AppStorage(ActiveProfile.acknowledgementKey) private var hasAcknowledgedProfile = false
 
     /// Welches Profil dieses Gerät führt. Gerätesache, deshalb `AppStorage` —
     /// siehe ``ActiveProfile``.

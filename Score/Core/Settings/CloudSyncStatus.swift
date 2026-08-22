@@ -40,6 +40,17 @@ final class CloudSyncStatus {
         /// Dieser Build darf CloudKit gar nicht benutzen — er ist nicht signiert.
         /// Kommt beim Nutzer nie vor, nur in Entwicklungs- und CI-Builds.
         case unavailable
+        /// Der Speicher liess sich beim Start nicht mit iCloud öffnen und läuft
+        /// deshalb rein lokal — die zweite Stufe aus ``ScoreDataStore/start(wantsCloudKit:make:)``.
+        ///
+        /// Bewusst nicht ``unavailable``: Dort sagt die Erklärung „dieser Build
+        /// ist nicht signiert", und das stimmt hier nicht. Und bewusst nicht
+        /// ``off``: Der Nutzer hat nichts abgeschaltet, ihm wurde etwas
+        /// abgeschaltet — das ist ein Unterschied, den er sehen soll.
+        case localFallback
+        /// Der Speicher liess sich gar nicht öffnen; die App läuft auf einem
+        /// flüchtigen Speicher — die dritte Stufe.
+        case noStorage
         /// Der Nutzer hat den Abgleich abgeschaltet, und der Speicher dieser
         /// Sitzung ist tatsächlich ohne CloudKit gestartet.
         case off
@@ -64,14 +75,24 @@ final class CloudSyncStatus {
     /// Testrechners überschrieben werden.
     private let probesAccount: Bool
 
+    /// Auf welcher Stufe der Speicher dieser Sitzung gestartet ist.
+    ///
+    /// Als Abschluss und nicht als Wert, damit er erst in ``refresh()``
+    /// abgefragt wird: Vorschauen und Belegbilder legen diese Klasse an, ohne
+    /// je einen ``ScoreDataStore`` zu wollen — und den beim Anlegen zu berühren
+    /// hiesse, dort einen Container aufzubauen.
+    private let storageFallback: @MainActor () -> ScoreDataStore.StorageFallback
+
     init(
         containerIdentifier: String = "iCloud.apps.levo-studio.Score",
         state: State = .unknown,
-        probesAccount: Bool = true
+        probesAccount: Bool = true,
+        storageFallback: @escaping @MainActor () -> ScoreDataStore.StorageFallback = { ScoreDataStore.shared.fallback }
     ) {
         self.containerIdentifier = containerIdentifier
         self.state = state
         self.probesAccount = probesAccount
+        self.storageFallback = storageFallback
         observeMirroringEvents()
     }
 
@@ -84,6 +105,23 @@ final class CloudSyncStatus {
     /// wird er nicht einmalig gecacht.
     func refresh() async {
         guard probesAccount else { return }
+
+        // Zuerst der Speicher, dann alles andere. Ist der Start auf eine
+        // Rückfallstufe gelaufen, ist das die wichtigere Auskunft: Ein
+        // Kontostatus wäre dort bestenfalls belanglos — es gibt in dieser
+        // Sitzung nichts, was er abgleichen könnte — und im flüchtigen Fall
+        // würde er die einzige Meldung verdecken, die der Nutzer sofort
+        // braucht.
+        switch storageFallback() {
+        case .inMemory:
+            state = .noStorage
+            return
+        case .localOnly:
+            state = .localFallback
+            return
+        case .none:
+            break
+        }
 
         // Ohne Entitlement ist schon der Aufruf tödlich: `CKContainer` trapt beim
         // Anlegen, statt einen Fehler zu werfen. Genau derselbe Grund wie beim
@@ -275,6 +313,8 @@ extension CloudSyncStatus.State {
         case .noAccount: "Kein iCloud-Konto"
         case .off: "Ausgeschaltet"
         case .unavailable: "In diesem Build nicht verfügbar"
+        case .localFallback: "Abgleich ruht"
+        case .noStorage: "Speicher nicht verfügbar"
         case .restricted: "iCloud eingeschränkt"
         case .failed: "Synchronisierung gestört"
         }
@@ -293,6 +333,10 @@ extension CloudSyncStatus.State {
             Text("Die Synchronisierung ist abgeschaltet. Neue Noten bleiben auf diesem Gerät; was bereits in deiner iCloud liegt, bleibt dort unangetastet.")
         case .unavailable:
             Text("Dieser Build ist nicht signiert und kann iCloud nicht nutzen. Deine Daten bleiben auf diesem Gerät.")
+        case .localFallback:
+            Text("Score konnte den Abgleich mit iCloud diesmal nicht starten. Alle deine Noten sind da und werden weiter auf diesem Gerät gesichert — nur der Abgleich mit deinen anderen Geräten ruht. Beende Score und öffne es neu, dann versucht es die App wieder.")
+        case .noStorage:
+            Text("Score konnte deine gespeicherten Daten nicht öffnen. Was du jetzt einträgst, wird nicht gesichert und ist beim Schliessen weg. Deine bisherigen Noten sind nicht gelöscht. Beende Score und öffne es neu.")
         case .noAccount:
             Text("Melde dich in den Systemeinstellungen bei iCloud an, damit deine Kurse auf deine anderen Geräte kommen. Ohne Konto bleibt alles nur auf diesem Gerät.")
         case .restricted:
@@ -316,7 +360,7 @@ extension CloudSyncStatus.State {
     /// Genau dann ist ein neuer Versuch das Naheliegendste.
     var allowsSync: Bool {
         switch self {
-        case .off, .unavailable, .noAccount, .restricted: false
+        case .off, .unavailable, .noAccount, .restricted, .localFallback, .noStorage: false
         case .unknown, .ready, .syncing, .synced, .failed: true
         }
     }
@@ -324,7 +368,7 @@ extension CloudSyncStatus.State {
     /// Ob der Zustand Aufmerksamkeit braucht.
     var needsAttention: Bool {
         switch self {
-        case .noAccount, .restricted, .failed, .unavailable: true
+        case .noAccount, .restricted, .failed, .unavailable, .localFallback, .noStorage: true
         // „Ausgeschaltet" ist kein Problem, sondern eine Entscheidung — sie
         // rot zu markieren würde sie als Fehler ausgeben.
         case .unknown, .ready, .syncing, .synced, .off: false

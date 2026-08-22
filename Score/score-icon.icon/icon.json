@@ -27,8 +27,8 @@
       "layers" : [
         {
           "glass" : true,
-          "image-name" : "score-icon-petrol-hell-1024 2.png",
-          "name" : "score-icon-petrol-hell-1024 2",
+          "image-name" : "score-icon-petrol-hell-1024.png",
+          "name" : "score-icon-petrol-hell-1024",
           "position" : {
             "scale" : 0.7,
             "translation-in-points" : [

@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 import SwiftData
 
 /// Der Speicher der App — und die einzige Stelle, an der er sich neu öffnen lässt.
@@ -48,12 +49,22 @@ final class ScoreDataStore {
     /// dieser Eigenschaft und reicht den neuen Container in die Umgebung.
     private(set) var container: ModelContainer
 
-    /// Ob dieser Prozess mit CloudKit gestartet ist. Steht für die Lebensdauer
-    /// des Prozesses fest, siehe ``CloudSyncActivation``, und wird beim
-    /// Neuöffnen unverändert übernommen: Ein Container, der beim Start ohne
-    /// CloudKit gebaut wurde, soll beim Neuöffnen nicht plötzlich einen Abgleich
-    /// anfangen, den der Nutzer für diese Sitzung abgeschaltet hat.
-    private let usesCloudKit: Bool
+    /// Ob der Speicher dieser Sitzung an CloudKit hängt, siehe
+    /// ``CloudSyncActivation``. Ein Container, der beim Start ohne CloudKit
+    /// gebaut wurde, fängt auch beim Neuöffnen keinen Abgleich an, den der
+    /// Nutzer für diese Sitzung abgeschaltet hat.
+    ///
+    /// Der Wert kann nur in eine Richtung kippen — von `true` auf `false`, und
+    /// nur beim Neuöffnen, wenn dessen zweite Stufe scheitert:
+    /// Dann läuft die Sitzung auf dem lokalen Container weiter, und alles
+    /// Weitere darf nicht mehr von einer Spiegelung ausgehen.
+    private(set) var usesCloudKit: Bool
+
+    /// Auf welcher Stufe der Start geendet hat. Steht für die Sitzung fest und
+    /// ist die Grundlage dafür, was die Einstellungen über den Speicher sagen.
+    private(set) var fallback: StorageFallback
+
+    private static let log = Logger(subsystem: "apps.levo-studio.Score", category: "store")
 
     private static let schema = Schema([
         Subject.self,
@@ -65,17 +76,31 @@ final class ScoreDataStore {
     private init() {
         // Zwei Bedingungen, beide nur hier prüfbar: der Prozess muss CloudKit
         // benutzen dürfen, und der Nutzer muss es wollen.
-        let usesCloudKit = CloudKitAvailability.isEntitled && AppSettings.shared.isCloudSyncEnabled
-        CloudSyncActivation.record(isActive: usesCloudKit)
-        self.usesCloudKit = usesCloudKit
+        let wantsCloudKit = CloudKitAvailability.isEntitled && AppSettings.shared.isCloudSyncEnabled
 
-        do {
-            container = try Self.makeContainer(usesCloudKit: usesCloudKit)
-        } catch {
-            // Kein Speicher heisst: am Schema stimmt etwas nicht. Eine leere
-            // Oberfläche, die stumm alles vergisst, wäre die schlechtere Antwort.
-            fatalError("Score konnte den Datenspeicher nicht öffnen: \(error)")
-        }
+        let startup = Self.start(wantsCloudKit: wantsCloudKit)
+        container = startup.container
+        usesCloudKit = startup.usesCloudKit
+        fallback = startup.fallback
+
+        // **Nach** dem Start und nicht davor: Fällt der Speicher auf die zweite
+        // Stufe, hängt diese Sitzung nicht an CloudKit — und `ScoreAppDelegate`
+        // liest genau diesen Wert, um zu entscheiden, ob es sich bei den stillen
+        // Push-Nachrichten anmeldet. Eine Anmeldung für einen Abgleich, den es
+        // gar nicht gibt, wartet auf Nachrichten, die nie kommen.
+        CloudSyncActivation.record(isActive: startup.usesCloudKit, fallback: startup.fallback)
+    }
+
+    /// Ein Speicher mit vorgegebenem Ausgangszustand — nur für Tests.
+    ///
+    /// ``shared`` baut beim ersten Zugriff einen echten Container und lässt
+    /// sich weder zweimal anlegen noch in eine Rückfallstufe zwingen. Um zu
+    /// prüfen, was ein halb geglücktes ``reopen(make:)`` hinterlässt, braucht
+    /// es deshalb einen zweiten Speicher, dessen Ausgangslage der Test setzt.
+    init(container: ModelContainer, usesCloudKit: Bool, fallback: StorageFallback) {
+        self.container = container
+        self.usesCloudKit = usesCloudKit
+        self.fallback = fallback
     }
 
     /// Öffnet den Speicher neu und startet damit die CloudKit-Spiegelung neu.
@@ -118,15 +143,52 @@ final class ScoreDataStore {
     /// demselben Datenbestand, nur ohne Spiegelung. Verloren geht dabei nichts:
     /// Es ist dieselbe Datei, und was in dieser Spanne geschrieben würde, nimmt
     /// die zweite Stufe beim Einrichten mit.
-    func reopen() async throws {
+    ///
+    /// ## Was passiert, wenn die zweite Stufe scheitert
+    ///
+    /// Dann steht der lokale Container aus der ersten Stufe — die Daten sind
+    /// unversehrt, es ist dieselbe Datei — aber diese Sitzung hat keine
+    /// Spiegelung mehr und bekommt bis zum Neustart auch keine. Genau das
+    /// beschreibt ``StorageFallback/localOnly``, und deshalb wird hier derselbe
+    /// Zustand gesetzt wie beim Rückfall auf Stufe 2 des Starts. Ohne das
+    /// stünde in den Einstellungen weiter „Bereit", während nichts mehr
+    /// gespiegelt wird.
+    ///
+    /// - Parameter make: Wie ein Container entsteht. Im Betrieb immer
+    ///   ``makeContainer(mode:)``; der Parameter besteht aus demselben Grund
+    ///   wie bei ``start(wantsCloudKit:make:)``.
+    func reopen(
+        make: (StorageMode) throws -> ModelContainer = { try makeContainer(mode: $0) }
+    ) async throws {
+        // Läuft die Sitzung auf dem flüchtigen Speicher, wäre ein Neuöffnen
+        // kein Abgleich, sondern ein Austausch: Der gerade sichtbare Bestand
+        // hängt an diesem Container und wäre danach weg. Also lieber ein
+        // ehrlicher Fehlschlag — „Jetzt synchronisieren" meldet ihn, und der
+        // bestehende Speicher bleibt stehen.
+        guard fallback != .inMemory else { throw StorageUnavailable() }
+
         guard usesCloudKit else {
-            container = try Self.makeContainer(usesCloudKit: false)
+            container = try make(.local)
             return
         }
 
-        container = try Self.makeContainer(usesCloudKit: false)
+        // Erste Stufe. Scheitert sie, ist noch nichts geschehen: Der bisherige
+        // Container steht unverändert, und der Fehler geht nach oben.
+        container = try make(.local)
         try await Task.sleep(for: Self.handoverDelay)
-        container = try Self.makeContainer(usesCloudKit: true)
+
+        do {
+            container = try make(.cloudKit)
+        } catch {
+            // Der lokale Container bleibt stehen und trägt dieselbe Datei.
+            // Nur die Spiegelung ist für diese Sitzung verloren — und das muss
+            // die Oberfläche erfahren, sonst meldet sie weiter „Bereit".
+            Self.log.error("Neuöffnen mit iCloud gescheitert, Sitzung läuft lokal weiter: \(error.localizedDescription, privacy: .private)")
+            usesCloudKit = false
+            fallback = .localOnly
+            CloudSyncActivation.record(isActive: false, fallback: .localOnly)
+            throw error
+        }
     }
 
     /// Sichert, was noch offen ist, und öffnet den Speicher dann neu.
@@ -144,6 +206,109 @@ final class ScoreDataStore {
         try await store.reopen()
     }
 
+    // MARK: - Der Start in drei Stufen
+
+    /// Es gibt in dieser Sitzung keinen dauerhaften Speicher, den man neu
+    /// öffnen könnte.
+    struct StorageUnavailable: Error {}
+
+    /// Womit ein einzelner Container gebaut wird.
+    enum StorageMode: Equatable {
+        /// Die Datei des Nutzers, gespiegelt über CloudKit.
+        case cloudKit
+        /// Dieselbe Datei, ohne Spiegelung.
+        case local
+        /// Gar keine Datei — ein Speicher, der mit dem Prozess endet.
+        case inMemory
+    }
+
+    /// Auf welcher Stufe der Start geendet hat.
+    enum StorageFallback: Equatable {
+        /// Der Speicher ist der gewünschte. Der Normalfall.
+        case none
+        /// Der Abgleich liess sich nicht einrichten; die Daten liegen
+        /// vollständig lokal vor, nur die Spiegelung ruht.
+        case localOnly
+        /// Auch die Datei liess sich nicht öffnen. Die App läuft, aber nichts
+        /// von dem, was jetzt entsteht, überlebt das Schliessen.
+        case inMemory
+    }
+
+    /// Was beim Start herauskam.
+    struct Startup {
+        var container: ModelContainer
+        var usesCloudKit: Bool
+        var fallback: StorageFallback
+    }
+
+    /// Öffnet den Speicher — und gibt nicht auf, wenn die erste Wahl scheitert.
+    ///
+    /// ## Warum es überhaupt Stufen gibt
+    ///
+    /// Bis hierher brach der Start mit `fatalError` ab, wenn sich der Container
+    /// nicht anlegen liess. Auf dem Schreibtisch heisst das „am Schema stimmt
+    /// etwas nicht"; auf dem Gerät heisst es: ein Schemawechsel, eine beschädigte
+    /// Datei, ein ungünstiger Zustand der CloudKit-Spiegelung — und die App
+    /// lässt sich nicht mehr öffnen. Eine App, die sich nicht öffnen lässt, kann
+    /// dem Nutzer nichts mehr erklären und ihm auch nichts mehr retten.
+    ///
+    /// Deshalb drei Stufen, in dieser Reihenfolge:
+    ///
+    /// 1. **Der gewünschte Speicher** — mit CloudKit, wenn der Prozess das darf
+    ///    und der Nutzer es will.
+    /// 2. **Derselbe Speicher ohne CloudKit.** Das ist der wahrscheinlichste
+    ///    Fall und fast immer die richtige Rettung: Scheitert nur die
+    ///    Einrichtung der Spiegelung, ist die Datei des Nutzers heil, und seine
+    ///    Noten sind alle da. Nur der Abgleich ruht bis zum nächsten Start.
+    /// 3. **Ein flüchtiger Speicher.** Damit die App startet und erklären kann,
+    ///    was los ist, statt vor dem ersten Bildschirm zu sterben.
+    ///
+    /// Was auf Stufe 2 und 3 zu sehen ist, entscheidet nicht diese Stelle,
+    /// sondern ``CloudSyncStatus`` und der Streifen über der Wurzelansicht.
+    ///
+    /// - Parameter make: Wie ein Container entsteht. Im Betrieb immer
+    ///   ``makeContainer(mode:)``; der Parameter besteht, damit Tests das
+    ///   Scheitern einzelner Stufen erzwingen können, ohne dass dafür im Betrieb
+    ///   irgendetwas anders läuft.
+    static func start(
+        wantsCloudKit: Bool,
+        make: (StorageMode) throws -> ModelContainer = { try makeContainer(mode: $0) }
+    ) -> Startup {
+        // Stufe 1 — nur wenn überhaupt CloudKit gewünscht ist. Ist es das
+        // nicht, ist der lokale Speicher schon die erste Wahl und kein Rückfall.
+        if wantsCloudKit {
+            do {
+                return Startup(container: try make(.cloudKit), usesCloudKit: true, fallback: .none)
+            } catch {
+                log.error("Speicher mit iCloud gescheitert, Rückfall auf lokal: \(error.localizedDescription, privacy: .private)")
+            }
+        }
+
+        // Stufe 2 — dieselbe Datei, ohne Spiegelung.
+        do {
+            return Startup(
+                container: try make(.local),
+                usesCloudKit: false,
+                fallback: wantsCloudKit ? .localOnly : .none
+            )
+        } catch {
+            log.error("Lokaler Speicher gescheitert, Rückfall auf flüchtig: \(error.localizedDescription, privacy: .private)")
+        }
+
+        // Stufe 3 — irgendetwas, damit die App startet.
+        do {
+            return Startup(container: try make(.inMemory), usesCloudKit: false, fallback: .inMemory)
+        } catch {
+            // Ein Speicher ohne Datei kann nur noch am Schema selbst scheitern —
+            // und dann ist er in keinem Test dieser App je entstanden, denn jede
+            // Suite baut ihn. Das ist ein Baufehler, kein Gerätezustand, und es
+            // gibt nichts mehr, worauf zurückzufallen wäre: `container` ist
+            // nicht optional, und eine App ohne Modell hätte auch keine Ansicht,
+            // die noch etwas anzeigen könnte.
+            fatalError("Score konnte nicht einmal einen flüchtigen Speicher anlegen: \(error)")
+        }
+    }
+
     /// Öffnet den Speicher — mit iCloud, wenn der Prozess das darf und der
     /// Nutzer es will, sonst lokal.
     ///
@@ -157,13 +322,15 @@ final class ScoreDataStore {
     ///
     /// Praktisch trifft das jeden Build ohne Signierung: den Test-Host und CI.
     /// Ohne diese Prüfung stirbt die App dort vor dem ersten Test.
-    private static func makeContainer(usesCloudKit: Bool) throws -> ModelContainer {
-        let configuration = ModelConfiguration(
-            schema: schema,
-            cloudKitDatabase: usesCloudKit
-                ? .private("iCloud.apps.levo-studio.Score")
-                : .none
-        )
+    static func makeContainer(mode: StorageMode) throws -> ModelContainer {
+        let configuration: ModelConfiguration = switch mode {
+        case .cloudKit:
+            ModelConfiguration(schema: schema, cloudKitDatabase: .private("iCloud.apps.levo-studio.Score"))
+        case .local:
+            ModelConfiguration(schema: schema, cloudKitDatabase: .none)
+        case .inMemory:
+            ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
+        }
 
         return try ModelContainer(for: schema, configurations: configuration)
     }

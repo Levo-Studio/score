@@ -44,6 +44,32 @@ struct CloudSyncActivationTests {
         #expect(CloudSyncActivation.restartNotice(desired: true, isEntitled: false) == nil)
     }
 
+    @Test("Auf einer Rückfallstufe steht kein Neustart-Hinweis am Schalter", arguments: [
+        ScoreDataStore.StorageFallback.localOnly,
+        ScoreDataStore.StorageFallback.inMemory
+    ])
+    func fallbackSilencesTheSwitchNotice(fallback: ScoreDataStore.StorageFallback) {
+        // Der Zustand über dem Schalter sagt in beiden Fällen schon, was los
+        // ist und dass ein Neustart nötig ist. Daneben wäre der Hinweis am
+        // Schalter auf der zweiten Stufe dasselbe zweimal — und auf der dritten
+        // ein Versprechen auf Synchronisierung, wo nichts gespeichert wird.
+        CloudSyncActivation.record(isActive: false, fallback: fallback)
+
+        #expect(CloudSyncActivation.requiresRestart(desired: true, isEntitled: true) == false)
+        #expect(CloudSyncActivation.restartNotice(desired: true, isEntitled: true) == nil)
+    }
+
+    @Test("Ohne Rückfall bleibt der Hinweis am umgelegten Schalter stehen")
+    func withoutFallbackTheNoticeRemains() {
+        CloudSyncActivation.record(isActive: false, fallback: .none)
+        #expect(CloudSyncActivation.requiresRestart(desired: true, isEntitled: true))
+        #expect(CloudSyncActivation.restartNotice(desired: true, isEntitled: true) != nil)
+
+        CloudSyncActivation.record(isActive: true, fallback: .none)
+        #expect(CloudSyncActivation.requiresRestart(desired: false, isEntitled: true))
+        #expect(CloudSyncActivation.restartNotice(desired: false, isEntitled: true) != nil)
+    }
+
     @Test("Der Schalter liegt auf dem Gerät und steht standardmässig auf an")
     func settingDefaultsToOn() throws {
         let name = "CloudSyncActivationTests.\(UUID().uuidString)"

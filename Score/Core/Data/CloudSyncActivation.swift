@@ -37,9 +37,20 @@ enum CloudSyncActivation {
     /// und das stimmt: dort läuft kein CloudKit.
     private(set) static var isActiveInThisSession = false
 
+    /// Auf welcher Stufe der Speicher dieser Sitzung steht.
+    ///
+    /// Wird zusammen mit ``isActiveInThisSession`` festgehalten, weil der
+    /// Hinweis am Schalter beides auseinanderhalten muss: Ein Speicher ohne
+    /// CloudKit kann die Wahl des Nutzers sein — oder ein Rückfall, den er
+    /// nicht gewollt hat. Im zweiten Fall sagt der Zustand über dem Schalter
+    /// schon, was los ist und was zu tun ist, und sagt es genauer, weil er den
+    /// Grund kennt.
+    private(set) static var storageFallback: ScoreDataStore.StorageFallback = .none
+
     /// Hält fest, womit der Container gebaut wurde.
-    static func record(isActive: Bool) {
+    static func record(isActive: Bool, fallback: ScoreDataStore.StorageFallback = .none) {
         isActiveInThisSession = isActive
+        storageFallback = fallback
     }
 
     /// Ob die Einstellung des Nutzers und der laufende Speicher auseinanderliegen.
@@ -52,6 +63,15 @@ enum CloudSyncActivation {
         // CloudKit gar nicht benutzen. Den Hinweis dort zu zeigen wäre ein
         // Versprechen, das der nächste Start nicht einlöst.
         guard isEntitled else { return false }
+
+        // Läuft die Sitzung auf einem Rückfall, gehört die Auskunft dem
+        // Zustand darüber. Er sagt bereits, dass der Abgleich ruht oder gar
+        // nichts gespeichert wird, und er nennt denselben Neustart — der
+        // Hinweis hier wäre daneben entweder eine Wiederholung oder, auf der
+        // dritten Stufe, schlicht falsch: Er verspräche eine Synchronisierung,
+        // wo nicht einmal gespeichert wird.
+        guard storageFallback == .none else { return false }
+
         return desired != isActiveInThisSession
     }
 

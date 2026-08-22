@@ -124,6 +124,110 @@ struct StorageFallbackTests {
     }
 }
 
+/// Das Neuöffnen des Speichers — und was von ihm übrig bleibt, wenn nur seine
+/// zweite Stufe scheitert.
+///
+/// Der Vorgang läuft zweistufig: erst auf einen lokalen Container tauschen,
+/// damit der alte seinen Platz bei CloudKit räumt, dann den neuen mit CloudKit
+/// anlegen. Beide Stufen können für sich scheitern, und die Folgen sind
+/// verschieden — genau das steht hier auf dem Prüfstand.
+@Suite("Neuöffnen des Speichers", .serialized)
+@MainActor
+struct StoreReopenTests {
+
+    /// Dieselbe Attrappe wie oben, nur eigenständig: Sie scheitert bei den
+    /// angegebenen Stufen und liefert sonst einen flüchtigen Container.
+    private final class Builder {
+        private let failing: Set<ScoreDataStore.StorageMode>
+        private(set) var attempted: [ScoreDataStore.StorageMode] = []
+
+        init(failing: Set<ScoreDataStore.StorageMode>) {
+            self.failing = failing
+        }
+
+        struct Refused: Error {}
+
+        func make(_ mode: ScoreDataStore.StorageMode) throws -> ModelContainer {
+            attempted.append(mode)
+            guard !failing.contains(mode) else { throw Refused() }
+            return try ScoreDataStore.makeContainer(mode: .inMemory)
+        }
+    }
+
+    private func store(fallback: ScoreDataStore.StorageFallback = .none) throws -> ScoreDataStore {
+        ScoreDataStore(
+            container: try ScoreDataStore.makeContainer(mode: .inMemory),
+            usesCloudKit: true,
+            fallback: fallback
+        )
+    }
+
+    @Test("Scheitert die zweite Stufe, läuft die Sitzung ohne iCloud weiter")
+    func secondStageFailureIsRecorded() async throws {
+        let store = try store()
+        let builder = Builder(failing: [.cloudKit])
+
+        await #expect(throws: Builder.Refused.self) {
+            try await store.reopen(make: builder.make)
+        }
+
+        // Ohne das meldeten die Einstellungen weiter „Bereit", während bis zum
+        // Neustart nichts mehr gespiegelt wird.
+        #expect(store.usesCloudKit == false)
+        #expect(store.fallback == .localOnly)
+        #expect(builder.attempted == [.local, .cloudKit])
+
+        // Und genau das ist es, was in den Einstellungen ankommt.
+        let status = CloudSyncStatus(state: .ready, probesAccount: true, storageFallback: { store.fallback })
+        await status.refresh()
+        #expect(status.state == .localFallback)
+    }
+
+    @Test("Der lokale Container aus der ersten Stufe trägt weiter Daten")
+    func dataSurvivesTheFailure() async throws {
+        let store = try store()
+        let builder = Builder(failing: [.cloudKit])
+
+        try? await store.reopen(make: builder.make)
+
+        let context = ModelContext(store.container)
+        context.insert(StudentProfile(firstName: "Testlauf"))
+        try context.save()
+        #expect(try context.fetchCount(FetchDescriptor<StudentProfile>()) == 1)
+    }
+
+    @Test("Scheitert schon die erste Stufe, bleibt der bestehende Speicher stehen")
+    func firstStageFailureChangesNothing() async throws {
+        let store = try store()
+        let before = store.container
+        let builder = Builder(failing: [.local])
+
+        await #expect(throws: Builder.Refused.self) {
+            try await store.reopen(make: builder.make)
+        }
+
+        #expect(store.container === before)
+        #expect(store.usesCloudKit)
+        #expect(store.fallback == .none)
+        // Die zweite Stufe wird gar nicht erst versucht.
+        #expect(builder.attempted == [.local])
+    }
+
+    @Test("Eine flüchtige Sitzung öffnet gar nicht erst neu")
+    func inMemorySessionRefuses() async throws {
+        let store = try store(fallback: .inMemory)
+        let before = store.container
+        let builder = Builder(failing: [])
+
+        await #expect(throws: ScoreDataStore.StorageUnavailable.self) {
+            try await store.reopen(make: builder.make)
+        }
+
+        #expect(store.container === before)
+        #expect(builder.attempted.isEmpty)
+    }
+}
+
 /// Was der Nutzer von den Rückfallstufen zu sehen bekommt.
 ///
 /// Die Stufen selbst sind stumm — sie sagen nur, was sie gefunden haben. Ob

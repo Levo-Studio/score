@@ -84,7 +84,7 @@ final class ScoreDataStore {
         // liest genau diesen Wert, um zu entscheiden, ob es sich bei den stillen
         // Push-Nachrichten anmeldet. Eine Anmeldung für einen Abgleich, den es
         // gar nicht gibt, wartet auf Nachrichten, die nie kommen.
-        CloudSyncActivation.record(isActive: startup.usesCloudKit)
+        CloudSyncActivation.record(isActive: startup.usesCloudKit, fallback: startup.fallback)
     }
 
     /// Öffnet den Speicher neu und startet damit die CloudKit-Spiegelung neu.

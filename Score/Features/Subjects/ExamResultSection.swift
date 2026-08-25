@@ -107,9 +107,20 @@ struct ExamResultSection: View {
         @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
-            Text(title ?? " ")
-                .font(.micro)
-                .foregroundStyle(title == nil ? .clear : ScorePalette.inkSecondary)
+            Group {
+                if let title {
+                    Text(title)
+                } else {
+                    // Ein Leerzeichen hält die Zeile frei, damit beide Spalten
+                    // gleich hoch beginnen. Bewusst `verbatim`: sonst landet das
+                    // Leerzeichen als Schlüssel im Katalog und wartet dort auf
+                    // eine Übersetzung, die es nie geben wird.
+                    Text(verbatim: " ")
+                }
+            }
+            .font(.micro)
+            .foregroundStyle(title == nil ? .clear : ScorePalette.inkSecondary)
+
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)

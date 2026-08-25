@@ -44,7 +44,15 @@ struct DeleteAllDataButton<Label: View>: View {
                 deleteAllData()
             }
         } message: { summary in
-            Text("Damit verschwinden dein Profil, \(summary.subjectCount) Fächer und \(summary.gradeCount) Leistungen — von diesem Gerät und aus deiner iCloud, also auch von deinen anderen Geräten. Einen Server von uns gibt es nicht, dort bleibt nichts zurück. Rückgängig machen lässt sich das nicht.")
+            // „Dein Profil" stimmt nur, solange es eines ist. `DataReset` löscht
+            // jedes — wer ein zweites Profil führt, verlor es hier mit, ohne
+            // dass es je dagestanden hätte. Die Zahl kommt deshalb aus der
+            // Zusammenfassung und wird nicht behauptet.
+            if summary.profileCount > 1 {
+                Text("Damit verschwinden alle \(summary.profileCount) Profile, \(summary.subjectCount) Fächer und \(summary.gradeCount) Leistungen — von diesem Gerät und aus deiner iCloud, also auch von deinen anderen Geräten. Einen Server von uns gibt es nicht, dort bleibt nichts zurück. Rückgängig machen lässt sich das nicht.")
+            } else {
+                Text("Damit verschwinden dein Profil, \(summary.subjectCount) Fächer und \(summary.gradeCount) Leistungen — von diesem Gerät und aus deiner iCloud, also auch von deinen anderen Geräten. Einen Server von uns gibt es nicht, dort bleibt nichts zurück. Rückgängig machen lässt sich das nicht.")
+            }
         }
         .alert("Löschen fehlgeschlagen", isPresented: isShowingError, presenting: errorMessage) { _ in
             Button("OK", role: .cancel) {}

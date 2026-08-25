@@ -62,6 +62,19 @@ private struct ScoreRoot: View {
     /// alten Stand sieht, obwohl auf dem iPad längst etwas Neues steht.
     private static let freshEnough: TimeInterval = 120
 
+    /// Ob die App seit dem Start schon einmal im Hintergrund war.
+    ///
+    /// Der Anstoss unten gehört zum **Wechsel** in den Vordergrund und nicht zum
+    /// ersten Erscheinen: Beim Kaltstart hat `ScoreDataStore` den Speicher gerade
+    /// eben geöffnet, und genau das ist der vollständige Abgleich. Ein Anstoss
+    /// obendrauf risse den frisch angelaufenen Spiegel wieder ab und baute ihn
+    /// 400 ms später neu auf — der Start machte die Plattenarbeit dreifach.
+    ///
+    /// Nur `.background` setzt die Marke. `.inactive` allein ist kein Verlassen
+    /// des Vordergrunds: Es steht für den Blick ins Kontrollzentrum, für einen
+    /// Anruf und für die letzten Augenblicke des Starts.
+    @State private var wasInBackground = false
+
     var body: some View {
         // Erscheinungsbild und Sprache hängen an der Wurzel, damit ein
         // Umschalten in den Einstellungen sofort die ganze App erfasst und
@@ -77,13 +90,20 @@ private struct ScoreRoot: View {
                     StorageWarningBanner()
                 }
             }
-            .onChange(of: scenePhase, initial: true) { _, phase in
-                guard phase == .active else { return }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .background {
+                    wasInBackground = true
+                    return
+                }
+
+                guard phase == .active, wasInBackground else { return }
+                wasInBackground = false
                 syncIfStale()
             }
     }
 
-    /// Stösst beim Öffnen einen Abgleich an, wenn der letzte lange her ist.
+    /// Stösst beim Zurückkommen aus dem Hintergrund einen Abgleich an, wenn der
+    /// letzte lange her ist.
     ///
     /// ## Warum das nötig ist
     ///

@@ -218,6 +218,60 @@ struct BlockTwoCalculatorTests {
         #expect(!outcome.isComplete)
     }
 
+    /// Der Deckel darf die offene Prüfung auch in der Hochrechnung nicht
+    /// verschlucken.
+    @Test("Die offene sechste Prüfung wird fortgeschrieben und nicht als null gezählt")
+    func theSixthOpenExamIsProjectedAndNotCountedAsZero() {
+        // Wieder sechs Prüfungen mit fünf Ergebnissen, diesmal auf 6 Punkten:
+        // erfasst sind 5 · 24 = 120 Punkte.
+        let subjects = (1...3).map {
+            subject("lf-\($0)", .leistungsfach, allPoints: 6, writtenExamPoints: 6)
+        } + [subject("lf-4", .leistungsfach, allPoints: 6)] + (1...2).map {
+            subject("mp-\($0)", .wahlBasisfach, allPoints: 6, isOralExam: true, oralExamPoints: 6)
+        }
+
+        let outcome = BlockTwoCalculator.calculate(for: subjects)
+
+        #expect(outcome.points == 120)
+        // Eine Prüfung steht offen. Stünde hier 0, wäre sie weder erfasst noch
+        // fehlend und ginge in der Hochrechnung als null Punkte durch.
+        #expect(outcome.missingExamCount == 1)
+        #expect(!outcome.isComplete)
+        // 120 + 24 = 144 statt 120: Was fehlt, wird auf dem gezeigten Niveau
+        // fortgeschrieben. Bei 120 Punkten meldete `failedConditions` zudem einen
+        // gerissenen Prüfungsblock, den es nicht gibt.
+        #expect(outcome.projectedPoints(assuming: 6) == 144)
+    }
+
+    /// Die beiden Zahlen dürfen sich nie widersprechen — sonst fällt eine
+    /// Prüfung zwischen ihnen hindurch.
+    @Test("Vollständig heisst genau: keine Prüfung fehlt mehr")
+    func completenessAndMissingCountAlwaysAgree() {
+        let cases: [[SubjectInput]] = [
+            Self.year(),
+            Self.year(written: [12, nil, nil], oral: [nil, nil]),
+            Self.year(written: [12, 10, 8], oral: [15, 5]),
+            (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 10, writtenExamPoints: 10) },
+            (1...3).map {
+                subject("lf-\($0)", .leistungsfach, allPoints: 15, writtenExamPoints: 15)
+            } + [subject("lf-4", .leistungsfach, allPoints: 15)] + (1...2).map {
+                subject("mp-\($0)", .wahlBasisfach, allPoints: 15, isOralExam: true, oralExamPoints: 15)
+            },
+            (1...4).map {
+                subject("lf-\($0)", .leistungsfach, allPoints: 15, writtenExamPoints: 15)
+            } + (1...2).map {
+                subject("mp-\($0)", .wahlBasisfach, allPoints: 15, isOralExam: true, oralExamPoints: 15)
+            }
+        ]
+
+        for subjects in cases {
+            let outcome = BlockTwoCalculator.calculate(for: subjects)
+            #expect(outcome.isComplete == (outcome.missingExamCount == 0))
+            // Und über die amtlichen 300 Punkte hebt die Hochrechnung nie hinaus.
+            #expect(outcome.projectedPoints(assuming: 15) <= BlockTwoCalculator.maximumPoints)
+        }
+    }
+
     // MARK: - Was noch fehlt
 
     @Test("Eine fehlende Prüfung ist nicht null Punkte")

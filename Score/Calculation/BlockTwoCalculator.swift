@@ -178,6 +178,11 @@ enum BlockTwoCalculator {
         /// recorded 5 und expected 5, der Block gälte als abgeschlossen und
         /// ``AbiturResult/Outcome/isPassed`` könnte wahr werden — obwohl eine
         /// echte Prüfung leer dasteht.
+        ///
+        /// ``missingExamCount`` zählt aus demselben Grund über ``exams`` und ist
+        /// genau dann 0, wenn hier `true` steht. Die beiden dürfen sich nicht
+        /// widersprechen: Sonst gälte eine Prüfung als weder erfasst noch
+        /// fehlend und fiele aus der Hochrechnung heraus.
         var isComplete: Bool {
             exams.count >= examCount && exams.allSatisfy { $0.result != nil }
         }
@@ -206,12 +211,32 @@ enum BlockTwoCalculator {
         /// Tabelle von 0 bis 900 — der erwartete Schnitt fiele um rund eine ganze
         /// Note, ohne dass sich an den Daten etwas geändert hätte.
         ///
-        /// Nach oben bleibt es bei fünf: ``recordedExamCount`` ist gedeckelt, bei
-        /// sechs erfassten Prüfungen im Bestand steht hier also 0 und keine
-        /// negative Zahl. Dass eine der sechs noch offen ist, sagt
-        /// ``isComplete`` — nicht diese Zahl.
+        /// Gezählt wird deshalb aus zwei Teilen: die Prüfungen, die im Bestand
+        /// stehen und noch kein Ergebnis haben, plus die, die Score noch gar
+        /// nicht kennt, weil die Fächerwahl offen ist.
+        ///
+        /// Der Umweg über ``recordedExamCount`` allein ginge schief, sobald mehr
+        /// als fünf Prüfungen im Bestand stehen — vier Leistungsfächer nach einem
+        /// Import oder Sync. ``recordedExamCount`` ist auf fünf gedeckelt, und
+        /// bei sechs Prüfungen mit fünf Ergebnissen stünde hier 0, während
+        /// ``isComplete`` zu Recht `false` sagt. ``projectedPoints(assuming:)``
+        /// schriebe die offene sechste Prüfung dann nicht fort, und sie ginge
+        /// faktisch als 0 Punkte ein — genau das, was die Regel „noch nicht
+        /// geprüft ist nicht null" verbietet. Aus fünf Ergebnissen à 6 Punkten
+        /// würden so 120 statt 144 Punkte, und
+        /// ``AbiturResult/Outcome/failedConditions`` meldete womöglich einen
+        /// gerissenen Prüfungsblock, den es nicht gibt.
+        ///
+        /// Nach oben bleibt es trotzdem bei fünf, wie bei den 300 Punkten und bei
+        /// ``recordedExamCount``: Mehr als fünf Prüfungen sieht die Verordnung
+        /// nicht vor, und ein Datenfehler darf die Hochrechnung nicht über die
+        /// amtliche Grenze heben. Der Deckel ändert am Kern nichts — diese Zahl
+        /// ist genau dann 0, wenn ``isComplete`` gilt. Beide sagen dasselbe, und
+        /// keine offene Prüfung verschwindet mehr zwischen ihnen.
         var missingExamCount: Int {
-            max(0, examCount - recordedExamCount)
+            let openInStock = exams.count { $0.result == nil }
+            let notYetChosen = max(0, examCount - exams.count)
+            return min(examCount, openInStock + notYetChosen)
         }
 
         /// Die hochgerechnete Punktzahl, wenn die fehlenden Prüfungen auf einem
@@ -225,8 +250,15 @@ enum BlockTwoCalculator {
         /// - Parameter level: Das angenommene Ergebnis je fehlender Prüfung, 0 bis
         ///   15. Der Aufrufer nimmt dafür den Schnitt der schon geprüften Fächer
         ///   oder, wenn es keinen gibt, das Niveau des Kursblocks.
+        ///
+        /// Gedeckelt wie ``points`` selbst: Stehen mehr als fünf Prüfungen im
+        /// Bestand, könnten erfasste und fortgeschriebene zusammen über die 300
+        /// Punkte hinauslaufen, die es in diesem Block gibt.
         func projectedPoints(assuming level: Double) -> Int {
-            points + missingExamCount * Int((level * Double(weight)).rounded())
+            min(
+                maximumPoints,
+                points + missingExamCount * Int((level * Double(weight)).rounded())
+            )
         }
 
         /// Ob die Mindestbedingung von 100 Punkten erfüllt ist.

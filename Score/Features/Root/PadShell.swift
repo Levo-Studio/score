@@ -321,9 +321,11 @@ struct PadShell: View {
             OralExamSubjectSheet(showsNavigationBar: false)
         case .newSubject:
             PadSubjectEditorView(target: .new, route: navigation, draftState: editorDraft)
+                .holdsUnsavedInput()
         case .editSubject:
             if let selectedSubject {
                 PadSubjectEditorView(target: .existing(selectedSubject), route: navigation, draftState: editorDraft)
+                    .holdsUnsavedInput()
             } else {
                 missingSubject
             }

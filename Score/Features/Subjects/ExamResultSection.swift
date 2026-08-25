@@ -92,7 +92,11 @@ struct ExamResultSection: View {
                 .scoreAnimation(ScoreMotion.rowIn, value: subject.writtenExamPoints)
                 .scoreAnimation(ScoreMotion.rowIn, value: subject.oralExamPoints)
                 .scoreOverlaySheet(item: $editedSlot) { slot in
+                    // Ein offenes Blatt heisst: kein Containertausch im
+                    // Hintergrund. Sonst schriebe das Punkte-Pad in einen
+                    // Kontext, den es nicht mehr gibt.
                     ExamResultSheet(subject: subject, slot: slot)
+                        .holdsUnsavedInput()
                 }
             }
         } else {
@@ -150,6 +154,7 @@ struct ExamResultSection: View {
             .scoreAnimation(ScoreMotion.rowIn, value: subject.oralExamPoints)
             .scoreOverlaySheet(item: $editedSlot) { slot in
                 ExamResultSheet(subject: subject, slot: slot)
+                    .holdsUnsavedInput()
             }
         }
     }

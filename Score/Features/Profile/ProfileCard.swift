@@ -59,7 +59,10 @@ struct ProfileCard: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Profil bearbeiten")
         .sheet(isPresented: $isEditing) {
+            // Der Editor schreibt direkt aufs Profil; ein Containertausch
+            // mittendrin liesse den getippten Namen ins Leere laufen.
             ProfileEditorView(profile: profile)
+                .holdsUnsavedInput()
         }
     }
 

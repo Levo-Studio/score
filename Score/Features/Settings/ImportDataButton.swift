@@ -70,6 +70,8 @@ struct ImportDataButton<Label: View>: View {
         ) { result in
             read(result)
         }
+        // Solange die Wahl offen steht, wird der Speicher nicht getauscht:
+        // `actOnChoice` schreibt gleich danach den ganzen Bestand.
         .sheet(item: $pending, onDismiss: actOnChoice) { candidate in
             ScrollView {
                 ImportChoiceSheet(candidate: candidate) { mode in
@@ -85,6 +87,7 @@ struct ImportDataButton<Label: View>: View {
             .presentationDragIndicator(.visible)
             .presentationBackground(ScorePalette.surface)
             .presentationCornerRadius(ScoreMetrics.Radius.sheet)
+            .holdsUnsavedInput()
         }
         .alert(
             "Bestand wirklich ersetzen?",

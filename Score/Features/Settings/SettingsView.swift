@@ -4,8 +4,8 @@ import UniformTypeIdentifiers
 
 /// Die Einstellungen: zwei Karten, darunter das Studio-Zeichen.
 ///
-/// Sprache und Erscheinungsbild kommen aus `AppSettings` und wirken sofort auf die
-/// ganze App. Bundesland und Abi-Jahrgang stehen im `StudentProfile` und damit in
+/// Das Erscheinungsbild kommt aus `AppSettings` und wirkt sofort auf die ganze
+/// App. Bundesland und Abi-Jahrgang stehen im `StudentProfile` und damit in
 /// SwiftData — sie gehören zum Abitur, nicht zum Gerät.
 struct SettingsView: View {
 
@@ -137,13 +137,10 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Karte 1 — Sprache, Erscheinungsbild, Jahrgang
+    // MARK: - Karte 1 — Erscheinungsbild, Jahrgang
 
     private func appearanceCard(settings: Bindable<AppSettings>) -> some View {
         SettingsGroup {
-            SettingsRow(title: "Sprache") {
-                LanguageSegments(selection: settings.language)
-            }
             SettingsRow(title: "Dark Mode") {
                 ScoreSwitch(isOn: settings.isDarkModeEnabled)
             }
@@ -439,52 +436,6 @@ private struct Divider2: View {
             .fill(ScorePalette.line)
             .frame(height: 1)
             .offset(y: -1)
-    }
-}
-
-// MARK: - Sprachumschalter
-
-/// Die Segment-Pille „Deutsch | English".
-///
-/// Die aktive Hälfte gleitet mit einer `matchedGeometryEffect`-Animation herüber,
-/// damit die Umschaltung als Bewegung lesbar ist und nicht als Sprung.
-private struct LanguageSegments: View {
-
-    @Binding var selection: AppSettings.Language
-    @Namespace private var namespace
-
-    var body: some View {
-        HStack(spacing: 4) {
-            ForEach(AppSettings.Language.allCases) { language in
-                let isSelected = selection == language
-
-                Button {
-                    selection = language
-                } label: {
-                    Text(verbatim: language.title)
-                        .font(ScoreTypography.publicSans(500, 11.5))
-                        .foregroundStyle(isSelected ? ScorePalette.ink : ScorePalette.inkSecondary)
-                        .padding(.horizontal, ScoreMetrics.Spacing.sm)
-                        .padding(.vertical, ScoreMetrics.Spacing.xs)
-                        .background {
-                            if isSelected {
-                                Capsule()
-                                    .fill(ScorePalette.surface)
-                                    .matchedGeometryEffect(id: "segment", in: namespace)
-                            }
-                        }
-                        .contentShape(Capsule())
-                }
-                .buttonStyle(.plain)
-                // Die eingestellte Sprache erkennt man sonst nur an der hellen
-                // Pille darunter. Wer sie nicht sieht, hört zweimal dasselbe.
-                .accessibilityAddTraits(isSelected ? .isSelected : [])
-            }
-        }
-        .padding(3)
-        .background(ScorePalette.fill)
-        .clipShape(Capsule())
-        .scoreAnimation(ScoreMotion.segment, value: selection)
     }
 }
 

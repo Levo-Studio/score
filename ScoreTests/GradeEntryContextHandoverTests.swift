@@ -328,6 +328,44 @@ struct GradeEntryContextHandoverTests {
         #expect(saved.contains { $0.points == 9 && $0.semester?.index == 2 })
     }
 
+    // MARK: - Der Rücknahme-Streifen
+
+    /// Der Streifen steht ein paar Sekunden und meldet dabei **keine**
+    /// ungesicherte Eingabe an — gesichert ist längst alles. Genau in diesen
+    /// Sekunden darf getauscht werden, und danach muss „Rückgängig" trotzdem
+    /// die richtige Leistung treffen.
+    @Test("Rückgängig entfernt nach dem Tausch die Leistung des neuen Kontexts")
+    func undoingACreationSurvivesTheHandover() throws {
+        let (store, entry) = try Self.makeStage()
+        let pending = PendingGradeEntryUndo.creation(of: entry)
+
+        try store.reopen()
+        let subject = try #require(try store.context.fetch(FetchDescriptor<Subject>()).first)
+
+        pending.undo(subject, store.context)
+        try store.context.save()
+
+        #expect(try Self.entries(in: store.context).isEmpty)
+
+        try store.reopen()
+        #expect(try Self.entries(in: store.context).isEmpty)
+    }
+
+    @Test("Rückgängig tut nichts, wenn die Leistung schon weg ist")
+    func undoingAVanishedCreationDoesNothing() throws {
+        let (store, entry) = try Self.makeStage()
+        let pending = PendingGradeEntryUndo.creation(of: entry)
+
+        try store.reopen()
+        let subject = try #require(try store.context.fetch(FetchDescriptor<Subject>()).first)
+        try Self.deleteAllEntries(in: store.context)
+
+        pending.undo(subject, store.context)
+        try store.context.save()
+
+        #expect(try Self.entries(in: store.context).isEmpty)
+    }
+
     private static func deleteAllEntries(in context: ModelContext) throws {
         for entry in try entries(in: context) {
             context.delete(entry)

@@ -88,6 +88,22 @@ struct SubjectDetailView: View {
                 isNew: edit.isNew
             )
         }
+        // Derselbe Griff wie auf dem iPad, aus demselben Grund: Der Griff auf das
+        // Schliessen oben hängt an der Bindung und läuft nur, wenn jemand das
+        // Blatt zumacht. Verschwindet stattdessen die ganze Ansicht, ohne dass
+        // jemand sie schliesst — ein Wechsel des Reiters, ein Abbau beim
+        // Neuöffnen des Speichers, ein gelöschtes Fach —, käme er nie dran, und
+        // die gerade eingetippten Punkte wären weg. Hier ist die letzte
+        // Gelegenheit, sie zu behalten.
+        .onDisappear {
+            guard let edit = editedEntry else { return }
+            // Erst leeren: Der Entwurf ist danach entweder angelegt oder
+            // verfallen, und ein zweiter Durchlauf legte ihn ein zweites Mal an.
+            editedEntry = nil
+            // Ohne Streifen: Er hinge an dieser Ansicht, die gerade abgebaut
+            // wird, und erschiene nie. Siehe ``keepIfEdited(_:offersUndo:)``.
+            keepIfEdited(edit, offersUndo: false)
+        }
     }
 
     // MARK: - Abgeleitete Werte
@@ -547,10 +563,18 @@ struct SubjectDetailView: View {
     /// Ein unangetasteter Entwurf verfällt. Wurde tatsächlich etwas eingegeben,
     /// entsteht die Leistung trotzdem — und der Streifen bietet sie zur Rücknahme
     /// an, genau wie eine gelöschte Note.
-    private func keepIfEdited(_ edit: GradeEntryEdit) {
+    ///
+    /// - Parameter offersUndo: Ob der Streifen angeboten wird. Aus `onDisappear`
+    ///   heraus nicht: Der Streifen ist ein `@State` dieser Ansicht, und eine
+    ///   Ansicht, die gerade abgebaut wird, zeigt ihn nicht mehr an. Ein
+    ///   Versprechen, das nicht eingelöst wird, ist schlechter als keines —
+    ///   behalten wird die Leistung trotzdem, und löschen lässt sie sich mit
+    ///   einem Wisch.
+    private func keepIfEdited(_ edit: GradeEntryEdit, offersUndo: Bool = true) {
         guard edit.isNew, edit.hasInput else { return }
 
         edit.commit(to: modelContext)
+        guard offersUndo else { return }
         showUndo(.creation(of: edit.entry))
     }
 

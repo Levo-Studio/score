@@ -116,8 +116,6 @@ struct SwipeRowLayoutTests {
 
     /// Hängt die iPad-Fachansicht in ein echtes Fenster.
     private func withPadDetail(_ body: (UIWindow) async throws -> Void) async throws {
-        AppSettings.shared.language = .german
-
         let container = try ModelContainer(
             for: Subject.self, SemesterResult.self, GradeEntry.self, StudentProfile.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
@@ -134,7 +132,7 @@ struct SwipeRowLayoutTests {
                 route: .constant(.subject(subject.identifier))
             )
             .background(ScorePalette.background)
-            .environment(\.locale, AppSettings.shared.locale)
+            .environment(\.locale, ScoreLocale.german)
             .environment(\.modelContext, context)
             .modelContainer(container)
             .frame(width: size.width, height: size.height)

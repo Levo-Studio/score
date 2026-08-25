@@ -232,14 +232,23 @@ enum BlockOneCalculator {
 
         /// Ob der Kursblock selbst erst eine Hochrechnung ist.
         ///
-        /// Wahr, solange nicht alle 48 Wertungen stehen. Der Schnitt wird durch
-        /// die tatsächliche Zahl der Wertungen geteilt und auf 40 Kurse gestreckt
-        /// — das ist die richtige Rechnung, aber es ist eine Fortschreibung des
-        /// bisher Gezeigten und kein Ergebnis. Wer drei Kurse mit je 15 Punkten
-        /// erfasst hat, steht hier bei 600 von 600; das ist eine Aussicht und darf
-        /// nirgends als feststehende Zahl auftreten.
+        /// Wahr, solange weniger als 40 Kurse eingebracht sind. Der Schnitt wird
+        /// dann durch die tatsächliche Zahl der Wertungen geteilt und auf 40 Kurse
+        /// gestreckt — das ist die richtige Rechnung, aber es ist eine
+        /// Fortschreibung des bisher Gezeigten und kein Ergebnis. Wer drei Kurse
+        /// mit je 15 Punkten erfasst hat, steht hier bei 600 von 600; das ist eine
+        /// Aussicht und darf nirgends als feststehende Zahl auftreten.
+        ///
+        /// Gemessen wird an den **Kursen** und nicht an den 48 Wertungen. Die 48
+        /// setzen zwei doppelt gewertete Leistungsfächer voraus, also mindestens
+        /// zwei Leistungsfächer im Bestand. Steht dort nur eines — eine unfertige
+        /// Fächerwahl, ein halber Import —, sind höchstens 44 Wertungen
+        /// erreichbar; gegen die 48 gemessen bliebe der Kursblock für immer eine
+        /// Hochrechnung und ``AbiturResult/Outcome/isPassed`` dauerhaft falsch,
+        /// selbst bei vollständigem Prüfungsblock. Das Kriterium muss „es fehlen
+        /// noch Daten" sein und nicht „die Fächerwahl ist ungewöhnlich".
         var isProjection: Bool {
-            effectiveWeightingCount < weightingCount
+            includedCount < totalCourseCount
         }
 
         /// Alle Kurse, die erfasst sind, aber nicht in den Score einfliessen.

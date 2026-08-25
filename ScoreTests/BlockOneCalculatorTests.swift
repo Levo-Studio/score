@@ -524,6 +524,24 @@ struct BlockOneCalculatorTests {
         #expect(outcome.includedCount == 2)
         #expect(isClose(outcome.averagePoints, 12))
     }
+
+    @Test("Ein vollständiger Bestand mit nur einem Leistungsfach ist keine Hochrechnung")
+    func aFullYearWithOneAdvancedSubjectIsNoProjection() {
+        // Ein Leistungsfach und neun Basisfächer: 40 Kurse, alle erfasst, alle
+        // eingebracht. Doppelt gewertet werden kann nur das eine Leistungsfach,
+        // also stehen 44 Wertungen statt 48. Das ist eine ungewöhnliche
+        // Fächerwahl und trotzdem kein fehlender Kurs — gegen die 48 gemessen
+        // bliebe der Kursblock für immer eine Hochrechnung.
+        let subjects = [subject("lf-a", .leistungsfach, allPoints: 12)]
+            + (1...9).map { subject("bf-\($0)", .wahlBasisfach, allPoints: 12) }
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        #expect(outcome.includedCount == BlockOneCalculator.totalCourseCount)
+        #expect(outcome.effectiveWeightingCount == 44)
+        #expect(!outcome.isProjection)
+        #expect(outcome.points == 480)
+    }
 }
 
 // MARK: - Klammern von Hand

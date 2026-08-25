@@ -58,7 +58,7 @@ struct GradeEntryEditTests {
         #expect(edit.isNew)
         #expect(try Self.entryCount(in: context) == 0)
         #expect((semester.entries ?? []).isEmpty)
-        #expect(edit.entry.semester == nil)
+        #expect(edit.draftUnderTest.semester == nil)
     }
 
     @Test("Ein verworfener Entwurf verändert den Schnitt nicht")
@@ -91,15 +91,15 @@ struct GradeEntryEditTests {
             title: "Klassenarbeit 1",
             in: semester
         )
-        edit.entry.points = 7
-        #expect(edit.commit(to: context))
+        edit.draftUnderTest.points = 7
+        #expect(edit.commit(to: context) != nil)
 
         #expect(try Self.entryCount(in: context) == 1)
         #expect((semester.entries ?? []).count == 1)
-        #expect(edit.entry.semester === semester)
-        #expect(edit.entry.points == 7)
-        #expect(edit.entry.kind == .written)
-        #expect(edit.entry.category == .exam)
+        #expect(edit.draftUnderTest.semester === semester)
+        #expect(edit.draftUnderTest.points == 7)
+        #expect(edit.draftUnderTest.kind == .written)
+        #expect(edit.draftUnderTest.category == .exam)
     }
 
     // MARK: - Beim Schliessen geht getippte Arbeit nicht verloren
@@ -108,7 +108,7 @@ struct GradeEntryEditTests {
     /// entscheidet, ob die Leistung entsteht.
     private static func closeSheet(_ edit: GradeEntryEdit, in context: ModelContext) {
         guard edit.isNew, edit.hasInput else { return }
-        #expect(edit.commit(to: context))
+        #expect(edit.commit(to: context) != nil)
     }
 
     @Test("Ein unangetasteter Entwurf lässt beim Schliessen nichts zurück")
@@ -137,14 +137,14 @@ struct GradeEntryEditTests {
             title: "Klassenarbeit 1",
             in: semester
         )
-        edit.entry.points = 5
+        edit.draftUnderTest.points = 5
 
         #expect(edit.hasInput)
         Self.closeSheet(edit, in: context)
 
         #expect(try Self.entryCount(in: context) == 1)
-        #expect(edit.entry.points == 5)
-        #expect(edit.entry.semester === semester)
+        #expect(edit.draftUnderTest.points == 5)
+        #expect(edit.draftUnderTest.semester === semester)
     }
 
     @Test("Ein getippter Titel, eine andere Art und eine andere Kategorie zählen auch")
@@ -156,20 +156,20 @@ struct GradeEntryEditTests {
         }
 
         let titled = draft()
-        titled.entry.title = "Nachschrift"
+        titled.draftUnderTest.title = "Nachschrift"
         #expect(titled.hasInput)
 
         let switchedKind = draft()
-        switchedKind.entry.kind = .oral
+        switchedKind.draftUnderTest.kind = .oral
         #expect(switchedKind.hasInput)
 
         let switchedCategory = draft()
-        switchedCategory.entry.category = .test
+        switchedCategory.draftUnderTest.category = .test
         #expect(switchedCategory.hasInput)
 
         // Ein leer geräumter Titel ist kein Beitrag, sondern eine Lücke.
         let cleared = draft()
-        cleared.entry.title = "   "
+        cleared.draftUnderTest.title = "   "
         #expect(!cleared.hasInput)
     }
 
@@ -185,11 +185,11 @@ struct GradeEntryEditTests {
         // Wer sie anfasst, hat etwas eingegeben; sonst würfe das heruntergezogene
         // Blatt genau diese Arbeit weg, ohne Streifen und ohne Hinweis.
         let manual = draft()
-        manual.entry.usesAutomaticShare = false
+        manual.draftUnderTest.usesAutomaticShare = false
         #expect(manual.hasInput)
 
         let weighted = draft()
-        weighted.entry.share = 30
+        weighted.draftUnderTest.share = 30
         #expect(weighted.hasInput)
     }
 
@@ -203,14 +203,14 @@ struct GradeEntryEditTests {
             title: "Klassenarbeit 1",
             in: semester
         )
-        edit.entry.usesAutomaticShare = false
-        edit.entry.share = 30
+        edit.draftUnderTest.usesAutomaticShare = false
+        edit.draftUnderTest.share = 30
 
         Self.closeSheet(edit, in: context)
 
         #expect(try Self.entryCount(in: context) == 1)
-        #expect(edit.entry.share == 30)
-        #expect(!edit.entry.usesAutomaticShare)
+        #expect(edit.draftUnderTest.share == 30)
+        #expect(!edit.draftUnderTest.usesAutomaticShare)
     }
 
     @Test("Die beim Schliessen angelegte Leistung lässt sich zurücknehmen")
@@ -223,10 +223,10 @@ struct GradeEntryEditTests {
             title: "Klassenarbeit 1",
             in: semester
         )
-        edit.entry.points = 5
+        edit.draftUnderTest.points = 5
         Self.closeSheet(edit, in: context)
 
-        let pending = PendingGradeEntryUndo.creation(of: edit.entry)
+        let pending = PendingGradeEntryUndo.creation(of: edit.draftUnderTest)
         pending.undo(subject, context)
         try context.save()
 
@@ -243,7 +243,7 @@ struct GradeEntryEditTests {
             title: "Klassenarbeit 1",
             in: semester
         )
-        edit.entry.points = 5
+        edit.draftUnderTest.points = 5
 
         // Der Entwurf wäre beim Schliessen angelegt worden — „Verwerfen" räumt
         // das Blatt aber ab, ohne `commit(to:)` zu rufen.
@@ -261,7 +261,7 @@ struct GradeEntryEditTests {
         context.insert(entry)
 
         let edit = GradeEntryEdit.existing(entry)
-        #expect(edit.commit(to: context))
+        #expect(edit.commit(to: context) != nil)
 
         #expect(!edit.isNew)
         #expect(try Self.entryCount(in: context) == 1)

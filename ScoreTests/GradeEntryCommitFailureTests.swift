@@ -42,7 +42,7 @@ struct GradeEntryCommitFailureTests {
 
         private(set) var editedEntry: GradeEntryEdit?
         private(set) var pendingUndo: PendingGradeEntryUndo?
-        private(set) var didLoseEntry = false
+        private(set) var lostInput: LostInput?
 
         init(context: ModelContext) {
             self.context = context
@@ -54,22 +54,22 @@ struct GradeEntryCommitFailureTests {
 
         /// „Fertig".
         func confirm(_ edit: GradeEntryEdit) {
-            let didCommit = edit.commit(to: context)
+            let committed = edit.commit(to: context)
             editedEntry = nil
-            if !didCommit { didLoseEntry = true }
+            if committed == nil { lostInput = edit.loss }
         }
 
         /// Das Blatt wurde heruntergezogen.
         func keepIfEdited(_ edit: GradeEntryEdit, offersUndo: Bool = true) {
             guard edit.isNew, edit.hasInput else { return }
 
-            guard edit.commit(to: context) else {
-                if offersUndo { didLoseEntry = true }
+            guard let entry = edit.commit(to: context) else {
+                if offersUndo { lostInput = edit.loss }
                 return
             }
 
             guard offersUndo else { return }
-            pendingUndo = .creation(of: edit.entry)
+            pendingUndo = .creation(of: entry)
         }
     }
 
@@ -122,13 +122,13 @@ struct GradeEntryCommitFailureTests {
             title: "Klassenarbeit 1",
             in: semester
         )
-        edit.entry.points = 13
+        edit.draftUnderTest.points = 13
         screen.open(edit)
 
         try Self.deleteSubject(subject, in: context)
         screen.confirm(edit)
 
-        #expect(screen.didLoseEntry)
+        #expect(screen.lostInput == .missingSubject)
         #expect(screen.editedEntry == nil)
         #expect(try Self.entryCount(in: context) == 0)
     }
@@ -144,11 +144,11 @@ struct GradeEntryCommitFailureTests {
             title: "Klassenarbeit 1",
             in: semester
         )
-        edit.entry.points = 13
+        edit.draftUnderTest.points = 13
         screen.open(edit)
         screen.confirm(edit)
 
-        #expect(screen.didLoseEntry == false)
+        #expect(screen.lostInput == nil)
         #expect(try Self.entryCount(in: context) == 1)
     }
 
@@ -166,13 +166,13 @@ struct GradeEntryCommitFailureTests {
             title: "Mündliche Note 1",
             in: semester
         )
-        edit.entry.points = 9
+        edit.draftUnderTest.points = 9
 
         try Self.deleteSubject(subject, in: context)
         screen.keepIfEdited(edit)
 
         #expect(screen.pendingUndo == nil)
-        #expect(screen.didLoseEntry)
+        #expect(screen.lostInput == .missingSubject)
         #expect(try Self.entryCount(in: context) == 0)
     }
 
@@ -187,11 +187,11 @@ struct GradeEntryCommitFailureTests {
             title: "Mündliche Note 1",
             in: semester
         )
-        edit.entry.points = 9
+        edit.draftUnderTest.points = 9
         screen.keepIfEdited(edit)
 
         #expect(screen.pendingUndo != nil)
-        #expect(screen.didLoseEntry == false)
+        #expect(screen.lostInput == nil)
         #expect(try Self.entryCount(in: context) == 1)
     }
 
@@ -209,13 +209,13 @@ struct GradeEntryCommitFailureTests {
             title: "Klassenarbeit 1",
             in: semester
         )
-        edit.entry.points = 13
+        edit.draftUnderTest.points = 13
 
         try Self.deleteSubject(subject, in: context)
         screen.keepIfEdited(edit, offersUndo: false)
 
         #expect(screen.pendingUndo == nil)
-        #expect(screen.didLoseEntry == false)
+        #expect(screen.lostInput == nil)
         #expect(try Self.entryCount(in: context) == 0)
     }
 }

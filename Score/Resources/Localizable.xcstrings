@@ -3293,6 +3293,23 @@
         }
       }
     },
+    "Diese Leistung gibt es nicht mehr — vermutlich wurde sie auf einem anderen Gerät gelöscht. Deine Änderungen konnten deshalb nicht gespeichert werden.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Leistung gibt es nicht mehr — vermutlich wurde sie auf einem anderen Gerät gelöscht. Deine Änderungen konnten deshalb nicht gespeichert werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This grade no longer exists — it was probably deleted on another device. Your changes could not be saved."
+          }
+        }
+      }
+    },
     "Diese Wahl hast du selbst getroffen. Score rechnet damit, auch wenn eine andere Kombination besser ausfiele. Nimm ein Kennzeichen weg, und Score wählt wieder von sich aus.": {
       "extractionState": "manual",
       "localizations": {

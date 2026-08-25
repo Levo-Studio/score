@@ -21,6 +21,15 @@ import SwiftData
 /// ``ScoreOverlaySheet``, für iPhone und iPad derselbe.
 struct GradeEntrySheet: View {
 
+    /// Die Leistung, auf die geschrieben wird.
+    ///
+    /// Kommt von aussen und wird hier bewusst **nicht** über die Zeit gehalten:
+    /// `@Bindable` ist kein Speicher, sondern nur die Hülle um den gerade
+    /// gereichten Verweis, und dieser Verweis muss aus dem geltenden Kontext
+    /// stammen. Der Aufrufer löst ihn deshalb in jedem Durchlauf neu auf — siehe
+    /// ``GradeEntryEdit/resolve(in:)``. Käme er stattdessen einmal beim Öffnen
+    /// des Blattes herein, schriebe jeder Tastendruck nach einem Containertausch
+    /// in ein Objekt eines abgeräumten Kontexts, und zwar stumm.
     @Bindable var entry: GradeEntry
 
     let subject: Subject

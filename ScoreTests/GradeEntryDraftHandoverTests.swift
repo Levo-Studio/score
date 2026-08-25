@@ -68,14 +68,14 @@ struct GradeEntryDraftHandoverTests {
             title: "Klassenarbeit 1",
             in: try old.semester(0)
         )
-        edit.entry.points = 13
+        edit.draftUnderTest.points = 13
 
         // Dazwischen tauscht der Speicher. Bestätigt wird gegen den **neuen**
         // Kontext — genau das tut die Fachansicht mit ihrem
         // `@Environment(\.modelContext)`.
-        #expect(edit.commit(to: fresh.context))
+        #expect(edit.commit(to: fresh.context) != nil)
 
-        #expect(edit.entry.semester === (try fresh.semester(0)))
+        #expect(edit.draftUnderTest.semester === (try fresh.semester(0)))
         #expect(try fresh.entryCount() == 1)
         // Und im alten Kontext ist nichts liegen geblieben.
         #expect(try old.entryCount() == 0)
@@ -96,10 +96,10 @@ struct GradeEntryDraftHandoverTests {
             title: "Mündliche Note 1",
             in: try old.semester(2)
         )
-        edit.entry.points = 9
-        #expect(edit.commit(to: fresh.context))
+        edit.draftUnderTest.points = 9
+        #expect(edit.commit(to: fresh.context) != nil)
 
-        #expect(edit.entry.semester === (try fresh.semester(2)))
+        #expect(edit.draftUnderTest.semester === (try fresh.semester(2)))
         #expect((try fresh.semester(0).entries ?? []).isEmpty)
     }
 
@@ -117,12 +117,12 @@ struct GradeEntryDraftHandoverTests {
             title: "Klassenarbeit 1",
             in: try old.semester(0)
         )
-        edit.entry.points = 13
+        edit.draftUnderTest.points = 13
         // Der Entwurf findet sein Halbjahr nicht mehr — und sagt das jetzt
         // auch, statt stumm nichts zu tun.
-        #expect(edit.commit(to: other.context) == false)
+        #expect(edit.commit(to: other.context) == nil)
 
         #expect(try other.entryCount() == 0)
-        #expect(edit.entry.semester == nil)
+        #expect(edit.draftUnderTest.semester == nil)
     }
 }

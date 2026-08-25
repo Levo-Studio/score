@@ -40,10 +40,17 @@ struct GradeEntryEdit: Identifiable {
     /// Die Leistung, die das Blatt bearbeitet.
     let entry: GradeEntry
 
-    /// Das Halbjahr, an das ein Entwurf beim Bestätigen gehängt wird.
+    /// Das Halbjahr, an das ein Entwurf beim Bestätigen gehängt wird — als
+    /// Kennung, nicht als Objekt.
     ///
     /// `nil` bei einer bestehenden Leistung — die hängt schon.
-    let pendingSemester: SemesterResult?
+    ///
+    /// ## Warum keine Kennung, sondern zwei
+    ///
+    /// Ein `SemesterResult` hat keine eigene geräteübergreifende Kennung; es ist
+    /// über sein Fach und seinen Index eindeutig, und beides sind blosse Werte.
+    /// Genau darum geht es hier — siehe ``PendingSemester``.
+    let pendingSemester: PendingSemester?
 
     /// Die Vorgaben, mit denen der Entwurf geöffnet wurde.
     ///
@@ -97,6 +104,11 @@ struct GradeEntryEdit: Identifiable {
     }
 
     /// Ein Entwurf mit den Vorgaben seiner Art, noch in keinem Kontext.
+    ///
+    /// Vom übergebenen Halbjahr bleibt nur seine Kennung zurück. Das Objekt
+    /// selbst wird bewusst **nicht** festgehalten: Es gehört dem Kontext, in dem
+    /// das Blatt aufging, und ein Entwurf, der kein Fremdobjekt hält, kann keine
+    /// Kontextgrenze verletzen.
     static func draft(
         category: GradeCategory,
         kind: GradeKind,
@@ -107,7 +119,10 @@ struct GradeEntryEdit: Identifiable {
         entry.kind = kind
         return GradeEntryEdit(
             entry: entry,
-            pendingSemester: semester,
+            pendingSemester: PendingSemester(
+                subjectIdentifier: semester.subject?.identifier,
+                index: semester.index
+            ),
             defaults: Defaults(
                 title: title,
                 points: entry.points,
@@ -123,9 +138,58 @@ struct GradeEntryEdit: Identifiable {
     ///
     /// Bei einer bestehenden Leistung passiert nichts — sie steht bereits im
     /// Kontext, und ein zweites `insert` wäre bestenfalls wirkungslos.
+    ///
+    /// ## Warum das Halbjahr hier erst gesucht wird
+    ///
+    /// Bis hierher hielt der Entwurf das `SemesterResult` selbst — das Objekt aus
+    /// dem Kontext, in dem das Blatt aufging. Wurde der Speicher in der
+    /// Zwischenzeit neu geöffnet, war `context` längst der neue, und das
+    /// Anhängen lief über die Kontextgrenze: „Illegal attempt to establish a
+    /// relationship between objects in different contexts", oder eine Leistung,
+    /// die im abgeräumten Kontext verschwand. Die Rettung scheiterte an genau
+    /// dem Fall, für den sie gebaut war.
+    ///
+    /// Deshalb wird das Halbjahr erst hier gesucht, und zwar **in dem Kontext,
+    /// in den eingefügt wird**. Findet sich keines — das Fach wurde inzwischen
+    /// gelöscht —, entsteht nichts: Eine Leistung an einem Fach, das es nicht
+    /// mehr gibt, wäre kein geretteter Entwurf, sondern eine Waise.
     func commit(to context: ModelContext) {
         guard let pendingSemester else { return }
-        entry.semester = pendingSemester
+        guard let semester = pendingSemester.resolve(in: context) else { return }
+        entry.semester = semester
         context.insert(entry)
+    }
+}
+
+// MARK: - Wohin ein Entwurf gehört
+
+/// Das Halbjahr eines Entwurfs, ausgedrückt in blossen Werten.
+///
+/// Fach und Index reichen: Ein Fach hat höchstens ein Halbjahr je Index. Beides
+/// sind Werte und überstehen deshalb einen Containertausch, was ein
+/// Modellobjekt nicht tut — die Vorgeschichte steht in ``GradeEntryEdit/commit(to:)``.
+struct PendingSemester: Equatable {
+
+    /// Die geräteübergreifende Kennung des Fachs.
+    ///
+    /// Optional, weil ein Halbjahr theoretisch ohne Fach dastehen kann. Dann
+    /// lässt es sich nicht wiederfinden, und der Entwurf entsteht nicht — besser
+    /// als eine Leistung, die an nichts hängt.
+    let subjectIdentifier: UUID?
+
+    /// Das Halbjahr als Index 0 bis 3.
+    let index: Int
+
+    /// Sucht das Halbjahr in diesem Kontext.
+    func resolve(in context: ModelContext) -> SemesterResult? {
+        guard let subjectIdentifier else { return nil }
+
+        var descriptor = FetchDescriptor<Subject>(
+            predicate: #Predicate { $0.identifier == subjectIdentifier }
+        )
+        descriptor.fetchLimit = 1
+
+        guard let subject = try? context.fetch(descriptor).first else { return nil }
+        return subject.semester(at: index)
     }
 }

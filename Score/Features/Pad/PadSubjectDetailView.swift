@@ -34,12 +34,11 @@ struct PadSubjectDetailView: View {
                 cardRow
                 entryColumns
                 // Unter den Halbjahren und nicht in einem: die Abiturprüfung
-                // hängt am Fach als Ganzem. Ihre Zeilen bleiben so breit wie
-                // eine Spalte der Leistungen darüber — ein gestrichelter Knopf
-                // über 1200 Punkt wäre kein Knopf mehr. Der erklärende Satz
-                // steht deshalb daneben statt darunter: so trägt die Zeile die
-                // Fläche, die sonst rechts leer bliebe.
-                ExamResultSection(subject: subject, notePlacement: .beside)
+                // hängt am Fach als Ganzem. Sie benutzt aber dasselbe Raster wie
+                // die Leistungen darüber — schriftlich links, mündlich rechts.
+                // So fluchten die gestrichelten Knöpfe mit denen darüber, und
+                // die rechte Hälfte bleibt nicht leer.
+                ExamResultSection(subject: subject, notePlacement: .columns)
             }
             .padding(.horizontal, PadMetrics.contentPadding)
             .padding(.top, 22)

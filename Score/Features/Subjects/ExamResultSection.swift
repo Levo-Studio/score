@@ -47,8 +47,13 @@ struct ExamResultSection: View {
     /// ganze Breite gezogen stünde ein gestrichelter Knopf in 1200 Punkt
     /// Fläche — das ist der Grund, warum die Zeilen ihre Breite behalten.
     enum NotePlacement {
+        /// iPhone: eine Spalte, der Satz steht unter den Zeilen.
         case below
-        case beside
+        /// iPad: schriftlich links, mündlich rechts — in denselben zwei Spalten
+        /// wie die Leistungen darüber. So fluchten die gestrichelten Knöpfe mit
+        /// denen darüber, und die rechte Hälfte bleibt nicht leer. Der Satz
+        /// steht darunter über die ganze Breite.
+        case columns
     }
 
     let subject: Subject
@@ -57,18 +62,59 @@ struct ExamResultSection: View {
     /// Das Ergebnis, dessen Blatt gerade offen ist.
     @State private var editedSlot: ExamResultSlot?
 
+    @ViewBuilder
     var body: some View {
-        if notePlacement == .beside {
-            HStack(alignment: .top, spacing: ScoreMetrics.Spacing.md) {
-                slots.frame(maxWidth: 560, alignment: .leading)
-                note
-                    .frame(maxWidth: 420, alignment: .leading)
-                    .padding(.top, 22)
-                Spacer(minLength: 0)
+        if notePlacement == .columns {
+            if ExamResultCopy.hasWrittenExam(subject) || ExamResultCopy.hasOralExam(subject) {
+                VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
+                    HStack(alignment: .top, spacing: ScoreMetrics.Spacing.md) {
+                        column(title: "Abiturprüfung") {
+                            if ExamResultCopy.hasWrittenExam(subject) {
+                                slot(.written, index: 0)
+                            } else {
+                                slot(.oral, index: 0)
+                            }
+                        }
+
+                        // Die Nachprüfung steht rechts, wo darüber die
+                        // mündlichen Leistungen stehen — dieselbe Art Eingabe an
+                        // derselben Stelle. Sie erscheint erst, wenn die
+                        // schriftliche Prüfung geschrieben ist; vorher gäbe es
+                        // nichts nachzuprüfen, und die Spalte bleibt leer.
+                        column(title: nil) {
+                            if ExamResultCopy.hasWrittenExam(subject),
+                               subject.writtenExamPoints != nil || subject.oralExamPoints != nil {
+                                slot(.oral, index: 1)
+                            }
+                        }
+                    }
+
+                    note
+                }
+                .scoreAnimation(ScoreMotion.rowIn, value: subject.writtenExamPoints)
+                .scoreAnimation(ScoreMotion.rowIn, value: subject.oralExamPoints)
+                .scoreOverlaySheet(item: $editedSlot) { slot in
+                    ExamResultSheet(subject: subject, slot: slot)
+                }
             }
         } else {
             slots
         }
+    }
+
+    /// Eine Spalte des Rasters — mit oder ohne Überschrift, damit beide Seiten
+    /// auf derselben Höhe beginnen.
+    private func column<Content: View>(
+        title: LocalizedStringKey?,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
+            Text(title ?? " ")
+                .font(.micro)
+                .foregroundStyle(title == nil ? .clear : ScorePalette.inkSecondary)
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// Der Satz unter oder neben den Zeilen.

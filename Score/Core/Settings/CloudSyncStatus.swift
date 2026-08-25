@@ -56,6 +56,16 @@ final class CloudSyncStatus {
         case off
     }
 
+    /// Die Instanz, an der die Oberfläche hängt.
+    ///
+    /// Geteilt und nicht je Ansicht — aus demselben Grund wie bei
+    /// ``ManualCloudSync/shared``, und aus einem zweiten: Als Vorgabe im `init`
+    /// einer Ansicht entstünde bei **jeder** Neuerzeugung der Ansichtsstruktur
+    /// eine weitere Instanz samt Anmeldung beim NotificationCenter, die `@State`
+    /// sofort wieder verwirft. Eine Ansichtsstruktur wird bei jedem Umlauf neu
+    /// gebaut; die Vorgabe muss deshalb etwas sein, das man nur nachschlägt.
+    static let shared = CloudSyncStatus()
+
     private(set) var state: State = .unknown
 
     private let containerIdentifier: String

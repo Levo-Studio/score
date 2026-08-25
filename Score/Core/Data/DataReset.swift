@@ -85,10 +85,10 @@ enum DataReset {
     /// Dialog „alles" und liefe hinterher gegen Kennungen, zu denen es keine
     /// Daten mehr gibt.
     ///
-    /// **Nicht** angerührt werden Sprache, Erscheinungsbild und der Schalter für
-    /// den automatischen Abgleich. Das sind keine Nutzerdaten, sondern
-    /// Einstellungen dieses Geräts: Wer seine Noten löscht, will deswegen keine
-    /// englische App im hellen Erscheinungsbild vorfinden.
+    /// **Nicht** angerührt werden das Erscheinungsbild und der Schalter für den
+    /// automatischen Abgleich. Das sind keine Nutzerdaten, sondern Einstellungen
+    /// dieses Geräts: Wer seine Noten löscht, will deswegen keine App im hellen
+    /// Erscheinungsbild und mit wieder eingeschaltetem Abgleich vorfinden.
     static func deleteAll(in context: ModelContext, defaults: UserDefaults = .standard) throws {
         try delete(GradeEntry.self, in: context)
         try delete(SemesterResult.self, in: context)

@@ -613,6 +613,313 @@ struct ScoreImportTests {
         #expect(try target.fetchCount(FetchDescriptor<StudentProfile>()) == 1)
     }
 
+    /// Ein Profil, an dem jede Angabe gesetzt ist — die Quelle der Datei.
+    @discardableResult
+    private static func makeProfile(
+        firstName: String,
+        state: String = "Bayern",
+        year: Int = 2027,
+        level: ClassLevel = .kursstufe2,
+        avatar: Data? = nil,
+        in context: ModelContext
+    ) -> StudentProfile {
+        let profile = StudentProfile(
+            firstName: firstName,
+            avatarData: avatar,
+            classLevel: level,
+            federalState: state,
+            graduationYear: year,
+            hasCompletedOnboarding: true
+        )
+        context.insert(profile)
+        return profile
+    }
+
+    /// Der gemeldete Datenverlust: Zusammenführen schrieb bis hierher **jede**
+    /// Profilangabe hart über. Wer die Sicherung eines Mitschülers zusammenführte,
+    /// hiess danach wie er und sass in dessen Jahrgang — obwohl das Blatt
+    /// „Was du hast, bleibt." verspricht.
+    @Test("Zusammenführen fasst ein gefülltes Profil nicht an")
+    func mergingNeverOverwritesTheProfile() throws {
+        let source = try Self.makeContext()
+        let foreign = Self.makeProfile(
+            firstName: "Jonas",
+            state: "NRW",
+            year: 2029,
+            level: .kursstufe1,
+            avatar: Data([0xFF, 0xD8, 0xAA]),
+            in: source
+        )
+        let data = try ScoreExport(profile: foreign, subjects: []).encoded()
+
+        let target = try Self.makeContext()
+        let mine = Self.makeProfile(
+            firstName: "Julius",
+            state: "Baden-Württemberg",
+            year: 2027,
+            level: .kursstufe2,
+            avatar: Data([0xFF, 0xD8, 0xBB]),
+            in: target
+        )
+
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .merge, in: target, profile: mine)
+
+        #expect(mine.firstName == "Julius")
+        #expect(mine.federalState == "Baden-Württemberg")
+        #expect(mine.graduationYear == 2027)
+        #expect(mine.classLevel == .kursstufe2)
+        #expect(mine.avatarData == Data([0xFF, 0xD8, 0xBB]))
+        #expect(try target.fetchCount(FetchDescriptor<StudentProfile>()) == 1)
+    }
+
+    /// Auch die eigene alte Sicherung darf den heutigen Stand nicht zurückdrehen:
+    /// Jahrgang und Klassenstufe haben immer einen Wert und bleiben deshalb beim
+    /// Zusammenführen ausnahmslos stehen.
+    @Test("Zusammenführen dreht Jahrgang und Klassenstufe nicht zurück")
+    func mergingKeepsTodaysGraduationYear() throws {
+        let source = try Self.makeContext()
+        let old = Self.makeProfile(firstName: "Julius", year: 2026, level: .kursstufe1, in: source)
+        let data = try ScoreExport(profile: old, subjects: []).encoded()
+
+        let target = try Self.makeContext()
+        let today = Self.makeProfile(firstName: "Julius", year: 2028, level: .kursstufe2, in: target)
+
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .merge, in: target, profile: today)
+
+        #expect(today.graduationYear == 2028)
+        #expect(today.classLevel == .kursstufe2)
+    }
+
+    /// Ergänzen heisst ergänzen: Was im Profil fehlt, kommt sehr wohl dazu.
+    @Test("Zusammenführen füllt leere Profilangaben")
+    func mergingFillsTheEmptyProfileFields() throws {
+        let source = try Self.makeContext()
+        let full = Self.makeProfile(
+            firstName: "Julius",
+            state: "Hessen",
+            avatar: Data([0xFF, 0xD8, 0xCC]),
+            in: source
+        )
+        let data = try ScoreExport(profile: full, subjects: []).encoded()
+
+        let target = try Self.makeContext()
+        let blank = Self.makeProfile(firstName: "   ", state: "", in: target)
+
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .merge, in: target, profile: blank)
+
+        #expect(blank.firstName == "Julius")
+        #expect(blank.federalState == "Hessen")
+        #expect(blank.avatarData == Data([0xFF, 0xD8, 0xCC]))
+    }
+
+    /// Beim Ersetzen gilt die Datei — dafür hat der Nutzer eine Rückfrage mit
+    /// Zahlen bestätigt.
+    @Test("Ersetzen übernimmt das Profil vollständig")
+    func replacingTakesTheWholeProfile() throws {
+        let source = try Self.makeContext()
+        let foreign = Self.makeProfile(
+            firstName: "Jonas",
+            state: "NRW",
+            year: 2029,
+            level: .kursstufe1,
+            avatar: Data([0xFF, 0xD8, 0xAA]),
+            in: source
+        )
+        let data = try ScoreExport(profile: foreign, subjects: []).encoded()
+
+        let target = try Self.makeContext()
+        let mine = Self.makeProfile(firstName: "Julius", avatar: Data([0xFF, 0xD8, 0xBB]), in: target)
+
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .replace, in: target, profile: mine)
+
+        #expect(mine.firstName == "Jonas")
+        #expect(mine.federalState == "NRW")
+        #expect(mine.graduationYear == 2029)
+        #expect(mine.classLevel == .kursstufe1)
+        #expect(mine.avatarData == Data([0xFF, 0xD8, 0xAA]))
+    }
+
+    /// Eine Datei ohne Bild weiss nichts über das Bild — sie darf es auch beim
+    /// Ersetzen nicht wegräumen. Sonst löschte ausgerechnet das Zurückspielen
+    /// einer älteren Sicherung das Gesicht, das sie retten soll.
+    @Test("Eine Datei ohne Bild löscht das vorhandene nicht")
+    func afileWithoutAnAvatarKeepsTheExistingOne() throws {
+        let source = try Self.makeContext()
+        let withoutAvatar = Self.makeProfile(firstName: "Jonas", in: source)
+        let data = try ScoreExport(profile: withoutAvatar, subjects: []).encoded()
+
+        let target = try Self.makeContext()
+        let mine = Self.makeProfile(firstName: "Julius", avatar: Data([0xFF, 0xD8, 0xBB]), in: target)
+
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .replace, in: target, profile: mine)
+
+        #expect(mine.avatarData == Data([0xFF, 0xD8, 0xBB]))
+    }
+
+    /// Der Weg, der den Fehler überhaupt sichtbar machte: exportieren, alles
+    /// löschen, wieder einlesen.
+    @Test("Das Profilbild übersteht Ausgabe und Einlesen")
+    func theAvatarSurvivesARoundTrip() throws {
+        let source = try Self.makeContext()
+        let avatar = Data([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10])
+        let profile = Self.makeProfile(firstName: "Julius", avatar: avatar, in: source)
+
+        let data = try ScoreExport(profile: profile, subjects: []).encoded()
+        let restored = try ScoreImport.read(data)
+
+        #expect(restored.profile?.avatarData == avatar)
+
+        let target = try Self.makeContext()
+        let fresh = Self.makeProfile(firstName: "", state: "", avatar: nil, in: target)
+        try ScoreImport.apply(restored, mode: .replace, in: target, profile: fresh)
+
+        #expect(fresh.avatarData == avatar)
+    }
+
+    // MARK: - Der Anlagezeitpunkt
+
+    /// Ohne den Zeitstempel in der Datei trugen alle Leistungen nach dem
+    /// Zurückspielen das Importdatum, und die Chronologie war weg.
+    @Test("Der Anlagezeitpunkt übersteht Ausgabe und Einlesen")
+    func theCreationDateSurvivesARoundTrip() throws {
+        let source = try Self.makeContext()
+        let subject = Subject(
+            name: "Geschichte",
+            abbreviation: "G",
+            colorValue: 0x33_44_55,
+            kind: .pflichtBasisfach,
+            activeSemesters: [0]
+        )
+        source.insert(subject)
+        let semester = SemesterResult(index: 0)
+        semester.subject = subject
+        source.insert(semester)
+
+        // Bewusst nicht in der Reihenfolge des Anlegens eingefügt: Die Datei
+        // trägt die Chronologie, nicht die Zeilenfolge.
+        let dates = [
+            Date(timeIntervalSince1970: 1_760_000_000),
+            Date(timeIntervalSince1970: 1_730_000_000),
+        ]
+        for (offset, date) in dates.enumerated() {
+            let entry = GradeEntry(
+                title: "Arbeit \(offset + 1)",
+                points: 9 + offset,
+                kind: .written,
+                category: .exam,
+                share: 50,
+                usesAutomaticShare: false,
+                createdAt: date
+            )
+            entry.semester = semester
+            source.insert(entry)
+        }
+
+        let data = try ScoreExport(profile: nil, subjects: try Self.fetchSubjects(in: source)).encoded()
+
+        let target = try Self.makeContext()
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .replace, in: target, profile: nil)
+
+        let restored = try #require(try Self.fetchSubjects(in: target).first?.semester(at: 0))
+        let order = restored.orderedEntries.map(\.title)
+        let stamps = restored.orderedEntries.map(\.createdAt)
+
+        // „Arbeit 2" ist die ältere und steht deshalb vorn — genau wie vor dem
+        // Export.
+        #expect(order == ["Arbeit 2", "Arbeit 1"])
+        #expect(stamps == dates.sorted())
+    }
+
+    /// Eine Datei ohne Zeitstempel bleibt lesbar; dort ist der Importzeitpunkt
+    /// alles, was Score wissen kann.
+    @Test("Eine ältere Datei ohne Zeitstempel bleibt lesbar")
+    func anOlderFileWithoutTimestampsStillWorks() throws {
+        let json = """
+        {
+          "exportedAt": "2026-01-15T09:00:00Z",
+          "subjects": [
+            {
+              "abbreviation": "M", "activeSemesters": [0], "isOralExamSubject": false,
+              "kind": "basisfach", "name": "Musik", "writtenShare": 50,
+              "semesters": [
+                { "index": 0, "isManuallyBracketed": false, "entries": [
+                  { "category": "exam", "kind": "written", "points": 11, "share": 100,
+                    "title": "Klassenarbeit 1", "usesAutomaticShare": true }
+                ] }
+              ]
+            }
+          ]
+        }
+        """
+
+        let before = Date.now
+        let context = try Self.makeContext()
+        try ScoreImport.apply(try ScoreImport.read(Data(json.utf8)), mode: .replace, in: context, profile: nil)
+
+        let entry = try #require(try context.fetch(FetchDescriptor<GradeEntry>()).first)
+        #expect(entry.createdAt >= before)
+    }
+
+    // MARK: - Die Zahlen für den Dialog
+
+    /// Der zweite gemeldete Weg: Ein Nutzer mit Profil, aber ohne Fächer, lief
+    /// in den Direkt-Import ohne Blatt und ohne Warnung — und bekam fremde
+    /// Profildaten geschrieben.
+    @Test("Ein Profil allein zählt als Bestand")
+    func aprofileAloneCountsAsExistingData() throws {
+        let context = try Self.makeContext()
+        #expect(try ScoreImport.summary(in: context).isEmpty)
+
+        Self.makeProfile(firstName: "Julius", in: context)
+        try context.save()
+
+        let summary = try ScoreImport.summary(in: context)
+        #expect(summary.hasProfile)
+        #expect(summary.subjectCount == 0)
+        #expect(summary.gradeCount == 0)
+        // Das eine, woran die Rückfrage hängt.
+        #expect(!summary.isEmpty)
+    }
+
+    @Test("Die Zahlen der Datei nennen auch ihr Profil")
+    func thefileSummaryReportsItsProfile() throws {
+        let context = try Self.makeContext()
+        let profile = Self.makeProfile(firstName: "Jonas", in: context)
+
+        #expect(ScoreImport.summary(of: ScoreExport(profile: profile, subjects: [])).hasProfile)
+        #expect(!ScoreImport.summary(of: ScoreExport(profile: nil, subjects: [])).hasProfile)
+    }
+
+    // MARK: - Zahlen, die in eine Rechnung gehen
+
+    /// Eine Datei mit einem Prozentanteil ausserhalb seiner Spanne verzerrte
+    /// jedes Halbjahresergebnis des Fachs — und über die Oberfläche kam der
+    /// Nutzer an den Wert nicht wieder heran.
+    @Test("Unmögliche Gewichtungen und Kursgrenzen machen die Datei unlesbar", arguments: [
+        #"{"exportedAt": "2026-01-15T09:00:00Z", "subjects": [{"name": "X", "abbreviation": "X", "kind": "basisfach", "writtenShare": 900, "activeSemesters": [0], "isOralExamSubject": false, "semesters": []}]}"#,
+        #"{"exportedAt": "2026-01-15T09:00:00Z", "subjects": [{"name": "X", "abbreviation": "X", "kind": "basisfach", "writtenShare": -10, "activeSemesters": [0], "isOralExamSubject": false, "semesters": []}]}"#,
+        #"{"exportedAt": "2026-01-15T09:00:00Z", "subjects": [{"name": "X", "abbreviation": "X", "kind": "basisfach", "writtenShare": 50, "maximumContributedCourses": 0, "activeSemesters": [0], "isOralExamSubject": false, "semesters": []}]}"#,
+        #"{"exportedAt": "2026-01-15T09:00:00Z", "subjects": [{"name": "X", "abbreviation": "X", "kind": "basisfach", "writtenShare": 50, "maximumContributedCourses": -3, "activeSemesters": [0], "isOralExamSubject": false, "semesters": []}]}"#,
+        #"{"exportedAt": "2026-01-15T09:00:00Z", "subjects": [{"name": "X", "abbreviation": "X", "kind": "basisfach", "writtenShare": 50, "activeSemesters": [0], "isOralExamSubject": false, "semesters": [{"index": 0, "isManuallyBracketed": false, "entries": [{"title": "T", "points": 10, "kind": "written", "category": "exam", "share": 500, "usesAutomaticShare": false}]}]}]}"#,
+        #"{"exportedAt": "2026-01-15T09:00:00Z", "subjects": [{"name": "X", "abbreviation": "X", "kind": "basisfach", "writtenShare": 50, "activeSemesters": [0], "isOralExamSubject": false, "semesters": [{"index": 0, "isManuallyBracketed": false, "entries": [{"title": "T", "points": 10, "kind": "written", "category": "exam", "share": -20, "usesAutomaticShare": false}]}]}]}"#,
+    ])
+    func impossibleWeightsMakeTheFileUnreadable(file: String) throws {
+        #expect(throws: ScoreImport.Failure.unreadable) {
+            _ = try ScoreImport.read(Data(file.utf8))
+        }
+    }
+
+    /// Die Ränder bleiben erlaubt: 0 und 100 sind gültige Gewichtungen, und eine
+    /// Kursgrenze von 1 ist die kleinste, die der Editor selbst vergibt.
+    @Test("Die gültigen Ränder bleiben lesbar")
+    func thevalidBoundariesStillRead() throws {
+        let file = #"{"exportedAt": "2026-01-15T09:00:00Z", "subjects": [{"name": "X", "abbreviation": "X", "kind": "basisfach", "writtenShare": 0, "maximumContributedCourses": 1, "activeSemesters": [0], "isOralExamSubject": false, "semesters": [{"index": 0, "isManuallyBracketed": false, "entries": [{"title": "T", "points": 10, "kind": "written", "category": "exam", "share": 100, "usesAutomaticShare": false}]}]}]}"#
+
+        let export = try ScoreImport.read(Data(file.utf8))
+        #expect(export.subjects.first?.writtenShare == 0)
+        #expect(export.subjects.first?.maximumContributedCourses == 1)
+    }
+
     // MARK: - Die Grenze der mündlichen Prüfungsfächer
 
     /// Eine Datei mit drei Leistungsfächern und **drei** mündlichen

@@ -20,7 +20,6 @@ enum OnboardingStep: Int, CaseIterable {
     /// wenn sie stehen, ist die Frage überhaupt beantwortbar. Überspringen ist
     /// erlaubt, wer in Kursstufe 1 einsteigt, weiss es noch nicht.
     case oralExamSubjects
-    case language
     case summary
 
     /// Die Schritte, die im Fortschrittsbalken auftauchen.
@@ -53,7 +52,6 @@ final class OnboardingViewModel {
     var classLevel: ClassLevel = .kursstufe1
     var federalState = FederalState.all[0]
     var graduationYear = Calendar.current.component(.year, from: .now) + 2
-    var language: AppSettings.Language = .german
 
     /// Die drei Leistungsfächer, in der Reihenfolge der Auswahl.
     var advancedSubjects: [String] = []
@@ -466,8 +464,6 @@ final class OnboardingViewModel {
             hasCompletedOnboarding: true
         )
         context.insert(profile)
-
-        AppSettings.shared.language = language
 
         // Einmal abgefragt und nicht je Fach: Ein `fetch` pro Fachname wären ein
         // Dutzend Abfragen für eine Auskunft, die sich nicht ändert.

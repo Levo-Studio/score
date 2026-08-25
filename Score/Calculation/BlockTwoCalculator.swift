@@ -176,9 +176,16 @@ enum BlockTwoCalculator {
             return results.reduce(0, +) / Double(results.count)
         }
 
-        /// Wie viele der fünf Prüfungen noch fehlen.
+        /// Wie viele der erwarteten Prüfungen noch fehlen.
+        ///
+        /// Gerechnet gegen ``expectedExamCount`` und nicht gegen die Fünf: wer
+        /// seine Prüfungsfächer noch nicht vollständig gewählt hat, hat drei
+        /// erwartete Prüfungen und nicht fünf. Gegen die Konstante gerechnet
+        /// schriebe die Hochrechnung zwei Prüfungen fort, die es in den Daten gar
+        /// nicht gibt — und wiese für einen halb erfassten Jahrgang einen
+        /// vollständigen Prüfungsblock aus.
         var missingExamCount: Int {
-            max(0, examCount - recordedExamCount)
+            max(0, expectedExamCount - recordedExamCount)
         }
 
         /// Die hochgerechnete Punktzahl, wenn die fehlenden Prüfungen auf einem

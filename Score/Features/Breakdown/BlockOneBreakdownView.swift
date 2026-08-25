@@ -802,6 +802,14 @@ struct BlockOneBreakdownView: View {
                 .foregroundStyle(ScorePalette.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
+            // Ohne diesen Satz findet den Haken niemand: Kacheln sehen nicht aus
+            // wie Knöpfe, und das sollen sie hier auch nicht.
+            Text("Tippe einen Kurs an, um ihn selbst zu klammern — oder um deine Klammer zurückzunehmen.")
+                .font(.optionMeta)
+                .lineSpacing(4.5)
+                .foregroundStyle(ScorePalette.inkSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
             if let threshold = breakdown.optionalThreshold,
                breakdown.optionalCandidateCount > breakdown.optionalSlotCount {
                 Text("Der schwächste Kurs, der noch drin ist, steht bei \(threshold) Punkten.")
@@ -943,7 +951,7 @@ struct BlockOneBreakdownView: View {
 
                 HStack(spacing: 6) {
                     ForEach(entry.courses) { course in
-                        courseTile(course)
+                        courseTile(course, in: entry)
                     }
                 }
 
@@ -966,16 +974,54 @@ struct BlockOneBreakdownView: View {
         return Text("Bringt \(entry.includedCount) von \(entry.recordedCount) Kursen ein")
     }
 
-    /// Ein Halbjahr als Kachel: Beschriftung, Punktzahl, Zustand.
+    /// Ein Halbjahr als Kachel: Haken, Beschriftung, Punktzahl, Zustand.
     ///
     /// Der Zustand steht als eigene Zeile unter der Zahl und nicht als Farbe
     /// allein — „fällt raus" muss man lesen können, nicht erraten.
-    private func courseTile(_ course: BlockOneBreakdown.Course) -> some View {
+    ///
+    /// Die Kachel ist zugleich der Schalter. Wer hier liest, warum ein Kurs
+    /// draussen ist, will ihn oft genau hier auch hereinholen — der Umweg über
+    /// die Fachansicht und das richtige Halbjahr war eine Strecke, die niemand
+    /// gehen wollte. Der Schalter in der Fachansicht bleibt, er sagt dasselbe
+    /// über dieselbe Zahl.
+    @ViewBuilder
+    private func courseTile(
+        _ course: BlockOneBreakdown.Course,
+        in entry: BlockOneBreakdown.SubjectEntry
+    ) -> some View {
+        if isTogglable(course, in: entry) {
+            Button {
+                toggleBracket(course, in: entry)
+            } label: {
+                tileBody(course, in: entry)
+            }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(course.state.isIncluded ? [.isButton, .isSelected] : .isButton)
+            .accessibilityHint(
+                course.state.isIncluded
+                    ? Text("Klammert diesen Kurs, er zählt dann nicht mehr mit")
+                    : Text("Nimmt die Klammer zurück, der Kurs zählt dann wieder mit")
+            )
+        } else {
+            tileBody(course, in: entry)
+        }
+    }
+
+    private func tileBody(
+        _ course: BlockOneBreakdown.Course,
+        in entry: BlockOneBreakdown.SubjectEntry
+    ) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(verbatim: Semester.label(course.semesterIndex))
-                .font(.rowValueCaption)
-                .monospacedDigit()
-                .foregroundStyle(ScorePalette.inkSecondary)
+            HStack(spacing: 4) {
+                Text(verbatim: Semester.label(course.semesterIndex))
+                    .font(.rowValueCaption)
+                    .monospacedDigit()
+                    .foregroundStyle(ScorePalette.inkSecondary)
+
+                Spacer(minLength: 0)
+
+                check(course, in: entry)
+            }
 
             Text(ScoreNumberFormat.points(course.state.points))
                 .font(ScoreTypography.archivo(600, 18))
@@ -993,6 +1039,70 @@ struct BlockOneBreakdownView: View {
         .background(ScorePalette.fill)
         .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.chip, style: .continuous))
         .opacity(course.state.isIncluded ? 1 : 0.72)
+        .contentShape(Rectangle())
+        .scoreAnimation(ScoreMotion.toggle, value: course.state)
+    }
+
+    /// Der Haken sagt: **dieser Kurs zählt mit.**
+    ///
+    /// Nicht „von Hand geklammert" — das wäre der Zustand des Schalters und
+    /// nicht der der Rechnung. Ein Kurs kann ungeklammert sein und trotzdem
+    /// draussen, weil vierzig voll sind; ein Haken, der dort sässe, würde die
+    /// Aufschlüsselung an genau der Stelle belügen, an der sie erklärt.
+    ///
+    /// Wo nichts eingetragen ist, steht auch kein Haken: ein nicht belegtes
+    /// Halbjahr ist kein Kurs, über den zu entscheiden wäre.
+    @ViewBuilder
+    private func check(
+        _ course: BlockOneBreakdown.Course,
+        in entry: BlockOneBreakdown.SubjectEntry
+    ) -> some View {
+        if course.state.points != nil {
+            let isOn = course.state.isIncluded
+            Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(isOn ? ScorePalette.accent : ScorePalette.inkSecondary)
+                // Gesperrt heisst blass, nicht weg: Bei einem Prüfungsfach ist
+                // die Frage „kann ich das klammern?" berechtigt, und ein
+                // fehlender Haken liesse sie unbeantwortet.
+                .opacity(isTogglable(course, in: entry) ? 1 : 0.35)
+        }
+    }
+
+    /// Ob dieser Kurs hier von Hand umgeschaltet werden kann.
+    ///
+    /// Nur dort, wo die Entscheidung wirklich beim Nutzer liegt: bei einem Kurs,
+    /// der zählt — die Klammer nimmt ihn heraus —, und bei einem, den der Nutzer
+    /// selbst geklammert hat — die Klammer gibt ihn zurück.
+    ///
+    /// Ein automatisch geklammerter Kurs bleibt fest. Er ist nicht draussen,
+    /// weil jemand ihn herausgenommen hat, sondern weil vierzig andere besser
+    /// sind; ihn anzutippen könnte daran nichts ändern, und ein Haken, der beim
+    /// Tippen zurückspringt, wäre ein Versprechen, das die Rechnung nicht hält.
+    private func isTogglable(
+        _ course: BlockOneBreakdown.Course,
+        in entry: BlockOneBreakdown.SubjectEntry
+    ) -> Bool {
+        guard entry.allowsBracketing else { return false }
+        switch course.state {
+        case .included: return true
+        case .bracketed(_, let reason): return reason == .manual
+        case .notTaken, .notRecorded: return false
+        }
+    }
+
+    /// Schreibt die Klammer direkt ins Modell — wie der Schalter in der
+    /// Fachansicht. Fehlt der Halbjahres-Datensatz, geschieht nichts, statt
+    /// still einen neuen anzulegen.
+    private func toggleBracket(
+        _ course: BlockOneBreakdown.Course,
+        in entry: BlockOneBreakdown.SubjectEntry
+    ) {
+        guard let subject = subjects.first(where: { $0.identifier.uuidString == entry.id }),
+              let semester = subject.semester(at: course.semesterIndex)
+        else { return }
+
+        semester.isManuallyBracketed.toggle()
     }
 
     @ViewBuilder

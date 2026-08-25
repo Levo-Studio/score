@@ -495,7 +495,6 @@ struct SummaryStep: View {
                     SummaryRow(label: "Pflicht-Basisfächer", value: Text(verbatim: model.summaryList(model.sortedRequiredBasicSubjects)))
                     SummaryRow(label: "Wahl-Basisfächer", value: Text(verbatim: model.summaryList(model.sortedElectiveBasicSubjects)))
                     SummaryRow(label: "Mündliche Prüfung", value: Text(verbatim: model.summaryList(model.sortedOralExamSubjects)))
-                    SummaryRow(label: "Sprache", value: Text(model.summaryLanguage))
                 }
             }
             .staggeredAppearance(index: 3)

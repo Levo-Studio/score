@@ -407,13 +407,6 @@ final class OnboardingViewModel {
         }
     }
 
-    /// Der Sprachname bleibt bewusst unübersetzt: „Deutsch" heisst auch in der
-    /// englischen Oberfläche „Deutsch", sonst wäre die Auswahl für jemanden, der
-    /// die aktive Sprache nicht liest, nicht wiederzufinden.
-    var summaryLanguage: String {
-        language.title
-    }
-
     /// Fasst eine Auswahl für die Abschluss-Karte zusammen.
     func summaryList(_ names: [String]) -> String {
         names.isEmpty ? ScoreNumberFormat.placeholder : names.joined(separator: ", ")

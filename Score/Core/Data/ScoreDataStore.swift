@@ -608,6 +608,24 @@ final class UnsavedInputRegistry {
         whenFree.append(action)
     }
 
+    /// Führt Arbeit aus, während der Aufschub steht.
+    ///
+    /// Für alles, was **zwischen** zwei Zeitpunkten auf dem Hauptaktor liegt und
+    /// dazwischen wartet: ein Bild aus der Mediathek laden und verkleinern, eine
+    /// Datei lesen. Vor dem `await` gehört ein Modellobjekt noch dem geltenden
+    /// Kontext, danach womöglich nicht mehr — und ein Schreibzugriff nach dem
+    /// Warten ginge stumm ins Leere.
+    ///
+    /// Anmelden und wieder abmelden gehören deshalb zusammen und liegen hier in
+    /// einer Hand: Ein `defer` kann nicht vergessen werden, ein von Hand
+    /// gesetztes `end` schon — und eine vergessene Abmeldung ist genau die
+    /// hängende Anmeldung, für die es die Frist gibt.
+    func holding<T>(_ work: () async -> T) async -> T {
+        let hold = begin()
+        defer { end(hold) }
+        return await work()
+    }
+
     // MARK: - Die Frist
 
     /// Legt die nächste Anmeldung fällig, sobald ihre Frist um ist.

@@ -300,6 +300,49 @@ struct UnsavedInputHandoverTests {
         #expect(reopens.count == 1)
     }
 
+    // MARK: - Arbeit über ein Warten hinweg
+
+    /// Was zwischen zwei Zeitpunkten wartet und danach auf ein Modellobjekt
+    /// schreibt, braucht den Aufschub für seine ganze Dauer — sonst gehört das
+    /// Objekt am Ende einem Kontext, den es nicht mehr gibt. In der App ist das
+    /// das Laden und Verkleinern eines Profilbildes.
+    @Test("Während gehaltener Arbeit wird nicht getauscht")
+    func heldWorkHoldsBackTheHandover() async {
+        let registry = UnsavedInputRegistry()
+        let reopens = Reopens()
+        let sync = makeSync(registry: registry, reopens: reopens)
+
+        // Der Abgleich meldet sich, während die Arbeit läuft — genau der Fall
+        // aus dem Betrieb: Rückkehr in den Vordergrund, während das Bild noch
+        // geladen wird.
+        let didWork = await registry.holding {
+            #expect(registry.holdsUnsavedInput)
+            sync.start(trigger: .automatic)
+            await settle()
+            #expect(reopens.count == 0)
+            return true
+        }
+
+        #expect(didWork)
+        #expect(registry.holdsUnsavedInput == false)
+
+        // Und nachgeholt wird er trotzdem — ein Aufschub, der nie endet, wäre
+        // die nächste Regression.
+        await waitUntil { reopens.count == 1 }
+        #expect(reopens.count == 1)
+    }
+
+    @Test("Gehaltene Arbeit gibt ihre Anmeldung auch bei einem Fehlschlag frei")
+    func heldWorkAlwaysReleases() async {
+        let registry = UnsavedInputRegistry()
+
+        let result: Data? = await registry.holding { nil }
+
+        #expect(result == nil)
+        #expect(registry.holdsUnsavedInput == false)
+        #expect(registry.openCount == 0)
+    }
+
     // MARK: - Die Marke des Speichers
 
     @Test("Der Speicher meldet seinen Tausch, von der ersten Stufe bis nach der zweiten")

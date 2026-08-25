@@ -457,8 +457,9 @@ enum ScoreImport {
 
     /// Trägt die Leistungen nach, die im Halbjahr noch fehlen.
     ///
-    /// **Dieselbe Leistung** ist die mit gleichem Titel, gleicher Punktzahl,
-    /// gleicher Art und im selben Halbjahr — sie wird übersprungen. Ohne diese
+    /// **Dieselbe Leistung** ist die mit derselben Kennung — und, wo keine
+    /// vorliegt, die mit gleichem Titel, gleicher Punktzahl, gleicher Art und im
+    /// selben Halbjahr. Sie wird übersprungen. Ohne diese
     /// Regel verdoppelte derselbe Import beim zweiten Mal alles, und der Nutzer
     /// stünde vor einem Bestand, den er nicht mehr entwirren kann.
     ///
@@ -477,17 +478,55 @@ enum ScoreImport {
     /// aus einer alten Sicherung ohne Zeitstempel und einmal aus einer neuen,
     /// bliebe sonst nicht dieselbe, und der zweite Import legte sie ein weiteres
     /// Mal an.
+    ///
+    /// ## Warum die Kennung **nicht** in den Fingerabdruck gehört, sondern davor
+    ///
+    /// Sie einfach als fünftes Feld danebenzustellen würde die Regel verschärfen
+    /// statt sie zu verbessern: Zwei Zeilen mit gleichem Titel, gleicher
+    /// Punktzahl und verschiedener Kennung wären dann nicht mehr dieselbe
+    /// Leistung, und jede alte Sicherung ohne Kennung liesse sich neben einer
+    /// neuen ein zweites Mal einlesen — genau der Fehler, den der fehlende
+    /// Zeitstempel schon einmal gemacht hat.
+    ///
+    /// Eine bekannte Kennung ist etwas anderes als ein bekannter Wert, und sie
+    /// wiegt schwerer: Sie sagt „diese Leistung steht hier schon", während der
+    /// Fingerabdruck nur sagt „etwas mit diesen Werten steht hier schon".
+    /// Gefragt wird deshalb in zwei Stufen — zuerst die Kennung, und nur wenn die
+    /// Datei keine mitbringt oder sie unbekannt ist, der Fingerabdruck.
+    ///
+    /// Das ist die eigentliche Reparatur des Falls: Sicherung ergänzend
+    /// einlesen, eine Leistung umbenennen, dieselbe Sicherung erneut ergänzen.
+    /// Der Fingerabdruck passt danach nicht mehr — die Kennung schon, und die
+    /// Leistung entsteht kein zweites Mal.
     private static func merge(
         _ imported: [ScoreExport.Entry],
         into semester: SemesterResult,
         in context: ModelContext
     ) {
-        let known = Set((semester.entries ?? []).map { fingerprint(of: $0) })
+        let existing = semester.entries ?? []
+        let known = Set(existing.map { fingerprint(of: $0) })
+
+        // Die Kennungen, die **vor** dem Import dastanden. Nur sie entscheiden,
+        // ob eine Zeile der Datei schon im Bestand steht — genau wie beim
+        // Fingerabdruck wird nie gegen andere Zeilen derselben Datei verglichen.
+        let knownIdentifiers = Set(existing.map(\.identifier))
+
+        // Die Kennungen, die anschliessend vergeben sind. Sie wächst mit: Trägt
+        // eine von Hand zusammengeschnittene Datei dieselbe Kennung zweimal, ist
+        // die zweite Zeile keine bekannte Leistung, sondern eine Kollision. Sie
+        // entsteht dann mit einer frischen Kennung — zwei Zeilen im selben
+        // Halbjahr mit derselben Kennung sind genau der Zustand, den dieser
+        // Umbau beseitigt.
+        var takenIdentifiers = knownIdentifiers
 
         for entry in imported {
             guard let kind = GradeKind(rawValue: entry.kind),
                   let category = GradeCategory(rawValue: entry.category)
             else { continue }
+
+            // Erste Stufe: Kennt der Bestand diese Leistung schon, ist sie es —
+            // gleichgültig, was seither an ihr geändert wurde.
+            if let identifier = entry.identifier, knownIdentifiers.contains(identifier) { continue }
 
             let mark = Fingerprint(
                 title: entry.title,
@@ -496,6 +535,12 @@ enum ScoreImport {
                 category: category
             )
             guard !known.contains(mark) else { continue }
+
+            // Steht eine Kennung in der Datei und ist sie hier noch frei, gilt
+            // sie. Sonst entsteht eine neue: Ältere Dateien kannten das Feld
+            // nicht, und eine Leistung ohne Kennung gibt es nicht.
+            let identifier = entry.identifier.flatMap { takenIdentifiers.contains($0) ? nil : $0 }
+                ?? UUID()
 
             let created = GradeEntry(
                 title: entry.title,
@@ -507,10 +552,12 @@ enum ScoreImport {
                 // Steht der Zeitstempel in der Datei, gilt er. Ältere Dateien
                 // kannten das Feld nicht — dann bleibt es beim Standardwert
                 // `.now`, mehr weiss diese Datei nicht.
-                createdAt: entry.createdAt ?? .now
+                createdAt: entry.createdAt ?? .now,
+                identifier: identifier
             )
             created.semester = semester
             context.insert(created)
+            takenIdentifiers.insert(identifier)
         }
     }
 

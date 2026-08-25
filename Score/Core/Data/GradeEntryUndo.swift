@@ -18,8 +18,15 @@ import SwiftData
 /// eine Handlung dieser Ansicht — er kennt auch jede Änderung im Eingabe-Sheet.
 /// Hier soll genau eine Löschung rückgängig gehen, und dafür reichen die Werte:
 /// die Leistung wird neu angelegt und wieder an ihr Halbjahr gehängt. Sie
-/// bekommt dabei eine neue `persistentModelID`, was folgenlos ist — `GradeEntry`
-/// hat keine geräteübergreifende Kennung, die irgendwo referenziert würde.
+/// bekommt dabei eine neue `persistentModelID` — die ist ohnehin gerätelokal und
+/// wird nirgends festgehalten.
+///
+/// Ihre eigene Kennung ``GradeEntry/identifier`` nimmt die Abschrift dagegen mit
+/// und trägt sie wieder ein: Zurückgeholt werden soll **dieselbe** Leistung, und
+/// an dieser Kennung hängt inzwischen alles, was sie über die Zeit wiederfinden
+/// muss — das offene Blatt (``PendingEntry``) ebenso wie der Dublettenabgleich
+/// des Imports. Eine frische Kennung machte aus der zurückgeholten Leistung eine
+/// zweite, die dieselbe Sicherung beim nächsten Ergänzen erneut anlegte.
 struct GradeEntryUndo: Identifiable, Equatable {
 
     /// Nur zur Unterscheidung zweier aufeinanderfolgender Löschungen: der
@@ -32,6 +39,9 @@ struct GradeEntryUndo: Identifiable, Equatable {
     var category: GradeCategory
     var share: Int
     var usesAutomaticShare: Bool
+
+    /// Die eigene Kennung der gelöschten Leistung — sie kommt mit zurück.
+    var identifier: UUID
 
     /// Der ursprüngliche Anlagezeitpunkt — er bestimmt die Reihenfolge in der
     /// Liste, die Leistung soll also an ihre alte Stelle zurück.
@@ -50,6 +60,7 @@ struct GradeEntryUndo: Identifiable, Equatable {
         self.share = entry.share
         self.usesAutomaticShare = entry.usesAutomaticShare
         self.createdAt = entry.createdAt
+        self.identifier = entry.identifier
         self.semesterIndex = semesterIndex
     }
 
@@ -81,7 +92,8 @@ struct GradeEntryUndo: Identifiable, Equatable {
             category: category,
             share: share,
             usesAutomaticShare: usesAutomaticShare,
-            createdAt: createdAt
+            createdAt: createdAt,
+            identifier: identifier
         )
         entry.semester = semester
         context.insert(entry)

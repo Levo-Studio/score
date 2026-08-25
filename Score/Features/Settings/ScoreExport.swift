@@ -15,7 +15,8 @@ import UniformTypeIdentifiers
 /// **jede Angabe, die sich von Hand eintragen lässt**: Farbe, Kursgrenze,
 /// Doppelwertung, die beiden Abiturprüfungsergebnisse und die Handklammerung
 /// jedes Halbjahres — dazu die Herkunft jedes Fachs und seine Position in der
-/// Liste, das Profilbild und der Anlagezeitpunkt jeder einzelnen Leistung.
+/// Liste, das Profilbild sowie Anlagezeitpunkt und Kennung jeder einzelnen
+/// Leistung.
 ///
 /// ## Die Formatversion
 ///
@@ -30,8 +31,11 @@ struct ScoreExport: Codable, Transferable {
     /// 1 war die erste Fassung ohne Farbe, Kursgrenze, Doppelwertung und
     /// Prüfungsergebnisse. 2 hatte noch weder Herkunft noch Reihenfolge der
     /// Fächer. 3 kannte weder das Profilbild noch den Anlagezeitpunkt einer
-    /// Leistung — beides ging beim Wiedereinspielen verloren.
-    static let currentFormatVersion = 4
+    /// Leistung — beides ging beim Wiedereinspielen verloren. 4 trug keine
+    /// Kennung je Leistung: Eine wieder eingelesene Leistung war danach eine
+    /// andere als die exportierte, und wer dieselbe Sicherung nach einer
+    /// Bearbeitung erneut ergänzte, bekam sie ein zweites Mal.
+    static let currentFormatVersion = 5
 
     /// Die Fassung, nach der diese Datei geschrieben wurde.
     ///
@@ -138,6 +142,19 @@ struct ScoreExport: Codable, Transferable {
         /// geschlossen hinter den vorhandenen, und zurückholen liess sich die
         /// Chronologie nicht mehr.
         var createdAt: Date?
+
+        // Seit Fassung 5. In älteren Dateien fehlt sie und bleibt `nil`.
+
+        /// Die eigene Kennung der Leistung.
+        ///
+        /// Sie gehört in die Sicherung, weil die Sicherung sonst ihre eigene
+        /// Zusage bricht: „Wer den Export später wieder einliest, soll dieselben
+        /// Zahlen sehen" heisst auch, dass es **dieselbe** Leistung sein muss.
+        /// Ohne die Kennung bekam jede eingelesene Zeile eine neue, und der
+        /// Import konnte eine bereits eingelesene Leistung nur noch an ihren
+        /// Werten wiedererkennen — wer den Titel danach änderte, hatte sie beim
+        /// nächsten Ergänzen zweimal. Siehe ``PendingEntry``.
+        var identifier: UUID?
     }
 
     init(profile: StudentProfile?, subjects: [Score.Subject]) {
@@ -172,7 +189,8 @@ struct ScoreExport: Codable, Transferable {
                                 category: entry.category.rawValue,
                                 share: entry.share,
                                 usesAutomaticShare: entry.usesAutomaticShare,
-                                createdAt: entry.createdAt
+                                createdAt: entry.createdAt,
+                                identifier: entry.identifier
                             )
                         }
                     )

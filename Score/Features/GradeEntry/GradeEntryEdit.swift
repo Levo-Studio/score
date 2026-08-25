@@ -327,10 +327,14 @@ enum LostInput: Identifiable, Hashable {
 ///
 /// Sie liegt nahe — eine Kennung ist sie ja —, taugt hier aber nicht: Sie gilt
 /// für **einen Speicher**, nicht für eine Datei. Öffnet
-/// ``ScoreDataStore/reopen(make:)`` denselben Bestand ein zweites Mal, tragen
-/// dieselben Zeilen andere `PersistentIdentifier`, und ein Vergleich findet
-/// nichts wieder. Nachgemessen ist das in `GradeEntryContextHandoverTests`; wer
-/// es erneut versucht, bekommt dort sofort einen roten Test.
+/// ``ScoreDataStore/reopen(make:)`` denselben Bestand ein zweites Mal, vergleicht
+/// sich eine festgehaltene `PersistentIdentifier` mit der derselben Zeile im
+/// neuen Kontext **nicht** gleich, und ein Vergleich findet nichts wieder. Wer
+/// es trotzdem versucht und die alte Kennung an `ModelContext.model(for:)`
+/// reicht, bekommt keinen leeren Treffer, sondern einen Absturz: „This model
+/// instance was invalidated because its backing data could no longer be found in
+/// the store." Nachgemessen ist beides in
+/// `GradeEntryContextHandoverTests.thePersistentIdentifierDoesNotSurviveTheHandover`.
 ///
 /// Auf einem zweiten Gerät wäre sie ohnehin eine andere — für einen Bestand, der
 /// über iCloud auf mehreren Geräten liegt, ist eine gerätelokale Kennung die
@@ -338,18 +342,31 @@ enum LostInput: Identifiable, Hashable {
 ///
 /// ## Woran eine Leistung stattdessen wiedererkannt wird
 ///
-/// An ihrem Halbjahr und ihrem Anlagezeitpunkt. Beides sind Werte, beide werden
-/// gespiegelt, und innerhalb eines Halbjahres ist der Anlagezeitpunkt eindeutig:
-/// Er entsteht beim Anlegen aus `Date.now` und wird danach nie mehr verändert —
-/// auch der Import und die Rücknahme einer Löschung tragen den ursprünglichen
-/// Wert wieder ein, damit die Reihenfolge in der Liste stimmt.
+/// An ``GradeEntry/identifier``, ihrer eigenen geräteübergreifenden Kennung.
+///
+/// Hier stand einmal der Anlagezeitpunkt: „innerhalb eines Halbjahres ist er
+/// eindeutig". Für den Import war das nicht gedeckt. Der Export kürzt
+/// `createdAt` auf ganze Sekunden (ISO 8601), der Import trägt genau diesen Wert
+/// wieder ein, und sein Dublettenabgleich vergleicht Titel, Punkte, Art und
+/// Kategorie — nicht den Zeitstempel. Wer eine Sicherung ergänzend einliest,
+/// danach einen Titel ändert und dieselbe Sicherung erneut einliest, hat zwei
+/// Zeilen im selben Halbjahr mit demselben `createdAt`. Ab da lieferte
+/// ``resolve(in:)`` für beide dasselbe Objekt: Das Blatt zeigte beim Antippen
+/// der zweiten Zeile die Werte der ersten, „Löschen" traf die erste, und
+/// „Rückgängig" nahm die falsche zurück — alles stumm.
 struct PendingEntry: Equatable {
 
     /// Das Halbjahr, in dem die Leistung steht.
+    ///
+    /// Es bleibt Teil der Kennung, obwohl die eigene Kennung der Leistung allein
+    /// ausreichen würde: Eine Leistung ist über die Fachansicht nur erreichbar,
+    /// solange sie an ihrem Halbjahr hängt. Verschwindet das Fach, soll das Blatt
+    /// ehrlich melden, dass es die Leistung nicht mehr gibt, statt auf einer
+    /// Waise weiterzuschreiben.
     let semester: PendingSemester
 
-    /// Der Anlagezeitpunkt — innerhalb des Halbjahres die eigentliche Kennung.
-    let createdAt: Date
+    /// Die eigene Kennung der Leistung.
+    let identifier: UUID
 
     /// Nimmt die Kennung einer bestehenden Leistung auf.
     ///
@@ -363,15 +380,19 @@ struct PendingEntry: Equatable {
             subjectIdentifier: entry.semester?.subject?.identifier,
             index: entry.semester?.index ?? -1
         )
-        createdAt = entry.createdAt
+        identifier = entry.identifier
     }
 
     /// Sucht die Leistung in diesem Kontext.
     ///
+    /// Gesucht wird innerhalb des Halbjahres und nicht über den ganzen Bestand:
+    /// Dieselbe Frage wie beim Anlegen — hängt die Leistung noch dort, wo das
+    /// Blatt sie gefunden hat?
+    ///
     /// - Returns: `nil`, wenn Fach, Halbjahr oder Leistung nicht mehr da sind.
     func resolve(in context: ModelContext) -> GradeEntry? {
         guard let semester = semester.resolve(in: context) else { return nil }
-        return (semester.entries ?? []).first { $0.createdAt == createdAt }
+        return (semester.entries ?? []).first { $0.identifier == identifier }
     }
 }
 

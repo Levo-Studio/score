@@ -39,16 +39,23 @@ struct UnsavedInputHandoverTests {
         func record() { count += 1 }
     }
 
+    /// Ob dieser Prozess gerade abgleichen kann — umlegbar, damit sich die
+    /// Wache in `start` im Test auch verschliessen lässt.
+    private final class Availability {
+        var isAvailable = true
+    }
+
     private func makeSync(
         registry: UnsavedInputRegistry,
-        reopens: Reopens
+        reopens: Reopens,
+        availability: Availability = Availability()
     ) -> ManualCloudSync {
         ManualCloudSync(
             defaults: makeDefaults(),
             observesEvents: false,
             settleDuration: .milliseconds(50),
             saveAndReopen: { reopens.record() },
-            isAvailable: { true },
+            isAvailable: { availability.isAvailable },
             holdsUnsavedInput: { registry.holdsUnsavedInput },
             whenNothingIsOpen: { registry.whenNothingIsOpen($0) }
         )
@@ -171,6 +178,69 @@ struct UnsavedInputHandoverTests {
         await waitUntil { reopens.count == 1 }
 
         #expect(reopens.count == 1)
+    }
+
+    // MARK: - Die Zusage „genau einmal nachgeholt"
+
+    /// Der gemeldete Fund: Die Nachhol-Schliessung setzte die Vormerkung zurück,
+    /// **bevor** sie den Lauf anstiess. Scheiterte der Anstoss an der Wache in
+    /// `start` — ein Lauf ist schon unterwegs, oder dieser Prozess kann gar nicht
+    /// abgleichen —, war der aufgeschobene Lauf ersatzlos weg und wurde nirgends
+    /// neu vorgemerkt.
+    @Test("Ein nicht zustande gekommener Nachhol-Lauf bleibt vorgemerkt")
+    func aBlockedCatchUpStaysPending() async {
+        let registry = UnsavedInputRegistry()
+        let reopens = Reopens()
+        let availability = Availability()
+        let sync = makeSync(registry: registry, reopens: reopens, availability: availability)
+
+        let hold = registry.begin()
+        sync.start(trigger: .automatic)
+        await settle()
+        #expect(sync.isDeferred)
+
+        // In der Zwischenzeit kann dieser Prozess nicht mehr abgleichen: Der
+        // nachgeholte Lauf läuft in die Wache von `start`.
+        availability.isAvailable = false
+        registry.end(hold)
+        await settle()
+
+        #expect(reopens.count == 0)
+        // Er ist deshalb nicht weg, sondern weiterhin vorgemerkt.
+        #expect(sync.isDeferred)
+    }
+
+    /// Und die Vormerkung bleibt bedienbar: Der nächste Aufschub hinterlegt eine
+    /// neue Schliessung, statt an der eigenen alten Vormerkung hängenzubleiben.
+    @Test("Der weiterhin vorgemerkte Lauf wird beim nächsten freien Moment nachgeholt")
+    func thePendingRunIsCaughtUpLater() async {
+        let registry = UnsavedInputRegistry()
+        let reopens = Reopens()
+        let availability = Availability()
+        let sync = makeSync(registry: registry, reopens: reopens, availability: availability)
+
+        let first = registry.begin()
+        sync.start(trigger: .automatic)
+        await settle()
+
+        availability.isAvailable = false
+        registry.end(first)
+        await settle()
+        #expect(reopens.count == 0)
+
+        // Der Abgleich ist wieder möglich, und der Nutzer öffnet und schliesst
+        // das nächste Blatt.
+        availability.isAvailable = true
+        let second = registry.begin()
+        sync.start(trigger: .automatic)
+        await settle()
+        #expect(reopens.count == 0)
+
+        registry.end(second)
+        await waitUntil { reopens.count == 1 }
+
+        #expect(reopens.count == 1)
+        #expect(sync.isDeferred == false)
     }
 
     // MARK: - Die Frist auf der Anmeldung

@@ -196,6 +196,14 @@ final class ManualCloudSync {
     /// hat, muss auch nicht erklären, warum er noch nicht lief.
     private(set) var isDeferred = false
 
+    /// Ob bei der Anmeldestelle bereits eine Nachhol-Schliessung liegt.
+    ///
+    /// Getrennt von ``isDeferred``, weil beides auseinanderlaufen kann: Kam der
+    /// nachgeholte Lauf nicht zustande, ist die Schliessung verbraucht, der Lauf
+    /// aber weiterhin vorgemerkt — und der nächste Aufschub muss dann eine neue
+    /// Schliessung hinterlegen dürfen.
+    private var isArmed = false
+
     /// Stösst einen Abgleich an.
     ///
     /// Während ein Lauf unterwegs ist, tut ein weiterer Tipp nichts.
@@ -268,12 +276,43 @@ final class ManualCloudSync {
     /// holt, während dasselbe Blatt offen steht, bekommt einen nachgeholten
     /// Abgleich und nicht zwei.
     private func deferUntilNothingIsOpen() {
-        guard !isDeferred else { return }
         isDeferred = true
 
+        // Die Vormerkung und die Schliessung bei der Anmeldestelle sind zwei
+        // verschiedene Dinge. Nur die Schliessung darf es einmal geben — die
+        // Vormerkung kann sie überdauern, wenn der nachgeholte Lauf nicht
+        // zustande kam.
+        guard !isArmed else { return }
+        armCatchUp()
+    }
+
+    /// Hinterlegt bei der Anmeldestelle, was beim nächsten freien Moment zu tun
+    /// ist.
+    ///
+    /// ## Warum `isDeferred` hier nicht vorab fällt
+    ///
+    /// Vorher stand hier `isDeferred = false` **vor** `start`. Scheiterte `start`
+    /// dann an seiner Wache — ein Lauf ist schon unterwegs, oder dieser Prozess
+    /// kann gar nicht abgleichen —, war der aufgeschobene Lauf ersatzlos weg und
+    /// wurde nirgends neu vorgemerkt. Die Zusage „genau einmal nachgeholt" galt
+    /// dann nicht.
+    ///
+    /// Jetzt setzt `start` die Vormerkung selbst zurück, und zwar erst, wenn der
+    /// Lauf wirklich beginnt. Kam er nicht zustande, bleibt er vorgemerkt: Der
+    /// nächste automatische Anstoss trifft entweder auf ein freies Feld und läuft
+    /// sofort, oder auf ein offenes Blatt und hinterlegt hier eine neue
+    /// Schliessung.
+    private func armCatchUp() {
+        isArmed = true
+
         whenNothingIsOpen { [weak self] in
-            guard let self, self.isDeferred else { return }
-            self.isDeferred = false
+            guard let self else { return }
+
+            // Die Schliessung ist verbraucht — noch **bevor** `start` läuft, denn
+            // `start` kann von sich aus eine neue hinterlegen wollen.
+            self.isArmed = false
+            guard self.isDeferred else { return }
+
             self.start(trigger: .automatic)
         }
     }

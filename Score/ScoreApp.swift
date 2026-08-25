@@ -141,6 +141,16 @@ private struct ScoreRoot: View {
     ///
     /// Der Blick in die App ist der ehrlichste Zeitpunkt für eine Nachfrage:
     /// Genau dann will jemand seinen Stand sehen.
+    ///
+    /// ## Warum das hier nicht immer sofort passiert
+    ///
+    /// Der Abgleich tauscht den `ModelContainer`, und dabei werden alle
+    /// Modellobjekte des alten Kontexts ungültig. Steht gerade ein Eingabe-Blatt
+    /// offen, hält es ungesicherte Eingaben, die dem alten Kontext gehören —
+    /// genau daran sind zwei Anläufe gescheitert, die das in der Oberfläche
+    /// auffangen wollten. Deshalb wartet der automatische Abgleich, bis das
+    /// letzte Blatt zu ist, und läuft dann nach; die Begründung steht in
+    /// ``UnsavedInputRegistry``, die Umsetzung in ``ManualCloudSync/start(trigger:)``.
     private func syncIfStale() {
         let sync = ManualCloudSync.shared
         guard sync.canStart else { return }
@@ -151,6 +161,6 @@ private struct ScoreRoot: View {
             return
         }
 
-        sync.start()
+        sync.start(trigger: .automatic)
     }
 }

@@ -75,7 +75,10 @@ struct SubjectDetailView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $isEditorPresented) {
+            // Der Editor hält einen Entwurf, der erst beim Sichern ins Modell
+            // geht — solange er steht, wird der Speicher nicht getauscht.
             SubjectEditorView(target: .existing(subject)) { dismiss() }
+                .holdsUnsavedInput()
         }
         // Mittig und nicht von unten: siehe ``ScoreOverlaySheet``.
         .scoreOverlaySheet(item: closingEntrySheet) { edit in

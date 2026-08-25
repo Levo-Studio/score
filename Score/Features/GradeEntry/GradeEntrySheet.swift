@@ -85,6 +85,14 @@ struct GradeEntrySheet: View {
         .padding(.horizontal, 24)
         .padding(.top, 22)
         .padding(.bottom, 24)
+        // Solange dieses Blatt steht, tauscht der automatische Abgleich den
+        // Speicher nicht. Es hält ungesicherte Eingaben — bei einem Entwurf sogar
+        // eine Leistung, die es noch gar nicht gibt —, und ein Containertausch
+        // machte den Kontext darunter ungültig. Die Anmeldung sitzt hier am Blatt
+        // selbst und nicht bei den beiden Aufrufern, damit iPhone und iPad sich
+        // nicht auseinanderentwickeln können. Warum die Wurzel hier liegt und
+        // nicht in der Fachansicht, steht in ``UnsavedInputRegistry``.
+        .holdsUnsavedInput()
     }
 
     // MARK: - Kopf

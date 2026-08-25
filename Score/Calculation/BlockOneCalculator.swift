@@ -230,6 +230,18 @@ enum BlockOneCalculator {
         /// Ob die Mindestbedingung von 200 Punkten erfüllt ist.
         var meetsMinimum: Bool { points >= passingPoints }
 
+        /// Ob der Kursblock selbst erst eine Hochrechnung ist.
+        ///
+        /// Wahr, solange nicht alle 48 Wertungen stehen. Der Schnitt wird durch
+        /// die tatsächliche Zahl der Wertungen geteilt und auf 40 Kurse gestreckt
+        /// — das ist die richtige Rechnung, aber es ist eine Fortschreibung des
+        /// bisher Gezeigten und kein Ergebnis. Wer drei Kurse mit je 15 Punkten
+        /// erfasst hat, steht hier bei 600 von 600; das ist eine Aussicht und darf
+        /// nirgends als feststehende Zahl auftreten.
+        var isProjection: Bool {
+            effectiveWeightingCount < weightingCount
+        }
+
         /// Alle Kurse, die erfasst sind, aber nicht in den Score einfliessen.
         var excludedCourses: Set<CourseIdentifier> {
             Set(bracketReasons.keys)

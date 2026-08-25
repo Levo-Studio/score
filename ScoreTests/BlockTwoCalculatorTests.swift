@@ -156,6 +156,26 @@ struct BlockTwoCalculatorTests {
         }
     }
 
+    @Test("Mehr als fünf Prüfungen sprengen den Block nicht")
+    func moreThanFiveExamsStayWithinTheBlock() {
+        // Vier Leistungsfächer neben zwei mündlichen Prüfungsfächern: amtlich
+        // unmöglich, im Datenbestand nach einem Import oder Sync trotzdem denkbar.
+        let subjects = (1...4).map {
+            subject("lf-\($0)", .leistungsfach, allPoints: 15, writtenExamPoints: 15)
+        } + (1...2).map {
+            subject("mp-\($0)", .wahlBasisfach, allPoints: 15, isOralExam: true, oralExamPoints: 15)
+        }
+
+        let outcome = BlockTwoCalculator.calculate(for: subjects)
+
+        // Sechs Prüfungen à 60 wären 360 — den Block gibt es nur bis 300.
+        #expect(outcome.points == BlockTwoCalculator.maximumPoints)
+        #expect(outcome.expectedExamCount == 5)
+        #expect(outcome.recordedExamCount == 5)
+        #expect(outcome.isComplete)
+        #expect(outcome.missingExamCount == 0)
+    }
+
     // MARK: - Was noch fehlt
 
     @Test("Eine fehlende Prüfung ist nicht null Punkte")

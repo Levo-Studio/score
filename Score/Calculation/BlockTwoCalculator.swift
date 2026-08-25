@@ -144,12 +144,22 @@ enum BlockTwoCalculator {
         /// Die fünf Prüfungen in fester Reihenfolge: erst schriftlich, dann mündlich.
         var exams: [Exam]
         /// Wie viele der fünf Prüfungen ein Ergebnis haben.
+        ///
+        /// Nie mehr als fünf: mehr Prüfungen als die Verordnung kennt, kann es
+        /// nicht geben. Siehe ``expectedExamCount``.
         var recordedExamCount: Int
         /// Wie viele Prüfungen es überhaupt gibt.
         ///
         /// Amtlich immer fünf. Solange die Prüfungsfächer nicht vollständig
         /// gewählt sind, kennt Score weniger — die Zahl steht deshalb hier und ist
         /// keine Konstante der Anzeige.
+        ///
+        /// Nach oben ist sie auf fünf begrenzt. Eine Fächerwahl mit vier
+        /// Leistungsfächern und zwei mündlichen Prüfungsfächern ist nicht
+        /// vorgesehen, kann aber im Datenbestand stehen — etwa nach einem Import
+        /// oder einem Sync über zwei Geräte. Score rechnet solche Fälle weiter,
+        /// meldet aber keine sechste Prüfung: sonst stünde „6 von 5 eingetragen"
+        /// auf dem Bildschirm und ``isComplete`` würde nie wahr.
         var expectedExamCount: Int
 
         /// Ob alle fünf Prüfungen ein Ergebnis haben.
@@ -200,11 +210,21 @@ enum BlockTwoCalculator {
     /// Stellt die fünf Prüfungen aus den Fächern zusammen und rechnet Block II.
     static func calculate(for subjects: [SubjectInput]) -> Outcome {
         let exams = self.exams(in: subjects)
+
+        // Mehr als fünf Prüfungen sieht die Verordnung nicht vor. Im Datenbestand
+        // stehen kann es trotzdem: vier Leistungsfächer neben zwei mündlichen
+        // Prüfungsfächern ergeben sechs Prüfungen — nach einem Import, einem Sync
+        // über zwei Geräte oder einer noch unfertigen Fächerwahl. Score rechnet
+        // dann weiter, aber innerhalb der amtlichen Grenzen: der Beitrag ist bei
+        // 300 Punkten gedeckelt, und gezählt werden höchstens fünf Prüfungen.
+        // Ohne den Deckel stünden bis zu 360 Punkte in einem Block, den es nur bis
+        // 300 gibt, und ``Outcome/isComplete`` — das genau fünf verlangt — würde
+        // nie wahr, das Ergebnis bliebe also für immer eine Hochrechnung.
         return Outcome(
-            points: exams.compactMap(\.points).reduce(0, +),
+            points: min(maximumPoints, exams.compactMap(\.points).reduce(0, +)),
             exams: exams,
-            recordedExamCount: exams.count { $0.result != nil },
-            expectedExamCount: exams.count
+            recordedExamCount: min(examCount, exams.count { $0.result != nil }),
+            expectedExamCount: min(examCount, exams.count)
         )
     }
 

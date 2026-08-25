@@ -19,6 +19,12 @@ struct PadSubjectEditorView: View {
 
     @State private var draft: SubjectDraft
 
+    /// Das Fach, dessen Löschung zur Bestätigung ansteht.
+    ///
+    /// Dasselbe Muster wie in der Sidebar: Der Dialog hängt an der Anfrage und
+    /// nicht an einem `Bool`, damit er nicht ohne Name und Zahl erscheinen kann.
+    @State private var pendingDeletion: SubjectDeletion.Request?
+
     init(target: SubjectEditorTarget, route: Binding<PadRoute>) {
         self.target = target
         _route = route
@@ -50,6 +56,12 @@ struct PadSubjectEditorView: View {
             .padding(.bottom, PadMetrics.contentPadding)
         }
         .scrollIndicators(.hidden)
+        // Dieselbe Frage wie beim Wisch in der Sidebar, aus derselben Fassung:
+        // Zwei Wege zum selben Löschen dürfen nicht verschieden warnen.
+        .subjectDeleteConfirmation($pendingDeletion, among: subjects) { _ in
+            // Das Fach ist weg — der Editor hat kein Ziel mehr.
+            route = .dashboard
+        }
     }
 
     // MARK: - Linke Spalte
@@ -288,9 +300,17 @@ struct PadSubjectEditorView: View {
         route = .subject(subject.identifier)
     }
 
+    /// Fragt nach, statt sofort zu löschen.
+    ///
+    /// Vorher lag hier ein `modelContext.delete(subject)`. Das war doppelt
+    /// falsch: Es löschte ohne die Frage, die der Wisch in der Sidebar stellt —
+    /// und es löschte nur das Fach. Halbjahre und Leistungen wären der Kaskade
+    /// des Stores überlassen gewesen, die keine verfolgten Einzellöschungen
+    /// erzeugt; ohne die käme das Fach auf dem zweiten Gerät zurück. Die
+    /// Begründung steht ausführlich bei ``SubjectDeletion/delete(_:in:)``,
+    /// gelöscht wird jetzt dort.
     private func delete() {
         guard let subject = target.editedSubject, subject.isCustom else { return }
-        modelContext.delete(subject)
-        route = .dashboard
+        pendingDeletion = SubjectDeletion.request(for: subject)
     }
 }

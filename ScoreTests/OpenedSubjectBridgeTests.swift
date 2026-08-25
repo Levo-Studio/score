@@ -3,36 +3,40 @@ import SwiftData
 import Testing
 @testable import Score
 
-/// Die Leerphase der Abfrage beim Neuöffnen des Speichers.
+/// Die Lücke der Abfrage beim Containertausch — und ihre Abgrenzung zur echten
+/// Löschung.
 ///
-/// ## Was hier nachgestellt wird
+/// ## Die Vorgeschichte
 ///
-/// Jemand hat in der Fachansicht ein Leistungs-Blatt offen und Punkte getippt.
-/// Die App geht in den Hintergrund und kommt nach mehr als zwei Minuten zurück;
-/// `ScoreApp` gleicht ab, und `ScoreDataStore.reopen` tauscht den Container
-/// **zweimal** — erst auf den lokalen, nach `handoverDelay` auf den mit iCloud.
-/// Jeder Tausch lässt die `@Query` der Hülle für einen Durchlauf leer laufen.
+/// `ScoreDataStore.reopen` tauscht den `ModelContainer` zweimal, mit
+/// `handoverDelay` dazwischen. Jeder Tausch lässt die `@Query` der Hülle für
+/// einen Durchlauf leer laufen. Wer daraufhin sofort auf „Dieses Fach gibt es
+/// nicht mehr." umschaltet, blitzt mitten im Abgleich auf und springt ungefragt
+/// zur Liste zurück.
 ///
-/// Bis zur Brücke schaltete die Hülle in genau diesem Durchlauf auf „Dieses Fach
-/// gibt es nicht mehr." um. Die Karenz verzögerte nur das Zurückgehen, nicht den
-/// Wechsel der Verzweigung — die Fachansicht wurde abgebaut, und ihr `@State`
-/// starb mitsamt dem Entwurf. Genau dieser Fall ist hier festgehalten.
+/// Der erste Versuch, das aufzufangen, war eine Karenz von 900 ms: Ein leeres
+/// Ergebnis galt eine knappe Sekunde lang als Übergang. Der Preis war
+/// schlimmer als der Fehler — ein **wirklich** gelöschtes Fach stand so lange
+/// als voll bedienbare Ansicht da, gelesen wurde dabei an einem gelöschten
+/// Modell, und der Schlüssel der Aufgabe (`persistentModelID`) bezeichnete die
+/// Datei statt den Container.
+///
+/// Jetzt fragt die Brücke den Speicher, statt zu raten. Diese Suite hält beide
+/// Hälften fest: die Lücke wird getragen, die Löschung nicht.
 ///
 /// ## Warum ohne die Ansicht
 ///
 /// Ein echter Containertausch unter einer laufenden `@Query` braucht ein Fenster
 /// und einen Simulator. Geprüft wird deshalb die Regel, an der die Ansicht
-/// hängt: ``OpenedSubjectBridge`` in derselben Reihenfolge, in der der Rumpf und
-/// die anschliessende Aufgabe sie aufrufen. Nimmt man die Brücke heraus und
-/// zeigt wieder direkt das Ergebnis der Abfrage, fällt jede Behauptung dieser
-/// Suite um.
+/// hängt, in genau der Reihenfolge, in der der Rumpf sie aufruft.
 @Suite("Fachansicht über den Containertausch")
 @MainActor
 struct OpenedSubjectBridgeTests {
 
     // MARK: - Der Nachbau der Hülle
 
-    /// Ein Durchlauf der Hülle: Abfrage-Ergebnis herein, Bild und Zustand heraus.
+    /// Ein Durchlauf der Hülle: Abfrage-Ergebnis und Zustand des Speichers
+    /// herein, Bild und Rücksprung heraus.
     ///
     /// Der Entwurf steht stellvertretend für den `@State` der Fachansicht. Er
     /// stirbt hier genau dann, wenn er es auch in SwiftUI täte: sobald die
@@ -40,7 +44,7 @@ struct OpenedSubjectBridgeTests {
     /// dem Baum fällt.
     private final class Screen {
 
-        private var bridge = OpenedSubjectBridge<Subject>()
+        private let bridge = OpenedSubjectBridge<Subject>()
 
         private(set) var displayed: Subject?
         private(set) var showsMissingSubject = false
@@ -53,20 +57,14 @@ struct OpenedSubjectBridgeTests {
             self.draft = draft
         }
 
-        /// Ein Durchlauf des Rumpfes samt der Aufgabe, die danach läuft.
-        func render(queryResult found: Subject?) {
-            displayed = bridge.subject(whenQueryReturned: found)
+        /// Ein Durchlauf des Rumpfes samt dem, was danach an `.onChange` hängt.
+        func render(queryResult found: Subject?, isReopening: Bool) {
+            displayed = bridge.subject(whenQueryReturned: found, isReopening: isReopening)
             showsMissingSubject = displayed == nil
             if showsMissingSubject {
                 draft = nil
+                didDismiss = true
             }
-            bridge.queryDidReturn(found)
-        }
-
-        /// Die Karenz ist abgelaufen, ohne dass das Fach wiederkam.
-        func graceDidElapse() {
-            bridge.graceDidElapse()
-            didDismiss = true
         }
     }
 
@@ -100,45 +98,46 @@ struct OpenedSubjectBridgeTests {
         }
     }
 
-    // MARK: - Der gemeldete Fall
+    // MARK: - Die Lücke wird getragen
 
-    /// Der Kern: Zwei Leerphasen kurz hintereinander, und der Entwurf steht
-    /// hinterher noch.
-    @Test("Der zweifache Containertausch nimmt den Entwurf nicht mit")
-    func doubleHandoverKeepsTheDraft() throws {
+    /// Zwei Leerphasen kurz hintereinander, und die Ansicht bleibt stehen.
+    @Test("Der zweifache Containertausch baut die Fachansicht nicht ab")
+    func doubleHandoverKeepsTheScreen() throws {
         let identifier = UUID()
         let old = try Stage(named: "Mathematik", identifier: identifier)
         let local = try Stage(named: "Mathematik", identifier: identifier)
         let cloud = try Stage(named: "Mathematik", identifier: identifier)
 
         let screen = Screen(draft: 13)
-        screen.render(queryResult: old.subject)
+        screen.render(queryResult: old.subject, isReopening: false)
         #expect(screen.displayed === old.subject)
 
-        // Erster Tausch: die Abfrage antwortet einen Durchlauf lang mit nichts.
-        screen.render(queryResult: nil)
+        // Erste Stufe: die Abfrage antwortet einen Durchlauf lang mit nichts.
+        screen.render(queryResult: nil, isReopening: true)
         #expect(screen.showsMissingSubject == false)
         #expect(screen.draft == 13)
 
         // Der lokale Container antwortet — ab jetzt gilt sein Fach.
-        screen.render(queryResult: local.subject)
+        screen.render(queryResult: local.subject, isReopening: true)
         #expect(screen.displayed === local.subject)
 
-        // Zweiter Tausch, `handoverDelay` später: dieselbe Lücke noch einmal.
-        screen.render(queryResult: nil)
+        // Zweite Stufe, `handoverDelay` später: dieselbe Lücke noch einmal.
+        screen.render(queryResult: nil, isReopening: true)
         #expect(screen.showsMissingSubject == false)
-        #expect(screen.draft == 13)
 
-        screen.render(queryResult: cloud.subject)
+        screen.render(queryResult: cloud.subject, isReopening: true)
+        #expect(screen.displayed === cloud.subject)
+
+        // Und nach dem Nachlauf steht die Marke wieder auf „tauscht nicht".
+        screen.render(queryResult: cloud.subject, isReopening: false)
         #expect(screen.displayed === cloud.subject)
         #expect(screen.draft == 13)
         #expect(screen.didDismiss == false)
     }
 
-    /// Die zweite Hälfte des Fixes: Die Brücke trägt nur über die Lücke. Sobald
-    /// die Abfrage wieder antwortet, arbeitet die Ansicht auf dem Objekt des
-    /// **neuen** Kontexts — sonst liefe jedes Schreiben über die Kontextgrenze,
-    /// und genau dagegen wurde die Hülle überhaupt eingeführt.
+    /// Die Brücke trägt nur über die Lücke. Sobald die Abfrage wieder antwortet,
+    /// arbeitet die Ansicht auf dem Objekt des **neuen** Kontexts — sonst liefe
+    /// jedes Schreiben über die Kontextgrenze.
     @Test("Das wiedergefundene Fach löst das gemerkte sofort ab")
     func theFreshObjectWins() throws {
         let identifier = UUID()
@@ -146,31 +145,52 @@ struct OpenedSubjectBridgeTests {
         let fresh = try Stage(named: "Deutsch", identifier: identifier)
 
         let screen = Screen()
-        screen.render(queryResult: old.subject)
-        screen.render(queryResult: nil)
+        screen.render(queryResult: old.subject, isReopening: false)
+        screen.render(queryResult: nil, isReopening: true)
         #expect(screen.displayed === old.subject)
 
-        screen.render(queryResult: fresh.subject)
+        screen.render(queryResult: fresh.subject, isReopening: true)
         #expect(screen.displayed === fresh.subject)
 
         // Auch die nächste Lücke trägt das neue Objekt weiter, nicht das alte.
-        screen.render(queryResult: nil)
+        screen.render(queryResult: nil, isReopening: true)
         #expect(screen.displayed === fresh.subject)
     }
 
-    /// Das Gegenstück: Ein wirklich gelöschtes Fach kommt nicht wieder. Nach
-    /// Ablauf der Karenz schaltet die Verzweigung um, und die Hülle geht zurück.
-    @Test("Ein gelöschtes Fach führt nach der Karenz zurück zur Liste")
-    func aDeletedSubjectStillDismisses() throws {
+    // MARK: - Die Löschung wird nicht getragen
+
+    /// Der gemeldete Fund: Ein wirklich gelöschtes Fach darf keinen Augenblick
+    /// länger als bedienbare Ansicht dastehen. Es gibt kein Fenster, in dem
+    /// jemand „＋ Klassenarbeit" tippen könnte, und keinen Durchlauf, in dem an
+    /// einem gelöschten Modell gelesen wird.
+    @Test("Ein gelöschtes Fach schaltet sofort um, ohne Fenster")
+    func aDeletedSubjectSwitchesImmediately() throws {
         let stage = try Stage(named: "Biologie", identifier: UUID())
 
         let screen = Screen(draft: 8)
-        screen.render(queryResult: stage.subject)
-        screen.render(queryResult: nil)
+        screen.render(queryResult: stage.subject, isReopening: false)
         #expect(screen.showsMissingSubject == false)
 
-        screen.graceDidElapse()
-        screen.render(queryResult: nil)
+        // Die Löschung kam vom zweiten Gerät. Der Speicher tauscht nicht — also
+        // ist das leere Ergebnis eine Auskunft und keine Lücke.
+        screen.render(queryResult: nil, isReopening: false)
+        #expect(screen.showsMissingSubject)
+        #expect(screen.didDismiss)
+    }
+
+    /// Auch der Sonderfall: gelöscht **während** getauscht wird. Die Lücke trägt
+    /// noch, aber sobald der Tausch durch ist und das Fach nicht wiederkommt,
+    /// fällt die Brücke — ohne dass jemand eine Frist abwarten müsste.
+    @Test("Eine Löschung während des Tauschs wird erkannt, sobald er durch ist")
+    func aDeletionDuringTheHandoverIsCaughtAfterwards() throws {
+        let stage = try Stage(named: "Chemie", identifier: UUID())
+
+        let screen = Screen()
+        screen.render(queryResult: stage.subject, isReopening: false)
+        screen.render(queryResult: nil, isReopening: true)
+        #expect(screen.showsMissingSubject == false)
+
+        screen.render(queryResult: nil, isReopening: false)
         #expect(screen.showsMissingSubject)
         #expect(screen.didDismiss)
     }

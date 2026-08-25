@@ -80,7 +80,10 @@ struct SubjectListView: View {
             }
         }
         .sheet(item: $editorTarget) { target in
+            // Wie beim Eingabe-Blatt: ungesicherter Entwurf offen heisst, dass
+            // der automatische Abgleich den Container nicht tauscht.
             SubjectEditorView(target: target)
+                .holdsUnsavedInput()
         }
         .sheet(isPresented: $isOralExamPickerPresented) {
             OralExamSubjectSheet()
@@ -252,34 +255,14 @@ private struct OpenedSubjectScreen: View {
 
     @Query(sort: \Subject.sortIndex) private var subjects: [Subject]
 
-    /// Wie lange ein leeres Ergebnis noch als Übergang gilt.
+    /// Der Speicher, nur wegen einer einzigen Frage: Tauscht er gerade?
     ///
-    /// Beim Neuöffnen steht die Abfrage für einen Augenblick leer, bis der neue
-    /// Kontext antwortet — grosszügig länger als ``ScoreDataStore/handoverDelay``.
-    /// Ohne diese Frist ginge die Ansicht mitten im Abgleich zurück, obwohl das
-    /// Fach noch da ist.
-    private static let graceBeforeDismiss: Duration = .milliseconds(900)
+    /// Ohne diese Auskunft müsste die Hülle raten, ob ein leeres Abfrageergebnis
+    /// eine Lücke oder eine Löschung ist — und genau dieses Raten war der Fehler
+    /// des zweiten Anlaufs.
+    @State private var store = ScoreDataStore.shared
 
-    /// Das zuletzt gefundene Fach, als Brücke über die Leerphase.
-    ///
-    /// Die Frist allein reicht nicht: Sie verzögerte nur das `dismiss()`, während
-    /// die Verzweigung sofort auf „gibt es nicht mehr" umsprang, sobald die
-    /// Abfrage für einen Durchlauf leer war. Damit wurde ``SubjectDetailView``
-    /// abgebaut und ihr `@State` — der offene Entwurf einer Leistung — starb.
-    /// Genau das passiert beim Neuöffnen des Speichers: ``ScoreDataStore/reopen(make:)``
-    /// tauscht den Container **zweimal**, mit ``ScoreDataStore/handoverDelay``
-    /// dazwischen, und jeder Tausch lässt die Abfrage einen Durchlauf lang leer
-    /// laufen.
-    ///
-    /// Deshalb hält die Brücke das zuletzt gefundene Fach und die Verzweigung
-    /// schaltet erst um, wenn die Frist wirklich abgelaufen ist. Der zweite
-    /// Tausch setzt die Frist neu, weil das Fach dazwischen kurz wieder da ist.
-    ///
-    /// Über die Kontextgrenze führt das nicht zurück: Sobald die Abfrage wieder
-    /// antwortet, gilt ihr Fach — das der **neuen** Abfrage und damit des neuen
-    /// Kontexts —, und die Brücke wird im selben Zug nachgezogen. Gehalten wird
-    /// das alte Objekt nur für die wenigen hundert Millisekunden dazwischen, in
-    /// denen es gar keinen neuen Kontext zu treffen gibt.
+    /// Trägt das zuletzt gefundene Fach über die Lücke des Tauschs.
     @State private var bridge = OpenedSubjectBridge<Subject>()
 
     private var subject: Subject? {
@@ -287,33 +270,24 @@ private struct OpenedSubjectScreen: View {
     }
 
     var body: some View {
-        let found = subject
         // Ein einziger `if` über den ganzen Rumpf: Zwei getrennte Zweige mit je
         // einer ``SubjectDetailView`` wären für SwiftUI zwei verschiedene
-        // Ansichten, und der Wechsel zwischen ihnen kostete genau den Zustand,
-        // den die Brücke retten soll.
+        // Ansichten, und der Wechsel zwischen ihnen kostete den Zustand, den die
+        // Fachansicht hält.
+        let displayed = bridge.subject(whenQueryReturned: subject, isReopening: store.isReopening)
+
         return Group {
-            if let displayed = bridge.subject(whenQueryReturned: found) {
+            if let displayed {
                 SubjectDetailView(subject: displayed)
             } else {
                 missingSubject
             }
         }
-        // Läuft bei jedem Wechsel zwischen „gefunden" und „leer" neu an — und
-        // bricht damit eine noch laufende Frist ab, sobald das Fach wiederkommt.
-        .task(id: found?.persistentModelID) {
-            guard found == nil else {
-                bridge.queryDidReturn(found)
-                return
-            }
-            try? await Task.sleep(for: Self.graceBeforeDismiss)
-            guard !Task.isCancelled else { return }
-            // Das Fach ist wirklich weg — gelöscht auf diesem oder einem
-            // anderen Gerät. Erst jetzt fällt die Brücke, und erst jetzt geht es
-            // zurück zur Liste, statt auf einer Ansicht zu stehen, deren
-            // Gegenstand es nicht mehr gibt.
-            bridge.graceDidElapse()
-            dismiss()
+        // Kein Timer und keine Karenz: Sobald die Brücke aufgibt, ist das Fach
+        // wirklich weg, und die Hülle geht zurück zur Liste, statt auf einer
+        // Ansicht zu stehen, deren Gegenstand es nicht mehr gibt.
+        .onChange(of: displayed == nil) { _, isMissing in
+            if isMissing { dismiss() }
         }
     }
 
@@ -328,52 +302,70 @@ private struct OpenedSubjectScreen: View {
     }
 }
 
-// MARK: - Brücke über die Leerphase
+// MARK: - Brücke über die Lücke des Containertauschs
 
-/// Hält das geöffnete Fach fest, während die Abfrage kurz leer läuft.
+/// Hält das geöffnete Fach fest, solange der Speicher seinen Container tauscht.
 ///
-/// ## Wozu
+/// ## Wozu sie noch da ist — und wozu nicht mehr
 ///
-/// Die Fachansicht hängt an einer `@Query`. Wird der Speicher neu geöffnet,
-/// antwortet die Abfrage für einen Durchlauf mit nichts — nicht weil das Fach
-/// fehlte, sondern weil der Kontext gerade getauscht wird. Wer in diesem Moment
-/// auf „gibt es nicht mehr" umschaltet, baut die Fachansicht ab und wirft ihren
-/// `@State` weg: einen halb getippten Entwurf zum Beispiel.
+/// Die Fachansicht hängt an einer `@Query`. Tauscht der Speicher den Container
+/// (``ScoreDataStore/reopen(make:)``), antwortet die Abfrage für einen Durchlauf
+/// mit nichts — nicht weil das Fach fehlte, sondern weil der Kontext gewechselt
+/// wird. Ohne Brücke spränge die Ansicht in diesem Durchlauf auf „Dieses Fach
+/// gibt es nicht mehr." und ginge zurück zur Liste: ein Aufblitzen und ein
+/// ungefragter Rücksprung mitten im Abgleich.
+///
+/// Sie ist damit noch eine Massnahme **gegen das Flackern** — und ausdrücklich
+/// keine Datenrettung mehr. Ungesicherte Eingaben überleben den Tausch nicht
+/// dadurch, dass jemand ein altes Objekt festhält, sondern dadurch, dass gar
+/// nicht getauscht wird, solange ein Blatt offen steht; siehe
+/// ``UnsavedInputRegistry``.
 ///
 /// ## Die Regel
 ///
-/// Gezeigt wird das gefundene Fach; findet die Abfrage nichts, das zuletzt
-/// gefundene. Aufgegeben wird erst, wenn die Frist ohne Wiederkehr abgelaufen
-/// ist. Ein wiedergefundenes Fach löst das gemerkte sofort ab — die Ansicht
-/// arbeitet damit immer auf dem Objekt des geltenden Kontexts, sobald es eines
-/// gibt.
+/// - Die Abfrage findet etwas: Das gilt, und es wird gemerkt. Das Objekt des
+///   **neuen** Kontexts löst das gemerkte damit sofort ab.
+/// - Sie findet nichts, **und der Speicher tauscht**: Das Gemerkte trägt über
+///   die Lücke.
+/// - Sie findet nichts, und der Speicher tauscht **nicht**: Das Fach ist
+///   wirklich gelöscht — sofort umschalten, kein Fenster, kein Timer.
 ///
-/// ## Reihenfolge
+/// ## Warum eine Klasse
 ///
-/// Genau die der Ansicht: ``subject(whenQueryReturned:)`` beim Aufbau,
-/// ``queryDidReturn(_:)`` danach, ``graceDidElapse()`` nur, wenn die Frist
-/// ausläuft. Ein eigener Typ, weil sich diese Regel so prüfen lässt — die
-/// Ansicht selbst braucht dafür ein Fenster und einen echten Containertausch.
-struct OpenedSubjectBridge<Subject> {
+/// Sie wird im Rumpf gelesen und dabei fortgeschrieben. Als `struct` in `@State`
+/// hiesse das, Zustand während des Aufbaus zu ändern; als beobachtete Klasse
+/// löste jede Fortschreibung einen weiteren Durchlauf aus. Eine schlichte Klasse
+/// ist genau das Richtige: ein Merkzettel, den SwiftUI nicht beobachtet.
+///
+/// Vermerk für den Nächsten: Hier stand einmal eine Karenz von 900 ms und ein
+/// `.task(id: persistentModelID)`. Beides war Raterei — die Kennung bezeichnet
+/// die Datei und nicht den Container, und die Frist zeigte ein gelöschtes Fach
+/// eine knappe Sekunde lang als bedienbare Ansicht. Wer wieder eine Stoppuhr
+/// braucht, hat vermutlich die falsche Frage gestellt.
+final class OpenedSubjectBridge<Subject: AnyObject> {
 
     private var lastFound: Subject?
 
-    /// Was dieser Durchlauf zeigt.
-    func subject(whenQueryReturned found: Subject?) -> Subject? {
-        found ?? lastFound
-    }
+    /// Was dieser Durchlauf zeigt — und was er sich für den nächsten merkt.
+    ///
+    /// - Parameters:
+    ///   - found: Was die Abfrage gerade liefert.
+    ///   - isReopening: Ob der Speicher gerade tauscht.
+    func subject(whenQueryReturned found: Subject?, isReopening: Bool) -> Subject? {
+        if let found {
+            lastFound = found
+            return found
+        }
 
-    /// Merkt sich das gefundene Fach. Ein leeres Ergebnis ändert nichts — es ist
-    /// bis zum Ablauf der Frist nur eine Lücke, keine Auskunft.
-    mutating func queryDidReturn(_ found: Subject?) {
-        guard let found else { return }
-        lastFound = found
-    }
+        guard isReopening else {
+            // Wirklich gelöscht — auf diesem oder einem anderen Gerät. Das
+            // gemerkte Objekt ist ab jetzt niemandem mehr zu zeigen: Es zu lesen
+            // hiesse, an einem gelöschten Modell zu lesen.
+            lastFound = nil
+            return nil
+        }
 
-    /// Die Frist ist abgelaufen, ohne dass das Fach wiederkam: Es ist wirklich
-    /// gelöscht, und die Brücke fällt.
-    mutating func graceDidElapse() {
-        lastFound = nil
+        return lastFound
     }
 }
 

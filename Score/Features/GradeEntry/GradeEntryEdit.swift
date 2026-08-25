@@ -57,6 +57,8 @@ struct GradeEntryEdit: Identifiable {
         var points: Int
         var kind: GradeKind
         var category: GradeCategory
+        var share: Int
+        var usesAutomaticShare: Bool
     }
 
     /// Ob diese Leistung noch gar nicht existiert.
@@ -65,9 +67,14 @@ struct GradeEntryEdit: Identifiable {
     /// Ob am Entwurf tatsächlich etwas eingegeben wurde.
     ///
     /// „Etwas eingegeben" heisst: ein eigener Titel steht drin, oder die
-    /// Punktzahl weicht von der Vorgabe ab, oder Art beziehungsweise Kategorie
-    /// wurden geändert. Ein leer geräumter Titel zählt nicht — das ist kein
-    /// Beitrag, sondern eine Lücke.
+    /// Punktzahl weicht von der Vorgabe ab, oder Art, Kategorie, Anteil
+    /// beziehungsweise die Automatik wurden geändert. Ein leer geräumter Titel
+    /// zählt nicht — das ist kein Beitrag, sondern eine Lücke.
+    ///
+    /// Anteil und Automatik gehören dazu, weil das Blatt beides anbietet: Wer
+    /// „Anteil automatisch" ausschaltet und den Schieber auf 30 % zieht, hat
+    /// eine Gewichtung gesetzt. Ohne sie in dieser Frage warf das Herunterziehen
+    /// des Blattes genau diese Arbeit weg — ohne Streifen und ohne Hinweis.
     var hasInput: Bool {
         guard let defaults else { return false }
 
@@ -77,6 +84,8 @@ struct GradeEntryEdit: Identifiable {
         return entry.points != defaults.points
             || entry.kind != defaults.kind
             || entry.category != defaults.category
+            || entry.share != defaults.share
+            || entry.usesAutomaticShare != defaults.usesAutomaticShare
     }
 
     /// Eine bestehende Leistung, die bearbeitet wird.
@@ -103,7 +112,9 @@ struct GradeEntryEdit: Identifiable {
                 title: title,
                 points: entry.points,
                 kind: kind,
-                category: category
+                category: category,
+                share: entry.share,
+                usesAutomaticShare: entry.usesAutomaticShare
             )
         )
     }

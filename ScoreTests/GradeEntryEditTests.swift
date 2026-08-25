@@ -173,6 +173,46 @@ struct GradeEntryEditTests {
         #expect(!cleared.hasInput)
     }
 
+    @Test("Eine gesetzte Gewichtung zählt als Eingabe")
+    func shareAndAutomaticShareCountAsInput() throws {
+        let (_, _, semester) = try Self.makeSubject()
+
+        func draft() -> GradeEntryEdit {
+            .draft(category: .exam, kind: .written, title: "Klassenarbeit 1", in: semester)
+        }
+
+        // Das Blatt bietet beides an — „Anteil automatisch" und den Schieber.
+        // Wer sie anfasst, hat etwas eingegeben; sonst würfe das heruntergezogene
+        // Blatt genau diese Arbeit weg, ohne Streifen und ohne Hinweis.
+        let manual = draft()
+        manual.entry.usesAutomaticShare = false
+        #expect(manual.hasInput)
+
+        let weighted = draft()
+        weighted.entry.share = 30
+        #expect(weighted.hasInput)
+    }
+
+    @Test("Der ausgeschaltete Automatik-Schalter überlebt das Schliessen")
+    func closingAfterSettingAShareCreatesTheEntry() throws {
+        let (context, _, semester) = try Self.makeSubject()
+
+        let edit = GradeEntryEdit.draft(
+            category: .exam,
+            kind: .written,
+            title: "Klassenarbeit 1",
+            in: semester
+        )
+        edit.entry.usesAutomaticShare = false
+        edit.entry.share = 30
+
+        Self.closeSheet(edit, in: context)
+
+        #expect(try Self.entryCount(in: context) == 1)
+        #expect(edit.entry.share == 30)
+        #expect(!edit.entry.usesAutomaticShare)
+    }
+
     @Test("Die beim Schliessen angelegte Leistung lässt sich zurücknehmen")
     func theKeptEntryCanBeUndone() throws {
         let (context, subject, semester) = try Self.makeSubject()

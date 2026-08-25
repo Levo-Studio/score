@@ -171,10 +171,15 @@ final class ScoreDataStore {
         // bestehende Speicher bleibt stehen.
         guard fallback != .inMemory else { throw StorageUnavailable() }
 
-        guard usesCloudKit else {
-            container = try make(.local)
-            return
-        }
+        // Ohne Spiegelung gibt es nichts neu zu öffnen. Bis hierher wurde auch
+        // dieser Fall durch einen Containertausch geschickt — derselbe Speicher,
+        // dieselbe Datei, kein einziger zusätzlicher Datensatz. Bezahlt hätte ihn
+        // die laufende Oberfläche: Jeder Tausch hängt sämtliche Ansichten an
+        // einen neuen Kontext. Also lieber gar nichts tun.
+        //
+        // Erreicht wird dieser Zweig ohnehin kaum: ``ManualCloudSync`` lässt sich
+        // ohne aktiven Abgleich erst gar nicht auslösen.
+        guard usesCloudKit else { return }
 
         // Erste Stufe. Scheitert sie, ist noch nichts geschehen: Der bisherige
         // Container steht unverändert, und der Fehler geht nach oben.

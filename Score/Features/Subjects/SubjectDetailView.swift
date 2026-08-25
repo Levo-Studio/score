@@ -27,13 +27,20 @@ struct SubjectDetailView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ScrollView {
+        // Einmal je Durchlauf und nicht je Lesestelle: ``summary`` rechnet über
+        // ``BlockOneCalculator`` alle Fächer durch. Der Wert wurde zuvor an über
+        // einem Dutzend Stellen im Rumpf gelesen — beim Tippen im Titelfeld
+        // einer Leistung wurde Block I damit bei jedem Anschlag ein Dutzend Mal
+        // komplett neu berechnet.
+        let summary = self.summary
+
+        return ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 navigationRow
-                header
+                header(summary)
                 SemesterPicker(selection: $semesterIndex, labels: Semester.labels)
-                subjectGlowCard
-                semesterCard
+                subjectGlowCard(summary)
+                semesterCard(summary)
                 entrySection(
                     title: "Schriftliche Leistungen",
                     kind: .written,
@@ -85,6 +92,12 @@ struct SubjectDetailView: View {
 
     // MARK: - Abgeleitete Werte
 
+    /// Der Stand dieses Fachs im gewählten Halbjahr.
+    ///
+    /// Teuer: Die Auskunft entsteht über ``BlockOneCalculator`` und damit aus
+    /// allen Fächern. Deshalb wird sie im Rumpf genau einmal gelesen und von
+    /// dort an die Karten weitergereicht, statt sie in jeder Karte erneut
+    /// abzufragen.
     private var summary: SubjectSummary {
         SubjectOverview.summary(for: subject, semesterIndex: semesterIndex, among: allSubjects)
     }
@@ -140,7 +153,7 @@ struct SubjectDetailView: View {
 
     // MARK: - Kopf
 
-    private var header: some View {
+    private func header(_ summary: SubjectSummary) -> some View {
         HStack(spacing: 13) {
             SubjectDot(color: subject.color, size: 46, cornerRadius: 15)
 
@@ -175,7 +188,7 @@ struct SubjectDetailView: View {
     /// Die kleine Schwester der Dashboard-Karte: gleicher Aufbau, aber der Schein
     /// hat die Farbe des Fachs statt des Markenpetrols. So bleibt beim Blättern
     /// durch die Fächer sofort klar, wo man ist.
-    private var subjectGlowCard: some View {
+    private func subjectGlowCard(_ summary: SubjectSummary) -> some View {
         VStack(alignment: .leading, spacing: 0) {
                 Text("Schnitt über alle Halbjahre")
                     .font(.cardLabel)
@@ -211,7 +224,7 @@ struct SubjectDetailView: View {
 
                     Spacer(minLength: ScoreMetrics.Spacing.xs)
 
-                    semesterResultText
+                    semesterResultText(summary)
                         .font(ScoreTypography.archivo(600, 13))
                         .monospacedDigit()
                         .foregroundStyle(ScorePalette.scoreInk)
@@ -261,7 +274,7 @@ struct SubjectDetailView: View {
     /// Liefert `Text`, damit der Plural von „Punkte" aus dem String-Katalog
     /// kommt; die Zahlen selbst bleiben unverändert. Zusammengesetzt wird als
     /// `AttributedString`, weil die Verkettung zweier `Text` abgekündigt ist.
-    private var semesterResultText: Text {
+    private func semesterResultText(_ summary: SubjectSummary) -> Text {
         let grade = ScoreNumberFormat.grade(summary.result.map { SubjectMath.grade(fromPoints: Double($0)) })
         guard let result = summary.result else {
             return Text(verbatim: ScoreNumberFormat.placeholder)
@@ -275,7 +288,7 @@ struct SubjectDetailView: View {
 
     // MARK: - Halbjahres-Karte
 
-    private var semesterCard: some View {
+    private func semesterCard(_ summary: SubjectSummary) -> some View {
         ScoreCard {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
@@ -283,7 +296,7 @@ struct SubjectDetailView: View {
                         .font(.cardTitle)
                         .foregroundStyle(ScorePalette.ink)
                     Spacer(minLength: ScoreMetrics.Spacing.xs)
-                    if let stateText = semesterStateText {
+                    if let stateText = semesterStateText(summary) {
                         ScoreBadge(title: stateText)
                     }
                 }
@@ -341,7 +354,7 @@ struct SubjectDetailView: View {
     ///
     /// Bewusst ein Badge und kein eigener Bildschirm: es ist eine Randnotiz, kein
     /// Problem, das gelöst werden müsste.
-    private var semesterStateText: LocalizedStringKey? {
+    private func semesterStateText(_ summary: SubjectSummary) -> LocalizedStringKey? {
         if !summary.isActive { return "nicht belegt" }
         switch summary.bracketReason {
         case .manual: return "von dir geklammert"

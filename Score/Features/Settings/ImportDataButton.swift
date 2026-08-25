@@ -56,6 +56,10 @@ struct ImportDataButton<Label: View>: View {
     /// Schliessen auf `nil` setzt — beim Handeln danach wäre die Datei sonst weg.
     @State private var chosenCandidate: PendingImport?
 
+    /// Hält den Aufschub des Abgleichs über das Schliessen des Blattes hinaus,
+    /// bis wirklich geschrieben ist. Siehe ``ImportWriteGuard``.
+    @State private var writeGuard = ImportWriteGuard()
+
     var body: some View {
         Button {
             isChoosingFile = true
@@ -70,13 +74,17 @@ struct ImportDataButton<Label: View>: View {
         ) { result in
             read(result)
         }
-        // Solange die Wahl offen steht, wird der Speicher nicht getauscht:
-        // `actOnChoice` schreibt gleich danach den ganzen Bestand.
+        // Solange die Wahl offen steht, wird der Speicher nicht getauscht — und
+        // über ``ImportWriteGuard`` auch darüber hinaus, bis geschrieben ist.
         .sheet(item: $pending, onDismiss: actOnChoice) { candidate in
             ScrollView {
                 ImportChoiceSheet(candidate: candidate) { mode in
                     chosenMode = mode
                     chosenCandidate = candidate
+                    // Ab hier steht ein Schreibvorgang an. Die Anmeldung des
+                    // Blattes endet mit seinem `onDisappear` — geschrieben wird
+                    // aber erst danach.
+                    writeGuard.begin()
                 }
             }
             .background(ScorePalette.surface)
@@ -96,9 +104,10 @@ struct ImportDataButton<Label: View>: View {
         ) { candidate in
             // Abbrechen trägt die Cancel-Rolle und ist damit die Voreinstellung:
             // wer den Dialog wegtippt oder Escape drückt, ersetzt nicht.
-            Button("Abbrechen", role: .cancel) {}
+            Button("Abbrechen", role: .cancel) { writeGuard.release() }
             Button("Ersetzen", role: .destructive) {
                 apply(candidate.export, mode: .replace)
+                writeGuard.release()
             }
         } message: { candidate in
             // Zwei Fassungen, weil das Ersetzen zwei verschiedene Dinge tut: Es
@@ -123,6 +132,13 @@ struct ImportDataButton<Label: View>: View {
     private var isConfirmingReplacement: Binding<Bool> {
         Binding(
             get: { replacement != nil },
+            // Der Schutz wird hier ausdrücklich **nicht** freigegeben: Ob die
+            // Bindung vor oder nach der Schaltfläche zurückgesetzt wird, sagt
+            // SwiftUI nicht zu — eine Freigabe an dieser Stelle könnte den
+            // Containertausch also mitten in das Schreiben hinein anstossen.
+            // Freigegeben wird in den beiden Schaltflächen, und wenn doch einmal
+            // keine von beiden drankommt, verfällt die Anmeldung von selbst;
+            // siehe ``UnsavedInputRegistry``.
             set: { if !$0 { replacement = nil } }
         )
     }
@@ -193,8 +209,14 @@ struct ImportDataButton<Label: View>: View {
         chosenCandidate = nil
 
         switch mode {
-        case .merge: apply(candidate.export, mode: .merge)
-        case .replace: replacement = candidate
+        case .merge:
+            // Zusammenführen schreibt sofort — danach ist der Schutz erfüllt.
+            apply(candidate.export, mode: .merge)
+            writeGuard.release()
+        case .replace:
+            // Ersetzen fragt erst noch nach. Der Schutz hält, bis der Dialog
+            // beantwortet und gegebenenfalls geschrieben ist.
+            replacement = candidate
         }
     }
 
@@ -210,6 +232,64 @@ struct ImportDataButton<Label: View>: View {
         } catch {
             failure = ImportFailure(reason: .notWritten)
         }
+    }
+}
+
+// MARK: - Der Schutz über das Blatt hinaus
+
+/// Hält den automatischen Abgleich zurück, bis der Import wirklich geschrieben
+/// ist.
+///
+/// ## Die Vorgeschichte, damit sie sich nicht wiederholt
+///
+/// Das Wahl-Blatt meldete sich über ``SwiftUI/View/holdsUnsavedInput()`` an, und
+/// diese Anmeldung endete mit seinem `onDisappear`. Geschrieben wird aber erst
+/// **danach**: `actOnChoice` läuft aus `onDismiss`, und im Zweig „Ersetzen"
+/// merkt es sich die Datei bloss vor — der zerstörende Bestätigungsdialog und
+/// das Löschen und Neuschreiben des gesamten Bestands kamen erst Sekunden
+/// später und waren gar nicht angemeldet.
+///
+/// Der Ablauf war damit: Blatt offen, Nutzer wechselt kurz weg und zurück (der
+/// Abgleich wird aufgeschoben), „Ersetzen" antippen, Blatt zu — und genau in
+/// diesem Moment wird der Aufschub nachgeholt und der zweistufige
+/// Containertausch beginnt. Der Nutzer bestätigt den Dialog, und das Löschen und
+/// Neuschreiben läuft in einen Kontext, der gerade ausgetauscht wird.
+///
+/// Deshalb reicht der Schutz jetzt bis zum **Ende des Schreibens** und nicht bis
+/// zum Schliessen des Blattes.
+///
+/// ## Warum ein eigener Typ
+///
+/// Die Anmeldung muss zwischen zwei Ereignissen aufgehoben werden, die in
+/// verschiedenen Ansichten liegen, und sie muss sich prüfen lassen, ohne dass
+/// jemand ein Fenster öffnet.
+@MainActor
+final class ImportWriteGuard {
+
+    private let registry: UnsavedInputRegistry
+    private var hold: UnsavedInputRegistry.Hold?
+
+    /// - Parameter registry: Wo angemeldet wird. In Tests eine eigene Stelle.
+    init(registry: UnsavedInputRegistry = .shared) {
+        self.registry = registry
+    }
+
+    /// Ob der Schutz gerade steht.
+    var isHolding: Bool { hold != nil }
+
+    /// Ein Schreibvorgang steht an oder läuft.
+    ///
+    /// Mehrfach zu rufen ist harmlos: Es bleibt bei der einen Anmeldung.
+    func begin() {
+        guard hold == nil else { return }
+        hold = registry.begin()
+    }
+
+    /// Geschrieben ist geschrieben — oder es wird gar nicht mehr geschrieben.
+    func release() {
+        guard let hold else { return }
+        registry.end(hold)
+        self.hold = nil
     }
 }
 

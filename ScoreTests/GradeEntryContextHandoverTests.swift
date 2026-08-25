@@ -26,9 +26,16 @@ import Testing
 /// ## Wie der Tausch hier nachgestellt wird
 ///
 /// Zwei `ModelContainer` nacheinander auf **derselben Datei** — genau das tut
-/// ``ScoreDataStore/reopen(make:)``, und genau daraus folgt, dass die
-/// `PersistentIdentifier` einer Leistung den Tausch übersteht: Sie bezeichnet
-/// die Zeile in der Datei und nicht das Objekt eines Kontexts.
+/// ``ScoreDataStore/reopen(make:)``.
+///
+/// Hier stand einmal, daraus folge, dass die `PersistentIdentifier` einer
+/// Leistung den Tausch übersteht, sie bezeichne ja die Zeile in der Datei. In
+/// ``GradeEntryEdit`` stand daneben das Gegenteil, mitsamt Verweis auf einen
+/// Test in dieser Datei, den es nie gab. Nachgemessen wird es jetzt in
+/// ``thePersistentIdentifierDoesNotSurviveTheHandover``, und die Messung sagt:
+/// Sie übersteht ihn **nicht**. Sie vergleicht sich nach dem Tausch mit der
+/// derselben Zeile nicht gleich, und der Versuch, sie über
+/// `ModelContext.model(for:)` aufzulösen, beendet den Prozess.
 @Suite("Eine bestehende Leistung und der Containertausch")
 @MainActor
 struct GradeEntryContextHandoverTests {
@@ -168,6 +175,41 @@ struct GradeEntryContextHandoverTests {
 
     private static func entries(in context: ModelContext) throws -> [GradeEntry] {
         try context.fetch(FetchDescriptor<GradeEntry>())
+    }
+
+    // MARK: - Was eine Kennung über den Tausch trägt
+
+    /// Die Messung, die zwei sich widersprechende Zusagen ersetzt.
+    ///
+    /// Sie hält fest, warum ``PendingEntry`` eine eigene `UUID` führt statt der
+    /// `PersistentIdentifier`: Nach dem Tausch bezeichnet die alte Kennung
+    /// nichts mehr, was sich in diesem Kontext wiederfinden liesse. Der
+    /// Gegenprobe halber steht daneben, was **doch** trägt — die eigene Kennung
+    /// der Leistung.
+    ///
+    /// Nicht geprüft wird `ModelContext.model(for:)` mit der alten Kennung:
+    /// Dieser Aufruf liefert keinen leeren Treffer, sondern beendet den Prozess
+    /// („This model instance was invalidated because its backing data could no
+    /// longer be found in the store"). Ein Test kann das nicht überleben — und
+    /// genau deshalb steht es hier als Satz.
+    @Test("Die PersistentIdentifier übersteht den Containertausch nicht, die eigene Kennung schon")
+    func thePersistentIdentifierDoesNotSurviveTheHandover() throws {
+        let (store, entry) = try Self.makeStage()
+        let staleIdentifier = entry.persistentModelID
+        let ownIdentifier = entry.identifier
+
+        try store.reopen()
+
+        let entries = try Self.entries(in: store.context)
+        #expect(entries.count == 1)
+
+        // Dieselbe Zeile, dieselbe Datei — und trotzdem eine Kennung, die sich
+        // nicht gleich vergleicht.
+        #expect(!entries.contains { $0.persistentModelID == staleIdentifier })
+
+        // Die eigene Kennung dagegen findet sie wieder. Sie ist ein Wert und
+        // liegt in der Datei, nicht im Kontext.
+        #expect(entries.contains { $0.identifier == ownIdentifier })
     }
 
     // MARK: - Tippen

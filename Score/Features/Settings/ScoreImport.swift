@@ -119,7 +119,7 @@ enum ScoreImport {
                   // Eine Kursgrenze von null oder weniger ist keine Grenze,
                   // sondern eine Angabe, die niemand gemeint haben kann. „Alle
                   // Halbjahre" heisst `nil` und nicht 0.
-                  subject.maximumContributedCourses.map { $0 >= 1 } ?? true
+                  subject.maximumContributedCourses.map({ $0 >= 1 }) ?? true
             else { throw Failure.unreadable }
 
             for semester in subject.semesters {

@@ -32,14 +32,14 @@ struct CourseLimitPicker: View {
 
             if isAvailable && !options.isEmpty {
                 ChipFlow {
-                    ScoreChip(title: "Alle", isSelected: limit == nil) {
+                    ScoreChip(title: "Alle", isSelected: selectedLimit == nil) {
                         limit = nil
                     }
                     ForEach(options, id: \.self) { option in
                         // Eine Zahl ist ein Wert, kein Wort — sie wird nicht übersetzt.
                         ScoreChip(
                             verbatimTitle: ScoreNumberFormat.points(option),
-                            isSelected: limit == option
+                            isSelected: selectedLimit == option
                         ) {
                             limit = option
                         }
@@ -55,6 +55,18 @@ struct CourseLimitPicker: View {
         }
     }
 
+    /// Die Grenze so, wie die Auswahl sie überhaupt abbilden kann.
+    ///
+    /// Eine Zahl, die unter den Chips nicht vorkommt, umfasst alle belegten
+    /// Kurse und wirkt damit wie „alle" — gespeichert wird sie auch so, siehe
+    /// ``SubjectDraft/resolvedCourseLimit``. Ohne diesen Abgleich stand kein
+    /// Chip markiert da, während die Fussnote weiter eine Zahl behauptete, die
+    /// nichts mehr bewirkte.
+    private var selectedLimit: Int? {
+        guard let limit, options.contains(limit) else { return nil }
+        return limit
+    }
+
     /// Der Satz unter der Auswahl sagt, was gerade gilt — und zwar in derselben
     /// Sprache, in der die Aufschlüsselung es später erklärt.
     private var note: Text {
@@ -64,10 +76,10 @@ struct CourseLimitPicker: View {
         guard !options.isEmpty else {
             return Text("Mit einem belegten Halbjahr gibt es nichts auszuwählen.")
         }
-        guard let limit else {
+        guard let selectedLimit else {
             return Text("Alle belegten Kurse zählen mit.")
         }
-        return Text("Score nimmt die besten \(limit) Kurse dieses Fachs, die übrigen bleiben aussen vor.")
+        return Text("Score nimmt die besten \(selectedLimit) Kurse dieses Fachs, die übrigen bleiben aussen vor.")
     }
 }
 

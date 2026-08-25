@@ -251,4 +251,61 @@ struct SubjectDraftTests {
 
         #expect(SubjectInput(subject).effectiveCourseLimit == nil)
     }
+
+    // MARK: - Kursgrenze und belegte Halbjahre
+
+    /// Der Entwurf muss dieselbe Zahl zeigen, die er sichert.
+    ///
+    /// Der Fehler dahinter: Bei vier Halbjahren „3" gewählt, dann ein Halbjahr
+    /// abgewählt — gesichert wurde „alle", angezeigt weiterhin die 3. Kein Chip
+    /// stand markiert, und die Fussnote behauptete, Score nehme die besten drei
+    /// Kurse.
+    @Test("Eine Grenze, die alle verbliebenen Kurse umfasst, gilt als alle")
+    func aLimitCoveringEveryCourseBecomesAll() throws {
+        let context = try Self.makeContext()
+        let subject = Subject(
+            name: "Kunst",
+            abbreviation: "Ku",
+            colorValue: 0x1C6B6E,
+            kind: .wahlBasisfach
+        )
+        context.insert(subject)
+
+        var draft = SubjectDraft(subject: subject)
+        draft.maximumContributedCourses = 3
+
+        #expect(draft.courseLimitOptions == [1, 2, 3])
+        #expect(draft.resolvedCourseLimit == 3)
+
+        draft.toggleSemester(0)
+
+        #expect(draft.activeSemesters.count == 3)
+        #expect(draft.courseLimitOptions == [1, 2])
+        // Angezeigt wie gesichert: „alle".
+        #expect(draft.maximumContributedCourses == nil)
+        #expect(draft.resolvedCourseLimit == nil)
+
+        draft.save(to: subject, in: context, existingSubjects: [subject])
+        #expect(subject.maximumContributedCourses == nil)
+    }
+
+    @Test("Eine Grenze unterhalb der belegten Halbjahre bleibt stehen")
+    func aLimitBelowTheSemesterCountSurvives() throws {
+        let context = try Self.makeContext()
+        let subject = Subject(
+            name: "Musik",
+            abbreviation: "Mu",
+            colorValue: 0x1C6B6E,
+            kind: .wahlBasisfach
+        )
+        context.insert(subject)
+
+        var draft = SubjectDraft(subject: subject)
+        draft.maximumContributedCourses = 2
+
+        draft.toggleSemester(0)
+
+        #expect(draft.maximumContributedCourses == 2)
+        #expect(draft.resolvedCourseLimit == 2)
+    }
 }

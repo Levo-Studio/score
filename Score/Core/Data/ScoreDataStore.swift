@@ -450,7 +450,16 @@ final class ScoreDataStore {
             ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         }
 
-        return try ModelContainer(for: schema, configurations: configuration)
+        let container = try ModelContainer(for: schema, configurations: configuration)
+
+        // Direkt nach dem Öffnen und vor der ersten Ansicht: Eine Datei, die aus
+        // einer Fassung ohne ``GradeEntry/identifier`` stammt, trägt für **alle**
+        // Leistungen dieselbe Vorgabekennung — und eine Kennung, die zweimal
+        // dasteht, ist keine. Warum das nötig ist und warum es hier steht, hängt
+        // an ``GradeEntryIdentifierRepair``.
+        GradeEntryIdentifierRepair.run(in: container.mainContext)
+
+        return container
     }
 }
 

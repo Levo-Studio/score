@@ -51,7 +51,12 @@ final class ScoreDataStore {
 
     /// Der aktuelle Container. Ändert sich beim Neuöffnen — die Wurzel hängt an
     /// dieser Eigenschaft und reicht den neuen Container in die Umgebung.
-    private(set) var container: ModelContainer
+    ///
+    /// `nil` nur auf der vierten Stufe des Starts: Dann liess sich nicht einmal
+    /// ein flüchtiger Speicher anlegen, und die App zeigt bloss noch die
+    /// Warnung. Optional und nicht erzwungen, damit dieser Fall die App nicht
+    /// beim Start umbringt — siehe ``start(wantsCloudKit:make:)``.
+    private(set) var container: ModelContainer?
 
     /// Ob der Speicher dieser Sitzung an CloudKit hängt, siehe
     /// ``CloudSyncActivation``. Ein Container, der beim Start ohne CloudKit
@@ -101,7 +106,7 @@ final class ScoreDataStore {
     /// sich weder zweimal anlegen noch in eine Rückfallstufe zwingen. Um zu
     /// prüfen, was ein halb geglücktes ``reopen(make:)`` hinterlässt, braucht
     /// es deshalb einen zweiten Speicher, dessen Ausgangslage der Test setzt.
-    init(container: ModelContainer, usesCloudKit: Bool, fallback: StorageFallback) {
+    init(container: ModelContainer?, usesCloudKit: Bool, fallback: StorageFallback) {
         self.container = container
         self.usesCloudKit = usesCloudKit
         self.fallback = fallback
@@ -169,7 +174,10 @@ final class ScoreDataStore {
         // hängt an diesem Container und wäre danach weg. Also lieber ein
         // ehrlicher Fehlschlag — „Jetzt synchronisieren" meldet ihn, und der
         // bestehende Speicher bleibt stehen.
-        guard fallback != .inMemory else { throw StorageUnavailable() }
+        switch fallback {
+        case .inMemory, .noModel: throw StorageUnavailable()
+        case .none, .localOnly: break
+        }
 
         // Ohne Spiegelung gibt es nichts neu zu öffnen. Bis hierher wurde auch
         // dieser Fall durch einen Containertausch geschickt — derselbe Speicher,
@@ -208,7 +216,7 @@ final class ScoreDataStore {
     /// Änderung erzeugt für sich schon einen Export.
     static func saveAndReopen() async throws {
         let store = shared
-        let context = store.container.mainContext
+        guard let context = store.container?.mainContext else { throw StorageUnavailable() }
         if context.hasChanges {
             try context.save()
         }
@@ -241,11 +249,15 @@ final class ScoreDataStore {
         /// Auch die Datei liess sich nicht öffnen. Die App läuft, aber nichts
         /// von dem, was jetzt entsteht, überlebt das Schliessen.
         case inMemory
+        /// Nicht einmal ein flüchtiger Speicher liess sich anlegen. Die App
+        /// startet ohne Container und zeigt nur noch die Warnung — es gibt keine
+        /// Ansicht, die ohne Modell etwas anzeigen könnte.
+        case noModel
     }
 
     /// Was beim Start herauskam.
     struct Startup {
-        var container: ModelContainer
+        var container: ModelContainer?
         var usesCloudKit: Bool
         var fallback: StorageFallback
     }
@@ -271,6 +283,10 @@ final class ScoreDataStore {
     ///    Noten sind alle da. Nur der Abgleich ruht bis zum nächsten Start.
     /// 3. **Ein flüchtiger Speicher.** Damit die App startet und erklären kann,
     ///    was los ist, statt vor dem ersten Bildschirm zu sterben.
+    /// 4. **Gar kein Speicher.** Scheitert schon der flüchtige, liegt der Fehler
+    ///    im Schema selbst, und es gibt nichts mehr zu retten. Die App muss
+    ///    deswegen aber nicht beim Start sterben: Sie startet ohne Container und
+    ///    zeigt nur noch die Warnung.
     ///
     /// Was auf Stufe 2 und 3 zu sehen ist, entscheidet nicht diese Stelle,
     /// sondern ``CloudSyncStatus`` und der Streifen über der Wurzelansicht.
@@ -308,14 +324,23 @@ final class ScoreDataStore {
         do {
             return Startup(container: try make(.inMemory), usesCloudKit: false, fallback: .inMemory)
         } catch {
-            // Ein Speicher ohne Datei kann nur noch am Schema selbst scheitern —
-            // und dann ist er in keinem Test dieser App je entstanden, denn jede
-            // Suite baut ihn. Das ist ein Baufehler, kein Gerätezustand, und es
-            // gibt nichts mehr, worauf zurückzufallen wäre: `container` ist
-            // nicht optional, und eine App ohne Modell hätte auch keine Ansicht,
-            // die noch etwas anzeigen könnte.
-            fatalError("Score konnte nicht einmal einen flüchtigen Speicher anlegen: \(error)")
+            log.error("Flüchtiger Speicher gescheitert, Rückfall auf einen Container ohne Modell: \(error.localizedDescription, privacy: .private)")
         }
+
+        // Stufe 4 — gar kein Speicher.
+        //
+        // Ein Speicher ohne Datei kann nur noch am Schema selbst scheitern. Das
+        // ist ein Baufehler und kein Gerätezustand — aber er trifft trotzdem den
+        // Nutzer, denn ein Schemawechsel kann sich auf einem Gerät anders
+        // verhalten als auf dem Schreibtisch. Bis hierher stand hier ein
+        // `fatalError`: Die App starb vor dem ersten Bildschirm, ohne ein Wort.
+        // Im App-Review heisst das „crash on launch", und der Nutzer sieht eine
+        // App, die sich nicht mehr öffnen lässt.
+        //
+        // Deshalb kein Absturz, sondern kein Container: Die Wurzel zeigt in
+        // diesem Fall allein die Warnung. Es gibt ohnehin keine Ansicht, die
+        // ohne Modell etwas anzeigen könnte — jede von ihnen fragt Daten ab.
+        return Startup(container: nil, usesCloudKit: false, fallback: .noModel)
     }
 
     /// Öffnet den Speicher — mit iCloud, wenn der Prozess das darf und der

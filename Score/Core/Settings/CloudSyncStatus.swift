@@ -139,7 +139,10 @@ final class CloudSyncStatus {
         // würde er die einzige Meldung verdecken, die der Nutzer sofort
         // braucht.
         switch storageFallback() {
-        case .inMemory:
+        // Beides heisst für den Nutzer dasselbe: Was er jetzt einträgt, ist beim
+        // Schliessen weg. Bei ``ScoreDataStore/StorageFallback/noModel`` kommt er
+        // hier ohnehin nicht vorbei — dann steht ausser der Warnung nichts.
+        case .inMemory, .noModel:
             state = .noStorage
             return
         case .localOnly:

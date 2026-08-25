@@ -79,27 +79,49 @@ private struct ScoreRoot: View {
         // Erscheinungsbild und Sprache hängen an der Wurzel, damit ein
         // Umschalten in den Einstellungen sofort die ganze App erfasst und
         // nicht nur den Bildschirm, auf dem der Schalter steht.
-        ContentView()
-            .scoreAppSettings()
-            .modelContainer(store.container)
-            // `safeAreaInset` und nicht `overlay`: Der Streifen soll Platz
-            // wegnehmen statt etwas zu verdecken — eine Warnung, die über einer
-            // Navigationsleiste liegt, macht die Leiste unbedienbar.
-            .safeAreaInset(edge: .top, spacing: 0) {
-                if store.fallback == .inMemory {
-                    StorageWarningBanner()
-                }
+        Group {
+            if let container = store.container {
+                ContentView()
+                    .modelContainer(container)
+            } else {
+                // Vierte Stufe des Starts: Es gibt keinen Container. Jede Ansicht
+                // der App fragt Daten ab und hätte hier nichts zu zeigen — also
+                // steht allein die Warnung da. Das ist wenig, aber es ist mehr
+                // als ein Absturz beim Start, und es sagt dem Nutzer, was zu tun
+                // ist.
+                noStorageScreen
             }
-            .onChange(of: scenePhase) { _, phase in
-                if phase == .background {
-                    wasInBackground = true
-                    return
-                }
+        }
+        .scoreAppSettings()
+        // `safeAreaInset` und nicht `overlay`: Der Streifen soll Platz
+        // wegnehmen statt etwas zu verdecken — eine Warnung, die über einer
+        // Navigationsleiste liegt, macht die Leiste unbedienbar.
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if store.fallback == .inMemory {
+                StorageWarningBanner()
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background {
+                wasInBackground = true
+                return
+            }
 
-                guard phase == .active, wasInBackground else { return }
-                wasInBackground = false
-                syncIfStale()
-            }
+            guard phase == .active, wasInBackground else { return }
+            wasInBackground = false
+            syncIfStale()
+        }
+    }
+
+    /// Was dasteht, wenn es gar keinen Speicher gibt: die Warnung und sonst
+    /// nichts.
+    private var noStorageScreen: some View {
+        VStack(spacing: 0) {
+            StorageWarningBanner()
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(ScorePalette.background.ignoresSafeArea())
     }
 
     /// Stösst beim Zurückkommen aus dem Hintergrund einen Abgleich an, wenn der

@@ -115,12 +115,29 @@ struct StorageFallbackTests {
 
         // Der Sinn der dritten Stufe ist eine App, die läuft. Ein Container,
         // in den sich nichts eintragen liesse, wäre nur ein späterer Absturz.
-        let context = ModelContext(startup.container)
+        let context = try ModelContext(#require(startup.container))
         context.insert(StudentProfile(firstName: "Testlauf"))
         try context.save()
 
         let count = try context.fetchCount(FetchDescriptor<StudentProfile>())
         #expect(count == 1)
+    }
+
+    // MARK: - Stufe 4
+
+    @Test("Scheitert auch der flüchtige Speicher, startet die App trotzdem")
+    func fourthStageDoesNotCrash() throws {
+        let builder = Builder(failing: [.cloudKit, .local, .inMemory])
+
+        let startup = ScoreDataStore.start(wantsCloudKit: true, make: builder.make)
+
+        // Hier stand bis vor Kurzem ein `fatalError` — die App starb vor dem
+        // ersten Bildschirm. Ein Schemafehler auf dem Gerät ist im App-Review
+        // ein „crash on launch"; eine Warnleiste ist die bessere Antwort.
+        #expect(startup.container == nil)
+        #expect(startup.fallback == .noModel)
+        #expect(startup.usesCloudKit == false)
+        #expect(builder.attempted == [.cloudKit, .local, .inMemory])
     }
 }
 
@@ -190,7 +207,7 @@ struct StoreReopenTests {
 
         try? await store.reopen(make: builder.make)
 
-        let context = ModelContext(store.container)
+        let context = try ModelContext(#require(store.container))
         context.insert(StudentProfile(firstName: "Testlauf"))
         try context.save()
         #expect(try context.fetchCount(FetchDescriptor<StudentProfile>()) == 1)

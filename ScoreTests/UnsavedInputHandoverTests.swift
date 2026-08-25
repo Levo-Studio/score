@@ -76,7 +76,7 @@ struct UnsavedInputHandoverTests {
         let reopens = Reopens()
         let sync = makeSync(registry: registry, reopens: reopens)
 
-        registry.begin()
+        _ = registry.begin()
         sync.start(trigger: .automatic)
         await settle()
 
@@ -91,14 +91,14 @@ struct UnsavedInputHandoverTests {
         let reopens = Reopens()
         let sync = makeSync(registry: registry, reopens: reopens)
 
-        registry.begin()
+        let hold = registry.begin()
         sync.start(trigger: .automatic)
         await settle()
         #expect(reopens.count == 0)
 
         // Der Nutzer schliesst das Blatt. Ein Abgleich, der nie liefe, wäre nur
         // die nächste Regression.
-        registry.end()
+        registry.end(hold)
         await waitUntil { reopens.count == 1 }
 
         #expect(reopens.count == 1)
@@ -111,13 +111,13 @@ struct UnsavedInputHandoverTests {
         let reopens = Reopens()
         let sync = makeSync(registry: registry, reopens: reopens)
 
-        registry.begin()
+        let hold = registry.begin()
         // Zweimal in den Vordergrund geholt, während dasselbe Blatt offen steht.
         sync.start(trigger: .automatic)
         sync.start(trigger: .automatic)
         await settle()
 
-        registry.end()
+        registry.end(hold)
         await waitUntil { reopens.count > 0 }
         await settle()
 
@@ -130,16 +130,16 @@ struct UnsavedInputHandoverTests {
         let reopens = Reopens()
         let sync = makeSync(registry: registry, reopens: reopens)
 
-        registry.begin()
-        registry.begin()
+        let lower = registry.begin()
+        let upper = registry.begin()
         sync.start(trigger: .automatic)
 
-        registry.end()
+        registry.end(upper)
         await settle()
-        // Ein `Bool` statt eines Zählers wäre hier schon frei gewesen.
+        // Ein `Bool` statt zweier Anmeldungen wäre hier schon frei gewesen.
         #expect(reopens.count == 0)
 
-        registry.end()
+        registry.end(lower)
         await waitUntil { reopens.count == 1 }
         #expect(reopens.count == 1)
     }
@@ -166,10 +166,67 @@ struct UnsavedInputHandoverTests {
         let reopens = Reopens()
         let sync = makeSync(registry: registry, reopens: reopens)
 
-        registry.begin()
+        _ = registry.begin()
         sync.start()
         await waitUntil { reopens.count == 1 }
 
+        #expect(reopens.count == 1)
+    }
+
+    // MARK: - Die Frist auf der Anmeldung
+
+    /// Der gemeldete Fund: Die Abmeldung hing allein am `onDisappear` des
+    /// angemeldeten Inhalts. Fiel sie aus — der Zug am Fenstertrenner ins
+    /// Schmale baut das Blatt ab, ohne dass die Ansicht darunter es merkt —,
+    /// meldete die Anmeldestelle für den Rest des Prozesslaufs „offen", und der
+    /// automatische Abgleich war stumm und dauerhaft tot.
+    ///
+    /// Seitdem ist der Aufschub fail-open: Eine Anmeldung verfällt von selbst.
+    @Test("Eine hängengebliebene Anmeldung blockiert den Abgleich nicht dauerhaft")
+    func aLeakedHoldDoesNotBlockForever() async {
+        let registry = UnsavedInputRegistry(maxHold: .milliseconds(200))
+        let reopens = Reopens()
+        let sync = makeSync(registry: registry, reopens: reopens)
+
+        // Das Blatt meldet sich an — und meldet sich nie wieder ab.
+        _ = registry.begin()
+        sync.start(trigger: .automatic)
+        #expect(reopens.count == 0)
+        #expect(sync.isDeferred)
+
+        await waitUntil { reopens.count == 1 }
+
+        #expect(reopens.count == 1)
+        #expect(sync.isDeferred == false)
+        #expect(registry.holdsUnsavedInput == false)
+    }
+
+    /// Die Frist darf den Schutz nicht praktisch abschalten: Sie hängt an der
+    /// einzelnen Anmeldung, nicht an der Anmeldestelle. Ein frisch geöffnetes
+    /// Blatt behält seine volle Frist, auch wenn daneben eine alte Anmeldung
+    /// gerade verfällt.
+    @Test("Die Frist nimmt nur die überfällige Anmeldung zurück")
+    func onlyTheOverdueHoldLapses() async {
+        let registry = UnsavedInputRegistry(maxHold: .milliseconds(400))
+        let reopens = Reopens()
+        let sync = makeSync(registry: registry, reopens: reopens)
+
+        // Die alte Anmeldung, die niemand zurücknimmt.
+        _ = registry.begin()
+        try? await Task.sleep(for: .milliseconds(300))
+
+        // Darüber geht ein echtes Blatt auf.
+        let fresh = registry.begin()
+        sync.start(trigger: .automatic)
+
+        // Jetzt ist die alte überfällig, das echte Blatt aber noch lange nicht.
+        try? await Task.sleep(for: .milliseconds(250))
+        #expect(registry.openCount == 1)
+        #expect(reopens.count == 0)
+        #expect(sync.isDeferred)
+
+        registry.end(fresh)
+        await waitUntil { reopens.count == 1 }
         #expect(reopens.count == 1)
     }
 

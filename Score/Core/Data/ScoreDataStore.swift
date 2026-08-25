@@ -488,6 +488,41 @@ final class ScoreDataStore {
 /// beziehungsweise einer anderen Route, und ein offenes Blatt liegt über allem.
 /// Ihn trotzdem zu sperren hiesse, auf einen Tipp hin nichts zu tun, ohne es
 /// erklären zu können.
+///
+/// ## Warum der Aufschub von selbst verfällt
+///
+/// Eine Anmeldung wird beim `onDisappear` der angemeldeten Ansicht
+/// zurückgenommen. Dieses `onDisappear` kommt nicht in jedem Fall: Zieht der
+/// Nutzer den Fenstertrenner ins Schmale, baut das System das präsentierte Blatt
+/// ab, ohne dass die Ansicht darunter davon erführe — deshalb hängt an den
+/// Fachansichten eigens ein `onDisappear` am **Präsentierenden**.
+///
+/// Fiele auch nur eine Abmeldung aus, meldete die Anmeldestelle für den Rest des
+/// Prozesslaufs „es ist etwas offen": Jeder Wechsel in den Vordergrund schöbe
+/// den Abgleich auf, der nachzuholende Lauf wartete auf ein `end`, das nie
+/// käme — der automatische Abgleich wäre stumm und dauerhaft tot.
+///
+/// Deshalb gilt jede Anmeldung nur ``defaultMaxHold`` lang und nimmt sich danach
+/// selbst zurück. Der Aufschub ist damit **fail-open** statt fail-closed, und
+/// das ist die richtige Richtung:
+///
+/// - Der schlimmste Fall eines übersprungenen Aufschubs ist das Verhalten von
+///   vorher — ein Containertausch bei offenem Blatt. Seit der Entwurf kein
+///   Modellobjekt mehr hält, sondern nur noch ``PendingSemester`` aus Kennung
+///   und Index, löst er sein Halbjahr in genau dem Kontext auf, in den er
+///   eingefügt wird. Die Kontextgrenze lässt sich so gar nicht mehr verletzen;
+///   übrig bliebe ein Flackern.
+/// - Der schlimmste Fall einer hängenden Anmeldung ist eine stille, dauerhafte
+///   Sync-Blockade. Der Nutzer sieht auf beiden Geräten verschiedene Stände und
+///   bekommt nirgends gesagt, warum.
+///
+/// Ein stilles Datenproblem wiegt schwerer als ein sichtbares Flackern, also
+/// verfällt der Schutz lieber, als dass er ewig gilt.
+///
+/// Damit die Frist den Schutz nicht praktisch abschaltet, hängt sie an der
+/// **einzelnen** Anmeldung und nicht an der Anmeldestelle als Ganzem: Eine
+/// überfällige Anmeldung verfällt, ein daneben frisch geöffnetes Blatt behält
+/// seine vollen fünf Minuten.
 @MainActor
 @Observable
 final class UnsavedInputRegistry {
@@ -495,39 +530,72 @@ final class UnsavedInputRegistry {
     /// Die Anmeldestelle, an der die App hängt. Es gibt genau eine.
     static let shared = UnsavedInputRegistry()
 
+    /// Wie lange eine einzelne Anmeldung längstens gilt, wenn sie niemand
+    /// zurücknimmt.
+    ///
+    /// Fünf Minuten: deutlich mehr, als ein Blatt dieser App tatsächlich offen
+    /// steht — Titel und Punktzahl einer Leistung sind in unter einer Minute
+    /// eingetippt, die Wahl beim Import in Sekunden —, und wenig genug, dass ein
+    /// hängengebliebener Eintrag sich noch in derselben Sitzung von selbst löst.
+    static let defaultMaxHold: Duration = .seconds(300)
+
+    /// Dieselbe Frist für diese Anmeldestelle. Tests setzen sie kurz.
+    let maxHold: Duration
+
+    /// Eine einzelne Anmeldung.
+    ///
+    /// Undurchsichtig und nur von der Anmeldestelle auszustellen: Wer abmeldet,
+    /// muss belegen können, **welche** Anmeldung er zurücknimmt. Ein blosser
+    /// Zähler liesse jedes `end()` irgendeine fremde Anmeldung freigeben.
+    struct Hold: Hashable {
+        fileprivate let id = UUID()
+        fileprivate init() {}
+    }
+
+    /// Die offenen Anmeldungen samt dem Zeitpunkt, zu dem sie eingingen.
+    private var holds: [Hold: ContinuousClock.Instant] = [:]
+
     /// Wie viele Ansichten gerade ungesicherte Eingaben halten.
     ///
-    /// Ein Zähler und kein `Bool`: Auf dem iPad kann über einem Blatt noch ein
-    /// zweites liegen, und ein `Bool` wäre nach dem Schliessen des oberen frei,
-    /// obwohl das untere noch steht.
-    private(set) var openCount = 0
+    /// Mehrere und nicht bloss ein `Bool`: Auf dem iPad kann über einem Blatt
+    /// noch ein zweites liegen, und ein `Bool` wäre nach dem Schliessen des
+    /// oberen frei, obwohl das untere noch steht.
+    var openCount: Int { holds.count }
 
     /// Ob gerade irgendwo etwas Ungesichertes offen steht.
-    var holdsUnsavedInput: Bool { openCount > 0 }
+    var holdsUnsavedInput: Bool { !holds.isEmpty }
 
     /// Was nachzuholen ist, sobald das letzte Blatt zu ist.
     private var whenFree: [() -> Void] = []
 
-    /// Nur für Tests: eine eigene Anmeldestelle, die keine andere stört.
-    init() {}
+    /// Wartet auf die nächste ablaufende Anmeldung.
+    private var lapse: Task<Void, Never>?
+
+    /// - Parameter maxHold: Wie lange eine Anmeldung längstens gilt.
+    init(maxHold: Duration = defaultMaxHold) {
+        self.maxHold = maxHold
+    }
 
     /// Eine Ansicht mit ungesicherter Eingabe ist aufgegangen.
-    func begin() {
-        openCount += 1
+    ///
+    /// Die zurückgegebene Anmeldung gehört dem Aufrufer; nur mit ihr lässt sie
+    /// sich wieder zurücknehmen.
+    func begin() -> Hold {
+        let hold = Hold()
+        holds[hold] = .now
+        scheduleLapse()
+        return hold
     }
 
     /// Sie ist wieder zu. Beim Letzten wird nachgeholt, was sich aufgestaut hat.
-    func end() {
-        guard openCount > 0 else { return }
-        openCount -= 1
-        guard openCount == 0 else { return }
-
-        // Erst leeren, dann ausführen: Was dabei sofort wieder ein Blatt
-        // aufmacht, meldet sich neu an und staut sich neu auf, statt hier in
-        // eine zweite Runde derselben Liste zu geraten.
-        let pending = whenFree
-        whenFree = []
-        pending.forEach { $0() }
+    ///
+    /// Mehrfaches Abmelden derselben Anmeldung tut nichts — `onDisappear` kann
+    /// mehr als einmal kommen, und ein zweites Abmelden dürfte kein fremdes
+    /// Blatt freigeben.
+    func end(_ hold: Hold) {
+        guard holds.removeValue(forKey: hold) != nil else { return }
+        scheduleLapse()
+        runPendingIfFree()
     }
 
     /// Führt die Aufgabe aus, sobald nichts mehr offen ist — sofort, wenn schon
@@ -538,6 +606,86 @@ final class UnsavedInputRegistry {
             return
         }
         whenFree.append(action)
+    }
+
+    // MARK: - Die Frist
+
+    /// Legt die nächste Anmeldung fällig, sobald ihre Frist um ist.
+    private func scheduleLapse() {
+        lapse?.cancel()
+        lapse = nil
+
+        guard let earliest = holds.values.min() else { return }
+        let deadline = earliest.advanced(by: maxHold)
+
+        lapse = Task { [weak self] in
+            let remaining = ContinuousClock.now.duration(to: deadline)
+            if remaining > .zero {
+                try? await Task.sleep(for: remaining)
+            }
+            guard !Task.isCancelled else { return }
+            self?.dropOverdueHolds()
+        }
+    }
+
+    /// Nimmt überfällige Anmeldungen von selbst zurück.
+    ///
+    /// Ausdrücklich nur die überfälligen und nicht alles: Läge neben einer
+    /// hängengebliebenen Anmeldung ein gerade erst geöffnetes Blatt, nähme ein
+    /// pauschaler Reset auch diesem den Schutz — und zwar genau in dem Moment,
+    /// in dem er gebraucht wird.
+    private func dropOverdueHolds() {
+        let now = ContinuousClock.now
+        let overdue = holds.filter { $0.value.duration(to: now) >= maxHold }
+        guard !overdue.isEmpty else {
+            scheduleLapse()
+            return
+        }
+
+        for hold in overdue.keys {
+            holds.removeValue(forKey: hold)
+        }
+        scheduleLapse()
+        runPendingIfFree()
+    }
+
+    /// Holt nach, was sich aufgestaut hat — sobald nichts mehr offen ist.
+    private func runPendingIfFree() {
+        guard !holdsUnsavedInput else { return }
+
+        // Erst leeren, dann ausführen: Was dabei sofort wieder ein Blatt
+        // aufmacht, meldet sich neu an und staut sich neu auf, statt hier in
+        // eine zweite Runde derselben Liste zu geraten.
+        let pending = whenFree
+        whenFree = []
+        pending.forEach { $0() }
+    }
+}
+
+/// Meldet die Ansicht an, an der sie hängt, und wieder ab.
+///
+/// Ein eigener Modifier und keine zwei losen `onAppear`/`onDisappear`: Die
+/// Anmeldung ist eine Kennung, die zwischen beiden aufgehoben werden muss.
+private struct HoldsUnsavedInput: ViewModifier {
+
+    let registry: UnsavedInputRegistry
+
+    /// Die eigene Anmeldung, solange diese Ansicht steht.
+    @State private var hold: UnsavedInputRegistry.Hold?
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear {
+                // Erscheint dieselbe Ansicht ein zweites Mal, ohne dazwischen
+                // verschwunden zu sein, bleibt es bei der ersten Anmeldung.
+                guard hold == nil else { return }
+                hold = registry.begin()
+            }
+            .onDisappear {
+                guard let hold else { return }
+                registry.end(hold)
+                self.hold = nil
+            }
     }
 }
 
@@ -555,7 +703,6 @@ extension SwiftUI.View {
     func holdsUnsavedInput(
         _ registry: UnsavedInputRegistry = .shared
     ) -> some View {
-        onAppear { registry.begin() }
-            .onDisappear { registry.end() }
+        modifier(HoldsUnsavedInput(registry: registry))
     }
 }

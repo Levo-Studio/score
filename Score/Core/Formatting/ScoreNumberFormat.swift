@@ -10,8 +10,6 @@ import Foundation
 /// Schreibweise gelesen.
 enum ScoreNumberFormat {
 
-    private static let german = Locale(identifier: "de_DE")
-
     /// Der Strich, der „kein Wert" bedeutet — nicht „null Punkte".
     ///
     /// Der Unterschied ist wichtig: ein Halbjahr ohne erfasste Leistung hat kein
@@ -32,7 +30,7 @@ enum ScoreNumberFormat {
     /// Ein ganzes Halbjahresergebnis, etwa „13".
     static func points(_ value: Int?) -> String {
         guard let value else { return placeholder }
-        return value.formatted(.number.locale(german))
+        return value.formatted(.number.locale(ScoreLocale.german))
     }
 
     // MARK: - Noten
@@ -50,7 +48,7 @@ enum ScoreNumberFormat {
     /// - Parameter fractionDigits: Schnitte stehen mit einer Nachkommastelle,
     ///   ganze Punktzahlen ohne.
     static func decimal(_ value: Double, fractionDigits: Int = 1) -> String {
-        value.formatted(.number.precision(.fractionLength(fractionDigits)).locale(german))
+        value.formatted(.number.precision(.fractionLength(fractionDigits)).locale(ScoreLocale.german))
     }
 
     /// Wie `decimal(_:fractionDigits:)`, liefert bei `nil` aber den Platzhalter.

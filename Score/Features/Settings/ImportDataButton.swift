@@ -15,8 +15,9 @@ import UniformTypeIdentifiers
 /// 1. Der Nutzer wählt eine JSON-Datei.
 /// 2. Sie wird **vollständig gelesen und geprüft**. Bricht das ab, bleibt der
 ///    Bestand unangetastet und es steht ein knapper Satz da.
-/// 3. Ist noch nichts da, wird gleich eingelesen — ein Dialog, der nichts zu
-///    warnen hat, ist nur eine Hürde.
+/// 3. Ist noch nichts da — kein Fach, keine Leistung **und kein Profil** —, wird
+///    gleich eingelesen; ein Dialog, der nichts zu warnen hat, ist nur eine
+///    Hürde.
 /// 4. Sonst geht ein Blatt von unten auf: zusammenführen oder ersetzen. Ersetzen
 ///    fragt danach noch einmal nach, mit Zahlen und zerstörend markiert.
 struct ImportDataButton<Label: View>: View {
@@ -97,7 +98,15 @@ struct ImportDataButton<Label: View>: View {
                 apply(candidate.export, mode: .replace)
             }
         } message: { candidate in
-            Text("Deine \(candidate.current.subjectCount) Fächer mit \(candidate.current.gradeCount) Leistungen werden gelöscht. Aus der Datei kommen \(candidate.incoming.subjectCount) Fächer mit \(candidate.incoming.gradeCount) Leistungen. Rückgängig machen lässt sich das nicht.")
+            // Zwei Fassungen, weil das Ersetzen zwei verschiedene Dinge tut: Es
+            // löscht immer den Fachbestand, und es überschreibt zusätzlich das
+            // Profil, wenn beide Seiten eines haben. Das zweite ist der Teil,
+            // der dem Nutzer bisher nirgends angekündigt wurde.
+            if candidate.current.hasProfile && candidate.incoming.hasProfile {
+                Text("Deine \(candidate.current.subjectCount) Fächer mit \(candidate.current.gradeCount) Leistungen werden gelöscht, und dein Profil übernimmt Name, Bundesland, Jahrgang und Klassenstufe aus der Datei. Aus der Datei kommen \(candidate.incoming.subjectCount) Fächer mit \(candidate.incoming.gradeCount) Leistungen. Rückgängig machen lässt sich das nicht.")
+            } else {
+                Text("Deine \(candidate.current.subjectCount) Fächer mit \(candidate.current.gradeCount) Leistungen werden gelöscht. Aus der Datei kommen \(candidate.incoming.subjectCount) Fächer mit \(candidate.incoming.gradeCount) Leistungen. Rückgängig machen lässt sich das nicht.")
+            }
         }
         .alert(failureTitle, isPresented: isShowingFailure, presenting: failure) { _ in
             Button("OK", role: .cancel) {}
@@ -153,7 +162,12 @@ struct ImportDataButton<Label: View>: View {
                 incoming: ScoreImport.summary(of: export)
             )
 
-            // Nichts da, nichts zu warnen: direkt einlesen.
+            // Nichts da, nichts zu warnen: direkt einlesen. „Nichts" schliesst
+            // das Profil ausdrücklich ein — siehe ``ScoreImport.Summary``. Ohne
+            // das lief dieser Weg auch für einen Nutzer los, der zwar noch kein
+            // Fach, aber sehr wohl ein Profil hatte, und schrieb ihm ungefragt
+            // Name, Bundesland, Jahrgang und Klassenstufe aus einer fremden
+            // Datei ins Profil.
             if current.isEmpty {
                 apply(export, mode: .replace)
             } else {

@@ -68,16 +68,14 @@ struct BlockOneBreakdownTests {
         // Ohne Prüfungen rechnet Score sie auf dem heutigen Stand hoch:
         // 11,4166… · 4 = 45,66… → 46 je Prüfung.
         //
-        // Hochgerechnet wird dabei nur, was auch erwartet wird. Dieser Jahrgang
-        // hat drei Leistungsfächer und noch kein mündliches Prüfungsfach gewählt;
-        // erwartet werden damit drei Prüfungen und nicht fünf. Dreimal 46 sind
-        // 138. Die beiden fehlenden mündlichen Prüfungen kommen erst dazu, wenn
-        // die Fächer gewählt sind — vorher gibt es sie in den Daten nicht.
+        // Hochgerechnet werden alle fünf. Dieser Jahrgang hat noch kein
+        // mündliches Prüfungsfach gewählt — geprüft wird trotzdem fünfmal, das
+        // steht in der Verordnung und nicht in den Daten. Fünfmal 46 sind 230.
         #expect(breakdown.result.isProjection)
-        #expect(breakdown.result.projectedExamBlockPoints == 138)
-        #expect(breakdown.result.totalPoints == 595)
-        // 595 liegt in der Zeile 589–606 der amtlichen Tabelle.
-        #expect(breakdown.result.grade == 2.3)
+        #expect(breakdown.result.projectedExamBlockPoints == 230)
+        #expect(breakdown.result.totalPoints == 687)
+        // 687 liegt in der Zeile 679–696 der amtlichen Tabelle.
+        #expect(breakdown.result.grade == 1.8)
     }
 
     // MARK: - Die drei Gruppen

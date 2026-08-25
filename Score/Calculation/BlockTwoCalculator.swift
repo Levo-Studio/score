@@ -176,16 +176,27 @@ enum BlockTwoCalculator {
             return results.reduce(0, +) / Double(results.count)
         }
 
-        /// Wie viele der erwarteten Prüfungen noch fehlen.
+        /// Wie viele der fünf Prüfungen noch fehlen.
         ///
-        /// Gerechnet gegen ``expectedExamCount`` und nicht gegen die Fünf: wer
-        /// seine Prüfungsfächer noch nicht vollständig gewählt hat, hat drei
-        /// erwartete Prüfungen und nicht fünf. Gegen die Konstante gerechnet
-        /// schriebe die Hochrechnung zwei Prüfungen fort, die es in den Daten gar
-        /// nicht gibt — und wiese für einen halb erfassten Jahrgang einen
-        /// vollständigen Prüfungsblock aus.
+        /// Gerechnet gegen die amtliche Fünf und **nicht** gegen
+        /// ``expectedExamCount``. Fünf Prüfungen sind die Prüfungsordnung und
+        /// keine Aussage über den Datenbestand: Dass die beiden mündlichen
+        /// Prüfungsfächer noch nicht gewählt sind — der Normalzustand in
+        /// Kursstufe 1 und im grössten Teil von Kursstufe 2 —, heisst nur, dass
+        /// Score die Fächer noch nicht kennt. Die Prüfungen kommen trotzdem.
+        ///
+        /// Gegen ``expectedExamCount`` gerechnet würden für diese Nutzer nur drei
+        /// Prüfungen fortgeschrieben. ``AbiturResult/Outcome/totalPoints`` käme
+        /// damit höchstens auf 600 + 180 = 780, die Note aber weiter aus der
+        /// Tabelle von 0 bis 900 — der erwartete Schnitt fiele um rund eine ganze
+        /// Note, ohne dass sich an den Daten etwas geändert hätte.
+        ///
+        /// Nach oben bleibt es bei fünf: ``recordedExamCount`` ist gedeckelt, bei
+        /// sechs erfassten Prüfungen im Bestand steht hier also 0 und keine
+        /// negative Zahl. Dass eine der sechs noch offen ist, sagt
+        /// ``isComplete`` — nicht diese Zahl.
         var missingExamCount: Int {
-            max(0, expectedExamCount - recordedExamCount)
+            max(0, examCount - recordedExamCount)
         }
 
         /// Die hochgerechnete Punktzahl, wenn die fehlenden Prüfungen auf einem
@@ -225,8 +236,8 @@ enum BlockTwoCalculator {
         // dann weiter, aber innerhalb der amtlichen Grenzen: der Beitrag ist bei
         // 300 Punkten gedeckelt, und gezählt werden höchstens fünf Prüfungen.
         // Ohne den Deckel stünden bis zu 360 Punkte in einem Block, den es nur bis
-        // 300 gibt, und ``Outcome/isComplete`` — das genau fünf verlangt — würde
-        // nie wahr, das Ergebnis bliebe also für immer eine Hochrechnung.
+        // 300 gibt, ``Outcome/isComplete`` — das genau fünf verlangt — würde nie
+        // wahr, und ``Outcome/missingExamCount`` würde negativ.
         return Outcome(
             points: min(maximumPoints, exams.compactMap(\.points).reduce(0, +)),
             exams: exams,

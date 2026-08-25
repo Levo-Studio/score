@@ -176,26 +176,29 @@ struct BlockTwoCalculatorTests {
         #expect(outcome.missingExamCount == 0)
     }
 
-    @Test("Es fehlt nur, was auch erwartet wird")
-    func onlyExpectedExamsAreMissing() {
-        // Drei Leistungsfächer, aber noch kein mündliches Prüfungsfach gewählt.
-        // Erwartet werden damit drei Prüfungen, und alle drei sind geschrieben.
+    @Test("Ohne gewählte mündliche Prüfungsfächer bleiben es fünf Prüfungen")
+    func unchosenOralExamSubjectsAreStillProjected() {
+        // Drei Leistungsfächer, aber noch kein mündliches Prüfungsfach gewählt —
+        // der Normalfall in Kursstufe 1 und im grössten Teil von Kursstufe 2.
         let subjects = (1...3).map {
             subject("lf-\($0)", .leistungsfach, allPoints: 10, writtenExamPoints: 12)
         }
 
         let outcome = BlockTwoCalculator.calculate(for: subjects)
 
+        // Score kennt drei Prüfungen; geprüft wird trotzdem fünfmal.
         #expect(outcome.expectedExamCount == 3)
         #expect(outcome.recordedExamCount == 3)
-        // Nichts fehlt, was es gibt — und aus zwei Prüfungen, die niemand
-        // gewählt hat, wird auch nichts hochgerechnet.
-        #expect(outcome.missingExamCount == 0)
+        #expect(outcome.missingExamCount == 2)
         #expect(outcome.points == 144)
-        #expect(outcome.projectedPoints(assuming: 12) == 144)
+        // 144 + 2 · 48 = 240. Würden nur die drei bekannten Prüfungen
+        // fortgeschrieben, bliebe der Block bei 144, die Gesamtpunktzahl käme nie
+        // über 780 und die Note fiele um rund eine ganze Stufe.
+        #expect(outcome.projectedPoints(assuming: 12) == 240)
         // Vollständig ist der Block trotzdem nicht: es fehlt die Fächerwahl.
         #expect(!outcome.isComplete)
     }
+
 
     // MARK: - Was noch fehlt
 

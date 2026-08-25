@@ -41,7 +41,7 @@ struct CloudSyncStatusTests {
         #expect(status.state == .syncing)
     }
 
-    @Test("„Wird synchronisiert …" endet, wenn nichts mehr nachkommt")
+    @Test("Der laufende Abgleich endet, wenn nichts mehr nachkommt")
     func runningStateEnds() async {
         let status = makeStatus()
         status.apply(unknownFailure())

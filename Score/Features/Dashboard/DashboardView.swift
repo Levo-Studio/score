@@ -21,7 +21,20 @@ struct DashboardView: View {
     @Environment(\.locale) private var locale
 
     @State private var model = DashboardViewModel()
-    @State private var selectedSemester: Int
+
+    /// Das gewählte Halbjahr — derselbe Schlüssel, den Fächerliste und
+    /// Fachansicht lesen.
+    ///
+    /// Es lag zuvor in `@State`, während die Fachbildschirme ihre Wahl in den
+    /// `UserDefaults` hielten: Wer hier 4/4 wählte und „Alle" antippte, stand in
+    /// der Liste in einem anderen Halbjahr, und zurück auf dem Dashboard stand
+    /// weiterhin 4/4. Eine Angabe darf nicht zwei Wahrheiten haben.
+    ///
+    /// Die Vorgabe kommt aus der Kursstufe: Das zuletzt belegte Halbjahr ist
+    /// das, an dem gerade gearbeitet wird. Sie greift nur, solange nichts
+    /// gewählt wurde.
+    @AppStorage(SubjectPreference.selectedSemesterKey)
+    private var selectedSemester = SubjectPreference.defaultSemesterIndex
 
     /// Die Aufschlüsselung steht als Sheet über dem Dashboard und nicht als
     /// Ziel eines `NavigationStack`: dieser Reiter hat keinen, und die Tab-Bar
@@ -34,8 +47,11 @@ struct DashboardView: View {
     init(profile: StudentProfile, onShowAllSubjects: @escaping () -> Void) {
         self.profile = profile
         self.onShowAllSubjects = onShowAllSubjects
-        // Das zuletzt belegte Halbjahr ist das, an dem gerade gearbeitet wird.
-        _selectedSemester = State(initialValue: profile.classLevel.availableSemesters.last ?? 0)
+        _selectedSemester = AppStorage(
+            wrappedValue: profile.classLevel.availableSemesters.last
+                ?? SubjectPreference.defaultSemesterIndex,
+            SubjectPreference.selectedSemesterKey
+        )
     }
 
     private var inputs: [SubjectInput] {
@@ -84,6 +100,14 @@ struct DashboardView: View {
         .background(ScorePalette.background)
         .onChange(of: inputs, initial: true) { _, newInputs in
             model.update(with: newInputs)
+        }
+        // Die Fachbildschirme kennen die Kursstufe nicht. Damit sie beim ersten
+        // Start nicht in einem anderen Halbjahr stehen als das Dashboard, wird
+        // die Vorgabe hier einmal festgeschrieben.
+        .onAppear {
+            SubjectPreference.seedSelectedSemester(
+                profile.classLevel.availableSemesters.last ?? SubjectPreference.defaultSemesterIndex
+            )
         }
         .sheet(isPresented: $isBreakdownPresented) {
             BlockOneBreakdownView(subjects: subjects) {

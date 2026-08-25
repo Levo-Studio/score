@@ -1228,7 +1228,11 @@ private struct BreakdownEdgeCases: View {
                             .foregroundStyle(ScorePalette.accent)
                             .accessibilityHidden(true)
                     }
-                    .frame(minHeight: ScoreMetrics.minimumTapTarget - ScoreMetrics.Spacing.sm)
+                    // Volle 44 Punkte, nicht die um einen Abstand gekürzte Höhe:
+                    // `contentShape` schneidet die Trefferfläche genau auf dieses
+                    // Mass zu, aus 44 wurden so 32 Punkte. Das ist unter Apples
+                    // Mindestmass, und überall sonst steht der Wert ungekürzt.
+                    .frame(minHeight: ScoreMetrics.minimumTapTarget)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)

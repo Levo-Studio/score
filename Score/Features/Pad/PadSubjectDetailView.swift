@@ -74,7 +74,9 @@ struct PadSubjectDetailView: View {
             // Erst leeren: Der Entwurf ist danach entweder angelegt oder
             // verfallen, und ein zweiter Durchlauf legte ihn ein zweites Mal an.
             editedEntry = nil
-            keepIfEdited(edit)
+            // Ohne Streifen: Er hinge an dieser Ansicht, die gerade abgebaut
+            // wird, und erschiene nie. Siehe ``keepIfEdited(_:offersUndo:)``.
+            keepIfEdited(edit, offersUndo: false)
         }
     }
 
@@ -606,10 +608,19 @@ struct PadSubjectDetailView: View {
 
     /// Ein geschlossenes Blatt mit tatsächlicher Eingabe legt die Leistung an und
     /// bietet sie zur Rücknahme an; ein unangetasteter Entwurf verfällt.
-    private func keepIfEdited(_ edit: GradeEntryEdit) {
+    ///
+    /// - Parameter offersUndo: Ob der Streifen angeboten wird. Aus `onDisappear`
+    ///   heraus nicht: ``pendingUndo`` ist ein `@State` dieser Ansicht, und wer
+    ///   ihn setzt, während die Ansicht abgebaut wird, setzt ihn ins Leere — der
+    ///   Streifen erschien nie, die Leistung stand aber trotzdem in den Daten.
+    ///   Ein Versprechen, das nicht eingelöst wird, ist schlechter als keines:
+    ///   Behalten wird die Leistung weiterhin, zurücknehmen lässt sie sich mit
+    ///   einem Wisch.
+    private func keepIfEdited(_ edit: GradeEntryEdit, offersUndo: Bool = true) {
         guard edit.isNew, edit.hasInput else { return }
 
         edit.commit(to: modelContext)
+        guard offersUndo else { return }
         showUndo(.creation(of: edit.entry))
     }
 

@@ -287,6 +287,19 @@ struct SettingsView: View {
             Text("Product by Levo Studio")
                 .font(.meta)
                 .foregroundStyle(ScorePalette.inkSecondary)
+
+            // Die einzige Stelle der Einstellungen, die sagt, woher die App
+            // kommt — also auch die Stelle, an der stehen muss, was sie nicht
+            // ist. Dieselbe Form wie die Zeile darüber: kein Kasten, keine
+            // Warnfarbe. Der zweite Ort dieses Satzes ist der Fuss der
+            // Aufschlüsselung, wo der Rechenweg endet.
+            Text("Score rechnet nach der Abiturverordnung Baden-Württembergs, ist aber keine amtliche Auskunft. Verbindlich ist allein das Zeugnis deiner Schule.")
+                .font(.meta)
+                .lineSpacing(4)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(ScorePalette.inkSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, ScoreMetrics.Spacing.md)
         }
         .accessibilityElement(children: .combine)
     }

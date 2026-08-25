@@ -38,7 +38,15 @@ struct SubjectStatistics {
         var best: (points: Int, index: Int)?
         for (index, value) in results.enumerated() {
             guard let value else { continue }
-            if best == nil || value > best!.points { best = (value, index) }
+            // Ohne `!`: Steht noch nichts fest, ist der erste Wert der beste;
+            // sonst zählt der Vergleich. Die Bedingung davor trug dieselbe
+            // Aussage, aber ein erzwungenes Auspacken hält sie nur so lange, wie
+            // niemand die Zeile umstellt.
+            guard let current = best else {
+                best = (value, index)
+                continue
+            }
+            if value > current.points { best = (value, index) }
         }
         guard let best else { return Text(verbatim: ScoreNumberFormat.placeholder) }
         return Text("\(best.points) Punkte · \(Semester.label(best.index))")

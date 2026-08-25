@@ -70,7 +70,11 @@ final class ScoreAppDelegate: NSObject, UIApplicationDelegate {
     ) {
         // Kein Grund, die App anzuhalten: Ohne Push bleibt der Abgleich beim
         // Start, und genau das sagt der Sync-Zustand in den Einstellungen dann.
-        Self.log.error("Push-Anmeldung fehlgeschlagen: \(error.localizedDescription, privacy: .public)")
+        // Maskiert, obwohl in dieser Meldung keine Nutzerdaten stehen: Was ein
+        // Systemfehler in seine Beschreibung schreibt, entscheidet nicht diese
+        // App, und die Voreinstellung für alles, was von aussen kommt, ist
+        // „nicht ins offene Protokoll".
+        Self.log.error("Push-Anmeldung fehlgeschlagen: \(error.localizedDescription, privacy: .private)")
     }
 
     func application(

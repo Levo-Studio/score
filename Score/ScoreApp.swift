@@ -69,6 +69,14 @@ private struct ScoreRoot: View {
         ContentView()
             .scoreAppSettings()
             .modelContainer(store.container)
+            // `safeAreaInset` und nicht `overlay`: Der Streifen soll Platz
+            // wegnehmen statt etwas zu verdecken — eine Warnung, die über einer
+            // Navigationsleiste liegt, macht die Leiste unbedienbar.
+            .safeAreaInset(edge: .top, spacing: 0) {
+                if store.fallback == .inMemory {
+                    StorageWarningBanner()
+                }
+            }
             .onChange(of: scenePhase, initial: true) { _, phase in
                 guard phase == .active else { return }
                 syncIfStale()

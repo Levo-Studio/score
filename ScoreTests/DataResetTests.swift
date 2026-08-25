@@ -61,6 +61,14 @@ struct DataResetTests {
         return context
     }
 
+    /// Ein eigener Bereich in `UserDefaults` pro Prüfung.
+    ///
+    /// `.standard` scheidet aus: Die Prüfungen liefen sonst gegen dieselben
+    /// Schlüssel wie die App auf dem Simulator und würden einander sehen.
+    private static func makeDefaults() -> UserDefaults {
+        UserDefaults(suiteName: "DataResetTests.\(UUID().uuidString)") ?? .standard
+    }
+
     private static func counts(in context: ModelContext) throws -> (Int, Int, Int, Int) {
         (
             try context.fetchCount(FetchDescriptor<StudentProfile>()),
@@ -85,7 +93,7 @@ struct DataResetTests {
     func deletesEverything() throws {
         let context = try Self.makeContext()
 
-        try DataReset.deleteAll(in: context)
+        try DataReset.deleteAll(in: context, defaults: Self.makeDefaults())
 
         let (profiles, subjects, semesters, entries) = try Self.counts(in: context)
         #expect(profiles == 0)
@@ -115,7 +123,7 @@ struct DataResetTests {
         context.insert(orphanEntry)
         try context.save()
 
-        try DataReset.deleteAll(in: context)
+        try DataReset.deleteAll(in: context, defaults: Self.makeDefaults())
 
         let (profiles, subjects, semesters, entries) = try Self.counts(in: context)
         #expect(profiles == 0)
@@ -128,9 +136,89 @@ struct DataResetTests {
     func deletingTwiceIsSafe() throws {
         let context = try Self.makeContext()
 
-        try DataReset.deleteAll(in: context)
-        try DataReset.deleteAll(in: context)
+        try DataReset.deleteAll(in: context, defaults: Self.makeDefaults())
+        try DataReset.deleteAll(in: context, defaults: Self.makeDefaults())
 
         #expect(try DataReset.summary(in: context).isEmpty)
+    }
+
+    // MARK: - Gemerkte Werte
+
+    /// Ein Gerät, auf dem gearbeitet wurde: Es kennt sein Profil, hat es
+    /// bestätigt, kennt den Profilsatz, hatte ein Halbjahr offen und hat schon
+    /// einmal abgeglichen. Dazu die drei Geräteeinstellungen.
+    private static func makeUsedDefaults() -> UserDefaults {
+        let defaults = makeDefaults()
+
+        defaults.set(UUID().uuidString, forKey: ActiveProfile.identifierKey)
+        defaults.set(true, forKey: ActiveProfile.acknowledgementKey)
+        defaults.set("a,b", forKey: ActiveProfile.acknowledgedRosterKey)
+        defaults.set(2, forKey: SubjectPreference.selectedSemesterKey)
+        defaults.set(Date(timeIntervalSince1970: 1_700_000_000), forKey: ManualCloudSync.lastSyncedAtKey)
+
+        defaults.set("en", forKey: "settings.language")
+        defaults.set("light", forKey: "settings.appearance")
+        defaults.set(false, forKey: "settings.cloudSyncEnabled")
+
+        return defaults
+    }
+
+    @Test("Nach dem Löschen ist kein gemerkter Wert des Nutzers mehr gesetzt")
+    func clearsUserDataKeys() throws {
+        let context = try Self.makeContext()
+        let defaults = Self.makeUsedDefaults()
+
+        try DataReset.deleteAll(in: context, defaults: defaults)
+
+        for key in DataReset.userDataKeys {
+            #expect(defaults.object(forKey: key) == nil, "\(key) steht noch")
+        }
+    }
+
+    @Test("Die Kennungen des Profils, das Halbjahr und der Abgleichszeitpunkt gehen mit")
+    func clearsEachKnownKey() throws {
+        let context = try Self.makeContext()
+        let defaults = Self.makeUsedDefaults()
+
+        try DataReset.deleteAll(in: context, defaults: defaults)
+
+        #expect(defaults.string(forKey: ActiveProfile.identifierKey) == nil)
+        #expect(defaults.object(forKey: ActiveProfile.acknowledgementKey) == nil)
+        #expect(defaults.string(forKey: ActiveProfile.acknowledgedRosterKey) == nil)
+        #expect(defaults.object(forKey: SubjectPreference.selectedSemesterKey) == nil)
+        #expect(defaults.object(forKey: ManualCloudSync.lastSyncedAtKey) == nil)
+    }
+
+    /// Sprache, Erscheinungsbild und der Schalter für den automatischen Abgleich
+    /// sind Einstellungen dieses Geräts und keine Daten. Wer seine Noten löscht,
+    /// darf nicht plötzlich eine englische App im hellen Erscheinungsbild
+    /// vorfinden.
+    @Test("Die Geräteeinstellungen überleben das Löschen unverändert")
+    @MainActor
+    func keepsDeviceSettings() throws {
+        let context = try Self.makeContext()
+        let defaults = Self.makeUsedDefaults()
+
+        try DataReset.deleteAll(in: context, defaults: defaults)
+
+        #expect(defaults.string(forKey: "settings.language") == "en")
+        #expect(defaults.string(forKey: "settings.appearance") == "light")
+        #expect(defaults.object(forKey: "settings.cloudSyncEnabled") as? Bool == false)
+
+        // Und über den Weg, den die App selbst nimmt.
+        let settings = AppSettings(defaults: defaults)
+        #expect(settings.language == .english)
+        #expect(settings.appearance == .light)
+        #expect(!settings.isCloudSyncEnabled)
+    }
+
+    @Test("Das Zurücksetzen der gemerkten Werte geht auch ohne Speicher")
+    func resetsWithoutContext() {
+        let defaults = Self.makeUsedDefaults()
+
+        DataReset.resetUserData(in: defaults)
+
+        #expect(defaults.object(forKey: ActiveProfile.identifierKey) == nil)
+        #expect(defaults.string(forKey: "settings.language") == "en")
     }
 }

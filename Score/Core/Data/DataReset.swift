@@ -62,13 +62,57 @@ enum DataReset {
     /// ist. Solche verwaisten Datensätze hinge kein Kaskadenlöschen ab, und sie
     /// blieben in iCloud stehen. Deshalb wird jede Entität eigens geleert, von den
     /// Blättern zur Wurzel.
-    static func deleteAll(in context: ModelContext) throws {
+    ///
+    /// ## Warum auch `UserDefaults`
+    ///
+    /// Nicht alles, was der Nutzer erzeugt hat, steht im Datenmodell. Welches
+    /// Profil dieses Gerät führt, ob hier schon eines bestätigt wurde, welchen
+    /// Profilsatz es gesehen hat, welches Halbjahr zuletzt offen war und wann
+    /// zuletzt abgeglichen wurde — das liegt in den `UserDefaults`, und zwar aus
+    /// guten Gründen (siehe ``ActiveProfile``). Bliebe es stehen, verspräche der
+    /// Dialog „alles" und liefe hinterher gegen Kennungen, zu denen es keine
+    /// Daten mehr gibt.
+    ///
+    /// **Nicht** angerührt werden Sprache, Erscheinungsbild und der Schalter für
+    /// den automatischen Abgleich. Das sind keine Nutzerdaten, sondern
+    /// Einstellungen dieses Geräts: Wer seine Noten löscht, will deswegen keine
+    /// englische App im hellen Erscheinungsbild vorfinden.
+    static func deleteAll(in context: ModelContext, defaults: UserDefaults = .standard) throws {
         try delete(GradeEntry.self, in: context)
         try delete(SemesterResult.self, in: context)
         try delete(Subject.self, in: context)
         try delete(StudentProfile.self, in: context)
 
         try context.save()
+
+        // Erst nach dem Speichern: Scheitert es, bleibt der gemerkte Zustand zu
+        // den Daten passend, die noch da sind.
+        resetUserData(in: defaults)
+    }
+
+    /// Die Werte in `UserDefaults`, die zu den Daten des Nutzers gehören.
+    ///
+    /// Die eine Liste, an der hängt, was „alles löschen" bedeutet. Jeder
+    /// Schlüssel steht dort, wo er benutzt wird; hier steht, dass er mitgeht.
+    /// Kommt ein neuer dazu, ist das die Stelle, an der er einzutragen ist —
+    /// sonst überlebt er das Löschen still.
+    static let userDataKeys: [String] = [
+        ActiveProfile.identifierKey,
+        ActiveProfile.acknowledgedRosterKey,
+        ActiveProfile.acknowledgementKey,
+        SubjectPreference.selectedSemesterKey,
+        ManualCloudSync.lastSyncedAtKey,
+    ]
+
+    /// Räumt die gemerkten Werte des Nutzers weg — und nur die.
+    ///
+    /// `removeObject(forKey:)` und nicht das Setzen eines Standardwerts: Ein
+    /// leerer String wäre ein gesetzter Wert, und `@AppStorage` unterscheidet
+    /// „nie gewählt" von „auf leer gesetzt" nur daran, ob der Schlüssel da ist.
+    static func resetUserData(in defaults: UserDefaults = .standard) {
+        for key in userDataKeys {
+            defaults.removeObject(forKey: key)
+        }
     }
 
     private static func delete<Model: PersistentModel>(

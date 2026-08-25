@@ -157,7 +157,7 @@ final class ProfileHandoffModel {
 
     /// Der Nutzer hat entschieden — eines behalten oder beide.
     func profileChoiceDidResolve() {
-        enterReady()
+        resumeInterruptedSetupOrEnterReady()
     }
 
     /// Der Nutzer legt aus den Einstellungen heraus ein **weiteres** Profil an.
@@ -180,7 +180,7 @@ final class ProfileHandoffModel {
 
     /// Der Nutzer macht mit dem gefundenen Profil weiter.
     func acceptHandoff() {
-        enterReady()
+        resumeInterruptedSetupOrEnterReady()
     }
 
     /// Der Nutzer richtet sich neu ein und verwirft das gefundene Profil.
@@ -210,5 +210,41 @@ final class ProfileHandoffModel {
     private func enterReady() {
         isAddingProfileHere = false
         stage = .ready
+    }
+
+    /// Der Ausgang aus einer Rückfrage, die eine laufende Einrichtung
+    /// unterbrochen hat.
+    ///
+    /// Die Rückfragen — ``duplicateProfilesDidAppear()`` und
+    /// ``profileDidAppear()`` — schlagen mit Absicht auch ein laufendes
+    /// Onboarding: Ein Profil, das aus iCloud hereinkommt, während der Nutzer
+    /// noch tippt, ist eine echte Frage. Beantwortet ist damit aber nur die
+    /// Frage nach dem fremden Profil, nicht der Auftrag, der zur Einrichtung
+    /// geführt hat.
+    ///
+    /// Wer in den Einstellungen „Neues Profil" gewählt hat, hat eine Handlung
+    /// ausdrücklich angefordert. Ginge es von der Rückfrage direkt in die App,
+    /// stünde der Nutzer im Dashboard, das zweite Profil gäbe es nie, und
+    /// gesagt hätte es ihm niemand — eine angeforderte Handlung, die still
+    /// verfällt. Deshalb geht es zurück in die Einrichtung statt in die App.
+    ///
+    /// Die Alternative wäre gewesen, die Rückfrage während der zweiten
+    /// Einrichtung ganz zu unterdrücken. Das nähme dem Nutzer aber die
+    /// Entscheidung über ein echtes fremdes Profil ab — genau der Fehler, den
+    /// die Verschärfung des Merkers gerade behoben hat. Beides ist zu haben:
+    /// erst fragen, dann weiterarbeiten.
+    ///
+    /// Der Merker bleibt dabei stehen, denn der Auftrag ist weiter offen. Er
+    /// fällt erst in ``enterReady()``, also wenn die Einrichtung wirklich durch
+    /// ist.
+    private func resumeInterruptedSetupOrEnterReady() {
+        // Nur solange die zweite Einrichtung noch aussteht. Ist sie durch
+        // (``didCompleteOnboardingHere``), ist der Auftrag erfüllt und der Weg
+        // führt wie bisher in die App.
+        guard isAddingProfileHere, !didCompleteOnboardingHere else {
+            enterReady()
+            return
+        }
+        stage = .onboarding
     }
 }

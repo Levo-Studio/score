@@ -286,6 +286,63 @@ struct DuplicateProfileFlowTests {
         #expect(handoff.stage == .choosingProfile)
     }
 
+    /// Die Frage nach dem fremden Profil ist berechtigt — der Auftrag, ein
+    /// zweites Profil anzulegen, verfällt dadurch aber nicht.
+    ///
+    /// Bis hierher führte die beantwortete Frage geradewegs in die App: Der
+    /// Nutzer hatte in den Einstellungen ausdrücklich „Neues Profil" gewählt,
+    /// stand danach im Dashboard, und sein zweites Profil gab es nie — ohne jede
+    /// Meldung.
+    @Test("Nach der Duplikatfrage geht die zweite Einrichtung weiter")
+    func theSecondSetupContinuesAfterTheDuplicateQuestion() {
+        let handoff = ProfileHandoffModel()
+        handoff.start(hasCompletedProfile: true, isProfileAcknowledged: true, mayReceiveCloudData: true)
+        handoff.registerAdditionalProfile()
+
+        // Die Einrichtung läuft noch, da trifft ein fremdes Profil aus iCloud ein.
+        handoff.duplicateProfilesDidAppear()
+        #expect(handoff.stage == .choosingProfile)
+
+        handoff.profileChoiceDidResolve()
+        // Zurück in die Einrichtung, nicht in die App.
+        #expect(handoff.stage == .onboarding)
+
+        // Und der Merker steht noch: Das gleich entstehende Profil ist weiterhin
+        // das ausdrücklich angeforderte und keine neue Frage.
+        handoff.onboardingDidComplete()
+        handoff.duplicateProfilesDidAppear()
+        #expect(handoff.stage == .onboarding)
+
+        handoff.profileDidAppear()
+        #expect(handoff.stage == .ready)
+    }
+
+    /// Derselbe Auftrag, unterbrochen von der Übernahmefrage statt von der
+    /// Duplikatfrage.
+    @Test("Nach der Übernahmefrage geht die zweite Einrichtung weiter")
+    func theSecondSetupContinuesAfterTheHandoffQuestion() {
+        let handoff = ProfileHandoffModel()
+        handoff.start(hasCompletedProfile: true, isProfileAcknowledged: true, mayReceiveCloudData: true)
+        handoff.registerAdditionalProfile()
+
+        handoff.profileDidAppear()
+        #expect(handoff.stage == .offeringHandoff)
+
+        handoff.acceptHandoff()
+        #expect(handoff.stage == .onboarding)
+    }
+
+    /// Ohne offenen Auftrag bleibt es beim geraden Weg in die App.
+    @Test("Die beantwortete Frage führt sonst weiter in die App")
+    func aresolvedQuestionWithoutAPendingSetupStillOpensTheApp() {
+        let handoff = ProfileHandoffModel()
+        handoff.start(hasCompletedProfile: true, isProfileAcknowledged: false, mayReceiveCloudData: true)
+
+        handoff.duplicateProfilesDidAppear()
+        handoff.profileChoiceDidResolve()
+        #expect(handoff.stage == .ready)
+    }
+
     /// „Von vorn anfangen" ist kein zweites Profil, sondern der Ersatz des
     /// gefundenen — dort schlägt die Frage weiterhin durch.
     @Test("Ein neuer Anfang bleibt für die Frage empfänglich")

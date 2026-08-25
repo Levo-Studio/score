@@ -385,14 +385,24 @@ enum BlockOneCalculator {
     /// dann rechnet Score selbst und sagt es über
     /// ``Outcome/usesAutomaticDoubleWeighting``.
     ///
-    /// Automatisch fällt die Wahl auf die beiden Leistungsfächer mit der höchsten
-    /// **Punktsumme über ihre eingebrachten Kurse** — nicht mit dem höchsten
-    /// Schnitt. Der Unterschied zählt, wenn ein Leistungsfach noch nicht alle vier
-    /// Ergebnisse hat: verdoppelt wird die Summe, und ein Fach mit zwei starken
-    /// Kursen bringt weniger ein als eines mit vier mittelmässigen.
+    /// Automatisch fällt die Wahl auf das Paar, das **den höchsten Kursblock
+    /// ergibt** — nicht auf die beiden Fächer mit der höchsten Punktsumme.
     ///
-    /// Bei Gleichstand entscheidet die Fachkennung, damit die Wahl nicht bei jedem
-    /// Aufruf zwischen zwei gleich guten Fächern springt.
+    /// Nach der Summe zu gehen wäre nur richtig, wenn alle Leistungsfächer gleich
+    /// viele Kurse einbrächten. Die Doppelwertung erhöht aber nicht nur den
+    /// Zähler, sondern auch den Nenner: jeder verdoppelte Kurs ist eine weitere
+    /// Wertung. Ein Fach mit vier Kursen à 8 Punkten bringt 32 Punkte auf vier
+    /// zusätzliche Wertungen, ein Fach mit zwei Kursen à 15 Punkten 30 Punkte auf
+    /// zwei. Die Summe spricht für das erste, das Ergebnis für das zweite: 351
+    /// gegen 390 Punkte. Deshalb wird jedes Paar durchgerechnet und verglichen,
+    /// was am Ende herauskommt.
+    ///
+    /// Teuer ist das nicht — bei drei Leistungsfächern gibt es genau drei Paare.
+    ///
+    /// Verglichen wird der Schnitt je Wertung als Bruch, über Kreuz multipliziert:
+    /// so entscheidet keine Gleitkommastelle über die Wahl. Bei Gleichstand
+    /// entscheidet die Fachkennung, damit die Wahl nicht bei jedem Aufruf zwischen
+    /// zwei gleich guten Paaren springt.
     ///
     /// - Parameter included: Die Kurse, die in den Kursblock eingehen. Nur sie
     ///   werden verdoppelt — ein geklammerter Kurs bleibt geklammert.
@@ -407,21 +417,58 @@ enum BlockOneCalculator {
             return (chosen.sorted(), false)
         }
 
-        var totals = [String: Int]()
-        for course in included where course.kind == .leistungsfach {
-            totals[course.id.subjectID, default: 0] += course.points
+        // Weniger als zwei Leistungsfächer: dann gibt es kein Paar zu wählen, und
+        // was da ist, wird verdoppelt.
+        let identifiers = advanced.map(\.id).sorted()
+        guard identifiers.count > doubleWeightedSubjectCount else {
+            return (identifiers, true)
         }
 
-        let best = advanced
-            .map { ($0.id, totals[$0.id] ?? 0) }
-            .sorted { left, right in
-                if left.1 != right.1 { return left.1 > right.1 }
-                return left.0 < right.0
-            }
-            .prefix(doubleWeightedSubjectCount)
-            .map(\.0)
+        // Je Leistungsfach die Punktsumme und die Zahl der eingebrachten Kurse.
+        // Beides zusammen macht das Paar aus: die Summe geht in den Zähler, die
+        // Kurszahl als zusätzliche Wertungen in den Nenner.
+        var totals = [String: (points: Int, courses: Int)]()
+        for course in included where course.kind == .leistungsfach {
+            let previous = totals[course.id.subjectID] ?? (0, 0)
+            totals[course.id.subjectID] = (previous.points + course.points, previous.courses + 1)
+        }
 
-        return (best.sorted(), true)
+        let basePoints = included.reduce(0) { $0 + $1.points }
+        let baseCount = included.count
+
+        /// Der Kursblock, der aus einem Paar folgt — als ungekürzter Bruch
+        /// „Punkte je Wertung", damit der Vergleich ohne Gleitkomma auskommt.
+        func outcome(for pair: (String, String)) -> (numerator: Int, denominator: Int) {
+            let first = totals[pair.0] ?? (0, 0)
+            let second = totals[pair.1] ?? (0, 0)
+            return (
+                basePoints + first.points + second.points,
+                baseCount + first.courses + second.courses
+            )
+        }
+
+        var pairs: [(String, String)] = []
+        for (index, first) in identifiers.enumerated() {
+            for second in identifiers[(index + 1)...] {
+                pairs.append((first, second))
+            }
+        }
+
+        let best = pairs.max { left, right in
+            let leftOutcome = outcome(for: left)
+            let rightOutcome = outcome(for: right)
+            // a/b < c/d ist bei positiven Nennern dasselbe wie a·d < c·b.
+            let leftCross = leftOutcome.numerator * rightOutcome.denominator
+            let rightCross = rightOutcome.numerator * leftOutcome.denominator
+            if leftCross != rightCross { return leftCross < rightCross }
+            // Gleichstand: die frühere Fachkennung gewinnt, damit die Wahl
+            // reproduzierbar bleibt. `max` nimmt bei Gleichheit das spätere
+            // Element, also muss das frühere Paar hier als „grösser" gelten.
+            return left > right
+        }
+
+        guard let best else { return (identifiers, true) }
+        return ([best.0, best.1].sorted(), true)
     }
 
     /// Wendet die Kursgrenze jedes Fachs an.

@@ -34,37 +34,37 @@ enum ExamResultSlot: String, Identifiable, Hashable {
 ///   einzutragen, und ein leeres Feld wäre eine Frage ohne Antwort.
 ///
 /// Leer heisst **noch nicht geprüft** und nicht null Punkte. Deshalb steht
-/// dort, wo noch nichts ist, ein gestrichelter Knopf und keine 0 — und deshalb
-/// nennt der Hinweis darunter die Gesamtzahl weiterhin eine Hochrechnung.
+/// dort, wo noch nichts ist, ein gestrichelter Knopf und keine 0.
+///
+/// Was ein Ergebnis für das Abitur bedeutet, steht nicht hier, sondern im
+/// Eingabe-Blatt: Der Abschnitt zeigt Zahlen, erklärt werden sie dort, wo man
+/// sie einträgt.
 struct ExamResultSection: View {
 
-    /// Wo der erklärende Satz steht.
+    /// Wie die Zeilen angeordnet sind.
     ///
-    /// Auf dem iPhone unter den Zeilen — dort ist die Spalte schmal, und alles
-    /// andere wäre ein Umbruch nach drei Wörtern. Auf dem iPad daneben: die
-    /// Zeilen bleiben so breit wie eine Spalte der Leistungen darüber, und der
-    /// Satz füllt die Fläche rechts davon, statt sie leer zu lassen. Über die
-    /// ganze Breite gezogen stünde ein gestrichelter Knopf in 1200 Punkt
-    /// Fläche — das ist der Grund, warum die Zeilen ihre Breite behalten.
-    enum NotePlacement {
-        /// iPhone: eine Spalte, der Satz steht unter den Zeilen.
-        case below
-        /// iPad: schriftlich links, mündlich rechts — in denselben zwei Spalten
-        /// wie die Leistungen darüber. So fluchten die gestrichelten Knöpfe mit
-        /// denen darüber, und die rechte Hälfte bleibt nicht leer. Der Satz
-        /// steht darunter über die ganze Breite.
+    /// Auf dem iPhone untereinander — mehr Platz gibt es dort nicht. Auf dem
+    /// iPad nebeneinander, in denselben zwei Spalten wie die Leistungen
+    /// darüber: so fluchten die gestrichelten Knöpfe mit denen darüber, und
+    /// die rechte Hälfte bleibt nicht leer. Über die ganze Breite gezogen
+    /// stünde ein gestrichelter Knopf in 1200 Punkt Fläche — das ist der
+    /// Grund, warum die Zeilen ihre Breite behalten.
+    enum Layout {
+        /// iPhone: eine Spalte, die Zeilen untereinander.
+        case stacked
+        /// iPad: schriftlich links, mündlich rechts.
         case columns
     }
 
     let subject: Subject
-    var notePlacement: NotePlacement = .below
+    var layout: Layout = .stacked
 
     /// Das Ergebnis, dessen Blatt gerade offen ist.
     @State private var editedSlot: ExamResultSlot?
 
     @ViewBuilder
     var body: some View {
-        if notePlacement == .columns {
+        if layout == .columns {
             if ExamResultCopy.hasWrittenExam(subject) || ExamResultCopy.hasOralExam(subject) {
                 VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
                     HStack(alignment: .top, spacing: ScoreMetrics.Spacing.md) {
@@ -88,8 +88,6 @@ struct ExamResultSection: View {
                             }
                         }
                     }
-
-                    note
                 }
                 .scoreAnimation(ScoreMotion.rowIn, value: subject.writtenExamPoints)
                 .scoreAnimation(ScoreMotion.rowIn, value: subject.oralExamPoints)
@@ -117,17 +115,6 @@ struct ExamResultSection: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// Der Satz unter oder neben den Zeilen.
-    private var note: some View {
-        ExamResultCopy.note(for: subject)
-            .font(.optionMeta)
-            .lineSpacing(5.5)
-            .foregroundStyle(ScorePalette.inkSecondary)
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(.top, ScoreMetrics.Spacing.xxs)
-            .padding(.horizontal, ScoreMetrics.Spacing.xxs)
-    }
-
     @ViewBuilder
     private var slots: some View {
         if ExamResultCopy.hasWrittenExam(subject) || ExamResultCopy.hasOralExam(subject) {
@@ -146,10 +133,6 @@ struct ExamResultSection: View {
                     }
                 } else {
                     slot(.oral, index: 0)
-                }
-
-                if notePlacement == .below {
-                    note
                 }
             }
             .scoreAnimation(ScoreMotion.rowIn, value: subject.writtenExamPoints)
@@ -299,16 +282,22 @@ struct ExamResultSheet: View {
         }
     }
 
+    /// Der Hinweis steht hier — und nur hier.
+    ///
+    /// In der Fachansicht stand derselbe Satz dauerhaft unter den Zeilen und
+    /// erklärte jedes Mal aufs Neue etwas, das man beim zweiten Hinsehen schon
+    /// weiss. Am Ort der Eingabe ist er eine Antwort auf eine Frage, die man
+    /// gerade hat; darüber ist er Möblierung. Deshalb nimmt er die ganze
+    /// Breite und teilt sie sich nicht mehr mit dem „Löschen" — bei 250 Punkt
+    /// brach er nach vier Wörtern um, während rechts daneben Platz frei lag.
     private var footer: some View {
-        HStack(alignment: .firstTextBaseline, spacing: ScoreMetrics.Spacing.sm) {
+        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.sm) {
             ExamResultCopy.note(for: subject)
                 .font(.meta)
                 .lineSpacing(4)
                 .foregroundStyle(ScorePalette.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: 250, alignment: .leading)
-
-            Spacer(minLength: ScoreMetrics.Spacing.xs)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             if points != nil {
                 Button(role: .destructive) {
@@ -322,6 +311,7 @@ struct ExamResultSheet: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
         .padding(.top, 14)

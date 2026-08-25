@@ -38,7 +38,7 @@ struct PadSubjectDetailView: View {
                 // die Leistungen darüber — schriftlich links, mündlich rechts.
                 // So fluchten die gestrichelten Knöpfe mit denen darüber, und
                 // die rechte Hälfte bleibt nicht leer.
-                ExamResultSection(subject: subject, notePlacement: .columns)
+                ExamResultSection(subject: subject, layout: .columns)
             }
             .padding(.horizontal, PadMetrics.contentPadding)
             .padding(.top, 22)

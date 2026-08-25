@@ -32,13 +32,23 @@ struct SubjectListView: View {
     /// Das Fach, dessen Löschung nach einem Wisch zur Bestätigung ansteht.
     @State private var pendingDeletion: SubjectDeletion.Request?
 
-    /// Das geöffnete Fach.
+    /// Das geöffnete Fach — als Kennung, nicht als Objekt.
     ///
     /// Die Zeile trägt keinen `NavigationLink` mehr, seit sie sich wischen
     /// lässt: ein Knopf im Inhalt löste am Ende jedes Wisches zusätzlich aus,
     /// weil der Finger die Zeile dabei nie verlässt. Die Navigation hängt
     /// deshalb an diesem Zustand, gesetzt vom Tipp der Hülle.
-    @State private var openedSubject: Subject?
+    ///
+    /// Hier steht die `UUID` und nicht das `Subject`, und das ist keine
+    /// Geschmacksfrage: „Jetzt synchronisieren" und der Abgleich beim Öffnen
+    /// tauschen den `ModelContainer` aus (siehe ``ScoreDataStore/reopen(make:)``).
+    /// Ein Modellobjekt in `@State` überlebte diesen Tausch als Objekt des
+    /// abgeräumten Kontexts, während `@Environment(\.modelContext)` längst der
+    /// neue wäre — jedes Schreiben aus der offenen Fachansicht liefe dann über
+    /// die Kontextgrenze. Eine Kennung ist ein blosser Wert und übersteht den
+    /// Tausch; das Fach dazu holt ``OpenedSubjectScreen`` frisch aus der
+    /// Abfrage. Die Navigation des iPads führt aus demselben Grund `UUID`s.
+    @State private var openedSubjectIdentifier: UUID?
 
     private var summaries: [SubjectSummary] {
         SubjectOverview.summaries(of: subjects, semesterIndex: semesterIndex)
@@ -65,8 +75,8 @@ struct SubjectListView: View {
             // einer Systemliste.
             .closesOpenSwipeRow()
             .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(item: $openedSubject) { subject in
-                SubjectDetailView(subject: subject)
+            .navigationDestination(item: $openedSubjectIdentifier) { identifier in
+                OpenedSubjectScreen(identifier: identifier)
             }
         }
         .sheet(item: $editorTarget) { target in
@@ -213,7 +223,7 @@ struct SubjectListView: View {
                 SwipeToDelete(
                     accessibilityLabel: Text("\(summary.subject.name) löschen"),
                     onDelete: { pendingDeletion = SubjectDeletion.request(for: summary.subject) },
-                    onTap: { openedSubject = summary.subject }
+                    onTap: { openedSubjectIdentifier = summary.subject.identifier }
                 ) {
                     SubjectListRow(summary: summary)
                 }
@@ -222,6 +232,62 @@ struct SubjectListView: View {
                 .rowAppearance(index: index, base: 0.06)
             }
         }
+    }
+}
+
+// MARK: - Das aufgeschlagene Fach
+
+/// Die Fachansicht, aufgeschlagen über die Kennung statt über das Objekt.
+///
+/// Die Liste reicht nur eine `UUID` weiter; das Fach dazu entsteht hier, aus der
+/// Abfrage des **gerade geltenden** Kontexts. Das ist der Grund für diese Hülle:
+/// Wird der Speicher neu geöffnet, läuft die Abfrage im neuen Container erneut,
+/// und die Fachansicht bekommt das Fach des neuen Kontexts gereicht — genauso wie
+/// ``PadShell`` es auf dem iPad seit jeher tut.
+private struct OpenedSubjectScreen: View {
+
+    let identifier: UUID
+
+    @Environment(\.dismiss) private var dismiss
+
+    @Query(sort: \Subject.sortIndex) private var subjects: [Subject]
+
+    /// Wie lange ein leeres Ergebnis noch als Übergang gilt.
+    ///
+    /// Beim Neuöffnen steht die Abfrage für einen Augenblick leer, bis der neue
+    /// Kontext antwortet — grosszügig länger als ``ScoreDataStore/handoverDelay``.
+    /// Ohne diese Frist ginge die Ansicht mitten im Abgleich zurück, obwohl das
+    /// Fach noch da ist.
+    private static let graceBeforeDismiss: Duration = .milliseconds(900)
+
+    private var subject: Subject? {
+        subjects.first { $0.identifier == identifier }
+    }
+
+    var body: some View {
+        if let subject {
+            SubjectDetailView(subject: subject)
+        } else {
+            missingSubject
+                .task {
+                    try? await Task.sleep(for: Self.graceBeforeDismiss)
+                    guard !Task.isCancelled else { return }
+                    // Das Fach ist wirklich weg — gelöscht auf diesem oder einem
+                    // anderen Gerät. Zurück zur Liste, statt auf einer Ansicht zu
+                    // stehen, deren Gegenstand es nicht mehr gibt.
+                    dismiss()
+                }
+        }
+    }
+
+    /// Was in der Zwischenzeit dasteht: derselbe Satz wie auf dem iPad.
+    private var missingSubject: some View {
+        Text("Dieses Fach gibt es nicht mehr.")
+            .font(.bodyText)
+            .foregroundStyle(ScorePalette.inkSecondary)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(ScorePalette.background)
+            .toolbar(.hidden, for: .navigationBar)
     }
 }
 

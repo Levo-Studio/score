@@ -33,11 +33,15 @@ import SwiftData
 /// 1. **Ungesicherte Änderungen** hängen am alten Kontext. Vor dem Neuöffnen
 ///    wird deshalb gespeichert; sonst wäre eine gerade getippte Note weg.
 /// 2. **Ansichten, die ein Modellobjekt in `@State` halten**, hielten danach ein
-///    Objekt aus dem alten Kontext. Score hat diese Stelle nicht: Die
-///    Navigation des iPads führt `UUID`s statt Objekte, und das Profil wird bei
-///    jeder Auswertung frisch aus der Abfrage gereicht. Neu Öffnen ist deshalb
-///    hier gefahrlos — in einer App, die Objekte in der Navigation hält, wäre es
-///    das nicht.
+///    Objekt aus dem alten Kontext, während `@Environment(\.modelContext)` schon
+///    der neue wäre — jedes Schreiben liefe über die Kontextgrenze. Score hält
+///    deshalb an **keiner** Stelle seiner Navigation ein Modellobjekt: Sowohl
+///    die Sidebar des iPads (``PadRoute``) als auch die Fächerliste des iPhones
+///    führen `UUID`s, und das Fach dazu wird in der Zielansicht frisch aus der
+///    Abfrage geholt. Das Profil wird bei jeder Auswertung ebenso frisch
+///    gereicht. Neu Öffnen ist deshalb hier gefahrlos — in einer App, die
+///    Objekte in der Navigation hält, wäre es das nicht. Wer eine neue Route
+///    baut, führt eine Kennung, keinen Verweis.
 @MainActor
 @Observable
 final class ScoreDataStore {

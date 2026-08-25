@@ -703,17 +703,6 @@
         }
       }
     },
-    "Alle Begriffe wie im Zeugnis": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alle Begriffe wie im Zeugnis"
-          }
-        }
-      }
-    },
     "Alle Daten löschen": {
       "extractionState": "manual",
       "localizations": {
@@ -1784,17 +1773,6 @@
         }
       }
     },
-    "Deutsch ist die Basissprache — die Begriffe der Kursstufe stehen so auch im Zeugnis.": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Deutsch ist die Basissprache — die Begriffe der Kursstufe stehen so auch im Zeugnis."
-          }
-        }
-      }
-    },
     "Dich gibt es zweimal": {
       "extractionState": "manual",
       "localizations": {
@@ -2731,17 +2709,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "In welcher Klasse bist du?"
-          }
-        }
-      }
-    },
-    "In welcher Sprache?": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "In welcher Sprache?"
           }
         }
       }
@@ -3978,17 +3945,6 @@
         }
       }
     },
-    "Same calculation, English wording": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Same calculation, English wording"
-          }
-        }
-      }
-    },
     "Schaut nach, ob es dich schon gibt …": {
       "extractionState": "manual",
       "localizations": {
@@ -4380,17 +4336,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Speicher nicht verfügbar"
-          }
-        }
-      }
-    },
-    "Sprache": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sprache"
           }
         }
       }

@@ -15,7 +15,7 @@ import UniformTypeIdentifiers
 /// **jede Angabe, die sich von Hand eintragen lässt**: Farbe, Kursgrenze,
 /// Doppelwertung, die beiden Abiturprüfungsergebnisse und die Handklammerung
 /// jedes Halbjahres — dazu die Herkunft jedes Fachs und seine Position in der
-/// Liste.
+/// Liste, das Profilbild und der Anlagezeitpunkt jeder einzelnen Leistung.
 ///
 /// ## Die Formatversion
 ///
@@ -29,8 +29,9 @@ struct ScoreExport: Codable, Transferable {
     ///
     /// 1 war die erste Fassung ohne Farbe, Kursgrenze, Doppelwertung und
     /// Prüfungsergebnisse. 2 hatte noch weder Herkunft noch Reihenfolge der
-    /// Fächer.
-    static let currentFormatVersion = 3
+    /// Fächer. 3 kannte weder das Profilbild noch den Anlagezeitpunkt einer
+    /// Leistung — beides ging beim Wiedereinspielen verloren.
+    static let currentFormatVersion = 4
 
     /// Die Fassung, nach der diese Datei geschrieben wurde.
     ///
@@ -49,6 +50,29 @@ struct ScoreExport: Codable, Transferable {
         var federalState: String
         var graduationYear: Int
         var classLevel: String
+
+        // Seit Fassung 4. In älteren Dateien fehlt es und bleibt `nil`.
+
+        /// Das Profilbild als JPEG, base64-kodiert im JSON.
+        ///
+        /// ## Warum es hineingehört
+        ///
+        /// Es liess sich von Hand eintragen und war damit von der Zusage des
+        /// Dateikopfs gedeckt — stand aber nicht in der Datei. Exportieren,
+        /// alles löschen, importieren: Das Bild war endgültig weg, als
+        /// einziges Stück des Profils.
+        ///
+        /// ## Warum unverändert und nicht noch einmal verkleinert
+        ///
+        /// Was hier ankommt, ist bereits durch ``ProfileImage/prepared(from:)``
+        /// gelaufen: höchstens 512 Punkte Kantenlänge, JPEG mit Qualität 0.8,
+        /// typischerweise einige Dutzend Kilobyte. Base64 macht daraus rund ein
+        /// Drittel mehr — bei einer Datei, die ohnehin jede Note einzeln
+        /// aufführt, fällt das nicht ins Gewicht. Ein zweiter Durchgang durch
+        /// die Kodierung würde das Bild nur ein weiteres Mal verlustbehaftet
+        /// zusammendrücken, ohne nennenswert etwas zu sparen; eine Sicherung
+        /// darf das Gesicherte nicht verschlechtern.
+        var avatarData: Data?
     }
 
     struct Subject: Codable {
@@ -102,6 +126,18 @@ struct ScoreExport: Codable, Transferable {
         var category: String
         var share: Int
         var usesAutomaticShare: Bool
+
+        // Seit Fassung 4. In älteren Dateien fehlt er und bleibt `nil`.
+
+        /// Wann die Leistung angelegt wurde.
+        ///
+        /// ``SemesterResult/orderedEntries`` sortiert danach. Ohne die Angabe
+        /// bekam beim Einlesen jede Leistung `.now`, also das Datum des
+        /// Imports: Die Reihenfolge innerhalb eines Halbjahres war danach
+        /// beliebig, beim Zusammenführen standen die eingelesenen Leistungen
+        /// geschlossen hinter den vorhandenen, und zurückholen liess sich die
+        /// Chronologie nicht mehr.
+        var createdAt: Date?
     }
 
     init(profile: StudentProfile?, subjects: [Score.Subject]) {
@@ -112,7 +148,8 @@ struct ScoreExport: Codable, Transferable {
                 firstName: $0.firstName,
                 federalState: $0.federalState,
                 graduationYear: $0.graduationYear,
-                classLevel: $0.classLevel.rawValue
+                classLevel: $0.classLevel.rawValue,
+                avatarData: $0.avatarData
             )
         }
         self.subjects = subjects.map { subject in
@@ -134,7 +171,8 @@ struct ScoreExport: Codable, Transferable {
                                 kind: entry.kind.rawValue,
                                 category: entry.category.rawValue,
                                 share: entry.share,
-                                usesAutomaticShare: entry.usesAutomaticShare
+                                usesAutomaticShare: entry.usesAutomaticShare,
+                                createdAt: entry.createdAt
                             )
                         }
                     )

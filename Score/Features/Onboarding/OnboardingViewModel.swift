@@ -235,6 +235,19 @@ final class OnboardingViewModel {
         !customSubjectDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    /// Ob der eingetippte Name beim Weitergehen tatsächlich ein weiteres
+    /// Leistungsfach ergäbe.
+    ///
+    /// Ein Name, der schon gewählt ist, ergibt keines: ``commitCustomSubject()``
+    /// übernimmt ihn dann nicht ein zweites Mal. Gezählt hat er trotzdem — wer
+    /// zwei Chips wählte und dann den Namen eines davon in den gestrichelten Tag
+    /// tippte, bekam ein aktives „Weiter" und ging mit zwei Leistungsfächern
+    /// weiter, obwohl der Schritt drei verlangt.
+    private var pendingCustomSubjectAddsAdvanced: Bool {
+        let name = customSubjectDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !name.isEmpty && !advancedSubjects.contains(name)
+    }
+
     /// Ob der aktuelle Schritt vollständig beantwortet ist.
     var canAdvance: Bool {
         switch step {
@@ -244,7 +257,7 @@ final class OnboardingViewModel {
             // Ein eingetippter, noch nicht bestätigter Name zählt mit: er wird
             // beim Weitergehen übernommen. Sonst stünde der Knopf grau da,
             // obwohl das dritte Fach längst getippt ist.
-            advancedSubjects.count + (hasPendingCustomSubject ? 1 : 0)
+            advancedSubjects.count + (pendingCustomSubjectAddsAdvanced ? 1 : 0)
                 == Self.requiredAdvancedSubjectCount
         default:
             true

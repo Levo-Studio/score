@@ -62,6 +62,20 @@ struct PadSubjectDetailView: View {
                 isNew: edit.isNew
             )
         }
+        // Der Griff auf das Schliessen oben hängt an der Bindung — er läuft also
+        // nur, wenn jemand das Blatt schliesst. Verschwindet stattdessen die
+        // ganze Ansicht, ohne dass jemand es zumacht, käme er nie dran: Auf dem
+        // iPad reicht dafür ein Zug am Fenstertrenner in die schmale Spalte,
+        // denn dort übernimmt das kompakte Gerüst und baut diese Ansicht ab. Die
+        // gerade eingetippten Punkte wären weg, ohne Streifen zum Zurückholen.
+        // Hier ist die letzte Gelegenheit, sie zu behalten.
+        .onDisappear {
+            guard let edit = editedEntry else { return }
+            // Erst leeren: Der Entwurf ist danach entweder angelegt oder
+            // verfallen, und ein zweiter Durchlauf legte ihn ein zweites Mal an.
+            editedEntry = nil
+            keepIfEdited(edit)
+        }
     }
 
     // MARK: - Abgeleitete Werte

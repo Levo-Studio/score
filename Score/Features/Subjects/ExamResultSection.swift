@@ -38,12 +38,52 @@ enum ExamResultSlot: String, Identifiable, Hashable {
 /// nennt der Hinweis darunter die Gesamtzahl weiterhin eine Hochrechnung.
 struct ExamResultSection: View {
 
+    /// Wo der erklärende Satz steht.
+    ///
+    /// Auf dem iPhone unter den Zeilen — dort ist die Spalte schmal, und alles
+    /// andere wäre ein Umbruch nach drei Wörtern. Auf dem iPad daneben: die
+    /// Zeilen bleiben so breit wie eine Spalte der Leistungen darüber, und der
+    /// Satz füllt die Fläche rechts davon, statt sie leer zu lassen. Über die
+    /// ganze Breite gezogen stünde ein gestrichelter Knopf in 1200 Punkt
+    /// Fläche — das ist der Grund, warum die Zeilen ihre Breite behalten.
+    enum NotePlacement {
+        case below
+        case beside
+    }
+
     let subject: Subject
+    var notePlacement: NotePlacement = .below
 
     /// Das Ergebnis, dessen Blatt gerade offen ist.
     @State private var editedSlot: ExamResultSlot?
 
     var body: some View {
+        if notePlacement == .beside {
+            HStack(alignment: .top, spacing: ScoreMetrics.Spacing.md) {
+                slots.frame(maxWidth: 560, alignment: .leading)
+                note
+                    .frame(maxWidth: 420, alignment: .leading)
+                    .padding(.top, 22)
+                Spacer(minLength: 0)
+            }
+        } else {
+            slots
+        }
+    }
+
+    /// Der Satz unter oder neben den Zeilen.
+    private var note: some View {
+        ExamResultCopy.note(for: subject)
+            .font(.optionMeta)
+            .lineSpacing(5.5)
+            .foregroundStyle(ScorePalette.inkSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.top, ScoreMetrics.Spacing.xxs)
+            .padding(.horizontal, ScoreMetrics.Spacing.xxs)
+    }
+
+    @ViewBuilder
+    private var slots: some View {
         if ExamResultCopy.hasWrittenExam(subject) || ExamResultCopy.hasOralExam(subject) {
             VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xs) {
                 Text("Abiturprüfung")
@@ -62,13 +102,9 @@ struct ExamResultSection: View {
                     slot(.oral, index: 0)
                 }
 
-                ExamResultCopy.note(for: subject)
-                    .font(.optionMeta)
-                    .lineSpacing(5.5)
-                    .foregroundStyle(ScorePalette.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, ScoreMetrics.Spacing.xxs)
-                    .padding(.horizontal, ScoreMetrics.Spacing.xxs)
+                if notePlacement == .below {
+                    note
+                }
             }
             .scoreAnimation(ScoreMotion.rowIn, value: subject.writtenExamPoints)
             .scoreAnimation(ScoreMotion.rowIn, value: subject.oralExamPoints)

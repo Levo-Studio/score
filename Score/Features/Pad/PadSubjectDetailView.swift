@@ -35,11 +35,11 @@ struct PadSubjectDetailView: View {
                 entryColumns
                 // Unter den Halbjahren und nicht in einem: die Abiturprüfung
                 // hängt am Fach als Ganzem. Ihre Zeilen bleiben so breit wie
-                // eine Spalte der Leistungen darüber — über die ganze Breite
-                // gezogen stünden zwei kurze Zeilen Text in einer 1200 Punkt
-                // breiten Fläche.
-                ExamResultSection(subject: subject)
-                    .frame(maxWidth: 560, alignment: .leading)
+                // eine Spalte der Leistungen darüber — ein gestrichelter Knopf
+                // über 1200 Punkt wäre kein Knopf mehr. Der erklärende Satz
+                // steht deshalb daneben statt darunter: so trägt die Zeile die
+                // Fläche, die sonst rechts leer bliebe.
+                ExamResultSection(subject: subject, notePlacement: .beside)
             }
             .padding(.horizontal, PadMetrics.contentPadding)
             .padding(.top, 22)

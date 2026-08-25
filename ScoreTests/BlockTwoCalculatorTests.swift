@@ -199,6 +199,24 @@ struct BlockTwoCalculatorTests {
         #expect(!outcome.isComplete)
     }
 
+    @Test("Eine sechste Prüfung ohne Ergebnis macht den Block nicht vollständig")
+    func aSixthExamWithoutAResultLeavesTheBlockIncomplete() {
+        // Vier Leistungsfächer neben zwei mündlichen Prüfungsfächern, und eines
+        // der vier ist noch nicht geschrieben: fünf Ergebnisse bei sechs
+        // Prüfungen. Der Deckel auf fünf darf die offene Prüfung nicht verdecken.
+        let subjects = (1...3).map {
+            subject("lf-\($0)", .leistungsfach, allPoints: 15, writtenExamPoints: 15)
+        } + [subject("lf-4", .leistungsfach, allPoints: 15)] + (1...2).map {
+            subject("mp-\($0)", .wahlBasisfach, allPoints: 15, isOralExam: true, oralExamPoints: 15)
+        }
+
+        let outcome = BlockTwoCalculator.calculate(for: subjects)
+
+        #expect(outcome.exams.count == 6)
+        #expect(outcome.recordedExamCount == 5)
+        #expect(outcome.expectedExamCount == 5)
+        #expect(!outcome.isComplete)
+    }
 
     // MARK: - Was noch fehlt
 

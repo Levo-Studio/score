@@ -159,12 +159,27 @@ enum BlockTwoCalculator {
         /// vorgesehen, kann aber im Datenbestand stehen — etwa nach einem Import
         /// oder einem Sync über zwei Geräte. Score rechnet solche Fälle weiter,
         /// meldet aber keine sechste Prüfung: sonst stünde „6 von 5 eingetragen"
-        /// auf dem Bildschirm und ``isComplete`` würde nie wahr.
+        /// auf dem Bildschirm. Ob eine dieser Prüfungen noch offen ist, sagt
+        /// ``isComplete`` — die zählt an dieser Zahl vorbei.
         var expectedExamCount: Int
 
-        /// Ob alle fünf Prüfungen ein Ergebnis haben.
+        /// Ob für jede Prüfung ein Ergebnis vorliegt.
+        ///
+        /// Zwei Bedingungen, und beide sind nötig: Es müssen mindestens die
+        /// amtlichen fünf Prüfungen im Bestand stehen — wer seine mündlichen
+        /// Prüfungsfächer noch nicht gewählt hat, hat drei, und dann ist gar
+        /// nichts vollständig —, und **jede** Prüfung im Bestand muss ein
+        /// Ergebnis haben.
+        ///
+        /// Gezählt wird deshalb über ``exams`` und nicht über ``recordedExamCount``
+        /// und ``expectedExamCount``: Beide sind auf fünf gedeckelt, und der
+        /// Deckel würde die Lücke verdecken. Stünden sechs Prüfungsfächer im
+        /// Bestand und hätten fünf davon ein Ergebnis, käme der Deckel auf
+        /// recorded 5 und expected 5, der Block gälte als abgeschlossen und
+        /// ``AbiturResult/Outcome/isPassed`` könnte wahr werden — obwohl eine
+        /// echte Prüfung leer dasteht.
         var isComplete: Bool {
-            expectedExamCount == examCount && recordedExamCount == examCount
+            exams.count >= examCount && exams.allSatisfy { $0.result != nil }
         }
 
         /// Der Schnitt über die Prüfungen, die schon ein Ergebnis haben.
@@ -236,8 +251,11 @@ enum BlockTwoCalculator {
         // dann weiter, aber innerhalb der amtlichen Grenzen: der Beitrag ist bei
         // 300 Punkten gedeckelt, und gezählt werden höchstens fünf Prüfungen.
         // Ohne den Deckel stünden bis zu 360 Punkte in einem Block, den es nur bis
-        // 300 gibt, ``Outcome/isComplete`` — das genau fünf verlangt — würde nie
-        // wahr, und ``Outcome/missingExamCount`` würde negativ.
+        // 300 gibt, und ``Outcome/missingExamCount`` würde negativ.
+        //
+        // Der Deckel gilt nur für die Zählung, nicht für die Vollständigkeit:
+        // ``Outcome/isComplete`` sieht die Prüfungen selbst an, damit eine sechste
+        // ohne Ergebnis nicht hinter der Fünf verschwindet.
         return Outcome(
             points: min(maximumPoints, exams.compactMap(\.points).reduce(0, +)),
             exams: exams,

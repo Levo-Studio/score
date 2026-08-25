@@ -73,7 +73,7 @@ struct GradeEntryDraftHandoverTests {
         // Dazwischen tauscht der Speicher. Bestätigt wird gegen den **neuen**
         // Kontext — genau das tut die Fachansicht mit ihrem
         // `@Environment(\.modelContext)`.
-        edit.commit(to: fresh.context)
+        #expect(edit.commit(to: fresh.context))
 
         #expect(edit.entry.semester === (try fresh.semester(0)))
         #expect(try fresh.entryCount() == 1)
@@ -97,7 +97,7 @@ struct GradeEntryDraftHandoverTests {
             in: try old.semester(2)
         )
         edit.entry.points = 9
-        edit.commit(to: fresh.context)
+        #expect(edit.commit(to: fresh.context))
 
         #expect(edit.entry.semester === (try fresh.semester(2)))
         #expect((try fresh.semester(0).entries ?? []).isEmpty)
@@ -118,7 +118,9 @@ struct GradeEntryDraftHandoverTests {
             in: try old.semester(0)
         )
         edit.entry.points = 13
-        edit.commit(to: other.context)
+        // Der Entwurf findet sein Halbjahr nicht mehr — und sagt das jetzt
+        // auch, statt stumm nichts zu tun.
+        #expect(edit.commit(to: other.context) == false)
 
         #expect(try other.entryCount() == 0)
         #expect(edit.entry.semester == nil)

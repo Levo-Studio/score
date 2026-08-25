@@ -92,7 +92,7 @@ struct GradeEntryEditTests {
             in: semester
         )
         edit.entry.points = 7
-        edit.commit(to: context)
+        #expect(edit.commit(to: context))
 
         #expect(try Self.entryCount(in: context) == 1)
         #expect((semester.entries ?? []).count == 1)
@@ -108,7 +108,7 @@ struct GradeEntryEditTests {
     /// entscheidet, ob die Leistung entsteht.
     private static func closeSheet(_ edit: GradeEntryEdit, in context: ModelContext) {
         guard edit.isNew, edit.hasInput else { return }
-        edit.commit(to: context)
+        #expect(edit.commit(to: context))
     }
 
     @Test("Ein unangetasteter Entwurf lässt beim Schliessen nichts zurück")
@@ -261,7 +261,7 @@ struct GradeEntryEditTests {
         context.insert(entry)
 
         let edit = GradeEntryEdit.existing(entry)
-        edit.commit(to: context)
+        #expect(edit.commit(to: context))
 
         #expect(!edit.isNew)
         #expect(try Self.entryCount(in: context) == 1)

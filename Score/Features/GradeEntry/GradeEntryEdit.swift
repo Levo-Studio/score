@@ -153,11 +153,30 @@ struct GradeEntryEdit: Identifiable {
     /// in den eingefügt wird**. Findet sich keines — das Fach wurde inzwischen
     /// gelöscht —, entsteht nichts: Eine Leistung an einem Fach, das es nicht
     /// mehr gibt, wäre kein geretteter Entwurf, sondern eine Waise.
-    func commit(to context: ModelContext) {
-        guard let pendingSemester else { return }
-        guard let semester = pendingSemester.resolve(in: context) else { return }
+    ///
+    /// ## Warum das Ergebnis zurückkommt
+    ///
+    /// Hier stand einmal ein stummes `return`, und beide Aufrufer gingen darüber
+    /// hinweg: „Fertig" schloss das Blatt, und die eingetippten Punkte waren ohne
+    /// ein Wort weg. Der Weg über das heruntergezogene Blatt war schlimmer — er
+    /// zeigte anschliessend unbedingt den Streifen „Leistung angelegt" für eine
+    /// Leistung, die es nicht gab, und dessen Rückgängig löschte ein Objekt, das
+    /// nie eingefügt worden war.
+    ///
+    /// Ein Fehlschlag muss deshalb beim Aufrufer ankommen.
+    ///
+    /// - Returns: `true`, wenn die Leistung im Kontext steht — auch dann, wenn
+    ///   sie schon vorher darin stand. `false` nur, wenn der Entwurf sein
+    ///   Halbjahr nicht mehr findet.
+    func commit(to context: ModelContext) -> Bool {
+        // Eine bestehende Leistung steht bereits im Kontext. Nichts zu tun ist
+        // hier kein Fehlschlag.
+        guard let pendingSemester else { return true }
+
+        guard let semester = pendingSemester.resolve(in: context) else { return false }
         entry.semester = semester
         context.insert(entry)
+        return true
     }
 }
 

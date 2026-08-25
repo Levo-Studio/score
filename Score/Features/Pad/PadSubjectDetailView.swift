@@ -25,6 +25,14 @@ struct PadSubjectDetailView: View {
     /// Die zuletzt gelöschte Leistung, solange sie sich zurückholen lässt.
     @State private var pendingUndo: PendingGradeEntryUndo?
 
+    /// Steht, wenn eine eingetippte Leistung nicht angelegt werden konnte, weil
+    /// ihr Fach inzwischen weg ist.
+    ///
+    /// Ohne diese Meldung ging das Blatt einfach zu und die Punkte waren weg —
+    /// oder, schlimmer, der Streifen meldete eine Leistung, die es gar nicht
+    /// gab.
+    @State private var didLoseEntry = false
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -50,6 +58,11 @@ struct PadSubjectDetailView: View {
         .closesOpenSwipeRow()
         .overlay(alignment: .bottom) {
             undoOverlay
+        }
+        .alert("Leistung nicht gespeichert", isPresented: $didLoseEntry) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Dieses Fach gibt es nicht mehr — vermutlich wurde es auf einem anderen Gerät gelöscht. Deine Eingabe konnte deshalb nicht gespeichert werden.")
         }
         // Mittig und nicht von unten: siehe ``ScoreOverlaySheet``.
         .scoreOverlaySheet(item: closingEntrySheet) { edit in
@@ -602,8 +615,13 @@ struct PadSubjectDetailView: View {
     /// „Fertig": der Entwurf wird angelegt, ohne Streifen — die Bestätigung war
     /// ausdrücklich.
     private func confirm(_ edit: GradeEntryEdit) {
-        edit.commit(to: modelContext)
+        let didCommit = edit.commit(to: modelContext)
         editedEntry = nil
+
+        // Ein Fehlschlag heisst: Das Fach wurde inzwischen gelöscht, meist vom
+        // zweiten Gerät. Ohne diese Meldung ginge das Blatt einfach zu und die
+        // eingetippten Punkte wären ohne ein Wort weg.
+        if !didCommit { didLoseEntry = true }
     }
 
     /// Ein geschlossenes Blatt mit tatsächlicher Eingabe legt die Leistung an und
@@ -619,7 +637,15 @@ struct PadSubjectDetailView: View {
     private func keepIfEdited(_ edit: GradeEntryEdit, offersUndo: Bool = true) {
         guard edit.isNew, edit.hasInput else { return }
 
-        edit.commit(to: modelContext)
+        guard edit.commit(to: modelContext) else {
+            // Kein Streifen: Er meldete „Leistung angelegt" für eine Leistung,
+            // die es nicht gibt, und sein Rückgängig löschte ein Objekt, das nie
+            // eingefügt wurde. Gemeldet wird der Verlust trotzdem — aber nur,
+            // wenn diese Ansicht noch steht, siehe `offersUndo`.
+            if offersUndo { didLoseEntry = true }
+            return
+        }
+
         guard offersUndo else { return }
         showUndo(.creation(of: edit.entry))
     }

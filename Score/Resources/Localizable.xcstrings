@@ -3388,6 +3388,23 @@
         }
       }
     },
+    "Dieses Fach gibt es nicht mehr — vermutlich wurde es auf einem anderen Gerät gelöscht. Deine Eingabe konnte deshalb nicht gespeichert werden.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Fach gibt es nicht mehr — vermutlich wurde es auf einem anderen Gerät gelöscht. Deine Eingabe konnte deshalb nicht gespeichert werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This subject no longer exists — it was probably deleted on another device. Your entry could not be saved."
+          }
+        }
+      }
+    },
     "Dieses Fach gibt es nicht mehr.": {
       "extractionState": "manual",
       "localizations": {
@@ -5152,6 +5169,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Grade deleted"
+          }
+        }
+      }
+    },
+    "Leistung nicht gespeichert": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leistung nicht gespeichert"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grade not saved"
           }
         }
       }

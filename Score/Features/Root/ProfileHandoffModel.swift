@@ -51,6 +51,20 @@ final class ProfileHandoffModel {
     /// darf die App nicht stillschweigend ins Dashboard springen.
     private var didCompleteOnboardingHere = false
 
+    /// Ob der Nutzer gerade **ausdrücklich** ein weiteres Profil anlegt.
+    ///
+    /// Das zweite Profil, das dabei entsteht, ist kein unerwartetes Duplikat,
+    /// sondern genau das, wonach in den Einstellungen gefragt wurde. Ohne diesen
+    /// Merker endete der Weg im Lösch-Bildschirm: Sobald die zweite Einrichtung
+    /// durch war, änderte sich die Zahl der fertigen Profile,
+    /// ``duplicateProfilesDidAppear()`` überschrieb jeden Zustand, und der
+    /// Nutzer stand vor „Dich gibt es zweimal" samt „Endgültig löschen" — für
+    /// ein Profil, das er sich eine Minute vorher selbst angelegt hatte.
+    ///
+    /// Er gilt nur bis in die App hinein: Danach ist der Satz gesehen, und ein
+    /// **drittes** Profil aus iCloud ist wieder eine echte Frage.
+    private var isAddingProfileHere = false
+
     /// Wie lange auf ein Profil aus iCloud gewartet wird.
     ///
     /// Der Deckel ist wichtiger als die genaue Zahl: iCloud kann langsam sein
@@ -96,7 +110,7 @@ final class ProfileHandoffModel {
             if didCompleteOnboardingHere {
                 // Das Profil ist gerade hier entstanden. Danach noch einmal zu
                 // fragen, ob es übernommen werden soll, wäre absurd.
-                stage = .ready
+                enterReady()
             } else {
                 // Es kam aus iCloud, während der Nutzer noch einrichtete. Ihn
                 // jetzt kommentarlos ins Dashboard zu schieben wäre genau der
@@ -121,13 +135,16 @@ final class ProfileHandoffModel {
     /// sich einmal für „beide behalten" entschieden hat, soll nicht bei jedem
     /// Start erneut gefragt werden.
     func duplicateProfilesDidAppear() {
+        // Ein ausdrücklich angelegtes zweites Profil ist kein Duplikat, nach dem
+        // zu fragen wäre. Siehe ``isAddingProfileHere``.
+        guard !isAddingProfileHere else { return }
         guard stage != .choosingProfile else { return }
         stage = .choosingProfile
     }
 
     /// Der Nutzer hat entschieden — eines behalten oder beide.
     func profileChoiceDidResolve() {
-        stage = .ready
+        enterReady()
     }
 
     /// Der Nutzer legt aus den Einstellungen heraus ein **weiteres** Profil an.
@@ -138,6 +155,7 @@ final class ProfileHandoffModel {
     /// wieder eine Einrichtung offen.
     func registerAdditionalProfile() {
         didCompleteOnboardingHere = false
+        isAddingProfileHere = true
         stage = .onboarding
     }
 
@@ -149,12 +167,16 @@ final class ProfileHandoffModel {
 
     /// Der Nutzer macht mit dem gefundenen Profil weiter.
     func acceptHandoff() {
-        stage = .ready
+        enterReady()
     }
 
     /// Der Nutzer richtet sich neu ein und verwirft das gefundene Profil.
     func startFreshSetup() {
         didCompleteOnboardingHere = false
+        // Kein ausdrückliches Zweitprofil: Hier wird das gefundene verworfen und
+        // eines an seine Stelle gesetzt. Taucht dabei ein Zwilling auf, ist das
+        // sehr wohl eine Frage.
+        isAddingProfileHere = false
         stage = .onboarding
     }
 
@@ -164,5 +186,16 @@ final class ProfileHandoffModel {
     /// anschliessende Auftauchen nicht als Fund aus iCloud missverstanden wird.
     func onboardingDidComplete() {
         didCompleteOnboardingHere = true
+    }
+
+    /// Der eine Weg in die geöffnete App.
+    ///
+    /// Hier und nicht an jeder Aufrufstelle einzeln, damit der Merker für das
+    /// ausdrücklich angelegte Profil zuverlässig genau dann fällt, wenn er seine
+    /// Aufgabe erfüllt hat: Das neue Profil steht, die App ist offen, und ab
+    /// jetzt ist jedes weitere Profil wieder eines, nach dem zu fragen ist.
+    private func enterReady() {
+        isAddingProfileHere = false
+        stage = .ready
     }
 }

@@ -37,15 +37,29 @@ struct ProfileChoiceView: View {
     /// Der Nutzer behält nur das gewählte; das andere ist bereits gelöscht.
     let onKeepOne: (StudentProfile) -> Void
 
+    /// Das Profil, unter dem dieses Gerät gerade läuft.
+    ///
+    /// Es entscheidet die Voreinstellung der Auswahl — siehe ``selection``.
+    var activeIdentifier: UUID?
+
     @Environment(\.modelContext) private var modelContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @Query private var subjects: [Subject]
     @Query private var gradeEntries: [GradeEntry]
 
-    /// Das Profil, auf dem die Auswahl gerade steht. Voreingestellt ist das
-    /// erste — irgendwo muss die Auswahl stehen, und „nichts gewählt" wäre ein
-    /// vierter Zustand ohne Nutzen.
+    /// Das Profil, auf dem die Auswahl gerade steht.
+    ///
+    /// Voreingestellt ist das **aktive** Profil dieses Geräts. Es stand hier
+    /// einmal auf ``ordered``.first, und das ist das Profil mit der kleineren
+    /// UUID — also je nach Zufall das alte. Wer dann „Beide behalten" tippte,
+    /// bekam nicht etwa beide unverändert, sondern lief hinterher unter dem
+    /// anderen Namen weiter: Die Aufrufstelle merkt sich das Gewählte, und das
+    /// Gewählte war nie eine Wahl, sondern eine Reihenfolge.
+    ///
+    /// Irgendwo muss die Auswahl stehen — „nichts gewählt" wäre ein vierter
+    /// Zustand ohne Nutzen. Auf dem Profil, unter dem das Gerät gerade läuft,
+    /// steht sie richtig.
     @State private var selection: UUID?
 
     /// Ob die Rückfrage vor dem Löschen steht.
@@ -87,7 +101,11 @@ struct ProfileChoiceView: View {
         }
         .onAppear {
             guard selection == nil else { return }
-            selection = ordered.first?.identifier
+            // Fällt auf das erste zurück, wenn das aktive Profil nicht unter den
+            // zur Wahl stehenden ist — etwa weil es gerade auf dem anderen Gerät
+            // gelöscht wurde.
+            selection = ordered.first { $0.identifier == activeIdentifier }?.identifier
+                ?? ordered.first?.identifier
         }
     }
 
@@ -479,7 +497,8 @@ extension ClassLevel {
             StudentProfile(firstName: "Jonas", classLevel: .kursstufe1, graduationYear: 2028, hasCompletedOnboarding: true)
         ],
         onKeepBoth: { _ in },
-        onKeepOne: { _ in }
+        onKeepOne: { _ in },
+        activeIdentifier: nil
     )
     .modelContainer(for: [Subject.self, SemesterResult.self, GradeEntry.self, StudentProfile.self], inMemory: true)
 }

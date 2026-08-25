@@ -224,4 +224,58 @@ struct DuplicateProfileFlowTests {
         handoff.profileDidAppear()
         #expect(handoff.stage == .ready)
     }
+
+    /// Der gemeldete Weg: „Neues Profil, gleiche Fächer" endete im
+    /// Lösch-Bildschirm.
+    ///
+    /// Sobald die zweite Einrichtung durch war, änderte sich die Zahl der
+    /// fertigen Profile, `ContentView` fragte nach Duplikaten, und die Frage
+    /// überschrieb den gerade erreichten Zustand. Der Nutzer stand vor „Dich
+    /// gibt es zweimal" samt „Endgültig löschen" — für ein Profil, das er sich
+    /// eine Minute vorher selbst angelegt hatte. Ein ausdrücklich angelegtes
+    /// zweites Profil ist kein unerwartetes Duplikat.
+    @Test("Ein ausdrücklich angelegtes zweites Profil führt nicht in die Frage")
+    func adeliberateSecondProfileNeverAsksTheDuplicateQuestion() {
+        let handoff = ProfileHandoffModel()
+        handoff.start(hasCompletedProfile: true, isProfileAcknowledged: true, mayReceiveCloudData: true)
+        handoff.registerAdditionalProfile()
+        #expect(handoff.stage == .onboarding)
+
+        // Genau die Reihenfolge, in der `ContentView` seine Beobachter abarbeitet:
+        // erst die gewachsene Zahl der Profile, dann das aufgetauchte Profil.
+        handoff.onboardingDidComplete()
+        handoff.duplicateProfilesDidAppear()
+        #expect(handoff.stage == .onboarding)
+
+        handoff.profileDidAppear()
+        #expect(handoff.stage == .ready)
+    }
+
+    /// Der Merker gilt nur für diesen einen Vorgang: Kommt danach ein **echtes**
+    /// drittes Profil aus iCloud, ist das wieder eine Frage.
+    @Test("Nach dem zweiten Profil wird wieder gefragt")
+    func alaterTwinStillAsks() {
+        let handoff = ProfileHandoffModel()
+        handoff.start(hasCompletedProfile: true, isProfileAcknowledged: true, mayReceiveCloudData: true)
+        handoff.registerAdditionalProfile()
+        handoff.onboardingDidComplete()
+        handoff.profileDidAppear()
+        #expect(handoff.stage == .ready)
+
+        handoff.duplicateProfilesDidAppear()
+        #expect(handoff.stage == .choosingProfile)
+    }
+
+    /// „Von vorn anfangen" ist kein zweites Profil, sondern der Ersatz des
+    /// gefundenen — dort schlägt die Frage weiterhin durch.
+    @Test("Ein neuer Anfang bleibt für die Frage empfänglich")
+    func afreshSetupStillAsks() {
+        let handoff = ProfileHandoffModel()
+        handoff.start(hasCompletedProfile: true, isProfileAcknowledged: true, mayReceiveCloudData: true)
+        handoff.registerAdditionalProfile()
+        handoff.startFreshSetup()
+
+        handoff.duplicateProfilesDidAppear()
+        #expect(handoff.stage == .choosingProfile)
+    }
 }

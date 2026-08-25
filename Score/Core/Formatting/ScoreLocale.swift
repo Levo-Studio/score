@@ -17,5 +17,10 @@ enum ScoreLocale {
     /// `de_DE` und nicht das blosse `de`: Die Region entscheidet über
     /// Dezimaltrennzeichen und Datumsreihenfolge, die Sprache allein tut das
     /// nicht.
-    static let german = Locale(identifier: "de_DE")
+    ///
+    /// `nonisolated`, weil das Projekt auf `MainActor` als Vorgabe steht und die
+    /// Locale auch dort gebraucht wird, wo keine Ansicht läuft — etwa als
+    /// Standardwert eines nebenläufigen Parameters. `Locale` ist `Sendable`, das
+    /// ist gefahrlos.
+    nonisolated static let german = Locale(identifier: "de_DE")
 }

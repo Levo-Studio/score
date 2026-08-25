@@ -1,5 +1,41 @@
 import SwiftUI
 import SwiftData
+import UIKit
+
+/// Ob das iPad-Gerüst überhaupt in Frage kommt.
+///
+/// ## Warum die Size Class allein nicht reicht
+///
+/// `horizontalSizeClass == .regular` liest sich wie „viel Platz", meint aber
+/// nicht „iPad". Ein iPhone Plus oder Pro Max ist im **Querformat** ebenfalls
+/// `.regular`, und Querformat ist für Score erlaubt. Hing die Wahl nur an der
+/// Size Class, bekam ein iPhone 16 Pro Max quer die 252 Punkt breite Sidebar auf
+/// 440 Punkt Höhe — und schlimmer: beim Drehen tauschte SwiftUI das ganze
+/// Gerüst, womit der komplette Zustand beider Seiten verfiel. Der Reiter
+/// „Fächer" stand nach dem Drehen wieder auf „Übersicht".
+///
+/// Deshalb kommt das Geräte-Idiom dazu. Es ersetzt die Size Class aber **nicht**,
+/// sondern begrenzt sie: Ein iPad im schmalen Split View ist `.compact` und
+/// bekommt weiterhin zu Recht das kompakte Gerüst — eine Sidebar in einer 320
+/// Punkt breiten Spalte wäre keine Navigation mehr, sondern ein Hindernis.
+enum ScoreDeviceIdiom {
+
+    /// Ob dieses Gerät ein iPad ist.
+    ///
+    /// Gelesen wird der Wert direkt bei jeder Abfrage: Das Idiom ändert sich zur
+    /// Laufzeit nicht, und ein zwischengespeicherter Wert überlebte den ersten
+    /// Start in einer anderen Umgebung (Mac, Vision) nicht verlässlich.
+    static var isPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
+
+    /// Ob das zweispaltige iPad-Layout gelten soll.
+    ///
+    /// - Parameter horizontalSizeClass: Die Size Class der umgebenden Ansicht.
+    static func prefersPadLayout(horizontalSizeClass: UserInterfaceSizeClass?) -> Bool {
+        isPad && horizontalSizeClass == .regular
+    }
+}
 
 /// Die Wurzel der App.
 ///
@@ -21,10 +57,11 @@ import SwiftData
 /// hinter dem Rücken des Nutzers begradigen darf, sondern eine Frage, die ihm
 /// gehört. Sie wird in ``ProfileChoiceView`` gestellt.
 ///
-/// Welches Hauptgerüst erscheint, entscheidet die horizontale Size Class und
-/// nicht der Gerätetyp: ein iPad im Splitscreen ist `.compact` und bekommt dann
-/// zu Recht das iPhone-Layout mit der Tab-Bar. Eine Abfrage über `UIDevice`
-/// würde dort eine Sidebar in eine 320 Punkt breite Spalte zwängen.
+/// Welches Hauptgerüst erscheint, entscheiden Geräte-Idiom und horizontale Size
+/// Class zusammen — siehe ``ScoreDeviceIdiom``. Beides ist nötig: Die Size Class
+/// allein gäbe einem iPhone Pro Max im Querformat das iPad-Gerüst, das Idiom
+/// allein zwänge einem iPad im schmalen Split View eine Sidebar in eine 320
+/// Punkt breite Spalte.
 struct ContentView: View {
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -165,7 +202,7 @@ struct ContentView: View {
 
     @ViewBuilder
     private func shell(for profile: StudentProfile) -> some View {
-        if horizontalSizeClass == .regular {
+        if ScoreDeviceIdiom.prefersPadLayout(horizontalSizeClass: horizontalSizeClass) {
             PadShell(profile: profile)
         } else {
             MainShell(profile: profile)

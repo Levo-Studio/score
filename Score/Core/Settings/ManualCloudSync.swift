@@ -175,6 +175,16 @@ final class ManualCloudSync {
         guard phase != .running, isAvailable() else { return }
 
         reset?.cancel()
+
+        // Auch die Karenz des vorigen Laufs. Ohne das gehörte sie noch dem alten
+        // Lauf und prüfte nur, ob **irgendein** Lauf gerade unterwegs ist:
+        // Scheiterte Lauf A nach dem Einrichten — etwa an einem fehlenden Konto —
+        // und tippt der Nutzer innerhalb der Karenz erneut, meldete die alte
+        // Karenz Erfolg für einen Lauf, den es nicht mehr gibt, und schriebe dazu
+        // einen Zeitstempel, zu dem nie etwas abgeglichen wurde.
+        settle?.cancel()
+        settle = nil
+
         phase = .running
 
         run = Task { [weak self] in

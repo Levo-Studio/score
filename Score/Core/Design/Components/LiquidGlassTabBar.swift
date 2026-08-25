@@ -111,6 +111,10 @@ struct LiquidGlassTabBar: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // Welcher Reiter offen ist, steht hier allein in Farbe und Grösse — beides
+        // sieht VoiceOver nicht. Ohne das Merkmal liest es alle vier Reiter als
+        // gleichwertige Knöpfe vor, und der aktuelle Ort in der App geht verloren.
+        .accessibilityAddTraits(isActive ? .isSelected : [])
     }
 }
 

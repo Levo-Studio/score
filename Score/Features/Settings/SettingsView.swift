@@ -476,6 +476,9 @@ private struct LanguageSegments: View {
                         .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
+                // Die eingestellte Sprache erkennt man sonst nur an der hellen
+                // Pille darunter. Wer sie nicht sieht, hört zweimal dasselbe.
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
         }
         .padding(3)

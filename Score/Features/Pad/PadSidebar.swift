@@ -144,6 +144,9 @@ struct PadSidebar: View {
         }
         .buttonStyle(.plain)
         .scoreAnimation(ScoreMotion.backdrop, value: isSelected)
+        // Die hervorgehobene Zeile sagt, wo man gerade ist. Das ist eine Aussage
+        // über den Zustand und darf nicht allein in der Hinterlegung stecken.
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     // MARK: - Mündliche Prüfungsfächer

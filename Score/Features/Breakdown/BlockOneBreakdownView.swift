@@ -909,7 +909,11 @@ struct BlockOneBreakdownView: View {
         case .beyondCourseCap:
             return Text("Es zählen nur \(BlockOneCalculator.totalCourseCount) Kurse. Dieser Kurs wäre geschützt gewesen — aber du hast mehr nicht abwählbare Kurse belegt, als hineinpassen.")
         case .automatic:
-            return Text("Automatisch geklammert: Es zählen nur \(BlockOneCalculator.totalCourseCount) Kurse, und dieser gehört zu den schwächsten. Ab \(breakdown.optionalThreshold ?? 0) Punkten bleibt ein Wahl-Basisfach-Kurs drin.")
+            // Nicht „ab X Punkten bleibt ein Kurs drin": bei Gleichstand
+            // entscheidet zusätzlich Fach und Halbjahr, also kann ein geklammerter
+            // Kurs genau bei X stehen. Der Satz nennt deshalb nur, wie schwach der
+            // schwächste eingebrachte Kurs ist.
+            return Text("Automatisch geklammert: Es zählen nur \(BlockOneCalculator.totalCourseCount) Kurse, und dieser gehört zu den schwächsten. Der schwächste Wahl-Basisfach-Kurs, der es noch hineingeschafft hat, steht bei \(breakdown.optionalThreshold ?? 0) Punkten — bei Gleichstand entscheidet Fach und Halbjahr.")
         }
     }
 

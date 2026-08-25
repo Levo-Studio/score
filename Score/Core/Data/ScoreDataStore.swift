@@ -507,17 +507,58 @@ final class ScoreDataStore {
 /// das ist die richtige Richtung:
 ///
 /// - Der schlimmste Fall eines übersprungenen Aufschubs ist das Verhalten von
-///   vorher — ein Containertausch bei offenem Blatt. Seit der Entwurf kein
-///   Modellobjekt mehr hält, sondern nur noch ``PendingSemester`` aus Kennung
-///   und Index, löst er sein Halbjahr in genau dem Kontext auf, in den er
-///   eingefügt wird. Die Kontextgrenze lässt sich so gar nicht mehr verletzen;
-///   übrig bliebe ein Flackern.
+///   vorher — ein Containertausch bei offenem Blatt. Was dabei passiert, hängt
+///   allein daran, ob irgendwo ein Modellobjekt **über die Zeit** festgehalten
+///   wird; siehe unten.
 /// - Der schlimmste Fall einer hängenden Anmeldung ist eine stille, dauerhafte
 ///   Sync-Blockade. Der Nutzer sieht auf beiden Geräten verschiedene Stände und
 ///   bekommt nirgends gesagt, warum.
 ///
 /// Ein stilles Datenproblem wiegt schwerer als ein sichtbares Flackern, also
 /// verfällt der Schutz lieber, als dass er ewig gilt.
+///
+/// ## Was ein übersprungener Aufschub tatsächlich kostet
+///
+/// Hier stand einmal die Zusage, die Kontextgrenze lasse sich gar nicht mehr
+/// verletzen, weil der Entwurf nur noch ``PendingSemester`` halte. Die Zusage
+/// war zu weit: Sie galt für ``GradeEntryEdit/draft(category:kind:title:in:)``
+/// und für nichts sonst. Das Blatt einer **bestehenden** Leistung legte
+/// weiterhin das `GradeEntry` selbst in den `@State` der Fachansicht, und der
+/// Rücknahme-Streifen schloss es in seine Closure ein. Ein Tausch dazwischen
+/// verlor getippte Punkte stumm, löschte im neuen Kontext ein fremdes Objekt und
+/// meldete für „Fertig" einen Erfolg, den es nicht gab.
+///
+/// Das ist behoben: Über die Zeit hält heute **keine** Ansicht mehr ein
+/// Modellobjekt eines fremden Kontexts. Alles, was ein Blatt, ein Streifen oder
+/// eine Route überdauern muss, ist eine Kennung aus blossen Werten
+/// (``PendingSemester``, ``PendingEntry``, die `UUID` eines Fachs) und wird in
+/// dem Kontext aufgelöst, in dem gerade gelesen oder geschrieben wird. Was
+/// zwischen zwei Zeitpunkten wartet, hält sich seine Anmeldung selbst, siehe
+/// ``UnsavedInputRegistry/holding(_:)``.
+///
+/// Übrig bleibt ein Flackern — und **eine** bewusst stehengelassene Stelle:
+/// `OpenedSubjectBridge` in ``SubjectListView`` reicht das zuletzt gefundene
+/// Fach genau für die Durchläufe weiter, in denen die Abfrage während des
+/// Tauschs leer antwortet. Ohne sie spränge die Fachansicht mitten im Abgleich
+/// auf „Dieses Fach gibt es nicht mehr." zurück. Sie hält nichts über die Zeit,
+/// sondern über einen Durchlauf, und der nächste Fund des neuen Kontexts löst
+/// das Gemerkte sofort ab. Wer in genau diesem Sekundenbruchteil eine Leistung
+/// löscht, greift trotzdem über die Kontextgrenze — das ist der bekannte,
+/// abgewogene Rest, kein vergessener Fall.
+///
+/// ## Woran der Nächste erkennt, dass die Zusage wieder gebrochen ist
+///
+/// Ein `@Model`-Objekt, das eine Ansicht über die Zeit festhält: in `@State`, in
+/// der Nutzlast eines `@State`-Enums, in einem `@Observable`-Modell, in einer
+/// Closure, die in `@State` liegt, oder hinter einem `await`. `@Bindable` und
+/// Parameter zählen nicht dazu, solange sie in jedem Durchlauf frisch aus einer
+/// `@Query` oder von oben kommen — die sind nach dem Tausch von selbst die des
+/// neuen Kontexts.
+///
+/// Nachgemessen wird das in `GradeEntryContextHandoverTests`: Dort läuft ein
+/// echter Containertausch zwischen dem Öffnen des Blattes und dem Tippen,
+/// „Fertig" und „Löschen". Wer die Regel bricht, bekommt dort einen roten Test,
+/// und nicht erst der Nutzer eine verlorene Note.
 ///
 /// Damit die Frist den Schutz nicht praktisch abschaltet, hängt sie an der
 /// **einzelnen** Anmeldung und nicht an der Anmeldestelle als Ganzem: Eine

@@ -325,8 +325,15 @@ private struct OpenedSubjectScreen: View {
 ///
 /// Sie ist damit noch eine Massnahme **gegen das Flackern** — und ausdrücklich
 /// keine Datenrettung mehr. Ungesicherte Eingaben überleben den Tausch nicht
-/// dadurch, dass jemand ein altes Objekt festhält, sondern dadurch, dass gar
-/// nicht getauscht wird, solange ein Blatt offen steht; siehe
+/// dadurch, dass jemand ein altes Objekt festhält, sondern dadurch, dass in
+/// aller Regel gar nicht getauscht wird, solange ein Blatt offen steht (siehe
+/// ``UnsavedInputRegistry``) — und dort, wo der Aufschub nach seiner Frist doch
+/// verfällt, dadurch, dass das Blatt seine Leistung in jedem Durchlauf im
+/// geltenden Kontext auflöst (siehe ``GradeEntryEdit``).
+///
+/// Was diese Brücke selbst weiterreicht, ist deshalb nur zum **Anzeigen**
+/// gedacht und gilt nur für die Durchläufe des Tauschs. Sie ist der eine
+/// bewusst stehengelassene Rest der Kontextgrenze; die Abwägung dazu steht in
 /// ``UnsavedInputRegistry``.
 ///
 /// ## Die Regel

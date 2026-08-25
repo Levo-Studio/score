@@ -286,7 +286,15 @@ private struct OpenedSubjectScreen: View {
         // Kein Timer und keine Karenz: Sobald die Brücke aufgibt, ist das Fach
         // wirklich weg, und die Hülle geht zurück zur Liste, statt auf einer
         // Ansicht zu stehen, deren Gegenstand es nicht mehr gibt.
-        .onChange(of: displayed == nil) { _, isMissing in
+        //
+        // `initial: true` und nicht bloss auf den Wechsel: Ist die Abfrage schon
+        // im **ersten** Rumpfdurchlauf leer — das Fach war beim Öffnen der Route
+        // bereits gelöscht, und der Speicher tauscht nicht —, gibt es nie einen
+        // Wechsel, auf den zu reagieren wäre. Der Ersatztext trägt aber
+        // `.toolbar(.hidden, for: .navigationBar)`; ohne diesen ersten Durchlauf
+        // stünde also eine Sackgasse ohne sichtbaren Rückweg da. Genau das deckte
+        // der zuvor entfernte `.task` ab, und mit ihm ging es verloren.
+        .onChange(of: displayed == nil, initial: true) { _, isMissing in
             if isMissing { dismiss() }
         }
     }

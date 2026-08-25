@@ -57,10 +57,22 @@ struct OpenedSubjectBridgeTests {
             self.draft = draft
         }
 
+        /// Was der Griff auf `displayed == nil` beim vorigen Durchlauf gesehen
+        /// hat. `nil`, solange es keinen vorigen gab.
+        private var lastIsMissing: Bool?
+
         /// Ein Durchlauf des Rumpfes samt dem, was danach an `.onChange` hängt.
         func render(queryResult found: Subject?, isReopening: Bool) {
             displayed = bridge.subject(whenQueryReturned: found, isReopening: isReopening)
             showsMissingSubject = displayed == nil
+
+            // `.onChange(of:initial:)` mit `initial: true`: Der **erste**
+            // Durchlauf zählt mit, danach nur noch der Wechsel. Ohne den ersten
+            // gäbe es für eine von Anfang an leere Abfrage nie einen Anlass,
+            // zurückzugehen.
+            guard lastIsMissing != showsMissingSubject else { return }
+            lastIsMissing = showsMissingSubject
+
             if showsMissingSubject {
                 draft = nil
                 didDismiss = true
@@ -174,6 +186,24 @@ struct OpenedSubjectBridgeTests {
         // Die Löschung kam vom zweiten Gerät. Der Speicher tauscht nicht — also
         // ist das leere Ergebnis eine Auskunft und keine Lücke.
         screen.render(queryResult: nil, isReopening: false)
+        #expect(screen.showsMissingSubject)
+        #expect(screen.didDismiss)
+    }
+
+    /// Der gemeldete Fund: `.onChange` reagiert nur auf einen **Wechsel**. Ist
+    /// die Abfrage schon im ersten Rumpfdurchlauf leer — das Fach war beim
+    /// Öffnen der Route bereits gelöscht, und der Speicher tauscht nicht —, gab
+    /// es nie einen Wechsel und damit keinen Rücksprung. Der Ersatztext
+    /// verbirgt aber die Navigationsleiste: eine Sackgasse ohne sichtbaren
+    /// Rückweg. Der zuvor entfernte `.task` hatte das abgedeckt.
+    @Test("Eine von Anfang an leere Abfrage ist keine Sackgasse")
+    func anEmptyFirstPassAlsoLeaves() throws {
+        let screen = Screen()
+
+        // Kein einziger Durchlauf mit Fach davor: Die Route wurde für eine
+        // Kennung geöffnet, zu der es nichts mehr gibt.
+        screen.render(queryResult: nil, isReopening: false)
+
         #expect(screen.showsMissingSubject)
         #expect(screen.didDismiss)
     }

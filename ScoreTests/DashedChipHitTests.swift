@@ -93,16 +93,25 @@ struct DashedChipHitTests {
             #expect(tag.accessibilityActivate())
             try await Self.settle()
             measurements.draft = "Astronomie"
-            try await Self.settle()
-
-            let editor = measurements.capsule
-            #expect(abs(editor.height - plain.height) <= 0.5)
+            // Gewartet wird, bis der Eingabezustand wirklich steht: breiter als
+            // der ruhige Tag **und** seit einer Runde unverändert.
+            let editor = try await Self.stable(until: { $0.width > plain.width }) {
+                measurements.capsule
+            }
+            // Der Nachbar wird hier **neu** gemessen. Die zu Beginn erfasste
+            // Position taugt nicht mehr als Bezug: Sobald die Tastatur
+            // aufgeht, scrollt die Liste, und dann vergleicht man zwei
+            // Momente statt zwei Chips. Genau daran hat dieser Test
+            // gelegentlich fälschlich Alarm geschlagen — die Zeilen waren um
+            // volle 150 Punkt auseinander, bei exakt gleicher Höhe.
+            let neighbour = measurements.plainChip
+            #expect(abs(editor.height - neighbour.height) <= 0.5)
             #expect(abs(editor.height - ScoreMetrics.chipHeight) <= 0.5)
             // Gleiche Grundlinie: der Tag sitzt in der Zeile wie sein Nachbar.
-            #expect(abs(editor.minY - plain.minY) <= 0.5)
-            #expect(abs(editor.maxY - plain.maxY) <= 0.5)
+            #expect(abs(editor.minY - neighbour.minY) <= 0.5)
+            #expect(abs(editor.maxY - neighbour.maxY) <= 0.5)
             // Nur die Breite darf sich ändern — sie tut es auch.
-            #expect(editor.width > plain.width)
+            #expect(editor.width > neighbour.width)
 
             // Und trotz der kleineren Höhe bleibt die Trefferfläche des „OK"
             // über der ganzen sichtbaren Fläche des Tags.
@@ -339,6 +348,47 @@ struct DashedChipHitTests {
     /// Lässt den Hauptlauf weiterdrehen, damit SwiftUI neu baut.
     private static func settle(seconds: Double = 0.35) async throws {
         try await Task.sleep(for: .seconds(seconds))
+    }
+
+    /// Wartet, bis ein gemessenes Rechteck sich nicht mehr ändert.
+    ///
+    /// Ein fester Schlaf taugt hier nicht: Der Eingabezustand geht **animiert**
+    /// auf, und trifft die Messung mitten hinein, misst sie eine Zwischenhöhe.
+    /// Genau daran ist dieser Test in etwa jedem vierten Lauf gescheitert — mal
+    /// grün, mal rot, ohne dass sich am Code etwas geändert hätte.
+    ///
+    /// Statt länger zu schlafen — was den Lauf nur verlangsamt und das Problem
+    /// bloss unwahrscheinlicher macht — wird hier auf den Zustand gewartet, um
+    /// den es geht: zwei gleiche Messungen hintereinander heissen, die
+    /// Animation steht.
+    ///
+    /// Wichtig ist die Bedingung `until`: Ohne sie rastet die Messung auf dem
+    /// **alten** Wert ein — zwei gleiche Messungen heissen dann nicht „die
+    /// Animation steht", sondern „sie hat noch nicht angefangen". Genau daran
+    /// ist ein erster Versuch gescheitert, das Flackern zu beheben; er machte es
+    /// schlimmer statt besser.
+    private static func stable(
+        within deadline: Double = 3,
+        until isReady: @MainActor (CGRect) -> Bool = { !$0.isEmpty },
+        _ read: @MainActor () -> CGRect
+    ) async throws -> CGRect {
+        var previous = read()
+        let end = Date.now.addingTimeInterval(deadline)
+
+        while Date.now < end {
+            try await Task.sleep(for: .milliseconds(20))
+            let current = read()
+            let unchanged = abs(current.height - previous.height) < 0.01
+                && abs(current.width - previous.width) < 0.01
+                && abs(current.minY - previous.minY) < 0.01
+            if unchanged, !current.isEmpty, isReady(current) { return current }
+            previous = current
+        }
+
+        // Nach der Frist wird zurückgegeben, was zuletzt gemessen wurde — der
+        // Test soll an seiner eigenen Erwartung scheitern und nicht an einem
+        // Zeitablauf, dessen Meldung nichts über die Sache aussagt.
+        return previous
     }
 
     /// Das Element mit dieser Beschriftung, irgendwo im Baum.

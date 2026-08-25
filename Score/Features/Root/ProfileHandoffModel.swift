@@ -61,6 +61,13 @@ final class ProfileHandoffModel {
     /// Nutzer stand vor „Dich gibt es zweimal" samt „Endgültig löschen" — für
     /// ein Profil, das er sich eine Minute vorher selbst angelegt hatte.
     ///
+    /// Er deckt genau **ein** Profil ab: das hier gerade angelegte. Deshalb
+    /// greift er erst zusammen mit ``didCompleteOnboardingHere``, also ab dem
+    /// Moment, in dem die eigene Einrichtung durch ist und ihr Profil gleich
+    /// gespeichert wird. Solange die zweite Einrichtung noch läuft, ist ein
+    /// auftauchendes Profil nicht das eigene — es kann nur aus iCloud stammen,
+    /// und dann ist die Frage genauso berechtigt wie sonst.
+    ///
     /// Er gilt nur bis in die App hinein: Danach ist der Satz gesehen, und ein
     /// **drittes** Profil aus iCloud ist wieder eine echte Frage.
     private var isAddingProfileHere = false
@@ -136,8 +143,14 @@ final class ProfileHandoffModel {
     /// Start erneut gefragt werden.
     func duplicateProfilesDidAppear() {
         // Ein ausdrücklich angelegtes zweites Profil ist kein Duplikat, nach dem
-        // zu fragen wäre. Siehe ``isAddingProfileHere``.
-        guard !isAddingProfileHere else { return }
+        // zu fragen wäre — aber nur dieses eine. Der Merker allein verschluckte
+        // jedes Profil, das während der zweiten Einrichtung eintraf, also auch
+        // ein echtes drittes von einem anderen Gerät. Zusammen mit dem
+        // abgeschlossenen Onboarding trifft er dagegen genau den einen
+        // Durchlauf, um den es geht: Die Einrichtung ist durch, ihr Profil wird
+        // gerade gespeichert, und die gewachsene Zahl der Profile ist die Folge
+        // davon. Siehe ``isAddingProfileHere``.
+        guard !(isAddingProfileHere && didCompleteOnboardingHere) else { return }
         guard stage != .choosingProfile else { return }
         stage = .choosingProfile
     }

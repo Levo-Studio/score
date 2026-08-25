@@ -266,6 +266,26 @@ struct DuplicateProfileFlowTests {
         #expect(handoff.stage == .choosingProfile)
     }
 
+    /// Der Merker deckt das eigene, gerade angelegte Profil ab — nicht jedes
+    /// beliebige.
+    ///
+    /// Trifft **während** der zweiten Einrichtung ein Profil aus iCloud ein,
+    /// stammt es von einem anderen Gerät: Das eigene ist ja noch gar nicht
+    /// gespeichert. Bis hierher verschluckte der Merker auch diesen Fall, und die
+    /// Frage kam nie — der Nutzer richtete sich fertig ein und stand hinterher
+    /// still mit drei Profilen da.
+    @Test("Ein fremdes Profil während der zweiten Einrichtung wird trotzdem gefragt")
+    func aforeignProfileDuringTheSecondSetupStillAsks() {
+        let handoff = ProfileHandoffModel()
+        handoff.start(hasCompletedProfile: true, isProfileAcknowledged: true, mayReceiveCloudData: true)
+        handoff.registerAdditionalProfile()
+        #expect(handoff.stage == .onboarding)
+
+        // Die Einrichtung läuft noch — kein `onboardingDidComplete()`.
+        handoff.duplicateProfilesDidAppear()
+        #expect(handoff.stage == .choosingProfile)
+    }
+
     /// „Von vorn anfangen" ist kein zweites Profil, sondern der Ersatz des
     /// gefundenen — dort schlägt die Frage weiterhin durch.
     @Test("Ein neuer Anfang bleibt für die Frage empfänglich")

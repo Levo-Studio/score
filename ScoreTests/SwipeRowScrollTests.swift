@@ -209,7 +209,6 @@ struct SwipeRowScrollTests {
     private func withSubjectList(
         _ body: (UIWindow, UIScrollView) async throws -> Void
     ) async throws {
-        AppSettings.shared.language = .german
         // Der geteilte Stand überlebt sonst von einem Test zum nächsten.
         SwipeRowRegistry.shared.closeAll()
 
@@ -237,7 +236,7 @@ struct SwipeRowScrollTests {
         let size = CGSize(width: 402, height: 874)
         let root = UIHostingController(
             rootView: SubjectListView()
-                .environment(\.locale, AppSettings.shared.locale)
+                .environment(\.locale, ScoreLocale.german)
                 .environment(\.modelContext, context)
                 .modelContainer(container)
                 .frame(width: size.width, height: size.height)

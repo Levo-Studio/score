@@ -313,13 +313,10 @@ struct DashedChipHitTests {
         _ probe: Probe,
         _ body: (UIWindow) async throws -> Void
     ) async throws {
-        // Ohne feste Sprache stünde in den Beschriftungen die des Simulators.
-        AppSettings.shared.language = .german
-
         let size = CGSize(width: 402, height: 874)
         let root = UIHostingController(
             rootView: probe
-                .environment(\.locale, AppSettings.shared.locale)
+                .environment(\.locale, ScoreLocale.german)
                 .frame(width: size.width, height: size.height)
         )
         root.view.frame = CGRect(origin: .zero, size: size)

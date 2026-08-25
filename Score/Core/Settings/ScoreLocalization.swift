@@ -2,30 +2,22 @@ import Foundation
 
 extension String {
 
-    /// Wie `String(localized:)`, aber in der Sprache, die der Nutzer **in Score**
-    /// gewählt hat.
+    /// Wie `String(localized:)`, aber ausdrücklich gegen die Sprache von Score
+    /// und nicht gegen die des Prozesses.
     ///
-    /// `String(localized:)` löst gegen die Sprache des Prozesses auf und weiss
-    /// nichts von `AppSettings`. Die App setzt ihre Sprache aber über
-    /// `.environment(\.locale, …)` an der Wurzel — das erreicht jedes `Text`,
-    /// jedoch keinen freistehenden `String(localized:)`-Aufruf.
-    ///
-    /// Die Folge war sichtbar: auf einem englisch eingestellten Gerät mit deutsch
-    /// gewählter App stand „Nicht gewertet" neben „4 courses", und die Kopfleiste
-    /// des iPads zeigte „Overview" über einer sonst deutschen Oberfläche.
+    /// Score ist einsprachig deutsch, die Auflösung gegen ``ScoreLocale/german``
+    /// ist trotzdem keine Formsache: `String(localized:)` sucht die Übersetzung
+    /// in der Sprache, auf die sich Prozess und Bundle geeinigt haben. Auf einem
+    /// englisch eingestellten Gerät hängt das an der Entwicklungsregion des
+    /// Bundles — eine Annahme, die man nicht in jedem Aufruf mitdenken will.
+    /// Eine ``LocalizedStringResource`` trägt ihre Sprache dagegen bis in die
+    /// Auflösung hinein.
     ///
     /// Überall dort, wo ein `String` gebraucht wird und kein `Text` möglich ist —
     /// Titel, zusammengesetzte `AttributedString`s, Werte für Bezeichner — gehört
     /// deshalb dieser Aufruf hin statt `String(localized:)`.
-    /// Der Weg führt über ``LocalizedStringResource`` und nicht über
-    /// `String(localized:locale:)`: Dessen `locale` bestimmt nur, wie Zahlen und
-    /// Daten **innerhalb** des Textes formatiert werden — welche Übersetzung
-    /// überhaupt gesucht wird, entscheidet weiterhin die Sprache des Bundles.
-    /// Auf einem englischen Gerät mit deutsch gestellter App stand deshalb
-    /// „Overview" über einer sonst deutschen Oberfläche. Eine
-    /// `LocalizedStringResource` trägt ihre Sprache dagegen bis in die Auflösung.
     static func scoreLocalized(_ key: String.LocalizationValue) -> String {
-        String(localized: LocalizedStringResource(key, locale: AppSettings.shared.locale))
+        String(localized: LocalizedStringResource(key, locale: ScoreLocale.german))
     }
 }
 
@@ -36,6 +28,6 @@ extension AttributedString {
     /// Gebraucht, wo mehrere Bausteine mit eigenen Pluralen zu einer Zeile
     /// verbunden werden und deshalb kein einzelner `LocalizedStringKey` reicht.
     static func scoreLocalized(_ key: String.LocalizationValue) -> AttributedString {
-        AttributedString(localized: LocalizedStringResource(key, locale: AppSettings.shared.locale))
+        AttributedString(localized: LocalizedStringResource(key, locale: ScoreLocale.german))
     }
 }

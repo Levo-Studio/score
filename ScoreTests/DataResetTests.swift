@@ -165,7 +165,7 @@ struct DataResetTests {
 
     /// Ein Gerät, auf dem gearbeitet wurde: Es kennt sein Profil, hat es
     /// bestätigt, kennt den Profilsatz, hatte ein Halbjahr offen und hat schon
-    /// einmal abgeglichen. Dazu die drei Geräteeinstellungen.
+    /// einmal abgeglichen. Dazu die beiden Geräteeinstellungen.
     private static func makeUsedDefaults() -> UserDefaults {
         let defaults = makeDefaults()
 
@@ -175,7 +175,6 @@ struct DataResetTests {
         defaults.set(2, forKey: SubjectPreference.selectedSemesterKey)
         defaults.set(Date(timeIntervalSince1970: 1_700_000_000), forKey: ManualCloudSync.lastSyncedAtKey)
 
-        defaults.set("en", forKey: "settings.language")
         defaults.set("light", forKey: "settings.appearance")
         defaults.set(false, forKey: "settings.cloudSyncEnabled")
 
@@ -208,10 +207,10 @@ struct DataResetTests {
         #expect(defaults.object(forKey: ManualCloudSync.lastSyncedAtKey) == nil)
     }
 
-    /// Sprache, Erscheinungsbild und der Schalter für den automatischen Abgleich
-    /// sind Einstellungen dieses Geräts und keine Daten. Wer seine Noten löscht,
-    /// darf nicht plötzlich eine englische App im hellen Erscheinungsbild
-    /// vorfinden.
+    /// Erscheinungsbild und der Schalter für den automatischen Abgleich sind
+    /// Einstellungen dieses Geräts und keine Daten. Wer seine Noten löscht, darf
+    /// nicht plötzlich eine App im hellen Erscheinungsbild und mit wieder
+    /// eingeschaltetem Abgleich vorfinden.
     @Test("Die Geräteeinstellungen überleben das Löschen unverändert")
     @MainActor
     func keepsDeviceSettings() throws {
@@ -220,13 +219,11 @@ struct DataResetTests {
 
         try DataReset.deleteAll(in: context, defaults: defaults)
 
-        #expect(defaults.string(forKey: "settings.language") == "en")
         #expect(defaults.string(forKey: "settings.appearance") == "light")
         #expect(defaults.object(forKey: "settings.cloudSyncEnabled") as? Bool == false)
 
         // Und über den Weg, den die App selbst nimmt.
         let settings = AppSettings(defaults: defaults)
-        #expect(settings.language == .english)
         #expect(settings.appearance == .light)
         #expect(!settings.isCloudSyncEnabled)
     }
@@ -238,6 +235,6 @@ struct DataResetTests {
         DataReset.resetUserData(in: defaults)
 
         #expect(defaults.object(forKey: ActiveProfile.identifierKey) == nil)
-        #expect(defaults.string(forKey: "settings.language") == "en")
+        #expect(defaults.string(forKey: "settings.appearance") == "light")
     }
 }

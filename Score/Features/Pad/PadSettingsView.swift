@@ -144,10 +144,7 @@ struct PadSettingsView: View {
 
     private func settingsCard(settings: Bindable<AppSettings>) -> some View {
         VStack(spacing: 0) {
-            PadSettingsRow(title: "Sprache", isFirst: true) {
-                PadLanguageSegments(selection: settings.language)
-            }
-            PadSettingsRow(title: "Dark Mode", isFirst: false) {
+            PadSettingsRow(title: "Dark Mode", isFirst: true) {
                 ScoreSwitch(isOn: settings.isDarkModeEnabled)
             }
             PadSettingsRow(title: "Bundesland", isFirst: false) {
@@ -273,8 +270,7 @@ struct PadSettingsView: View {
     private var lastSyncedText: String {
         ManualCloudSync.lastSyncedText(
             date: sync.lastSyncedAt,
-            isActive: syncStatus.state.allowsSync,
-            locale: settings.locale
+            isActive: syncStatus.state.allowsSync
         )
     }
 
@@ -407,43 +403,3 @@ private struct PadSettingsValue: View {
     }
 }
 
-/// Die Segment-Pille „Deutsch | English" in den Massen des iPad-Layouts.
-private struct PadLanguageSegments: View {
-
-    @Binding var selection: AppSettings.Language
-    @Namespace private var namespace
-
-    var body: some View {
-        HStack(spacing: ScoreMetrics.Spacing.xxs) {
-            ForEach(AppSettings.Language.allCases) { language in
-                let isSelected = selection == language
-
-                Button {
-                    selection = language
-                } label: {
-                    Text(verbatim: language.title)
-                        .font(ScoreTypography.publicSans(500, 12))
-                        .foregroundStyle(isSelected ? ScorePalette.ink : ScorePalette.inkSecondary)
-                        .padding(.horizontal, 13)
-                        .padding(.vertical, 9)
-                        .background {
-                            if isSelected {
-                                Capsule()
-                                    .fill(ScorePalette.surface)
-                                    .matchedGeometryEffect(id: "segment", in: namespace)
-                            }
-                        }
-                        .contentShape(Capsule())
-                }
-                .buttonStyle(.plain)
-                // Die eingestellte Sprache erkennt man sonst nur an der hellen
-                // Pille darunter. Wer sie nicht sieht, hört zweimal dasselbe.
-                .accessibilityAddTraits(isSelected ? .isSelected : [])
-            }
-        }
-        .padding(3)
-        .background(ScorePalette.fill)
-        .clipShape(Capsule())
-        .scoreAnimation(ScoreMotion.segment, value: selection)
-    }
-}

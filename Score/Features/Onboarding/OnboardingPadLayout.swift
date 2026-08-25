@@ -86,8 +86,6 @@ struct OnboardingPadLayout: View {
             ElectiveBasicSubjectsStep(model: model)
         case .oralExamSubjects:
             OralExamSubjectsStep(model: model)
-        case .language:
-            LanguageStep(model: model)
         case .summary:
             SummaryStep(model: model)
         }

@@ -92,22 +92,19 @@ enum DashboardGreeting {
     /// Die fertige Zeile für eine View.
     ///
     /// Als `Text` und nicht als `String`: Ein freistehender `String(localized:)`
-    /// sucht die Übersetzung in der Sprache des Prozesses und nicht in der, die
-    /// der Nutzer in Score gewählt hat — auf einem englischen Gerät mit deutsch
-    /// gestellter App stünde hier sonst die englische Zeile. Der Umweg über
-    /// ``LocalizedStringResource`` nimmt die Sprache ausdrücklich mit.
-    @MainActor
+    /// sucht die Übersetzung in der Sprache, auf die sich Prozess und Bundle
+    /// geeinigt haben. Der Umweg über ``LocalizedStringResource`` nimmt die
+    /// Sprache von Score ausdrücklich mit, statt sie vorauszusetzen.
     static func text(for stage: Stage, firstName: String) -> Text {
         Text(
             LocalizedStringResource(
                 value(for: stage, firstName: firstName),
-                locale: AppSettings.shared.locale
+                locale: ScoreLocale.german
             )
         )
     }
 
     /// Beides in einem Schritt — der Weg, den die Views nehmen.
-    @MainActor
     static func text(expectedGrade: Double, recordedCount: Int, firstName: String) -> Text {
         text(
             for: stage(expectedGrade: expectedGrade, recordedCount: recordedCount),

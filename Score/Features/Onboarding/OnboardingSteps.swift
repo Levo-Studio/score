@@ -441,36 +441,6 @@ private struct SubjectSelectionSection: View {
     }
 }
 
-// MARK: - Sprache
-
-struct LanguageStep: View {
-
-    @Bindable var model: OnboardingViewModel
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.lg) {
-            OnboardingHeader(
-                kicker: model.stepKicker,
-                title: "In welcher Sprache?",
-                text: "Deutsch ist die Basissprache — die Begriffe der Kursstufe stehen so auch im Zeugnis."
-            )
-
-            VStack(spacing: 9) {
-                ForEach(AppSettings.Language.allCases) { language in
-                    OnboardingOptionCard(
-                        verbatimTitle: language.title,
-                        subtitle: language.subtitle,
-                        isSelected: model.language == language
-                    ) {
-                        model.language = language
-                    }
-                }
-            }
-            .staggeredAppearance(index: 3)
-        }
-    }
-}
-
 // MARK: - Fertig
 
 struct SummaryStep: View {
@@ -495,7 +465,6 @@ struct SummaryStep: View {
                     SummaryRow(label: "Pflicht-Basisfächer", value: Text(verbatim: model.summaryList(model.sortedRequiredBasicSubjects)))
                     SummaryRow(label: "Wahl-Basisfächer", value: Text(verbatim: model.summaryList(model.sortedElectiveBasicSubjects)))
                     SummaryRow(label: "Mündliche Prüfung", value: Text(verbatim: model.summaryList(model.sortedOralExamSubjects)))
-                    SummaryRow(label: "Sprache", value: Text(model.summaryLanguage))
                 }
             }
             .staggeredAppearance(index: 3)

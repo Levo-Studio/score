@@ -91,17 +91,6 @@ struct OnboardingOptionCard: View {
         self.init(title: Text(title), subtitle: subtitle, isSelected: isSelected, action: action)
     }
 
-    /// Für Titel, die nicht übersetzt werden dürfen — etwa Sprachnamen, die in
-    /// ihrer eigenen Sprache stehen bleiben.
-    init(
-        verbatimTitle: String,
-        subtitle: LocalizedStringKey,
-        isSelected: Bool,
-        action: @escaping () -> Void
-    ) {
-        self.init(title: Text(verbatim: verbatimTitle), subtitle: subtitle, isSelected: isSelected, action: action)
-    }
-
     private init(
         title: Text,
         subtitle: LocalizedStringKey,

@@ -259,8 +259,7 @@ struct ManualCloudSyncTests {
     func neverSyncedReadsHonestly() {
         let text = ManualCloudSync.lastSyncedText(
             date: nil,
-            isActive: true,
-            locale: Locale(identifier: "de_DE")
+            isActive: true
         )
 
         #expect(text == "Noch nie")
@@ -270,33 +269,25 @@ struct ManualCloudSyncTests {
     func inactiveSyncHidesTheDate() {
         let text = ManualCloudSync.lastSyncedText(
             date: Date(timeIntervalSince1970: 1_750_000_000),
-            isActive: false,
-            locale: Locale(identifier: "de_DE")
+            isActive: false
         )
 
         #expect(text == "Ausgesetzt")
     }
 
-    @Test("Die relative Angabe folgt der in Score gewählten Sprache")
-    func relativeTextFollowsTheAppLanguage() {
+    /// Ohne Angabe eines Gebietsschemas — so, wie die Einstellungen sie rufen.
+    @Test("Die relative Angabe steht ohne Zutun auf Deutsch")
+    func relativeTextIsGerman() {
         let reference = Date(timeIntervalSince1970: 1_800_000_000)
         let twoMinutesEarlier = reference.addingTimeInterval(-120)
 
-        let german = ManualCloudSync.lastSyncedText(
+        let text = ManualCloudSync.lastSyncedText(
             date: twoMinutesEarlier,
             isActive: true,
-            locale: Locale(identifier: "de_DE"),
-            reference: reference
-        )
-        let english = ManualCloudSync.lastSyncedText(
-            date: twoMinutesEarlier,
-            isActive: true,
-            locale: Locale(identifier: "en_US"),
             reference: reference
         )
 
-        #expect(german == "vor 2 Minuten")
-        #expect(english == "2 minutes ago")
+        #expect(text == "vor 2 Minuten")
     }
 
     // MARK: - Was der Nutzer zu lesen bekommt

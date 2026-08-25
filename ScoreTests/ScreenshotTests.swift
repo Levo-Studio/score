@@ -41,14 +41,12 @@ enum ScreenshotOutput {
 ///
 /// ```
 /// TEST_RUNNER_SCORE_SCREENSHOT_DIR=/pfad/zum/ordner \
-///   xcodebuild … -testLanguage de -testRegion DE test \
-///   -only-testing:ScoreTests/ScreenshotTests
+///   xcodebuild … test -only-testing:ScoreTests/ScreenshotTests
 /// ```
 ///
-/// `-testLanguage de` gehört dazu: Score löst freistehende Texte über
-/// `String.scoreLocalized(_:)` gegen die im Simulator eingestellte Sprache auf.
-/// Ohne die Angabe stünde in einer sonst deutschen Aufnahme „Exam" statt
-/// „Klassenarbeit".
+/// Eine Sprachangabe braucht der Lauf nicht: Score ist einsprachig deutsch und
+/// löst sowohl den String-Katalog als auch Zahlen und Daten gegen
+/// ``ScoreLocale/german`` auf, unabhängig von der Einstellung des Simulators.
 @Suite("Belegbilder", .enabled(if: ScreenshotOutput.directory != nil), .serialized)
 @MainActor
 struct ScreenshotTests {
@@ -1020,7 +1018,7 @@ struct ScreenshotTests {
                     context: context
                 ) {
                     // Nur das Objekt, nicht `scoreAppSettings()`: Farbschema
-                    // und Sprache setzt die Aufnahme selbst.
+                    // und Locale setzt die Aufnahme selbst.
                     SettingsView(syncStatus: state.status, sync: phone)
                         .environment(AppSettings.shared)
                 }
@@ -1288,15 +1286,10 @@ struct ScreenshotTests {
         let directory = try #require(ScreenshotOutput.directory)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
-        // Deutsch ist die Basissprache; ohne diese Angabe stünde die Oberfläche in
-        // der Sprache des Simulators. Die App setzt beides an ihrer Wurzel — hier
-        // gibt es die nicht, also wird es hier gesetzt.
-        AppSettings.shared.language = .german
-
         let root = UIHostingController(
             rootView: content()
                 .environment(\.colorScheme, scheme)
-                .environment(\.locale, AppSettings.shared.locale)
+                .environment(\.locale, ScoreLocale.german)
                 .environment(\.modelContext, context)
                 .modelContainer(context.container)
                 .frame(width: size.width, height: size.height)

@@ -29,9 +29,12 @@ import Foundation
 /// verschiebt sich dadurch nicht: bei 15 und 15 steht wieder 15.
 ///
 /// Ein nicht ganzzahliges Ergebnis wird kaufmännisch gerundet — ab der Dezimale 5
-/// aufwärts. Score rundet dabei den **vierfachen Wert je Fach** und nicht erst die
-/// Summe: die Verordnung spricht vom Ergebnis des einzelnen Prüfungsfachs, und
-/// nur so bleibt der Beitrag eines Fachs für sich genommen nachrechenbar.
+/// aufwärts. Gerundet wird das **Prüfungsergebnis selbst**, und erst die ganze
+/// Zahl geht vervierfacht in den Block ein. Die Verordnung kennt nur ganzzahlige
+/// Prüfungsergebnisse von 0 bis 15; der Faktor 4 kommt danach. Der Beitrag eines
+/// Fachs ist deshalb immer durch 4 teilbar. Wer stattdessen den vervierfachten
+/// Wert rundet, kommt bei schriftlich 10 und mündlich 11 auf 41 statt auf die
+/// amtlichen 40 — (20 + 11) ÷ 3 = 10,33 → 10 → 40.
 ///
 /// ## Noch nicht geprüft ist nicht null
 ///
@@ -123,9 +126,14 @@ enum BlockTwoCalculator {
             }
         }
 
-        /// Was dieses Fach zu Block II beiträgt: das Ergebnis mal vier, gerundet.
+        /// Was dieses Fach zu Block II beiträgt: das gerundete Ergebnis mal vier.
+        ///
+        /// Erst runden, dann vervierfachen — nicht umgekehrt. Das
+        /// Prüfungsergebnis eines Fachs ist amtlich eine ganze Zahl von 0 bis 15;
+        /// die vierfache Wertung setzt darauf auf. Aus schriftlich 10 und
+        /// mündlich 11 wird so (20 + 11) ÷ 3 = 10,33 → 10 → 40 und nicht 41.
         var points: Int? {
-            result.map { Int(($0 * Double(weight)).rounded()) }
+            result.map { Int($0.rounded()) * weight }
         }
     }
 

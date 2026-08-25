@@ -113,23 +113,47 @@ struct BlockTwoCalculatorTests {
 
     @Test("Ein nicht ganzzahliges Ergebnis wird kaufmännisch gerundet")
     func combinedResultsAreRoundedHalfUp() {
-        // (13 · 2 + 14) ÷ 3 = 13,333… → mal vier 53,33… → 53
+        // (13 · 2 + 14) ÷ 3 = 13,333… → 13 → mal vier 52
         let up = BlockTwoCalculator.Exam(
             id: "lf", role: .written, writtenPoints: 13, oralPoints: 14
         )
-        #expect(up.points == 53)
+        #expect(up.points == 52)
 
-        // (14 · 2 + 13) ÷ 3 = 13,666… → mal vier 54,66… → 55
+        // (14 · 2 + 13) ÷ 3 = 13,666… → 14 → mal vier 56
         let down = BlockTwoCalculator.Exam(
             id: "lf", role: .written, writtenPoints: 14, oralPoints: 13
         )
-        #expect(down.points == 55)
+        #expect(down.points == 56)
 
         // Bei 15 und 15 bleibt es bei 15 — die Obergrenze verschiebt sich nicht.
         let top = BlockTwoCalculator.Exam(
             id: "lf", role: .written, writtenPoints: 15, oralPoints: 15
         )
         #expect(top.points == 60)
+    }
+
+    @Test("Gerundet wird das Prüfungsergebnis, nicht sein vierfacher Wert")
+    func theResultIsRoundedBeforeItIsQuadrupled() {
+        // Schriftlich 10, mündlich 11: (20 + 11) ÷ 3 = 10,33… Amtlich steht damit
+        // das Prüfungsergebnis 10, und vierfach sind das 40 Punkte. Wer erst
+        // vervierfacht und dann rundet, landet bei 41 — einer Punktzahl, die in
+        // Block II gar nicht vorkommen kann.
+        let exam = BlockTwoCalculator.Exam(
+            id: "lf", role: .written, writtenPoints: 10, oralPoints: 11
+        )
+
+        #expect(exam.points == 40)
+
+        // Der Beitrag eines Fachs ist immer durch vier teilbar — über alle
+        // Kombinationen aus schriftlichem und mündlichem Ergebnis hinweg.
+        for written in 0...15 {
+            for oral in 0...15 {
+                let combined = BlockTwoCalculator.Exam(
+                    id: "lf", role: .written, writtenPoints: written, oralPoints: oral
+                )
+                #expect(try! #require(combined.points) % BlockTwoCalculator.weight == 0)
+            }
+        }
     }
 
     // MARK: - Was noch fehlt

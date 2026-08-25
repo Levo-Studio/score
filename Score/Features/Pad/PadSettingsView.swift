@@ -270,8 +270,7 @@ struct PadSettingsView: View {
     private var lastSyncedText: String {
         ManualCloudSync.lastSyncedText(
             date: sync.lastSyncedAt,
-            isActive: syncStatus.state.allowsSync,
-            locale: settings.locale
+            isActive: syncStatus.state.allowsSync
         )
     }
 

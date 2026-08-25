@@ -557,12 +557,14 @@ extension ManualCloudSync {
     ///   - isActive: Ob in dieser Sitzung überhaupt abgeglichen wird. Ist er
     ///     abgeschaltet oder kein Konto angemeldet, wird der alte Stand **nicht**
     ///     als aktueller ausgegeben — dann steht dort, dass gerade nichts läuft.
-    ///   - locale: Die in Score gewählte Sprache, nicht die des Geräts.
+    ///   - locale: Das Gebietsschema, in dem die relative Angabe formatiert
+    ///     wird. Die Vorgabe ist die feste deutsche Locale von Score; der
+    ///     Parameter bleibt, damit sich die Zeile ohne laufende App prüfen lässt.
     ///   - reference: Der Zeitpunkt, gegen den gerechnet wird.
     nonisolated static func lastSyncedText(
         date: Date?,
         isActive: Bool,
-        locale: Locale,
+        locale: Locale = ScoreLocale.german,
         reference: Date = .now
     ) -> String {
         guard isActive else {

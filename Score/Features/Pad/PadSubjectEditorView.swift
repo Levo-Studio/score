@@ -1,6 +1,27 @@
 import SwiftUI
 import SwiftData
 
+/// Ob im Fach-Editor gerade etwas Ungesichertes steht.
+///
+/// ## Warum eine Klasse und kein `Binding<Bool>`
+///
+/// Der Editor liegt im Detailbereich von ``PadShell``, und jede Routenänderung
+/// baut ihn ab — der Entwurf liegt in `@State` und ist damit weg. Auf dem iPhone
+/// steht der Editor in einem Sheet, das ausdrücklich „Abbrechen" verlangt; auf
+/// dem iPad genügte ein Tipp in der immer sichtbaren Sidebar, um eine halbe
+/// Bearbeitung kommentarlos zu verlieren. ``PadShell`` muss also **vor** dem
+/// Routenwechsel wissen, ob es etwas zu verlieren gibt.
+///
+/// Ein `Binding<Bool>` auf `@State` reichte dafür nicht: Der Editor setzt den
+/// Merker beim Sichern zurück und ändert unmittelbar danach die Route. Die
+/// Bindung der Hülle läse in derselben Runde noch den alten Wert und fragte nach
+/// Änderungen, die gerade gesichert wurden. Ein Referenztyp antwortet sofort.
+@Observable final class PadEditorDraftState {
+
+    /// Ob der Entwurf vom gespeicherten Stand abweicht.
+    var hasUnsavedChanges = false
+}
+
 /// Der Fach-Editor des iPad-Layouts.
 ///
 /// Kein Sheet, sondern ein Bildschirm: die Sidebar bleibt daneben stehen, man
@@ -12,6 +33,10 @@ struct PadSubjectEditorView: View {
     let target: SubjectEditorTarget
 
     @Binding var route: PadRoute
+
+    /// Der Merker, über den ``PadShell`` erfährt, dass hier etwas Ungesichertes
+    /// steht. Siehe ``PadEditorDraftState``.
+    let draftState: PadEditorDraftState
 
     @Environment(\.modelContext) private var modelContext
 
@@ -25,9 +50,10 @@ struct PadSubjectEditorView: View {
     /// nicht an einem `Bool`, damit er nicht ohne Name und Zahl erscheinen kann.
     @State private var pendingDeletion: SubjectDeletion.Request?
 
-    init(target: SubjectEditorTarget, route: Binding<PadRoute>) {
+    init(target: SubjectEditorTarget, route: Binding<PadRoute>, draftState: PadEditorDraftState) {
         self.target = target
         _route = route
+        self.draftState = draftState
         _draft = State(initialValue: SubjectDraft(subject: target.editedSubject))
     }
 
@@ -56,12 +82,44 @@ struct PadSubjectEditorView: View {
             .padding(.bottom, PadMetrics.contentPadding)
         }
         .scrollIndicators(.hidden)
+        // Der Merker läuft mit jeder Änderung mit, damit die Hülle im Moment des
+        // Routenwechsels schon weiss, ob sie fragen muss.
+        .onChange(of: hasUnsavedChanges, initial: true) { _, isDirty in
+            draftState.hasUnsavedChanges = isDirty
+        }
+        // Ist der Editor weg, gibt es nichts mehr zu verlieren. Ohne das bliebe
+        // ein gesetzter Merker stehen und liesse die Hülle beim nächsten Mal nach
+        // Änderungen fragen, die es gar nicht gibt.
+        .onDisappear { draftState.hasUnsavedChanges = false }
         // Dieselbe Frage wie beim Wisch in der Sidebar, aus derselben Fassung:
         // Zwei Wege zum selben Löschen dürfen nicht verschieden warnen.
         .subjectDeleteConfirmation($pendingDeletion, among: subjects) { _ in
-            // Das Fach ist weg — der Editor hat kein Ziel mehr.
+            // Das Fach ist weg — der Editor hat kein Ziel mehr, und sein Entwurf
+            // beschreibt nichts, was noch existiert.
+            draftState.hasUnsavedChanges = false
             route = .dashboard
         }
+    }
+
+    /// Ob der Entwurf vom gespeicherten Stand abweicht.
+    ///
+    /// Verglichen wird gegen einen frisch aus dem Fach gelesenen Entwurf und
+    /// nicht gegen eine gemerkte Kopie: So zählt auch eine Änderung, die der
+    /// Nutzer von Hand wieder zurückgenommen hat, zu Recht als „nichts offen".
+    /// Bei einem neuen Fach ist der Vergleichswert der leere Entwurf.
+    private var hasUnsavedChanges: Bool {
+        let saved = SubjectDraft(subject: target.editedSubject)
+        return draft.name != saved.name
+            || draft.abbreviation != saved.abbreviation
+            || draft.colorValue != saved.colorValue
+            || draft.kind != saved.kind
+            || draft.activeSemesters != saved.activeSemesters
+            || draft.writtenShare != saved.writtenShare
+            || draft.maximumContributedCourses != saved.maximumContributedCourses
+            || draft.isOralExamSubject != saved.isOralExamSubject
+            || draft.isDoubleWeighted != saved.isDoubleWeighted
+            || draft.writtenExamPoints != saved.writtenExamPoints
+            || draft.oralExamPoints != saved.oralExamPoints
     }
 
     // MARK: - Linke Spalte
@@ -297,6 +355,10 @@ struct PadSubjectEditorView: View {
             in: modelContext,
             existingSubjects: subjects
         )
+        // Erst der Merker, dann die Route: Der Routenwechsel läuft durch die
+        // Bindung der Hülle, und die fragt genau in diesem Moment, ob etwas
+        // Ungesichertes verloren ginge. Gesichert ist es hier gerade.
+        draftState.hasUnsavedChanges = false
         route = .subject(subject.identifier)
     }
 

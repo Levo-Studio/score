@@ -56,6 +56,16 @@ struct PadShell: View {
     /// Ob die Aufschlüsselung von Block I gerade über dem Inhalt liegt.
     @State private var isBreakdownPresented = false
 
+    /// Ob im Fach-Editor gerade etwas Ungesichertes steht.
+    @State private var editorDraft = PadEditorDraftState()
+
+    /// Das Ziel, das auf die Antwort auf „Änderungen verwerfen?" wartet.
+    ///
+    /// `nil` heisst „keine Frage offen". Die Route selbst bleibt bis zur Antwort
+    /// unverändert — der Editor darf nicht abgebaut werden, während noch zur
+    /// Debatte steht, ob sein Entwurf erhalten bleibt.
+    @State private var routeAwaitingDiscard: PadRoute?
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Die Wahl des Nutzers, solange er eine getroffen hat — je Ausrichtung eine.
@@ -154,6 +164,15 @@ struct PadShell: View {
         // Safe Area, und unten sowie rechts bleibt ein schwarzes Band stehen.
         .background(ScorePalette.background.ignoresSafeArea())
         .tint(ScorePalette.accent)
+        // „Weiter bearbeiten" trägt die Cancel-Rolle und ist damit die
+        // Voreinstellung: Wer den Dialog wegtippt oder Escape drückt, behält
+        // seine Arbeit.
+        .alert("Änderungen verwerfen?", isPresented: isConfirmingDiscard, presenting: routeAwaitingDiscard) { pending in
+            Button("Weiter bearbeiten", role: .cancel) {}
+            Button("Verwerfen", role: .destructive) { discard(to: pending) }
+        } message: { _ in
+            Text("Am Fach stehen ungesicherte Änderungen. Sie gehen verloren, wenn du jetzt woandershin wechselst.")
+        }
     }
 
     private var sidebar: some View {
@@ -173,6 +192,16 @@ struct PadShell: View {
             get: { route },
             set: { newRoute in
                 guard newRoute == .breakdown else {
+                    // Der Detailbereich hängt an der Route: Ein Wechsel baut den
+                    // Fach-Editor ab und nimmt seinen Entwurf mit. Steht dort
+                    // Ungesichertes, wird erst gefragt — ein Tipp in der immer
+                    // sichtbaren Sidebar darf keine halbe Bearbeitung
+                    // wegräumen. Auf dem iPhone verlangt das Sheet dafür
+                    // ausdrücklich „Abbrechen".
+                    if editorDraft.hasUnsavedChanges, newRoute != route {
+                        routeAwaitingDiscard = newRoute
+                        return
+                    }
                     commit(newRoute)
                     return
                 }
@@ -200,6 +229,21 @@ struct PadShell: View {
             // gewählt hat, will es sehen.
             if !isLandscapeLayout { portraitSidebarChoice = false }
         }
+    }
+
+    /// Ob die Frage nach dem Verwerfen gerade dasteht.
+    private var isConfirmingDiscard: Binding<Bool> {
+        Binding(
+            get: { routeAwaitingDiscard != nil },
+            // Wegtippen heisst „weiter bearbeiten": Die Route bleibt, wo sie ist.
+            set: { if !$0 { routeAwaitingDiscard = nil } }
+        )
+    }
+
+    private func discard(to pending: PadRoute) {
+        editorDraft.hasUnsavedChanges = false
+        routeAwaitingDiscard = nil
+        commit(pending)
     }
 
     private func setSidebar(visible: Bool) {
@@ -276,10 +320,10 @@ struct PadShell: View {
             // Navigationsleiste: die Kopfleiste des iPads nennt den Titel schon.
             OralExamSubjectSheet(showsNavigationBar: false)
         case .newSubject:
-            PadSubjectEditorView(target: .new, route: navigation)
+            PadSubjectEditorView(target: .new, route: navigation, draftState: editorDraft)
         case .editSubject:
             if let selectedSubject {
-                PadSubjectEditorView(target: .existing(selectedSubject), route: navigation)
+                PadSubjectEditorView(target: .existing(selectedSubject), route: navigation, draftState: editorDraft)
             } else {
                 missingSubject
             }

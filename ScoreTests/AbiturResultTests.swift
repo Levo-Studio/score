@@ -355,6 +355,46 @@ struct AbiturResultTests {
         #expect(result.projectedExamBlockPoints <= BlockTwoCalculator.maximumPoints)
     }
 
+    @Test("Auch ein aus wenigen Kursen gerechneter Kursblock ist eine Hochrechnung")
+    func aCourseBlockFromFewCoursesIsAProjection() {
+        // Fünf Kurse, jeder mit 15 Punkten, dazu alle fünf Prüfungen. Der
+        // Kursblock steht damit rechnerisch bei 600 von 600 — aus fünf von 40
+        // Kursen. Ohne diese Prüfung stünde „bestanden mit 900 Punkten" auf dem
+        // Bildschirm, für einen Jahrgang, von dem fast alles fehlt.
+        let subjects = (1...3).map {
+            subject("lf-\($0)", .leistungsfach, points: [15], writtenExamPoints: 15)
+        } + (1...2).map {
+            subject(
+                "mp-\($0)",
+                .wahlBasisfach,
+                points: [15],
+                isOralExam: true,
+                oralExamPoints: 15
+            )
+        }
+
+        let result = AbiturResult.calculate(for: subjects)
+
+        #expect(result.courseBlock.points == BlockOneCalculator.maximumPoints)
+        #expect(result.courseBlock.isProjection)
+        #expect(result.examBlock.isComplete)
+        #expect(result.totalPoints == 900)
+
+        // Der Prüfungsblock ist vollständig, der Kursblock ist es nicht — und
+        // damit ist die Gesamtpunktzahl eine Aussicht und kein Abschluss.
+        #expect(result.isProjection)
+        #expect(!result.isPassed)
+    }
+
+    @Test("Ein vollständiger Jahrgang ist keine Hochrechnung")
+    func aFullYearIsNotAProjection() {
+        let result = AbiturResult.calculate(for: Self.year)
+
+        #expect(result.courseBlock.effectiveWeightingCount == BlockOneCalculator.weightingCount)
+        #expect(!result.courseBlock.isProjection)
+        #expect(!result.isProjection)
+    }
+
     // MARK: - Der leere Zustand
 
     @Test("Das leere Ergebnis ist gültig und ohne Note")

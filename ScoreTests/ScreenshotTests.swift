@@ -463,7 +463,8 @@ struct ScreenshotTests {
             ) {
                 PadSubjectEditorView(
                     target: .existing(gemeinschaftskunde),
-                    route: .constant(.subject(gemeinschaftskunde.identifier))
+                    route: .constant(.subject(gemeinschaftskunde.identifier)),
+                    draftState: PadEditorDraftState()
                 )
                 .background(ScorePalette.background)
             }

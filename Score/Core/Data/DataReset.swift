@@ -16,7 +16,19 @@ enum DataReset {
     struct Summary: Equatable {
         var subjectCount: Int
         var gradeCount: Int
-        var hasProfile: Bool
+
+        /// Wie viele Profile verschwinden.
+        ///
+        /// Eine Zahl und kein `Bool`: ``deleteAll(in:defaults:)`` löscht **jedes**
+        /// `StudentProfile`, nicht nur das dieses Geräts. Wer zwei Profile
+        /// nebeneinander führt, räumte mit „Endgültig löschen" auch das zweite
+        /// weg — auf allen Geräten und ohne dass der Dialog es je erwähnt hätte,
+        /// weil er von „deinem Profil" sprach. Was der Dialog sagt, hängt jetzt
+        /// an dieser Zahl.
+        var profileCount: Int
+
+        /// Ob überhaupt ein Profil dabei ist.
+        var hasProfile: Bool { profileCount > 0 }
 
         /// Ob überhaupt etwas zu löschen ist.
         var isEmpty: Bool {
@@ -29,7 +41,7 @@ enum DataReset {
         Summary(
             subjectCount: try context.fetchCount(FetchDescriptor<Subject>()),
             gradeCount: try context.fetchCount(FetchDescriptor<GradeEntry>()),
-            hasProfile: try context.fetchCount(FetchDescriptor<StudentProfile>()) > 0
+            profileCount: try context.fetchCount(FetchDescriptor<StudentProfile>())
         )
     }
 

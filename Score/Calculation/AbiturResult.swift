@@ -99,9 +99,19 @@ enum AbiturResult {
             AbiturGradeTable.grade(forTotalPoints: totalPoints)
         }
 
-        /// Ob noch Prüfungsergebnisse fehlen — dann ist alles eine Hochrechnung.
+        /// Ob das Ergebnis eine Hochrechnung ist — weil Prüfungen **oder** Kurse
+        /// fehlen.
+        ///
+        /// Der Prüfungsblock ist der offensichtliche Fall. Der Kursblock ist der
+        /// stillere: sein Schnitt wird durch die tatsächliche Zahl der Wertungen
+        /// geteilt und auf 40 Kurse gestreckt, damit ein fehlender Kurs nicht als
+        /// null zählt. Wer drei Kurse mit je 15 Punkten erfasst hat, steht damit
+        /// bei 600 von 600 — und mit vollständigen Prüfungen stünde ohne diese
+        /// Prüfung „bestanden, 900 Punkte" auf dem Bildschirm, für einen Jahrgang,
+        /// von dem 37 Kurse fehlen. Eine Zahl, die aus wenigen Kursen
+        /// fortgeschrieben ist, ist eine Aussicht wie jede andere.
         var isProjection: Bool {
-            !examBlock.isComplete
+            !examBlock.isComplete || courseBlock.isProjection
         }
 
         /// Die Bedingungen, die gerade nicht erfüllt sind.

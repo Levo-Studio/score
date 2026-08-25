@@ -32,13 +32,23 @@ struct SubjectListView: View {
     /// Das Fach, dessen Löschung nach einem Wisch zur Bestätigung ansteht.
     @State private var pendingDeletion: SubjectDeletion.Request?
 
-    /// Das geöffnete Fach.
+    /// Das geöffnete Fach — als Kennung, nicht als Objekt.
     ///
     /// Die Zeile trägt keinen `NavigationLink` mehr, seit sie sich wischen
     /// lässt: ein Knopf im Inhalt löste am Ende jedes Wisches zusätzlich aus,
     /// weil der Finger die Zeile dabei nie verlässt. Die Navigation hängt
     /// deshalb an diesem Zustand, gesetzt vom Tipp der Hülle.
-    @State private var openedSubject: Subject?
+    ///
+    /// Hier steht die `UUID` und nicht das `Subject`, und das ist keine
+    /// Geschmacksfrage: „Jetzt synchronisieren" und der Abgleich beim Öffnen
+    /// tauschen den `ModelContainer` aus (siehe ``ScoreDataStore/reopen(make:)``).
+    /// Ein Modellobjekt in `@State` überlebte diesen Tausch als Objekt des
+    /// abgeräumten Kontexts, während `@Environment(\.modelContext)` längst der
+    /// neue wäre — jedes Schreiben aus der offenen Fachansicht liefe dann über
+    /// die Kontextgrenze. Eine Kennung ist ein blosser Wert und übersteht den
+    /// Tausch; das Fach dazu holt ``OpenedSubjectScreen`` frisch aus der
+    /// Abfrage. Die Navigation des iPads führt aus demselben Grund `UUID`s.
+    @State private var openedSubjectIdentifier: UUID?
 
     private var summaries: [SubjectSummary] {
         SubjectOverview.summaries(of: subjects, semesterIndex: semesterIndex)
@@ -65,12 +75,15 @@ struct SubjectListView: View {
             // einer Systemliste.
             .closesOpenSwipeRow()
             .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(item: $openedSubject) { subject in
-                SubjectDetailView(subject: subject)
+            .navigationDestination(item: $openedSubjectIdentifier) { identifier in
+                OpenedSubjectScreen(identifier: identifier)
             }
         }
         .sheet(item: $editorTarget) { target in
+            // Wie beim Eingabe-Blatt: ungesicherter Entwurf offen heisst, dass
+            // der automatische Abgleich den Container nicht tauscht.
             SubjectEditorView(target: target)
+                .holdsUnsavedInput()
         }
         .sheet(isPresented: $isOralExamPickerPresented) {
             OralExamSubjectSheet()
@@ -213,7 +226,7 @@ struct SubjectListView: View {
                 SwipeToDelete(
                     accessibilityLabel: Text("\(summary.subject.name) löschen"),
                     onDelete: { pendingDeletion = SubjectDeletion.request(for: summary.subject) },
-                    onTap: { openedSubject = summary.subject }
+                    onTap: { openedSubjectIdentifier = summary.subject.identifier }
                 ) {
                     SubjectListRow(summary: summary)
                 }
@@ -222,6 +235,152 @@ struct SubjectListView: View {
                 .rowAppearance(index: index, base: 0.06)
             }
         }
+    }
+}
+
+// MARK: - Das aufgeschlagene Fach
+
+/// Die Fachansicht, aufgeschlagen über die Kennung statt über das Objekt.
+///
+/// Die Liste reicht nur eine `UUID` weiter; das Fach dazu entsteht hier, aus der
+/// Abfrage des **gerade geltenden** Kontexts. Das ist der Grund für diese Hülle:
+/// Wird der Speicher neu geöffnet, läuft die Abfrage im neuen Container erneut,
+/// und die Fachansicht bekommt das Fach des neuen Kontexts gereicht — genauso wie
+/// ``PadShell`` es auf dem iPad seit jeher tut.
+private struct OpenedSubjectScreen: View {
+
+    let identifier: UUID
+
+    @Environment(\.dismiss) private var dismiss
+
+    @Query(sort: \Subject.sortIndex) private var subjects: [Subject]
+
+    /// Der Speicher, nur wegen einer einzigen Frage: Tauscht er gerade?
+    ///
+    /// Ohne diese Auskunft müsste die Hülle raten, ob ein leeres Abfrageergebnis
+    /// eine Lücke oder eine Löschung ist — und genau dieses Raten war der Fehler
+    /// des zweiten Anlaufs.
+    @State private var store = ScoreDataStore.shared
+
+    /// Trägt das zuletzt gefundene Fach über die Lücke des Tauschs.
+    @State private var bridge = OpenedSubjectBridge<Subject>()
+
+    private var subject: Subject? {
+        subjects.first { $0.identifier == identifier }
+    }
+
+    var body: some View {
+        // Ein einziger `if` über den ganzen Rumpf: Zwei getrennte Zweige mit je
+        // einer ``SubjectDetailView`` wären für SwiftUI zwei verschiedene
+        // Ansichten, und der Wechsel zwischen ihnen kostete den Zustand, den die
+        // Fachansicht hält.
+        let displayed = bridge.subject(whenQueryReturned: subject, isReopening: store.isReopening)
+
+        return Group {
+            if let displayed {
+                SubjectDetailView(subject: displayed)
+            } else {
+                missingSubject
+            }
+        }
+        // Kein Timer und keine Karenz: Sobald die Brücke aufgibt, ist das Fach
+        // wirklich weg, und die Hülle geht zurück zur Liste, statt auf einer
+        // Ansicht zu stehen, deren Gegenstand es nicht mehr gibt.
+        //
+        // `initial: true` und nicht bloss auf den Wechsel: Ist die Abfrage schon
+        // im **ersten** Rumpfdurchlauf leer — das Fach war beim Öffnen der Route
+        // bereits gelöscht, und der Speicher tauscht nicht —, gibt es nie einen
+        // Wechsel, auf den zu reagieren wäre. Der Ersatztext trägt aber
+        // `.toolbar(.hidden, for: .navigationBar)`; ohne diesen ersten Durchlauf
+        // stünde also eine Sackgasse ohne sichtbaren Rückweg da. Genau das deckte
+        // der zuvor entfernte `.task` ab, und mit ihm ging es verloren.
+        .onChange(of: displayed == nil, initial: true) { _, isMissing in
+            if isMissing { dismiss() }
+        }
+    }
+
+    /// Was in der Zwischenzeit dasteht: derselbe Satz wie auf dem iPad.
+    private var missingSubject: some View {
+        Text("Dieses Fach gibt es nicht mehr.")
+            .font(.bodyText)
+            .foregroundStyle(ScorePalette.inkSecondary)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(ScorePalette.background)
+            .toolbar(.hidden, for: .navigationBar)
+    }
+}
+
+// MARK: - Brücke über die Lücke des Containertauschs
+
+/// Hält das geöffnete Fach fest, solange der Speicher seinen Container tauscht.
+///
+/// ## Wozu sie noch da ist — und wozu nicht mehr
+///
+/// Die Fachansicht hängt an einer `@Query`. Tauscht der Speicher den Container
+/// (``ScoreDataStore/reopen(make:)``), antwortet die Abfrage für einen Durchlauf
+/// mit nichts — nicht weil das Fach fehlte, sondern weil der Kontext gewechselt
+/// wird. Ohne Brücke spränge die Ansicht in diesem Durchlauf auf „Dieses Fach
+/// gibt es nicht mehr." und ginge zurück zur Liste: ein Aufblitzen und ein
+/// ungefragter Rücksprung mitten im Abgleich.
+///
+/// Sie ist damit noch eine Massnahme **gegen das Flackern** — und ausdrücklich
+/// keine Datenrettung mehr. Ungesicherte Eingaben überleben den Tausch nicht
+/// dadurch, dass jemand ein altes Objekt festhält, sondern dadurch, dass in
+/// aller Regel gar nicht getauscht wird, solange ein Blatt offen steht (siehe
+/// ``UnsavedInputRegistry``) — und dort, wo der Aufschub nach seiner Frist doch
+/// verfällt, dadurch, dass das Blatt seine Leistung in jedem Durchlauf im
+/// geltenden Kontext auflöst (siehe ``GradeEntryEdit``).
+///
+/// Was diese Brücke selbst weiterreicht, ist deshalb nur zum **Anzeigen**
+/// gedacht und gilt nur für die Durchläufe des Tauschs. Sie ist der eine
+/// bewusst stehengelassene Rest der Kontextgrenze; die Abwägung dazu steht in
+/// ``UnsavedInputRegistry``.
+///
+/// ## Die Regel
+///
+/// - Die Abfrage findet etwas: Das gilt, und es wird gemerkt. Das Objekt des
+///   **neuen** Kontexts löst das gemerkte damit sofort ab.
+/// - Sie findet nichts, **und der Speicher tauscht**: Das Gemerkte trägt über
+///   die Lücke.
+/// - Sie findet nichts, und der Speicher tauscht **nicht**: Das Fach ist
+///   wirklich gelöscht — sofort umschalten, kein Fenster, kein Timer.
+///
+/// ## Warum eine Klasse
+///
+/// Sie wird im Rumpf gelesen und dabei fortgeschrieben. Als `struct` in `@State`
+/// hiesse das, Zustand während des Aufbaus zu ändern; als beobachtete Klasse
+/// löste jede Fortschreibung einen weiteren Durchlauf aus. Eine schlichte Klasse
+/// ist genau das Richtige: ein Merkzettel, den SwiftUI nicht beobachtet.
+///
+/// Vermerk für den Nächsten: Hier stand einmal eine Karenz von 900 ms und ein
+/// `.task(id: persistentModelID)`. Beides war Raterei — die Kennung bezeichnet
+/// die Datei und nicht den Container, und die Frist zeigte ein gelöschtes Fach
+/// eine knappe Sekunde lang als bedienbare Ansicht. Wer wieder eine Stoppuhr
+/// braucht, hat vermutlich die falsche Frage gestellt.
+final class OpenedSubjectBridge<Subject: AnyObject> {
+
+    private var lastFound: Subject?
+
+    /// Was dieser Durchlauf zeigt — und was er sich für den nächsten merkt.
+    ///
+    /// - Parameters:
+    ///   - found: Was die Abfrage gerade liefert.
+    ///   - isReopening: Ob der Speicher gerade tauscht.
+    func subject(whenQueryReturned found: Subject?, isReopening: Bool) -> Subject? {
+        if let found {
+            lastFound = found
+            return found
+        }
+
+        guard isReopening else {
+            // Wirklich gelöscht — auf diesem oder einem anderen Gerät. Das
+            // gemerkte Objekt ist ab jetzt niemandem mehr zu zeigen: Es zu lesen
+            // hiesse, an einem gelöschten Modell zu lesen.
+            lastFound = nil
+            return nil
+        }
+
+        return lastFound
     }
 }
 

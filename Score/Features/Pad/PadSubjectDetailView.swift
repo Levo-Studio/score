@@ -25,6 +25,14 @@ struct PadSubjectDetailView: View {
     /// Die zuletzt gelöschte Leistung, solange sie sich zurückholen lässt.
     @State private var pendingUndo: PendingGradeEntryUndo?
 
+    /// Steht, wenn eine Eingabe nicht gespeichert werden konnte, weil ihr Fach
+    /// oder die bearbeitete Leistung inzwischen weg ist.
+    ///
+    /// Ohne diese Meldung ging das Blatt einfach zu und die Punkte waren weg —
+    /// oder, schlimmer, der Streifen meldete eine Leistung, die es gar nicht
+    /// gab.
+    @State private var lostInput: LostInput?
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -51,16 +59,34 @@ struct PadSubjectDetailView: View {
         .overlay(alignment: .bottom) {
             undoOverlay
         }
+        .alert(
+            "Leistung nicht gespeichert",
+            isPresented: lostInputAlert,
+            presenting: lostInput
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { lost in
+            lost.message
+        }
         // Mittig und nicht von unten: siehe ``ScoreOverlaySheet``.
         .scoreOverlaySheet(item: closingEntrySheet) { edit in
-            GradeEntrySheet(
-                entry: edit.entry,
-                subject: subject,
-                semesterEntries: currentSemester?.entries ?? [],
-                onDelete: { discard(edit) },
-                onConfirm: { confirm(edit) },
-                isNew: edit.isNew
-            )
+            entrySheet(edit)
+        }
+        // Der Griff auf das Schliessen oben hängt an der Bindung — er läuft also
+        // nur, wenn jemand das Blatt schliesst. Verschwindet stattdessen die
+        // ganze Ansicht, ohne dass jemand es zumacht, käme er nie dran: Auf dem
+        // iPad reicht dafür ein Zug am Fenstertrenner in die schmale Spalte,
+        // denn dort übernimmt das kompakte Gerüst und baut diese Ansicht ab. Die
+        // gerade eingetippten Punkte wären weg, ohne Streifen zum Zurückholen.
+        // Hier ist die letzte Gelegenheit, sie zu behalten.
+        .onDisappear {
+            guard let edit = editedEntry else { return }
+            // Erst leeren: Der Entwurf ist danach entweder angelegt oder
+            // verfallen, und ein zweiter Durchlauf legte ihn ein zweites Mal an.
+            editedEntry = nil
+            // Ohne Streifen: Er hinge an dieser Ansicht, die gerade abgebaut
+            // wird, und erschiene nie. Siehe ``keepIfEdited(_:offersUndo:)``.
+            keepIfEdited(edit, offersUndo: false)
         }
     }
 
@@ -558,17 +584,77 @@ struct PadSubjectDetailView: View {
         }
     }
 
+    /// Der Inhalt des Eingabe-Blattes — derselbe Weg wie auf dem iPhone.
+    ///
+    /// Die Leistung wird in **jedem** Durchlauf frisch im geltenden Kontext
+    /// gesucht, statt sie beim Öffnen festzuhalten. Das Blatt kann lange stehen,
+    /// und ein Containertausch dazwischen macht jedes festgehaltene Objekt
+    /// ungültig — getippter Titel und getippte Punkte landeten dann in einer
+    /// Leiche und wären stumm verloren. Die Begründung im Ganzen steht in
+    /// ``GradeEntryEdit``.
+    @ViewBuilder
+    private func entrySheet(_ edit: GradeEntryEdit) -> some View {
+        if let entry = edit.resolve(in: modelContext) {
+            GradeEntrySheet(
+                entry: entry,
+                subject: subject,
+                semesterEntries: currentSemester?.entries ?? [],
+                onDelete: { discard(edit) },
+                onConfirm: { confirm(edit) },
+                isNew: edit.isNew
+            )
+        } else {
+            // Die Leistung wurde gelöscht, während das Blatt offen stand. Ohne
+            // Objekt gibt es nichts mehr zu bearbeiten; das Blatt geht zu und
+            // sagt, warum. Der Griff hängt an `onAppear` und nicht am Rumpf:
+            // Zustand mitten im Aufbau zu ändern, ist genau die Sorte
+            // Nebenwirkung, die SwiftUI nicht schuldet.
+            Color.clear
+                .frame(width: 0, height: 0)
+                .onAppear { lose(edit) }
+        }
+    }
+
+    /// Das Blatt zumachen und den Verlust melden.
+    ///
+    /// Ausdrücklich **nicht** über ``closingEntrySheet``: Dort hinge
+    /// ``keepIfEdited(_:offersUndo:)`` daran, und das hätte hier nichts zu tun —
+    /// verloren ist eine bestehende Leistung, kein Entwurf.
+    private func lose(_ edit: GradeEntryEdit) {
+        editedEntry = nil
+        lostInput = edit.loss
+    }
+
+    /// Die Bindung des Hinweises. „OK" räumt ihn ab.
+    private var lostInputAlert: Binding<Bool> {
+        Binding(
+            get: { lostInput != nil },
+            set: { if !$0 { lostInput = nil } }
+        )
+    }
+
     /// Die Schaltfläche unten im Blatt: ein Entwurf wird verworfen, eine
     /// bestehende Leistung gelöscht.
     ///
     /// Ein Entwurf steht in keinem Kontext — es gibt nichts zu löschen und
     /// nichts zurückzunehmen, also auch keinen Streifen.
+    ///
+    /// Gelöscht wird die Leistung des **geltenden** Kontexts, nicht die, mit der
+    /// das Blatt aufging: `delete` nimmt eine Abschrift und ruft
+    /// `modelContext.delete` — beides auf einem Objekt aus einem abgeräumten
+    /// Kontext wäre ein Griff über die Kontextgrenze.
     private func discard(_ edit: GradeEntryEdit) {
-        if edit.isNew {
+        guard !edit.isNew else {
             editedEntry = nil
-        } else {
-            delete(edit.entry)
+            return
         }
+
+        guard let entry = edit.resolve(in: modelContext) else {
+            lose(edit)
+            return
+        }
+
+        delete(entry)
     }
 
     /// Das Blatt, mit einem Griff auf sein Schliessen — derselbe Weg wie auf dem
@@ -586,17 +672,41 @@ struct PadSubjectDetailView: View {
     /// „Fertig": der Entwurf wird angelegt, ohne Streifen — die Bestätigung war
     /// ausdrücklich.
     private func confirm(_ edit: GradeEntryEdit) {
-        edit.commit(to: modelContext)
+        let committed = edit.commit(to: modelContext)
         editedEntry = nil
+
+        // Ein Fehlschlag heisst: Fach oder Leistung wurden inzwischen gelöscht,
+        // meist vom zweiten Gerät. Ohne diese Meldung ginge das Blatt einfach zu
+        // und die eingetippten Punkte wären ohne ein Wort weg.
+        if committed == nil { lostInput = edit.loss }
     }
 
     /// Ein geschlossenes Blatt mit tatsächlicher Eingabe legt die Leistung an und
     /// bietet sie zur Rücknahme an; ein unangetasteter Entwurf verfällt.
-    private func keepIfEdited(_ edit: GradeEntryEdit) {
+    ///
+    /// - Parameter offersUndo: Ob der Streifen angeboten wird. Aus `onDisappear`
+    ///   heraus nicht: ``pendingUndo`` ist ein `@State` dieser Ansicht, und wer
+    ///   ihn setzt, während die Ansicht abgebaut wird, setzt ihn ins Leere — der
+    ///   Streifen erschien nie, die Leistung stand aber trotzdem in den Daten.
+    ///   Ein Versprechen, das nicht eingelöst wird, ist schlechter als keines:
+    ///   Behalten wird die Leistung weiterhin, zurücknehmen lässt sie sich mit
+    ///   einem Wisch.
+    private func keepIfEdited(_ edit: GradeEntryEdit, offersUndo: Bool = true) {
         guard edit.isNew, edit.hasInput else { return }
 
-        edit.commit(to: modelContext)
-        showUndo(.creation(of: edit.entry))
+        guard let entry = edit.commit(to: modelContext) else {
+            // Kein Streifen: Er meldete „Leistung angelegt" für eine Leistung,
+            // die es nicht gibt, und sein Rückgängig löschte ein Objekt, das nie
+            // eingefügt wurde. Gemeldet wird der Verlust trotzdem — aber nur,
+            // wenn diese Ansicht noch steht, siehe `offersUndo`.
+            if offersUndo { lostInput = edit.loss }
+            return
+        }
+
+        guard offersUndo else { return }
+        // Die Leistung aus `commit`, nicht die aus dem Entwurf: Angeboten wird
+        // genau das, was gerade eingefügt wurde.
+        showUndo(.creation(of: entry))
     }
 
     /// Löscht eine Leistung sofort und bietet sie zur Rücknahme an — derselbe

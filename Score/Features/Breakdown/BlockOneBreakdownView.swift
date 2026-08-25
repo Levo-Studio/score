@@ -909,7 +909,11 @@ struct BlockOneBreakdownView: View {
         case .beyondCourseCap:
             return Text("Es zählen nur \(BlockOneCalculator.totalCourseCount) Kurse. Dieser Kurs wäre geschützt gewesen — aber du hast mehr nicht abwählbare Kurse belegt, als hineinpassen.")
         case .automatic:
-            return Text("Automatisch geklammert: Es zählen nur \(BlockOneCalculator.totalCourseCount) Kurse, und dieser gehört zu den schwächsten. Ab \(breakdown.optionalThreshold ?? 0) Punkten bleibt ein Wahl-Basisfach-Kurs drin.")
+            // Nicht „ab X Punkten bleibt ein Kurs drin": bei Gleichstand
+            // entscheidet zusätzlich Fach und Halbjahr, also kann ein geklammerter
+            // Kurs genau bei X stehen. Der Satz nennt deshalb nur, wie schwach der
+            // schwächste eingebrachte Kurs ist.
+            return Text("Automatisch geklammert: Es zählen nur \(BlockOneCalculator.totalCourseCount) Kurse, und dieser gehört zu den schwächsten. Der schwächste Wahl-Basisfach-Kurs, der es noch hineingeschafft hat, steht bei \(breakdown.optionalThreshold ?? 0) Punkten — bei Gleichstand entscheidet Fach und Halbjahr.")
         }
     }
 
@@ -1224,7 +1228,11 @@ private struct BreakdownEdgeCases: View {
                             .foregroundStyle(ScorePalette.accent)
                             .accessibilityHidden(true)
                     }
-                    .frame(minHeight: ScoreMetrics.minimumTapTarget - ScoreMetrics.Spacing.sm)
+                    // Volle 44 Punkte, nicht die um einen Abstand gekürzte Höhe:
+                    // `contentShape` schneidet die Trefferfläche genau auf dieses
+                    // Mass zu, aus 44 wurden so 32 Punkte. Das ist unter Apples
+                    // Mindestmass, und überall sonst steht der Wert ungekürzt.
+                    .frame(minHeight: ScoreMetrics.minimumTapTarget)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)

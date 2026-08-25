@@ -51,6 +51,27 @@ final class ProfileHandoffModel {
     /// darf die App nicht stillschweigend ins Dashboard springen.
     private var didCompleteOnboardingHere = false
 
+    /// Ob der Nutzer gerade **ausdrücklich** ein weiteres Profil anlegt.
+    ///
+    /// Das zweite Profil, das dabei entsteht, ist kein unerwartetes Duplikat,
+    /// sondern genau das, wonach in den Einstellungen gefragt wurde. Ohne diesen
+    /// Merker endete der Weg im Lösch-Bildschirm: Sobald die zweite Einrichtung
+    /// durch war, änderte sich die Zahl der fertigen Profile,
+    /// ``duplicateProfilesDidAppear()`` überschrieb jeden Zustand, und der
+    /// Nutzer stand vor „Dich gibt es zweimal" samt „Endgültig löschen" — für
+    /// ein Profil, das er sich eine Minute vorher selbst angelegt hatte.
+    ///
+    /// Er deckt genau **ein** Profil ab: das hier gerade angelegte. Deshalb
+    /// greift er erst zusammen mit ``didCompleteOnboardingHere``, also ab dem
+    /// Moment, in dem die eigene Einrichtung durch ist und ihr Profil gleich
+    /// gespeichert wird. Solange die zweite Einrichtung noch läuft, ist ein
+    /// auftauchendes Profil nicht das eigene — es kann nur aus iCloud stammen,
+    /// und dann ist die Frage genauso berechtigt wie sonst.
+    ///
+    /// Er gilt nur bis in die App hinein: Danach ist der Satz gesehen, und ein
+    /// **drittes** Profil aus iCloud ist wieder eine echte Frage.
+    private var isAddingProfileHere = false
+
     /// Wie lange auf ein Profil aus iCloud gewartet wird.
     ///
     /// Der Deckel ist wichtiger als die genaue Zahl: iCloud kann langsam sein
@@ -96,7 +117,7 @@ final class ProfileHandoffModel {
             if didCompleteOnboardingHere {
                 // Das Profil ist gerade hier entstanden. Danach noch einmal zu
                 // fragen, ob es übernommen werden soll, wäre absurd.
-                stage = .ready
+                enterReady()
             } else {
                 // Es kam aus iCloud, während der Nutzer noch einrichtete. Ihn
                 // jetzt kommentarlos ins Dashboard zu schieben wäre genau der
@@ -121,13 +142,22 @@ final class ProfileHandoffModel {
     /// sich einmal für „beide behalten" entschieden hat, soll nicht bei jedem
     /// Start erneut gefragt werden.
     func duplicateProfilesDidAppear() {
+        // Ein ausdrücklich angelegtes zweites Profil ist kein Duplikat, nach dem
+        // zu fragen wäre — aber nur dieses eine. Der Merker allein verschluckte
+        // jedes Profil, das während der zweiten Einrichtung eintraf, also auch
+        // ein echtes drittes von einem anderen Gerät. Zusammen mit dem
+        // abgeschlossenen Onboarding trifft er dagegen genau den einen
+        // Durchlauf, um den es geht: Die Einrichtung ist durch, ihr Profil wird
+        // gerade gespeichert, und die gewachsene Zahl der Profile ist die Folge
+        // davon. Siehe ``isAddingProfileHere``.
+        guard !(isAddingProfileHere && didCompleteOnboardingHere) else { return }
         guard stage != .choosingProfile else { return }
         stage = .choosingProfile
     }
 
     /// Der Nutzer hat entschieden — eines behalten oder beide.
     func profileChoiceDidResolve() {
-        stage = .ready
+        resumeInterruptedSetupOrEnterReady()
     }
 
     /// Der Nutzer legt aus den Einstellungen heraus ein **weiteres** Profil an.
@@ -138,6 +168,7 @@ final class ProfileHandoffModel {
     /// wieder eine Einrichtung offen.
     func registerAdditionalProfile() {
         didCompleteOnboardingHere = false
+        isAddingProfileHere = true
         stage = .onboarding
     }
 
@@ -149,12 +180,16 @@ final class ProfileHandoffModel {
 
     /// Der Nutzer macht mit dem gefundenen Profil weiter.
     func acceptHandoff() {
-        stage = .ready
+        resumeInterruptedSetupOrEnterReady()
     }
 
     /// Der Nutzer richtet sich neu ein und verwirft das gefundene Profil.
     func startFreshSetup() {
         didCompleteOnboardingHere = false
+        // Kein ausdrückliches Zweitprofil: Hier wird das gefundene verworfen und
+        // eines an seine Stelle gesetzt. Taucht dabei ein Zwilling auf, ist das
+        // sehr wohl eine Frage.
+        isAddingProfileHere = false
         stage = .onboarding
     }
 
@@ -164,5 +199,52 @@ final class ProfileHandoffModel {
     /// anschliessende Auftauchen nicht als Fund aus iCloud missverstanden wird.
     func onboardingDidComplete() {
         didCompleteOnboardingHere = true
+    }
+
+    /// Der eine Weg in die geöffnete App.
+    ///
+    /// Hier und nicht an jeder Aufrufstelle einzeln, damit der Merker für das
+    /// ausdrücklich angelegte Profil zuverlässig genau dann fällt, wenn er seine
+    /// Aufgabe erfüllt hat: Das neue Profil steht, die App ist offen, und ab
+    /// jetzt ist jedes weitere Profil wieder eines, nach dem zu fragen ist.
+    private func enterReady() {
+        isAddingProfileHere = false
+        stage = .ready
+    }
+
+    /// Der Ausgang aus einer Rückfrage, die eine laufende Einrichtung
+    /// unterbrochen hat.
+    ///
+    /// Die Rückfragen — ``duplicateProfilesDidAppear()`` und
+    /// ``profileDidAppear()`` — schlagen mit Absicht auch ein laufendes
+    /// Onboarding: Ein Profil, das aus iCloud hereinkommt, während der Nutzer
+    /// noch tippt, ist eine echte Frage. Beantwortet ist damit aber nur die
+    /// Frage nach dem fremden Profil, nicht der Auftrag, der zur Einrichtung
+    /// geführt hat.
+    ///
+    /// Wer in den Einstellungen „Neues Profil" gewählt hat, hat eine Handlung
+    /// ausdrücklich angefordert. Ginge es von der Rückfrage direkt in die App,
+    /// stünde der Nutzer im Dashboard, das zweite Profil gäbe es nie, und
+    /// gesagt hätte es ihm niemand — eine angeforderte Handlung, die still
+    /// verfällt. Deshalb geht es zurück in die Einrichtung statt in die App.
+    ///
+    /// Die Alternative wäre gewesen, die Rückfrage während der zweiten
+    /// Einrichtung ganz zu unterdrücken. Das nähme dem Nutzer aber die
+    /// Entscheidung über ein echtes fremdes Profil ab — genau der Fehler, den
+    /// die Verschärfung des Merkers gerade behoben hat. Beides ist zu haben:
+    /// erst fragen, dann weiterarbeiten.
+    ///
+    /// Der Merker bleibt dabei stehen, denn der Auftrag ist weiter offen. Er
+    /// fällt erst in ``enterReady()``, also wenn die Einrichtung wirklich durch
+    /// ist.
+    private func resumeInterruptedSetupOrEnterReady() {
+        // Nur solange die zweite Einrichtung noch aussteht. Ist sie durch
+        // (``didCompleteOnboardingHere``), ist der Auftrag erfüllt und der Weg
+        // führt wie bisher in die App.
+        guard isAddingProfileHere, !didCompleteOnboardingHere else {
+            enterReady()
+            return
+        }
+        stage = .onboarding
     }
 }

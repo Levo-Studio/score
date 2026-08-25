@@ -120,6 +120,44 @@ struct OnboardingCustomSubjectTests {
         #expect(model.step == .requiredBasicSubjects)
     }
 
+    // MARK: - Ein schon gewählter Name im Tag
+
+    /// Ein eingetippter Name zählt nur, wenn er auch etwas hinzufügt.
+    ///
+    /// Der Fehler dahinter: ``OnboardingViewModel/canAdvance`` zählte jeden
+    /// getippten Namen als weitere Wahl mit, ``commitCustomSubject()`` übernahm
+    /// ihn aber nicht, wenn er bereits gewählt war. Wer zwei Chips wählte und
+    /// dann den Namen eines davon eintippte, ging mit zwei Leistungsfächern
+    /// weiter — der Schritt verlangt drei.
+    @Test("Ein schon gewähltes Fach im Tag macht den Schritt nicht vollständig")
+    func aDraftNamingAnAlreadyChosenSubjectDoesNotCount() {
+        let model = OnboardingViewModel()
+        model.step = .advancedSubjects
+        model.advancedSubjects = ["Deutsch", "Mathematik"]
+
+        model.customSubjectDraft = "Deutsch"
+        #expect(!model.canAdvance)
+
+        // Auch mit Rand: verglichen wird der beschnittene Name.
+        model.customSubjectDraft = "  Deutsch  "
+        #expect(!model.canAdvance)
+
+        model.customSubjectDraft = "Astronomie"
+        #expect(model.canAdvance)
+    }
+
+    @Test("Ein Weitergehen mit doppeltem Namen bleibt bei zwei Fächern")
+    func advancingWithADuplicateNameKeepsTwoSubjects() {
+        let model = OnboardingViewModel()
+        model.step = .advancedSubjects
+        model.advancedSubjects = ["Deutsch", "Mathematik"]
+        model.customSubjectDraft = "Deutsch"
+
+        model.advance()
+
+        #expect(model.advancedSubjects == ["Deutsch", "Mathematik"])
+    }
+
     // MARK: - Bis in die Datenbank
 
     @Test("Das eigene Fach landet als Datensatz in der Datenbank")

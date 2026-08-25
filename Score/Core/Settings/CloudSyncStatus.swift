@@ -56,6 +56,16 @@ final class CloudSyncStatus {
         case off
     }
 
+    /// Die Instanz, an der die Oberfläche hängt.
+    ///
+    /// Geteilt und nicht je Ansicht — aus demselben Grund wie bei
+    /// ``ManualCloudSync/shared``, und aus einem zweiten: Als Vorgabe im `init`
+    /// einer Ansicht entstünde bei **jeder** Neuerzeugung der Ansichtsstruktur
+    /// eine weitere Instanz samt Anmeldung beim NotificationCenter, die `@State`
+    /// sofort wieder verwirft. Eine Ansichtsstruktur wird bei jedem Umlauf neu
+    /// gebaut; die Vorgabe muss deshalb etwas sein, das man nur nachschlägt.
+    static let shared = CloudSyncStatus()
+
     private(set) var state: State = .unknown
 
     private let containerIdentifier: String
@@ -83,15 +93,31 @@ final class CloudSyncStatus {
     /// hiesse, dort einen Container aufzubauen.
     private let storageFallback: @MainActor () -> ScoreDataStore.StorageFallback
 
+    /// Wie lange „Wird synchronisiert …" ohne ein weiteres Lebenszeichen stehen
+    /// bleibt.
+    ///
+    /// Grosszügig wie die Zeitgrenze in ``ManualCloudSync``: Ein Erstabgleich
+    /// über ein langsames Netz braucht seine Zeit.
+    static let defaultRunningGrace: Duration = .seconds(30)
+
+    /// Dieselbe Frist für diese Instanz. Tests setzen sie kurz.
+    let runningGrace: Duration
+
+    /// Läuft, solange ``State/syncing`` steht — und beendet ihn, wenn nichts
+    /// mehr nachkommt. Siehe ``show(_:)``.
+    private var runningGraceTask: Task<Void, Never>?
+
     init(
         containerIdentifier: String = "iCloud.apps.levo-studio.Score",
         state: State = .unknown,
         probesAccount: Bool = true,
+        runningGrace: Duration = defaultRunningGrace,
         storageFallback: @escaping @MainActor () -> ScoreDataStore.StorageFallback = { ScoreDataStore.shared.fallback }
     ) {
         self.containerIdentifier = containerIdentifier
         self.state = state
         self.probesAccount = probesAccount
+        self.runningGrace = runningGrace
         self.storageFallback = storageFallback
         observeMirroringEvents()
     }
@@ -113,7 +139,10 @@ final class CloudSyncStatus {
         // würde er die einzige Meldung verdecken, die der Nutzer sofort
         // braucht.
         switch storageFallback() {
-        case .inMemory:
+        // Beides heisst für den Nutzer dasselbe: Was er jetzt einträgt, ist beim
+        // Schliessen weg. Bei ``ScoreDataStore/StorageFallback/noModel`` kommt er
+        // hier ohnehin nicht vorbei — dann steht ausser der Warnung nichts.
+        case .inMemory, .noModel:
             state = .noStorage
             return
         case .localOnly:
@@ -207,13 +236,16 @@ final class CloudSyncStatus {
     }
 
     /// Ein Mirroring-Ereignis, reduziert auf sendbare Werte.
-    private struct Outcome: Sendable {
+    ///
+    /// Nicht privat, weil Tests diese Ereignisse einspeisen, ohne CloudKit zu
+    /// betreiben — dieselbe Aufteilung wie bei ``ManualCloudSync/Event``.
+    struct Outcome: Sendable {
         var isFinished: Bool
         var endDate: Date?
         var reason: CloudSyncFailure.Reason?
     }
 
-    private func apply(_ outcome: Outcome) {
+    func apply(_ outcome: Outcome) {
         switch outcome.reason {
         case .none:
             break
@@ -221,7 +253,7 @@ final class CloudSyncStatus {
         // Der Setup-Lauf meldet den Kontofehler zuerst; ihn als Sync-Fehler zu
         // zeigen wäre irreführend, wenn schlicht niemand angemeldet ist.
         case .noAccount:
-            state = .noAccount
+            show(.noAccount)
             return
 
         // Was CloudKit selbst wiederholt, ist keine Störung. Die Spiegelung
@@ -236,14 +268,14 @@ final class CloudSyncStatus {
         // wenn er von Hand nachfragt.
         case .retryable:
             if case .synced = state { return }
-            state = .syncing
+            show(.syncing)
             return
 
         // Volle iCloud ist das Einzige neben dem fehlenden Konto, was der
         // Nutzer selbst beheben kann. Also ist es auch das Einzige, was hier
         // als Störung erscheint.
         case .quota:
-            state = .failed(CloudSyncFailure.Reason.quota.message)
+            show(.failed(CloudSyncFailure.Reason.quota.message))
             return
 
         // Alles Übrige bleibt stumm — und das ist eine bewusste Entscheidung.
@@ -261,14 +293,42 @@ final class CloudSyncStatus {
         // alt, wenn nichts mehr durchkommt. Das ist die ehrlichere Auskunft.
         case .unknown:
             if case .synced = state { return }
-            state = .syncing
+            show(.syncing)
             return
         }
 
         if let endDate = outcome.endDate, outcome.isFinished {
-            state = .synced(endDate)
+            show(.synced(endDate))
         } else {
-            state = .syncing
+            show(.syncing)
+        }
+    }
+
+    /// Setzt den Zustand — und sorgt dafür, dass „läuft gerade" wieder endet.
+    ///
+    /// ``State/syncing`` ist der einzige Zustand ohne eigenen Abschluss: Er
+    /// steht, bis ein weiteres Ereignis ihn ablöst. Bei einem Fehler, den
+    /// ``CloudSyncFailure`` nicht übersetzt — etwa 134410 oder 134421 —, kommt
+    /// dieses Ereignis nie, und die Einstellungen meldeten bis zum App-Ende
+    /// „Wird synchronisiert …", obwohl längst nichts mehr lief.
+    ///
+    /// Die Regel „nur warnen, was der Nutzer beheben kann" bleibt: Nach der
+    /// Frist steht dort nicht etwa eine Störung, sondern wieder ``State/ready``.
+    /// Das behauptet nichts, was nicht stimmt — ob der Abgleich wirklich
+    /// durchkommt, sagt „Zuletzt synchronisiert" darunter, und dieser
+    /// Zeitstempel wird alt. Ein Zustand, der nie endet, wäre die schlechtere
+    /// Auskunft: Er sieht nach Arbeit aus, wo keine mehr ist.
+    private func show(_ newState: State) {
+        runningGraceTask?.cancel()
+        runningGraceTask = nil
+        state = newState
+
+        guard newState == .syncing else { return }
+
+        runningGraceTask = Task { [weak self] in
+            try? await Task.sleep(for: self?.runningGrace ?? Self.defaultRunningGrace)
+            guard !Task.isCancelled, let self, self.state == .syncing else { return }
+            self.state = .ready
         }
     }
 

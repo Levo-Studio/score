@@ -37,11 +37,19 @@ struct OnboardingView: View {
                 .ignoresSafeArea()
 
             // Quer auf dem iPad wird die Breite geteilt. Die Ausrichtung wird
-            // genauso gemessen wie in `PadShell` — über die angebotene Grösse,
-            // nicht über `UIDevice`: ein iPad im Splitscreen ist `.compact` und
-            // bekommt dann zu Recht wieder die einspaltige Fassung.
+            // genauso gemessen wie in `PadShell` — über die angebotene Grösse.
+            //
+            // Ob das zweispaltige Layout überhaupt zur Wahl steht, entscheidet
+            // aber ``ScoreDeviceIdiom`` und nicht die Size Class allein: Ein
+            // iPhone Pro Max ist im Querformat ebenfalls `.regular` und breiter
+            // als hoch. Es sprang deshalb beim Drehen mitten in der Einrichtung
+            // auf die iPad-Fassung, deren linke Vorschauspalte fest 45 % der
+            // Breite nimmt — und verlor dabei den Tastaturfokus des Namensfeldes.
+            // Ein iPad im schmalen Split View ist umgekehrt `.compact` und
+            // bekommt weiterhin zu Recht die einspaltige Fassung.
             GeometryReader { proxy in
-                if horizontalSizeClass == .regular, proxy.size.width >= proxy.size.height {
+                if ScoreDeviceIdiom.prefersPadLayout(horizontalSizeClass: horizontalSizeClass),
+                   proxy.size.width >= proxy.size.height {
                     OnboardingPadLayout(
                         model: model,
                         primaryTitle: primaryTitle,

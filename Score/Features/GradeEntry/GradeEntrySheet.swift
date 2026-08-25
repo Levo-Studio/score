@@ -21,6 +21,15 @@ import SwiftData
 /// ``ScoreOverlaySheet``, für iPhone und iPad derselbe.
 struct GradeEntrySheet: View {
 
+    /// Die Leistung, auf die geschrieben wird.
+    ///
+    /// Kommt von aussen und wird hier bewusst **nicht** über die Zeit gehalten:
+    /// `@Bindable` ist kein Speicher, sondern nur die Hülle um den gerade
+    /// gereichten Verweis, und dieser Verweis muss aus dem geltenden Kontext
+    /// stammen. Der Aufrufer löst ihn deshalb in jedem Durchlauf neu auf — siehe
+    /// ``GradeEntryEdit/resolve(in:)``. Käme er stattdessen einmal beim Öffnen
+    /// des Blattes herein, schriebe jeder Tastendruck nach einem Containertausch
+    /// in ein Objekt eines abgeräumten Kontexts, und zwar stumm.
     @Bindable var entry: GradeEntry
 
     let subject: Subject
@@ -52,6 +61,12 @@ struct GradeEntrySheet: View {
 
     @Environment(\.dismiss) private var dismiss
 
+    /// Ob Anteil und Automatik in diesem Blatt schon angefasst wurden.
+    ///
+    /// Zusammen mit ``isNew`` entscheidet das, ob ein Arten-Chip die Anteile
+    /// noch überschreiben darf — siehe ``shareIsUserChoice``.
+    @State private var shareWasTouched = false
+
     var body: some View {
         // Der Inhalt baut sich gestaffelt auf, nachdem das Blatt aufgegangen ist —
         // der Vorlauf entspricht der Dauer von `scRise`.
@@ -79,6 +94,14 @@ struct GradeEntrySheet: View {
         .padding(.horizontal, 24)
         .padding(.top, 22)
         .padding(.bottom, 24)
+        // Solange dieses Blatt steht, tauscht der automatische Abgleich den
+        // Speicher nicht. Es hält ungesicherte Eingaben — bei einem Entwurf sogar
+        // eine Leistung, die es noch gar nicht gibt —, und ein Containertausch
+        // machte den Kontext darunter ungültig. Die Anmeldung sitzt hier am Blatt
+        // selbst und nicht bei den beiden Aufrufern, damit iPhone und iPad sich
+        // nicht auseinanderentwickeln können. Warum die Wurzel hier liegt und
+        // nicht in der Fachansicht, steht in ``UnsavedInputRegistry``.
+        .holdsUnsavedInput()
     }
 
     // MARK: - Kopf
@@ -115,9 +138,19 @@ struct GradeEntrySheet: View {
     /// Die Art setzt die Voreinstellungen neu — sie ist die Entscheidung, aus der
     /// alles andere folgt. Eine Klassenarbeit ist immer schriftlich; Anteil und
     /// Automatik kommen aus der Art und bleiben danach frei änderbar.
+    ///
+    /// **Nur solange am Anteil noch nichts entschieden ist.** Vorher schrieb der
+    /// Chip die Vorgaben immer, auch über eine bestehende Leistung mit von Hand
+    /// gesetzten 40 %: Ein Fehlgriff auf „Test" stellte den Anteil zurück,
+    /// sofort gespeichert und ohne Rückgängig, und der Kursschnitt sprang mit.
+    /// Eine ausdrückliche Wahl darf ein Nebeneffekt nicht stillschweigend
+    /// zurücknehmen.
     private func apply(_ category: GradeCategory) {
         entry.category = category
         if category == .exam { entry.kind = .written }
+
+        guard !shareIsUserChoice else { return }
+
         entry.usesAutomaticShare = category.usesAutomaticShareByDefault
         if category.usesAutomaticShareByDefault {
             entry.share = 100
@@ -125,6 +158,14 @@ struct GradeEntrySheet: View {
             entry.share = category.defaultShare
         }
     }
+
+    /// Ob der Anteil bereits eine Entscheidung des Nutzers ist.
+    ///
+    /// Bei einer bestehenden Leistung von Anfang an: Sie steht so gespeichert,
+    /// weil jemand sie so gesetzt hat. Bei einem Entwurf erst, sobald Schalter
+    /// oder Schieber angefasst wurden — bis dahin ist der Anteil nur die Vorgabe
+    /// der Art und darf mit ihr wechseln.
+    private var shareIsUserChoice: Bool { !isNew || shareWasTouched }
 
     private var kindChips: some View {
         HStack(spacing: 6) {
@@ -167,9 +208,26 @@ struct GradeEntrySheet: View {
                     .frame(maxWidth: 230, alignment: .leading)
             }
             Spacer(minLength: ScoreMetrics.Spacing.xs)
-            ScoreSwitch(isOn: $entry.usesAutomaticShare)
+            ScoreSwitch(isOn: touchedShareBinding(\.usesAutomaticShare))
         }
         .padding(.top, 18)
+    }
+
+    /// Schreibt wie eine gewöhnliche Bindung ans Modell und merkt sich dabei,
+    /// dass der Anteil jetzt eine Wahl des Nutzers ist.
+    ///
+    /// Der Vermerk hängt an der Bindung und nicht an einem `onChange`: So kann
+    /// er nicht auslösen, wenn ``apply(_:)`` selbst die Vorgaben setzt.
+    private func touchedShareBinding<Value>(
+        _ keyPath: ReferenceWritableKeyPath<GradeEntry, Value>
+    ) -> Binding<Value> {
+        Binding(
+            get: { entry[keyPath: keyPath] },
+            set: { newValue in
+                shareWasTouched = true
+                entry[keyPath: keyPath] = newValue
+            }
+        )
     }
 
     private var manualShare: some View {
@@ -185,7 +243,7 @@ struct GradeEntrySheet: View {
                     .foregroundStyle(ScorePalette.accent)
                     .animatedValue(entry.share)
             }
-            WeightSlider(writtenShare: $entry.share, range: 5...100, step: 5)
+            WeightSlider(writtenShare: touchedShareBinding(\.share), range: 5...100, step: 5)
         }
         .padding(.top, 14)
     }

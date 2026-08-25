@@ -21,6 +21,31 @@ import SwiftData
 @Model
 final class GradeEntry {
 
+    /// Eine stabile Kennung, die über Geräte und Sicherungen hinweg gleich bleibt.
+    ///
+    /// ## Warum eine Leistung eine eigene Kennung braucht
+    ///
+    /// Sie war lange das einzige Modell ohne eine, und das Blatt einer
+    /// bestehenden Leistung behalf sich mit einem zusammengesetzten Schlüssel aus
+    /// Halbjahr und Anlagezeitpunkt (``PendingEntry``). Der ist nach einem Import
+    /// nicht eindeutig: Der Export schreibt `createdAt` als ISO-8601-Wert, also
+    /// auf ganze Sekunden gekürzt, der Import trägt genau diesen Wert wieder ein,
+    /// und der Dublettenabgleich vergleicht Titel, Punkte, Art und Kategorie.
+    /// Wer eine Sicherung ergänzend einliest, danach den Titel ändert und
+    /// dieselbe Sicherung noch einmal einliest, hat zwei Zeilen im selben
+    /// Halbjahr mit identischem `createdAt` — und ab da schrieb, löschte und
+    /// nahm die Oberfläche stumm die falsche zurück.
+    ///
+    /// Die `persistentModelID` von SwiftData taugt dafür nicht: Sie gilt für
+    /// einen Speicher und ist auf einem zweiten Gerät eine andere. Deshalb
+    /// dasselbe Muster wie bei ``Subject/identifier`` — eine eigene `UUID`, die
+    /// mitgespiegelt und mitexportiert wird.
+    ///
+    /// > Wichtig: Der Vorgabewert ist für CloudKit nicht schmückendes Beiwerk.
+    /// > Ein Feld ohne Vorgabe ist im gespiegelten Schema nicht zulässig, und die
+    /// > Spiegelung scheitert beim Aufbau des Containers.
+    @Attribute(.allowsCloudEncryption) var identifier: UUID = UUID()
+
     /// Der Titel der Leistung, etwa „Klassenarbeit 2".
     @Attribute(.allowsCloudEncryption) var title: String = ""
 
@@ -57,8 +82,14 @@ final class GradeEntry {
         category: GradeCategory,
         share: Int,
         usesAutomaticShare: Bool,
-        createdAt: Date = .now
+        createdAt: Date = .now,
+        // Eine frische Kennung ist der Normalfall. Angegeben wird sie nur dort,
+        // wo dieselbe Leistung wiederentsteht statt neu anzufangen: beim
+        // Zurückholen einer gelöschten Leistung und beim Einlesen einer
+        // Sicherung, die die Kennung mitbringt.
+        identifier: UUID = UUID()
     ) {
+        self.identifier = identifier
         self.title = title
         self.points = Self.clamp(points)
         self.kindRawValue = kind.rawValue

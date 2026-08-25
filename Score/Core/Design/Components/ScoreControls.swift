@@ -72,6 +72,10 @@ struct ScoreChip: View {
         }
         .buttonStyle(.plain)
         .scoreAnimation(ScoreMotion.selection, value: isSelected)
+        // Der Chip kennt seinen Zustand selbst, also gehört das Merkmal hierher
+        // und nicht an jede der vielen Aufrufstellen. Gewählt heisst sonst nur
+        // „petrol statt hell" — eine rein sichtbare Aussage.
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
@@ -288,6 +292,10 @@ struct SemesterPicker: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                // Das gewählte Halbjahr ist nur eingefärbt. Ohne Merkmal klingen
+                // alle vier Segmente gleich, und man müsste raten, welches gerade
+                // angezeigt wird.
+                .accessibilityAddTraits(selection == index ? .isSelected : [])
             }
         }
         .padding(5)

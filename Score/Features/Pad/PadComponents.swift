@@ -103,6 +103,9 @@ struct PadSemesterSegments: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                // Wie beim `SemesterPicker` des iPhones: Die Auswahl steht allein
+                // in der Farbe und muss für VoiceOver ausdrücklich benannt werden.
+                .accessibilityAddTraits(selection == index ? .isSelected : [])
             }
         }
         .padding(ScoreMetrics.Spacing.xxs)

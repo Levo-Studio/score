@@ -113,23 +113,163 @@ struct BlockTwoCalculatorTests {
 
     @Test("Ein nicht ganzzahliges Ergebnis wird kaufmännisch gerundet")
     func combinedResultsAreRoundedHalfUp() {
-        // (13 · 2 + 14) ÷ 3 = 13,333… → mal vier 53,33… → 53
+        // (13 · 2 + 14) ÷ 3 = 13,333… → 13 → mal vier 52
         let up = BlockTwoCalculator.Exam(
             id: "lf", role: .written, writtenPoints: 13, oralPoints: 14
         )
-        #expect(up.points == 53)
+        #expect(up.points == 52)
 
-        // (14 · 2 + 13) ÷ 3 = 13,666… → mal vier 54,66… → 55
+        // (14 · 2 + 13) ÷ 3 = 13,666… → 14 → mal vier 56
         let down = BlockTwoCalculator.Exam(
             id: "lf", role: .written, writtenPoints: 14, oralPoints: 13
         )
-        #expect(down.points == 55)
+        #expect(down.points == 56)
 
         // Bei 15 und 15 bleibt es bei 15 — die Obergrenze verschiebt sich nicht.
         let top = BlockTwoCalculator.Exam(
             id: "lf", role: .written, writtenPoints: 15, oralPoints: 15
         )
         #expect(top.points == 60)
+    }
+
+    @Test("Gerundet wird das Prüfungsergebnis, nicht sein vierfacher Wert")
+    func theResultIsRoundedBeforeItIsQuadrupled() {
+        // Schriftlich 10, mündlich 11: (20 + 11) ÷ 3 = 10,33… Amtlich steht damit
+        // das Prüfungsergebnis 10, und vierfach sind das 40 Punkte. Wer erst
+        // vervierfacht und dann rundet, landet bei 41 — einer Punktzahl, die in
+        // Block II gar nicht vorkommen kann.
+        let exam = BlockTwoCalculator.Exam(
+            id: "lf", role: .written, writtenPoints: 10, oralPoints: 11
+        )
+
+        #expect(exam.points == 40)
+
+        // Der Beitrag eines Fachs ist immer durch vier teilbar — über alle
+        // Kombinationen aus schriftlichem und mündlichem Ergebnis hinweg.
+        for written in 0...15 {
+            for oral in 0...15 {
+                let combined = BlockTwoCalculator.Exam(
+                    id: "lf", role: .written, writtenPoints: written, oralPoints: oral
+                )
+                #expect(try! #require(combined.points) % BlockTwoCalculator.weight == 0)
+            }
+        }
+    }
+
+    @Test("Mehr als fünf Prüfungen sprengen den Block nicht")
+    func moreThanFiveExamsStayWithinTheBlock() {
+        // Vier Leistungsfächer neben zwei mündlichen Prüfungsfächern: amtlich
+        // unmöglich, im Datenbestand nach einem Import oder Sync trotzdem denkbar.
+        let subjects = (1...4).map {
+            subject("lf-\($0)", .leistungsfach, allPoints: 15, writtenExamPoints: 15)
+        } + (1...2).map {
+            subject("mp-\($0)", .wahlBasisfach, allPoints: 15, isOralExam: true, oralExamPoints: 15)
+        }
+
+        let outcome = BlockTwoCalculator.calculate(for: subjects)
+
+        // Sechs Prüfungen à 60 wären 360 — den Block gibt es nur bis 300.
+        #expect(outcome.points == BlockTwoCalculator.maximumPoints)
+        #expect(outcome.expectedExamCount == 5)
+        #expect(outcome.recordedExamCount == 5)
+        #expect(outcome.isComplete)
+        #expect(outcome.missingExamCount == 0)
+    }
+
+    @Test("Ohne gewählte mündliche Prüfungsfächer bleiben es fünf Prüfungen")
+    func unchosenOralExamSubjectsAreStillProjected() {
+        // Drei Leistungsfächer, aber noch kein mündliches Prüfungsfach gewählt —
+        // der Normalfall in Kursstufe 1 und im grössten Teil von Kursstufe 2.
+        let subjects = (1...3).map {
+            subject("lf-\($0)", .leistungsfach, allPoints: 10, writtenExamPoints: 12)
+        }
+
+        let outcome = BlockTwoCalculator.calculate(for: subjects)
+
+        // Score kennt drei Prüfungen; geprüft wird trotzdem fünfmal.
+        #expect(outcome.expectedExamCount == 3)
+        #expect(outcome.recordedExamCount == 3)
+        #expect(outcome.missingExamCount == 2)
+        #expect(outcome.points == 144)
+        // 144 + 2 · 48 = 240. Würden nur die drei bekannten Prüfungen
+        // fortgeschrieben, bliebe der Block bei 144, die Gesamtpunktzahl käme nie
+        // über 780 und die Note fiele um rund eine ganze Stufe.
+        #expect(outcome.projectedPoints(assuming: 12) == 240)
+        // Vollständig ist der Block trotzdem nicht: es fehlt die Fächerwahl.
+        #expect(!outcome.isComplete)
+    }
+
+    @Test("Eine sechste Prüfung ohne Ergebnis macht den Block nicht vollständig")
+    func aSixthExamWithoutAResultLeavesTheBlockIncomplete() {
+        // Vier Leistungsfächer neben zwei mündlichen Prüfungsfächern, und eines
+        // der vier ist noch nicht geschrieben: fünf Ergebnisse bei sechs
+        // Prüfungen. Der Deckel auf fünf darf die offene Prüfung nicht verdecken.
+        let subjects = (1...3).map {
+            subject("lf-\($0)", .leistungsfach, allPoints: 15, writtenExamPoints: 15)
+        } + [subject("lf-4", .leistungsfach, allPoints: 15)] + (1...2).map {
+            subject("mp-\($0)", .wahlBasisfach, allPoints: 15, isOralExam: true, oralExamPoints: 15)
+        }
+
+        let outcome = BlockTwoCalculator.calculate(for: subjects)
+
+        #expect(outcome.exams.count == 6)
+        #expect(outcome.recordedExamCount == 5)
+        #expect(outcome.expectedExamCount == 5)
+        #expect(!outcome.isComplete)
+    }
+
+    /// Der Deckel darf die offene Prüfung auch in der Hochrechnung nicht
+    /// verschlucken.
+    @Test("Die offene sechste Prüfung wird fortgeschrieben und nicht als null gezählt")
+    func theSixthOpenExamIsProjectedAndNotCountedAsZero() {
+        // Wieder sechs Prüfungen mit fünf Ergebnissen, diesmal auf 6 Punkten:
+        // erfasst sind 5 · 24 = 120 Punkte.
+        let subjects = (1...3).map {
+            subject("lf-\($0)", .leistungsfach, allPoints: 6, writtenExamPoints: 6)
+        } + [subject("lf-4", .leistungsfach, allPoints: 6)] + (1...2).map {
+            subject("mp-\($0)", .wahlBasisfach, allPoints: 6, isOralExam: true, oralExamPoints: 6)
+        }
+
+        let outcome = BlockTwoCalculator.calculate(for: subjects)
+
+        #expect(outcome.points == 120)
+        // Eine Prüfung steht offen. Stünde hier 0, wäre sie weder erfasst noch
+        // fehlend und ginge in der Hochrechnung als null Punkte durch.
+        #expect(outcome.missingExamCount == 1)
+        #expect(!outcome.isComplete)
+        // 120 + 24 = 144 statt 120: Was fehlt, wird auf dem gezeigten Niveau
+        // fortgeschrieben. Bei 120 Punkten meldete `failedConditions` zudem einen
+        // gerissenen Prüfungsblock, den es nicht gibt.
+        #expect(outcome.projectedPoints(assuming: 6) == 144)
+    }
+
+    /// Die beiden Zahlen dürfen sich nie widersprechen — sonst fällt eine
+    /// Prüfung zwischen ihnen hindurch.
+    @Test("Vollständig heisst genau: keine Prüfung fehlt mehr")
+    func completenessAndMissingCountAlwaysAgree() {
+        let cases: [[SubjectInput]] = [
+            Self.year(),
+            Self.year(written: [12, nil, nil], oral: [nil, nil]),
+            Self.year(written: [12, 10, 8], oral: [15, 5]),
+            (1...3).map { subject("lf-\($0)", .leistungsfach, allPoints: 10, writtenExamPoints: 10) },
+            (1...3).map {
+                subject("lf-\($0)", .leistungsfach, allPoints: 15, writtenExamPoints: 15)
+            } + [subject("lf-4", .leistungsfach, allPoints: 15)] + (1...2).map {
+                subject("mp-\($0)", .wahlBasisfach, allPoints: 15, isOralExam: true, oralExamPoints: 15)
+            },
+            (1...4).map {
+                subject("lf-\($0)", .leistungsfach, allPoints: 15, writtenExamPoints: 15)
+            } + (1...2).map {
+                subject("mp-\($0)", .wahlBasisfach, allPoints: 15, isOralExam: true, oralExamPoints: 15)
+            }
+        ]
+
+        for subjects in cases {
+            let outcome = BlockTwoCalculator.calculate(for: subjects)
+            #expect(outcome.isComplete == (outcome.missingExamCount == 0))
+            // Und über die amtlichen 300 Punkte hebt die Hochrechnung nie hinaus.
+            #expect(outcome.projectedPoints(assuming: 15) <= BlockTwoCalculator.maximumPoints)
+        }
     }
 
     // MARK: - Was noch fehlt

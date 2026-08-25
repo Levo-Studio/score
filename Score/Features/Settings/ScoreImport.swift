@@ -13,7 +13,10 @@ import SwiftData
 /// Geprüft wird dabei mehr als „lässt sich als JSON lesen": jeder Fachtyp, jede
 /// Notenart und jedes Halbjahr muss ein Wert sein, den Score kennt. Ein `kind`
 /// aus einer anderen App würde sonst still zu „Wahl-Basisfach", und der Nutzer
-/// hätte eine Wiederherstellung, die anders aussieht als sein Export.
+/// hätte eine Wiederherstellung, die anders aussieht als sein Export. Geprüft
+/// werden ebenso die Zahlen, die in eine Rechnung gehen: Prozentanteile und
+/// Kursgrenze — ein Wert ausserhalb seiner Spanne verzerrt jedes Ergebnis des
+/// Fachs, und über die Oberfläche kommt der Nutzer nicht wieder an ihn heran.
 ///
 /// ## Zusammenführen oder ersetzen
 ///
@@ -21,7 +24,7 @@ import SwiftData
 /// Hürde. Sonst wählt der Nutzer:
 ///
 /// - **Zusammenführen** ergänzt. Fächer werden über den Namen zugeordnet, und
-///   was schon steht, bleibt stehen. Derselbe Import zweimal hintereinander
+///   was schon steht, bleibt stehen — das Profil eingeschlossen. Derselbe Import zweimal hintereinander
 ///   ändert beim zweiten Mal nichts mehr. Zugeordnet wird dabei nur gegen den
 ///   Bestand, wie er **vor** dem Import war — was in der Datei zweimal steht,
 ///   entsteht zweimal.
@@ -84,6 +87,24 @@ enum ScoreImport {
         return export
     }
 
+    /// Die gültige Spanne eines Prozentanteils.
+    ///
+    /// Sie gilt für die Gewichtung schriftlich zu mündlich am Fach ebenso wie
+    /// für den festen Anteil einer einzelnen Leistung — beide sind Prozentwerte,
+    /// und beide gehen über ``WeightSlider`` nie über diese Grenzen hinaus.
+    ///
+    /// ## Warum das geprüft werden muss
+    ///
+    /// Ein `writtenShare` von 900 aus einer fremden oder von Hand geänderten
+    /// Datei liess ``SubjectMath/result(for:)`` mit `(schriftlich · 900 +
+    /// mündlich · (−800)) / 100` rechnen. Jedes Halbjahresergebnis des Fachs war
+    /// danach falsch und stand am oberen oder unteren Anschlag — und rückgängig
+    /// machen liess sich das über die Oberfläche nicht, weil der Regler den Wert
+    /// gar nicht darstellen kann und ihn beim ersten Anfassen still auf etwas
+    /// anderes zieht. Dieselbe Rechnung trifft der feste Anteil einer Leistung
+    /// über ``SubjectMath/effectiveShares(for:)``.
+    private static let shareRange = 0...100
+
     /// Prüft alles, was Score aus der Datei auflösen muss.
     private static func validate(_ export: ScoreExport) throws {
         if let profile = export.profile, ClassLevel(rawValue: profile.classLevel) == nil {
@@ -93,7 +114,12 @@ enum ScoreImport {
         for subject in export.subjects {
             guard SubjectKind(rawValue: subject.kind) != nil,
                   !subject.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-                  subject.activeSemesters.allSatisfy(Semester.allIndices.contains)
+                  subject.activeSemesters.allSatisfy(Semester.allIndices.contains),
+                  shareRange.contains(subject.writtenShare),
+                  // Eine Kursgrenze von null oder weniger ist keine Grenze,
+                  // sondern eine Angabe, die niemand gemeint haben kann. „Alle
+                  // Halbjahre" heisst `nil` und nicht 0.
+                  subject.maximumContributedCourses.map({ $0 >= 1 }) ?? true
             else { throw Failure.unreadable }
 
             for semester in subject.semesters {
@@ -102,7 +128,8 @@ enum ScoreImport {
                 for entry in semester.entries {
                     guard GradeKind(rawValue: entry.kind) != nil,
                           GradeCategory(rawValue: entry.category) != nil,
-                          GradeEntry.pointsRange.contains(entry.points)
+                          GradeEntry.pointsRange.contains(entry.points),
+                          shareRange.contains(entry.share)
                     else { throw Failure.unreadable }
                 }
             }
@@ -120,8 +147,18 @@ enum ScoreImport {
         var subjectCount: Int
         var gradeCount: Int
 
+        /// Ob ein Profil dazugehört.
+        ///
+        /// Zählt genau wie bei ``DataReset/Summary`` zu ``isEmpty``, und aus
+        /// demselben Grund: Ohne diese Angabe hiess „nichts da" nur „keine
+        /// Fächer". Ein Nutzer mit Profil, aber ohne Fächer — der Zustand direkt
+        /// nach dem Onboarding, wenn kein Fach gewählt wurde — bekam für eine
+        /// fremde Datei weder Blatt noch Warnung: Der Direktweg lief los und
+        /// schrieb fremde Profildaten in sein Profil.
+        var hasProfile: Bool = false
+
         /// Ob überhaupt etwas da ist.
-        var isEmpty: Bool { subjectCount == 0 && gradeCount == 0 }
+        var isEmpty: Bool { subjectCount == 0 && gradeCount == 0 && !hasProfile }
     }
 
     /// Was in der Datei steht.
@@ -130,7 +167,8 @@ enum ScoreImport {
             subjectCount: export.subjects.count,
             gradeCount: export.subjects.reduce(0) { total, subject in
                 total + subject.semesters.reduce(0) { $0 + $1.entries.count }
-            }
+            },
+            hasProfile: export.profile != nil
         )
     }
 
@@ -138,7 +176,8 @@ enum ScoreImport {
     static func summary(in context: ModelContext) throws -> Summary {
         Summary(
             subjectCount: try context.fetchCount(FetchDescriptor<Subject>()),
-            gradeCount: try context.fetchCount(FetchDescriptor<GradeEntry>())
+            gradeCount: try context.fetchCount(FetchDescriptor<GradeEntry>()),
+            hasProfile: try context.fetchCount(FetchDescriptor<StudentProfile>()) > 0
         )
     }
 
@@ -248,7 +287,7 @@ enum ScoreImport {
         }
 
         if let profile, let imported = export.profile {
-            apply(imported, to: profile)
+            apply(imported, to: profile, mode: mode)
         }
 
         do {
@@ -418,8 +457,9 @@ enum ScoreImport {
 
     /// Trägt die Leistungen nach, die im Halbjahr noch fehlen.
     ///
-    /// **Dieselbe Leistung** ist die mit gleichem Titel, gleicher Punktzahl,
-    /// gleicher Art und im selben Halbjahr — sie wird übersprungen. Ohne diese
+    /// **Dieselbe Leistung** ist die mit derselben Kennung — und, wo keine
+    /// vorliegt, die mit gleichem Titel, gleicher Punktzahl, gleicher Art und im
+    /// selben Halbjahr. Sie wird übersprungen. Ohne diese
     /// Regel verdoppelte derselbe Import beim zweiten Mal alles, und der Nutzer
     /// stünde vor einem Bestand, den er nicht mehr entwirren kann.
     ///
@@ -433,19 +473,60 @@ enum ScoreImport {
     /// „Zweimal dieselbe Datei einlesen verdoppelt nichts" bleibt davon
     /// unberührt: beim zweiten Mal steht das Eingelesene ja schon im Bestand.
     ///
-    /// Der Zeitstempel ist bewusst **nicht** Teil des Vergleichs: er wird beim
-    /// Anlegen gesetzt und steht gar nicht in der Datei.
+    /// Der Zeitstempel ist bewusst **nicht** Teil des Vergleichs. Seit Fassung 4
+    /// steht er zwar in der Datei, aber genau deshalb: Dieselbe Leistung, einmal
+    /// aus einer alten Sicherung ohne Zeitstempel und einmal aus einer neuen,
+    /// bliebe sonst nicht dieselbe, und der zweite Import legte sie ein weiteres
+    /// Mal an.
+    ///
+    /// ## Warum die Kennung **nicht** in den Fingerabdruck gehört, sondern davor
+    ///
+    /// Sie einfach als fünftes Feld danebenzustellen würde die Regel verschärfen
+    /// statt sie zu verbessern: Zwei Zeilen mit gleichem Titel, gleicher
+    /// Punktzahl und verschiedener Kennung wären dann nicht mehr dieselbe
+    /// Leistung, und jede alte Sicherung ohne Kennung liesse sich neben einer
+    /// neuen ein zweites Mal einlesen — genau der Fehler, den der fehlende
+    /// Zeitstempel schon einmal gemacht hat.
+    ///
+    /// Eine bekannte Kennung ist etwas anderes als ein bekannter Wert, und sie
+    /// wiegt schwerer: Sie sagt „diese Leistung steht hier schon", während der
+    /// Fingerabdruck nur sagt „etwas mit diesen Werten steht hier schon".
+    /// Gefragt wird deshalb in zwei Stufen — zuerst die Kennung, und nur wenn die
+    /// Datei keine mitbringt oder sie unbekannt ist, der Fingerabdruck.
+    ///
+    /// Das ist die eigentliche Reparatur des Falls: Sicherung ergänzend
+    /// einlesen, eine Leistung umbenennen, dieselbe Sicherung erneut ergänzen.
+    /// Der Fingerabdruck passt danach nicht mehr — die Kennung schon, und die
+    /// Leistung entsteht kein zweites Mal.
     private static func merge(
         _ imported: [ScoreExport.Entry],
         into semester: SemesterResult,
         in context: ModelContext
     ) {
-        let known = Set((semester.entries ?? []).map { fingerprint(of: $0) })
+        let existing = semester.entries ?? []
+        let known = Set(existing.map { fingerprint(of: $0) })
+
+        // Die Kennungen, die **vor** dem Import dastanden. Nur sie entscheiden,
+        // ob eine Zeile der Datei schon im Bestand steht — genau wie beim
+        // Fingerabdruck wird nie gegen andere Zeilen derselben Datei verglichen.
+        let knownIdentifiers = Set(existing.map(\.identifier))
+
+        // Die Kennungen, die anschliessend vergeben sind. Sie wächst mit: Trägt
+        // eine von Hand zusammengeschnittene Datei dieselbe Kennung zweimal, ist
+        // die zweite Zeile keine bekannte Leistung, sondern eine Kollision. Sie
+        // entsteht dann mit einer frischen Kennung — zwei Zeilen im selben
+        // Halbjahr mit derselben Kennung sind genau der Zustand, den dieser
+        // Umbau beseitigt.
+        var takenIdentifiers = knownIdentifiers
 
         for entry in imported {
             guard let kind = GradeKind(rawValue: entry.kind),
                   let category = GradeCategory(rawValue: entry.category)
             else { continue }
+
+            // Erste Stufe: Kennt der Bestand diese Leistung schon, ist sie es —
+            // gleichgültig, was seither an ihr geändert wurde.
+            if let identifier = entry.identifier, knownIdentifiers.contains(identifier) { continue }
 
             let mark = Fingerprint(
                 title: entry.title,
@@ -455,16 +536,28 @@ enum ScoreImport {
             )
             guard !known.contains(mark) else { continue }
 
+            // Steht eine Kennung in der Datei und ist sie hier noch frei, gilt
+            // sie. Sonst entsteht eine neue: Ältere Dateien kannten das Feld
+            // nicht, und eine Leistung ohne Kennung gibt es nicht.
+            let identifier = entry.identifier.flatMap { takenIdentifiers.contains($0) ? nil : $0 }
+                ?? UUID()
+
             let created = GradeEntry(
                 title: entry.title,
                 points: entry.points,
                 kind: kind,
                 category: category,
                 share: entry.share,
-                usesAutomaticShare: entry.usesAutomaticShare
+                usesAutomaticShare: entry.usesAutomaticShare,
+                // Steht der Zeitstempel in der Datei, gilt er. Ältere Dateien
+                // kannten das Feld nicht — dann bleibt es beim Standardwert
+                // `.now`, mehr weiss diese Datei nicht.
+                createdAt: entry.createdAt ?? .now,
+                identifier: identifier
             )
             created.semester = semester
             context.insert(created)
+            takenIdentifiers.insert(identifier)
         }
     }
 
@@ -487,9 +580,55 @@ enum ScoreImport {
 
     // MARK: - Das Profil
 
-    /// Übernimmt Vorname, Bundesland, Jahrgang und Klassenstufe ins **aktive**
-    /// Profil. Ein zweites entsteht dabei nicht.
-    private static func apply(_ imported: ScoreExport.Profile, to profile: StudentProfile) {
+    /// Übernimmt die Angaben der Datei ins **aktive** Profil. Ein zweites
+    /// entsteht dabei nicht.
+    ///
+    /// ## Warum der Modus auch hier gilt
+    ///
+    /// Er tat es lange nicht: Jeder Import schrieb Vorname, Bundesland, Jahrgang
+    /// und Klassenstufe hart über, auch der zusammenführende. Wer die Sicherung
+    /// eines Mitschülers zusammenführte, hiess danach wie er und sass in dessen
+    /// Jahrgang; wer seine eigene alte Datei zurückspielte, fiel auf den Stand
+    /// dieser Datei zurück. Das Blatt verspricht „Was du hast, bleibt." — und
+    /// dieses Versprechen endete bisher an der Fachgrenze, obwohl die
+    /// Fach-Zusammenführung daneben peinlich genau nur Lücken füllt.
+    ///
+    /// - **Ersetzen** übernimmt alles. Der Nutzer hat ausdrücklich gesagt, dass
+    ///   sein Bestand der Datei weichen soll, und hat das an einer Rückfrage mit
+    ///   Zahlen bestätigt.
+    /// - **Zusammenführen** füllt nur, wozu im Profil **nichts** steht — dieselbe
+    ///   Regel wie beim Fach. Jahrgang und Klassenstufe haben immer einen Wert,
+    ///   einen „leeren" Jahrgang gibt es nicht; sie bleiben deshalb beim
+    ///   Zusammenführen ausnahmslos stehen.
+    ///
+    /// ## Warum das Bild nie gelöscht wird
+    ///
+    /// Auch beim Ersetzen nicht: Dateien vor Fassung 4 konnten das Bild gar
+    /// nicht tragen. Ein `nil` daraus heisst „diese Datei weiss nichts davon"
+    /// und nicht „dieses Profil hat keines" — das Wiedereinspielen einer alten
+    /// Sicherung würde sonst genau das Bild wegräumen, das sie retten soll.
+    private static func apply(
+        _ imported: ScoreExport.Profile,
+        to profile: StudentProfile,
+        mode: Mode
+    ) {
+        if let avatar = imported.avatarData {
+            // Beim Zusammenführen nur, wenn keines dasteht; beim Ersetzen immer.
+            if mode == .replace || profile.avatarData == nil {
+                profile.avatarData = avatar
+            }
+        }
+
+        guard mode == .replace else {
+            if profile.trimmedFirstName == nil {
+                profile.firstName = imported.firstName
+            }
+            if profile.federalState.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                profile.federalState = imported.federalState
+            }
+            return
+        }
+
         profile.firstName = imported.firstName
         profile.federalState = imported.federalState
         profile.graduationYear = imported.graduationYear

@@ -66,7 +66,11 @@ struct BlockOneBreakdownTests {
         #expect(breakdown.outcome.points == 457)
 
         // Ohne Prüfungen rechnet Score sie auf dem heutigen Stand hoch:
-        // 11,4166… · 4 = 45,66… → 46 je Prüfung, fünfmal also 230.
+        // 11,4166… · 4 = 45,66… → 46 je Prüfung.
+        //
+        // Hochgerechnet werden alle fünf. Dieser Jahrgang hat noch kein
+        // mündliches Prüfungsfach gewählt — geprüft wird trotzdem fünfmal, das
+        // steht in der Verordnung und nicht in den Daten. Fünfmal 46 sind 230.
         #expect(breakdown.result.isProjection)
         #expect(breakdown.result.projectedExamBlockPoints == 230)
         #expect(breakdown.result.totalPoints == 687)

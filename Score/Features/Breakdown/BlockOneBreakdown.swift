@@ -285,8 +285,14 @@ struct BlockOneBreakdown {
         let outcome = result.courseBlock
         let included = Set(outcome.includedCourses)
         let reasons = outcome.bracketReasons
+        // Zwei Fächer mit derselben Kennung sollte es nicht geben — doppelt
+        // eingespielte Datensätze oder ein Sync über zwei Geräte bringen sie
+        // trotzdem hervor. `uniqueKeysWithValues` bricht dabei ab und die
+        // Aufschlüsselung liesse sich gar nicht mehr öffnen. Der erste Kurs
+        // gewinnt, wie zwei Zeilen weiter unten bei den Fächern selbst.
         let pointsByCourse = Dictionary(
-            uniqueKeysWithValues: BlockOneCalculator.availableCourses(in: inputs).map { ($0.id, $0.points) }
+            BlockOneCalculator.availableCourses(in: inputs).map { ($0.id, $0.points) },
+            uniquingKeysWith: { first, _ in first }
         )
 
         self.result = result

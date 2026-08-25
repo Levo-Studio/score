@@ -34,9 +34,25 @@ struct PendingGradeEntryUndo: Identifiable {
     /// Zurückgenommen wird hier der Datensatz selbst und keine Abschrift: Er ist
     /// gerade erst entstanden, es gibt nichts, was zwischenzeitlich an ihm hängen
     /// könnte.
+    ///
+    /// ## Warum die Leistung als Kennung in die Closure geht
+    ///
+    /// Hier stand `context.delete(entry)` auf dem übergebenen Objekt. Dieser
+    /// Wert liegt aber im `@State` der Fachansicht, solange der Streifen steht —
+    /// und in diesen Sekunden darf der Speicher seinen Container tauschen: Der
+    /// Streifen meldet keine ungesicherte Eingabe an, denn gesichert ist längst
+    /// alles. Nach dem Tausch wäre `entry` ein Objekt aus einem abgeräumten
+    /// Kontext, und „Rückgängig" löschte ein fremdes Objekt im neuen Kontext —
+    /// also gar nichts, dafür über die Kontextgrenze hinweg.
+    ///
+    /// Deshalb wandert nur eine ``PendingEntry`` in die Closure, und gelöscht
+    /// wird, was sich in dem Kontext findet, in dem der Tipp ankommt. Findet
+    /// sich nichts, ist die Leistung schon weg — dann ist auch nichts
+    /// zurückzunehmen.
     static func creation(of entry: GradeEntry) -> PendingGradeEntryUndo {
-        PendingGradeEntryUndo(message: "Leistung angelegt") { _, context in
-            guard !entry.isDeleted else { return }
+        let created = PendingEntry(of: entry)
+        return PendingGradeEntryUndo(message: "Leistung angelegt") { _, context in
+            guard let entry = created.resolve(in: context), !entry.isDeleted else { return }
             context.delete(entry)
         }
     }

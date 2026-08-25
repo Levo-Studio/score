@@ -21,7 +21,13 @@ struct PadSettingsView: View {
 
     /// Beides kommt von aussen herein, damit Belegbilder die Zustände zeigen
     /// können, die sich sonst nur bei echtem Netz und echtem Konto einstellen.
-    init(syncStatus: CloudSyncStatus = CloudSyncStatus(), sync: ManualCloudSync = .shared) {
+    ///
+    /// Beide Vorgaben sind geteilte Instanzen und keine frisch gebauten: Ein
+    /// `CloudSyncStatus()` an dieser Stelle liefe bei **jeder** Neuerzeugung der
+    /// Ansichtsstruktur — also bei jedem Umlauf —, meldete jedes Mal einen
+    /// weiteren Beobachter beim NotificationCenter an und würde von `@State`
+    /// sofort wieder verworfen, das die erste Instanz behält.
+    init(syncStatus: CloudSyncStatus = .shared, sync: ManualCloudSync = .shared) {
         _syncStatus = State(initialValue: syncStatus)
         _sync = State(initialValue: sync)
     }
@@ -430,6 +436,9 @@ private struct PadLanguageSegments: View {
                         .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
+                // Die eingestellte Sprache erkennt man sonst nur an der hellen
+                // Pille darunter. Wer sie nicht sieht, hört zweimal dasselbe.
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
         }
         .padding(3)

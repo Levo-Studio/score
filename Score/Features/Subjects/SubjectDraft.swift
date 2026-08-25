@@ -59,6 +59,11 @@ struct SubjectDraft {
         isDoubleWeighted = subject?.isDoubleWeighted ?? false
         writtenExamPoints = subject?.writtenExamPoints
         oralExamPoints = subject?.oralExamPoints
+
+        // Gespeichert sein kann auch eine Zahl, die alle belegten Kurse umfasst —
+        // etwa aus einem Import. Der Entwurf zeigt sie als das an, was sie
+        // bewirkt: „alle".
+        maximumContributedCourses = resolvedCourseLimit
     }
 
     // MARK: - Abiturprüfung
@@ -236,6 +241,13 @@ struct SubjectDraft {
 
     /// Das letzte belegte Halbjahr lässt sich nicht abwählen — ein Fach ohne
     /// jedes Halbjahr wäre ein Datensatz, der nirgends mehr auftaucht.
+    ///
+    /// Die Kursgrenze wird gleich mitgezogen: Wer bei vier Halbjahren „3" wählt
+    /// und dann ein Halbjahr abwählt, hinterliess eine Zahl, die nichts mehr
+    /// bewirkte. Gespeichert wurde ``resolvedCourseLimit`` und damit „alle",
+    /// angezeigt wurde die rohe Zahl — kein Chip war markiert, und die Fussnote
+    /// behauptete weiter, Score nehme die besten drei Kurse. Der Entwurf hält
+    /// jetzt denselben Wert, der gesichert wird.
     mutating func toggleSemester(_ index: Int) {
         if activeSemesters.contains(index) {
             guard activeSemesters.count > 1 else { return }
@@ -243,6 +255,8 @@ struct SubjectDraft {
         } else {
             activeSemesters.insert(index)
         }
+
+        maximumContributedCourses = resolvedCourseLimit
     }
 
     // MARK: - Vorschläge

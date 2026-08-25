@@ -62,28 +62,70 @@ private struct ScoreRoot: View {
     /// alten Stand sieht, obwohl auf dem iPad längst etwas Neues steht.
     private static let freshEnough: TimeInterval = 120
 
+    /// Ob die App seit dem Start schon einmal im Hintergrund war.
+    ///
+    /// Der Anstoss unten gehört zum **Wechsel** in den Vordergrund und nicht zum
+    /// ersten Erscheinen: Beim Kaltstart hat `ScoreDataStore` den Speicher gerade
+    /// eben geöffnet, und genau das ist der vollständige Abgleich. Ein Anstoss
+    /// obendrauf risse den frisch angelaufenen Spiegel wieder ab und baute ihn
+    /// 400 ms später neu auf — der Start machte die Plattenarbeit dreifach.
+    ///
+    /// Nur `.background` setzt die Marke. `.inactive` allein ist kein Verlassen
+    /// des Vordergrunds: Es steht für den Blick ins Kontrollzentrum, für einen
+    /// Anruf und für die letzten Augenblicke des Starts.
+    @State private var wasInBackground = false
+
     var body: some View {
         // Erscheinungsbild und Sprache hängen an der Wurzel, damit ein
         // Umschalten in den Einstellungen sofort die ganze App erfasst und
         // nicht nur den Bildschirm, auf dem der Schalter steht.
-        ContentView()
-            .scoreAppSettings()
-            .modelContainer(store.container)
-            // `safeAreaInset` und nicht `overlay`: Der Streifen soll Platz
-            // wegnehmen statt etwas zu verdecken — eine Warnung, die über einer
-            // Navigationsleiste liegt, macht die Leiste unbedienbar.
-            .safeAreaInset(edge: .top, spacing: 0) {
-                if store.fallback == .inMemory {
-                    StorageWarningBanner()
-                }
+        Group {
+            if let container = store.container {
+                ContentView()
+                    .modelContainer(container)
+            } else {
+                // Vierte Stufe des Starts: Es gibt keinen Container. Jede Ansicht
+                // der App fragt Daten ab und hätte hier nichts zu zeigen — also
+                // steht allein die Warnung da. Das ist wenig, aber es ist mehr
+                // als ein Absturz beim Start, und es sagt dem Nutzer, was zu tun
+                // ist.
+                noStorageScreen
             }
-            .onChange(of: scenePhase, initial: true) { _, phase in
-                guard phase == .active else { return }
-                syncIfStale()
+        }
+        .scoreAppSettings()
+        // `safeAreaInset` und nicht `overlay`: Der Streifen soll Platz
+        // wegnehmen statt etwas zu verdecken — eine Warnung, die über einer
+        // Navigationsleiste liegt, macht die Leiste unbedienbar.
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if store.fallback == .inMemory {
+                StorageWarningBanner()
             }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background {
+                wasInBackground = true
+                return
+            }
+
+            guard phase == .active, wasInBackground else { return }
+            wasInBackground = false
+            syncIfStale()
+        }
     }
 
-    /// Stösst beim Öffnen einen Abgleich an, wenn der letzte lange her ist.
+    /// Was dasteht, wenn es gar keinen Speicher gibt: die Warnung und sonst
+    /// nichts.
+    private var noStorageScreen: some View {
+        VStack(spacing: 0) {
+            StorageWarningBanner()
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(ScorePalette.background.ignoresSafeArea())
+    }
+
+    /// Stösst beim Zurückkommen aus dem Hintergrund einen Abgleich an, wenn der
+    /// letzte lange her ist.
     ///
     /// ## Warum das nötig ist
     ///
@@ -99,6 +141,16 @@ private struct ScoreRoot: View {
     ///
     /// Der Blick in die App ist der ehrlichste Zeitpunkt für eine Nachfrage:
     /// Genau dann will jemand seinen Stand sehen.
+    ///
+    /// ## Warum das hier nicht immer sofort passiert
+    ///
+    /// Der Abgleich tauscht den `ModelContainer`, und dabei werden alle
+    /// Modellobjekte des alten Kontexts ungültig. Steht gerade ein Eingabe-Blatt
+    /// offen, hält es ungesicherte Eingaben, die dem alten Kontext gehören —
+    /// genau daran sind zwei Anläufe gescheitert, die das in der Oberfläche
+    /// auffangen wollten. Deshalb wartet der automatische Abgleich, bis das
+    /// letzte Blatt zu ist, und läuft dann nach; die Begründung steht in
+    /// ``UnsavedInputRegistry``, die Umsetzung in ``ManualCloudSync/start(trigger:)``.
     private func syncIfStale() {
         let sync = ManualCloudSync.shared
         guard sync.canStart else { return }
@@ -109,6 +161,6 @@ private struct ScoreRoot: View {
             return
         }
 
-        sync.start()
+        sync.start(trigger: .automatic)
     }
 }

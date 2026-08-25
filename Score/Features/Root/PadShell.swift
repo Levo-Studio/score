@@ -56,15 +56,41 @@ struct PadShell: View {
     /// Ob die Aufschlüsselung von Block I gerade über dem Inhalt liegt.
     @State private var isBreakdownPresented = false
 
+    /// Ob im Fach-Editor gerade etwas Ungesichertes steht.
+    @State private var editorDraft = PadEditorDraftState()
+
+    /// Das Ziel, das auf die Antwort auf „Änderungen verwerfen?" wartet.
+    ///
+    /// `nil` heisst „keine Frage offen". Die Route selbst bleibt bis zur Antwort
+    /// unverändert — der Editor darf nicht abgebaut werden, während noch zur
+    /// Debatte steht, ob sein Entwurf erhalten bleibt.
+    @State private var routeAwaitingDiscard: PadRoute?
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// Die Wahl des Nutzers, solange er eine getroffen hat.
+    /// Die Wahl des Nutzers, solange er eine getroffen hat — je Ausrichtung eine.
     ///
-    /// `nil` heisst „noch nichts entschieden" — dann entscheidet die Ausrichtung:
-    /// quer offen, hoch zu. Ein `Bool` mit Startwert liesse sich nicht sauber an
-    /// die Ausrichtung koppeln, weil die erste Layout-Runde noch keine Grösse
-    /// kennt und der Startwert dann hängen bliebe.
-    @State private var sidebarChoice: Bool?
+    /// `nil` heisst „für diese Ausrichtung noch nichts entschieden" — dann gilt
+    /// die Voreinstellung: quer offen, hoch zu. Ein `Bool` mit Startwert liesse
+    /// sich nicht sauber an die Ausrichtung koppeln, weil die erste Layout-Runde
+    /// noch keine Grösse kennt und der Startwert dann hängen bliebe.
+    ///
+    /// ## Warum zwei Werte und kein Zurücksetzen beim Drehen
+    ///
+    /// Vorher gab es einen gemeinsamen Wert, den ein `onChange(of: isLandscape)`
+    /// beim Drehen verwarf. Das war aus zwei Gründen falsch:
+    ///
+    /// - Das Ereignis hängt am Seitenverhältnis, nicht am Drehen. Im Split View
+    ///   feuert es auch beim Ziehen des Fenstertrenners — eine eingeklappte
+    ///   Sidebar stand danach wieder offen, ohne dass jemand sie geöffnet hätte.
+    /// - Quer und hoch sind zwei verschiedene Dinge: quer steht die Sidebar
+    ///   neben dem Inhalt, hoch liegt sie darüber. Wer sie hoch nach der Auswahl
+    ///   zuklappen lässt, hat damit nichts über das Querformat gesagt.
+    ///
+    /// Getrennt gemerkt bleibt jede Entscheidung dort, wo sie getroffen wurde,
+    /// und keine muss verworfen werden.
+    @State private var landscapeSidebarChoice: Bool?
+    @State private var portraitSidebarChoice: Bool?
 
     /// Die zuletzt gemessene Ausrichtung.
     ///
@@ -87,29 +113,40 @@ struct PadShell: View {
     var body: some View {
         GeometryReader { proxy in
             let isLandscape = proxy.size.width >= proxy.size.height
-            let isSidebarVisible = sidebarChoice ?? isLandscape
+            let isSidebarVisible = (isLandscape ? landscapeSidebarChoice : portraitSidebarChoice) ?? isLandscape
 
             ZStack(alignment: .topLeading) {
-                HStack(spacing: 0) {
-                    if isLandscape && isSidebarVisible {
-                        sidebar
-                            .transition(.move(edge: .leading))
+                Group {
+                    HStack(spacing: 0) {
+                        if isLandscape && isSidebarVisible {
+                            sidebar
+                                .transition(.move(edge: .leading))
+                        }
+                        detail(isSidebarVisible: isSidebarVisible)
                     }
-                    detail(isSidebarVisible: isSidebarVisible)
-                }
 
-                if !isLandscape && isSidebarVisible {
-                    Color.black.opacity(0.3)
-                        .ignoresSafeArea()
-                        .onTapGesture { setSidebar(visible: false) }
-                        .transition(.opacity)
+                    if !isLandscape && isSidebarVisible {
+                        Color.black.opacity(0.3)
+                            .ignoresSafeArea()
+                            .onTapGesture { setSidebar(visible: false) }
+                            .transition(.opacity)
 
-                    sidebar
-                        .shadow(color: Color(0x060E0D, alpha: 0.22), radius: 24, x: 6, y: 0)
-                        .transition(
-                            .opacity.combined(with: .move(edge: .leading))
-                        )
+                        sidebar
+                            .shadow(color: Color(0x060E0D, alpha: 0.22), radius: 24, x: 6, y: 0)
+                            .transition(
+                                .opacity.combined(with: .move(edge: .leading))
+                            )
+                    }
                 }
+                // Die Aufschlüsselung ist modal, und modal heisst mehr als
+                // „liegt oben drauf": Der Vorhang dunkelte alles darunter nur ab.
+                // Mit VoiceOver oder Full Keyboard Access liess sich weiter in
+                // die Sidebar wandern und dort ein Fach aktivieren — die Karte
+                // blieb dann über einer Fachansicht stehen und erklärte eine
+                // Übersicht, die gar nicht mehr da war. Beides zusammen sperrt
+                // den Hintergrund für Zeiger **und** für die Hilfstechnologien.
+                .allowsHitTesting(!isBreakdownPresented)
+                .accessibilityHidden(isBreakdownPresented)
 
                 if isBreakdownPresented {
                     breakdownOverlay(in: proxy.size)
@@ -117,15 +154,25 @@ struct PadShell: View {
             }
             .onAppear { isLandscapeLayout = isLandscape }
             .onChange(of: isLandscape) { _, newValue in
-                // Nach dem Drehen gilt wieder, was zur neuen Ausrichtung passt.
+                // Nur mitschreiben, was die Bindung ausserhalb des
+                // `GeometryReader` sonst nicht erführe. Die Wahl des Nutzers
+                // bleibt stehen — siehe ``landscapeSidebarChoice``.
                 isLandscapeLayout = newValue
-                sidebarChoice = nil
             }
         }
         // Bis an die Gerätekanten. Ohne `ignoresSafeArea` endet die Fläche an der
         // Safe Area, und unten sowie rechts bleibt ein schwarzes Band stehen.
         .background(ScorePalette.background.ignoresSafeArea())
         .tint(ScorePalette.accent)
+        // „Weiter bearbeiten" trägt die Cancel-Rolle und ist damit die
+        // Voreinstellung: Wer den Dialog wegtippt oder Escape drückt, behält
+        // seine Arbeit.
+        .alert("Änderungen verwerfen?", isPresented: isConfirmingDiscard, presenting: routeAwaitingDiscard) { pending in
+            Button("Weiter bearbeiten", role: .cancel) {}
+            Button("Verwerfen", role: .destructive) { discard(to: pending) }
+        } message: { _ in
+            Text("Am Fach stehen ungesicherte Änderungen. Sie gehen verloren, wenn du jetzt woandershin wechselst.")
+        }
     }
 
     private var sidebar: some View {
@@ -145,17 +192,17 @@ struct PadShell: View {
             get: { route },
             set: { newRoute in
                 guard newRoute == .breakdown else {
-                    // Beides in einer Transaktion. Vorher setzte die Bindung die
-                    // Route ohne Animation und ein eigenes `onChange` schloss die
-                    // Sidebar danach — der Detailbereich tauschte seinen Inhalt
-                    // also sofort aus, während die Sidebar erst hinterher
-                    // wegblendete. Genau dieser Versatz sah nach Sprung aus.
-                    withAnimation(ScoreMotion.resolve(ScoreMotion.sidebarDismiss, reduceMotion: reduceMotion)) {
-                        route = newRoute
-                        // Im Hochformat verdeckt die Sidebar den Inhalt. Wer ein
-                        // Ziel gewählt hat, will es sehen.
-                        if !isLandscapeLayout { sidebarChoice = false }
+                    // Der Detailbereich hängt an der Route: Ein Wechsel baut den
+                    // Fach-Editor ab und nimmt seinen Entwurf mit. Steht dort
+                    // Ungesichertes, wird erst gefragt — ein Tipp in der immer
+                    // sichtbaren Sidebar darf keine halbe Bearbeitung
+                    // wegräumen. Auf dem iPhone verlangt das Sheet dafür
+                    // ausdrücklich „Abbrechen".
+                    if editorDraft.hasUnsavedChanges, newRoute != route {
+                        routeAwaitingDiscard = newRoute
+                        return
                     }
+                    commit(newRoute)
                     return
                 }
                 withAnimation(ScoreMotion.resolve(ScoreMotion.sheetRise, reduceMotion: reduceMotion)) {
@@ -165,9 +212,52 @@ struct PadShell: View {
         )
     }
 
+    /// Setzt die Route und räumt auf, was nur zur alten passte.
+    ///
+    /// Beides in einer Transaktion. Vorher setzte die Bindung die Route ohne
+    /// Animation und ein eigenes `onChange` schloss die Sidebar danach — der
+    /// Detailbereich tauschte seinen Inhalt also sofort aus, während die Sidebar
+    /// erst hinterher wegblendete. Genau dieser Versatz sah nach Sprung aus.
+    private func commit(_ newRoute: PadRoute) {
+        withAnimation(ScoreMotion.resolve(ScoreMotion.sidebarDismiss, reduceMotion: reduceMotion)) {
+            route = newRoute
+            // Die Aufschlüsselung erklärt die Übersicht. Wechselt der Inhalt
+            // darunter, steht sie über etwas, das sie nicht meint. Dann geht sie
+            // mit.
+            isBreakdownPresented = false
+            // Im Hochformat verdeckt die Sidebar den Inhalt. Wer ein Ziel
+            // gewählt hat, will es sehen.
+            if !isLandscapeLayout { portraitSidebarChoice = false }
+        }
+    }
+
+    /// Ob die Frage nach dem Verwerfen gerade dasteht.
+    private var isConfirmingDiscard: Binding<Bool> {
+        Binding(
+            get: { routeAwaitingDiscard != nil },
+            // Wegtippen heisst „weiter bearbeiten": Die Route bleibt, wo sie ist.
+            set: { if !$0 { routeAwaitingDiscard = nil } }
+        )
+    }
+
+    private func discard(to pending: PadRoute) {
+        editorDraft.hasUnsavedChanges = false
+        routeAwaitingDiscard = nil
+        commit(pending)
+    }
+
     private func setSidebar(visible: Bool) {
         withAnimation(ScoreMotion.resolve(ScoreMotion.sidebarDismiss, reduceMotion: reduceMotion)) {
-            sidebarChoice = visible
+            storeSidebarChoice(visible)
+        }
+    }
+
+    /// Legt die Wahl in dem Fach ab, das zur aktuellen Ausrichtung gehört.
+    private func storeSidebarChoice(_ visible: Bool) {
+        if isLandscapeLayout {
+            landscapeSidebarChoice = visible
+        } else {
+            portraitSidebarChoice = visible
         }
     }
 
@@ -230,10 +320,12 @@ struct PadShell: View {
             // Navigationsleiste: die Kopfleiste des iPads nennt den Titel schon.
             OralExamSubjectSheet(showsNavigationBar: false)
         case .newSubject:
-            PadSubjectEditorView(target: .new, route: navigation)
+            PadSubjectEditorView(target: .new, route: navigation, draftState: editorDraft)
+                .holdsUnsavedInput()
         case .editSubject:
             if let selectedSubject {
-                PadSubjectEditorView(target: .existing(selectedSubject), route: navigation)
+                PadSubjectEditorView(target: .existing(selectedSubject), route: navigation, draftState: editorDraft)
+                    .holdsUnsavedInput()
             } else {
                 missingSubject
             }

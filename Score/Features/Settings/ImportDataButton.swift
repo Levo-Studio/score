@@ -15,8 +15,9 @@ import UniformTypeIdentifiers
 /// 1. Der Nutzer wählt eine JSON-Datei.
 /// 2. Sie wird **vollständig gelesen und geprüft**. Bricht das ab, bleibt der
 ///    Bestand unangetastet und es steht ein knapper Satz da.
-/// 3. Ist noch nichts da, wird gleich eingelesen — ein Dialog, der nichts zu
-///    warnen hat, ist nur eine Hürde.
+/// 3. Ist noch nichts da — kein Fach, keine Leistung **und kein Profil** —, wird
+///    gleich eingelesen; ein Dialog, der nichts zu warnen hat, ist nur eine
+///    Hürde.
 /// 4. Sonst geht ein Blatt von unten auf: zusammenführen oder ersetzen. Ersetzen
 ///    fragt danach noch einmal nach, mit Zahlen und zerstörend markiert.
 struct ImportDataButton<Label: View>: View {
@@ -55,6 +56,10 @@ struct ImportDataButton<Label: View>: View {
     /// Schliessen auf `nil` setzt — beim Handeln danach wäre die Datei sonst weg.
     @State private var chosenCandidate: PendingImport?
 
+    /// Hält den Aufschub des Abgleichs über das Schliessen des Blattes hinaus,
+    /// bis wirklich geschrieben ist. Siehe ``ImportWriteGuard``.
+    @State private var writeGuard = ImportWriteGuard()
+
     var body: some View {
         Button {
             isChoosingFile = true
@@ -69,11 +74,17 @@ struct ImportDataButton<Label: View>: View {
         ) { result in
             read(result)
         }
+        // Solange die Wahl offen steht, wird der Speicher nicht getauscht — und
+        // über ``ImportWriteGuard`` auch darüber hinaus, bis geschrieben ist.
         .sheet(item: $pending, onDismiss: actOnChoice) { candidate in
             ScrollView {
                 ImportChoiceSheet(candidate: candidate) { mode in
                     chosenMode = mode
                     chosenCandidate = candidate
+                    // Ab hier steht ein Schreibvorgang an. Die Anmeldung des
+                    // Blattes endet mit seinem `onDisappear` — geschrieben wird
+                    // aber erst danach.
+                    writeGuard.begin()
                 }
             }
             .background(ScorePalette.surface)
@@ -84,6 +95,7 @@ struct ImportDataButton<Label: View>: View {
             .presentationDragIndicator(.visible)
             .presentationBackground(ScorePalette.surface)
             .presentationCornerRadius(ScoreMetrics.Radius.sheet)
+            .holdsUnsavedInput()
         }
         .alert(
             "Bestand wirklich ersetzen?",
@@ -92,12 +104,21 @@ struct ImportDataButton<Label: View>: View {
         ) { candidate in
             // Abbrechen trägt die Cancel-Rolle und ist damit die Voreinstellung:
             // wer den Dialog wegtippt oder Escape drückt, ersetzt nicht.
-            Button("Abbrechen", role: .cancel) {}
+            Button("Abbrechen", role: .cancel) { writeGuard.release() }
             Button("Ersetzen", role: .destructive) {
                 apply(candidate.export, mode: .replace)
+                writeGuard.release()
             }
         } message: { candidate in
-            Text("Deine \(candidate.current.subjectCount) Fächer mit \(candidate.current.gradeCount) Leistungen werden gelöscht. Aus der Datei kommen \(candidate.incoming.subjectCount) Fächer mit \(candidate.incoming.gradeCount) Leistungen. Rückgängig machen lässt sich das nicht.")
+            // Zwei Fassungen, weil das Ersetzen zwei verschiedene Dinge tut: Es
+            // löscht immer den Fachbestand, und es überschreibt zusätzlich das
+            // Profil, wenn beide Seiten eines haben. Das zweite ist der Teil,
+            // der dem Nutzer bisher nirgends angekündigt wurde.
+            if candidate.current.hasProfile && candidate.incoming.hasProfile {
+                Text("Deine \(candidate.current.subjectCount) Fächer mit \(candidate.current.gradeCount) Leistungen werden gelöscht, und dein Profil übernimmt Name, Bundesland, Jahrgang und Klassenstufe aus der Datei. Aus der Datei kommen \(candidate.incoming.subjectCount) Fächer mit \(candidate.incoming.gradeCount) Leistungen. Rückgängig machen lässt sich das nicht.")
+            } else {
+                Text("Deine \(candidate.current.subjectCount) Fächer mit \(candidate.current.gradeCount) Leistungen werden gelöscht. Aus der Datei kommen \(candidate.incoming.subjectCount) Fächer mit \(candidate.incoming.gradeCount) Leistungen. Rückgängig machen lässt sich das nicht.")
+            }
         }
         .alert(failureTitle, isPresented: isShowingFailure, presenting: failure) { _ in
             Button("OK", role: .cancel) {}
@@ -111,6 +132,13 @@ struct ImportDataButton<Label: View>: View {
     private var isConfirmingReplacement: Binding<Bool> {
         Binding(
             get: { replacement != nil },
+            // Der Schutz wird hier ausdrücklich **nicht** freigegeben: Ob die
+            // Bindung vor oder nach der Schaltfläche zurückgesetzt wird, sagt
+            // SwiftUI nicht zu — eine Freigabe an dieser Stelle könnte den
+            // Containertausch also mitten in das Schreiben hinein anstossen.
+            // Freigegeben wird in den beiden Schaltflächen, und wenn doch einmal
+            // keine von beiden drankommt, verfällt die Anmeldung von selbst;
+            // siehe ``UnsavedInputRegistry``.
             set: { if !$0 { replacement = nil } }
         )
     }
@@ -153,7 +181,12 @@ struct ImportDataButton<Label: View>: View {
                 incoming: ScoreImport.summary(of: export)
             )
 
-            // Nichts da, nichts zu warnen: direkt einlesen.
+            // Nichts da, nichts zu warnen: direkt einlesen. „Nichts" schliesst
+            // das Profil ausdrücklich ein — siehe ``ScoreImport.Summary``. Ohne
+            // das lief dieser Weg auch für einen Nutzer los, der zwar noch kein
+            // Fach, aber sehr wohl ein Profil hatte, und schrieb ihm ungefragt
+            // Name, Bundesland, Jahrgang und Klassenstufe aus einer fremden
+            // Datei ins Profil.
             if current.isEmpty {
                 apply(export, mode: .replace)
             } else {
@@ -176,8 +209,14 @@ struct ImportDataButton<Label: View>: View {
         chosenCandidate = nil
 
         switch mode {
-        case .merge: apply(candidate.export, mode: .merge)
-        case .replace: replacement = candidate
+        case .merge:
+            // Zusammenführen schreibt sofort — danach ist der Schutz erfüllt.
+            apply(candidate.export, mode: .merge)
+            writeGuard.release()
+        case .replace:
+            // Ersetzen fragt erst noch nach. Der Schutz hält, bis der Dialog
+            // beantwortet und gegebenenfalls geschrieben ist.
+            replacement = candidate
         }
     }
 
@@ -193,6 +232,64 @@ struct ImportDataButton<Label: View>: View {
         } catch {
             failure = ImportFailure(reason: .notWritten)
         }
+    }
+}
+
+// MARK: - Der Schutz über das Blatt hinaus
+
+/// Hält den automatischen Abgleich zurück, bis der Import wirklich geschrieben
+/// ist.
+///
+/// ## Die Vorgeschichte, damit sie sich nicht wiederholt
+///
+/// Das Wahl-Blatt meldete sich über ``SwiftUI/View/holdsUnsavedInput()`` an, und
+/// diese Anmeldung endete mit seinem `onDisappear`. Geschrieben wird aber erst
+/// **danach**: `actOnChoice` läuft aus `onDismiss`, und im Zweig „Ersetzen"
+/// merkt es sich die Datei bloss vor — der zerstörende Bestätigungsdialog und
+/// das Löschen und Neuschreiben des gesamten Bestands kamen erst Sekunden
+/// später und waren gar nicht angemeldet.
+///
+/// Der Ablauf war damit: Blatt offen, Nutzer wechselt kurz weg und zurück (der
+/// Abgleich wird aufgeschoben), „Ersetzen" antippen, Blatt zu — und genau in
+/// diesem Moment wird der Aufschub nachgeholt und der zweistufige
+/// Containertausch beginnt. Der Nutzer bestätigt den Dialog, und das Löschen und
+/// Neuschreiben läuft in einen Kontext, der gerade ausgetauscht wird.
+///
+/// Deshalb reicht der Schutz jetzt bis zum **Ende des Schreibens** und nicht bis
+/// zum Schliessen des Blattes.
+///
+/// ## Warum ein eigener Typ
+///
+/// Die Anmeldung muss zwischen zwei Ereignissen aufgehoben werden, die in
+/// verschiedenen Ansichten liegen, und sie muss sich prüfen lassen, ohne dass
+/// jemand ein Fenster öffnet.
+@MainActor
+final class ImportWriteGuard {
+
+    private let registry: UnsavedInputRegistry
+    private var hold: UnsavedInputRegistry.Hold?
+
+    /// - Parameter registry: Wo angemeldet wird. In Tests eine eigene Stelle.
+    init(registry: UnsavedInputRegistry = .shared) {
+        self.registry = registry
+    }
+
+    /// Ob der Schutz gerade steht.
+    var isHolding: Bool { hold != nil }
+
+    /// Ein Schreibvorgang steht an oder läuft.
+    ///
+    /// Mehrfach zu rufen ist harmlos: Es bleibt bei der einen Anmeldung.
+    func begin() {
+        guard hold == nil else { return }
+        hold = registry.begin()
+    }
+
+    /// Geschrieben ist geschrieben — oder es wird gar nicht mehr geschrieben.
+    func release() {
+        guard let hold else { return }
+        registry.end(hold)
+        self.hold = nil
     }
 }
 

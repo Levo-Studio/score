@@ -224,4 +224,135 @@ struct DuplicateProfileFlowTests {
         handoff.profileDidAppear()
         #expect(handoff.stage == .ready)
     }
+
+    /// Der gemeldete Weg: „Neues Profil, gleiche Fächer" endete im
+    /// Lösch-Bildschirm.
+    ///
+    /// Sobald die zweite Einrichtung durch war, änderte sich die Zahl der
+    /// fertigen Profile, `ContentView` fragte nach Duplikaten, und die Frage
+    /// überschrieb den gerade erreichten Zustand. Der Nutzer stand vor „Dich
+    /// gibt es zweimal" samt „Endgültig löschen" — für ein Profil, das er sich
+    /// eine Minute vorher selbst angelegt hatte. Ein ausdrücklich angelegtes
+    /// zweites Profil ist kein unerwartetes Duplikat.
+    @Test("Ein ausdrücklich angelegtes zweites Profil führt nicht in die Frage")
+    func adeliberateSecondProfileNeverAsksTheDuplicateQuestion() {
+        let handoff = ProfileHandoffModel()
+        handoff.start(hasCompletedProfile: true, isProfileAcknowledged: true, mayReceiveCloudData: true)
+        handoff.registerAdditionalProfile()
+        #expect(handoff.stage == .onboarding)
+
+        // Genau die Reihenfolge, in der `ContentView` seine Beobachter abarbeitet:
+        // erst die gewachsene Zahl der Profile, dann das aufgetauchte Profil.
+        handoff.onboardingDidComplete()
+        handoff.duplicateProfilesDidAppear()
+        #expect(handoff.stage == .onboarding)
+
+        handoff.profileDidAppear()
+        #expect(handoff.stage == .ready)
+    }
+
+    /// Der Merker gilt nur für diesen einen Vorgang: Kommt danach ein **echtes**
+    /// drittes Profil aus iCloud, ist das wieder eine Frage.
+    @Test("Nach dem zweiten Profil wird wieder gefragt")
+    func alaterTwinStillAsks() {
+        let handoff = ProfileHandoffModel()
+        handoff.start(hasCompletedProfile: true, isProfileAcknowledged: true, mayReceiveCloudData: true)
+        handoff.registerAdditionalProfile()
+        handoff.onboardingDidComplete()
+        handoff.profileDidAppear()
+        #expect(handoff.stage == .ready)
+
+        handoff.duplicateProfilesDidAppear()
+        #expect(handoff.stage == .choosingProfile)
+    }
+
+    /// Der Merker deckt das eigene, gerade angelegte Profil ab — nicht jedes
+    /// beliebige.
+    ///
+    /// Trifft **während** der zweiten Einrichtung ein Profil aus iCloud ein,
+    /// stammt es von einem anderen Gerät: Das eigene ist ja noch gar nicht
+    /// gespeichert. Bis hierher verschluckte der Merker auch diesen Fall, und die
+    /// Frage kam nie — der Nutzer richtete sich fertig ein und stand hinterher
+    /// still mit drei Profilen da.
+    @Test("Ein fremdes Profil während der zweiten Einrichtung wird trotzdem gefragt")
+    func aforeignProfileDuringTheSecondSetupStillAsks() {
+        let handoff = ProfileHandoffModel()
+        handoff.start(hasCompletedProfile: true, isProfileAcknowledged: true, mayReceiveCloudData: true)
+        handoff.registerAdditionalProfile()
+        #expect(handoff.stage == .onboarding)
+
+        // Die Einrichtung läuft noch — kein `onboardingDidComplete()`.
+        handoff.duplicateProfilesDidAppear()
+        #expect(handoff.stage == .choosingProfile)
+    }
+
+    /// Die Frage nach dem fremden Profil ist berechtigt — der Auftrag, ein
+    /// zweites Profil anzulegen, verfällt dadurch aber nicht.
+    ///
+    /// Bis hierher führte die beantwortete Frage geradewegs in die App: Der
+    /// Nutzer hatte in den Einstellungen ausdrücklich „Neues Profil" gewählt,
+    /// stand danach im Dashboard, und sein zweites Profil gab es nie — ohne jede
+    /// Meldung.
+    @Test("Nach der Duplikatfrage geht die zweite Einrichtung weiter")
+    func theSecondSetupContinuesAfterTheDuplicateQuestion() {
+        let handoff = ProfileHandoffModel()
+        handoff.start(hasCompletedProfile: true, isProfileAcknowledged: true, mayReceiveCloudData: true)
+        handoff.registerAdditionalProfile()
+
+        // Die Einrichtung läuft noch, da trifft ein fremdes Profil aus iCloud ein.
+        handoff.duplicateProfilesDidAppear()
+        #expect(handoff.stage == .choosingProfile)
+
+        handoff.profileChoiceDidResolve()
+        // Zurück in die Einrichtung, nicht in die App.
+        #expect(handoff.stage == .onboarding)
+
+        // Und der Merker steht noch: Das gleich entstehende Profil ist weiterhin
+        // das ausdrücklich angeforderte und keine neue Frage.
+        handoff.onboardingDidComplete()
+        handoff.duplicateProfilesDidAppear()
+        #expect(handoff.stage == .onboarding)
+
+        handoff.profileDidAppear()
+        #expect(handoff.stage == .ready)
+    }
+
+    /// Derselbe Auftrag, unterbrochen von der Übernahmefrage statt von der
+    /// Duplikatfrage.
+    @Test("Nach der Übernahmefrage geht die zweite Einrichtung weiter")
+    func theSecondSetupContinuesAfterTheHandoffQuestion() {
+        let handoff = ProfileHandoffModel()
+        handoff.start(hasCompletedProfile: true, isProfileAcknowledged: true, mayReceiveCloudData: true)
+        handoff.registerAdditionalProfile()
+
+        handoff.profileDidAppear()
+        #expect(handoff.stage == .offeringHandoff)
+
+        handoff.acceptHandoff()
+        #expect(handoff.stage == .onboarding)
+    }
+
+    /// Ohne offenen Auftrag bleibt es beim geraden Weg in die App.
+    @Test("Die beantwortete Frage führt sonst weiter in die App")
+    func aresolvedQuestionWithoutAPendingSetupStillOpensTheApp() {
+        let handoff = ProfileHandoffModel()
+        handoff.start(hasCompletedProfile: true, isProfileAcknowledged: false, mayReceiveCloudData: true)
+
+        handoff.duplicateProfilesDidAppear()
+        handoff.profileChoiceDidResolve()
+        #expect(handoff.stage == .ready)
+    }
+
+    /// „Von vorn anfangen" ist kein zweites Profil, sondern der Ersatz des
+    /// gefundenen — dort schlägt die Frage weiterhin durch.
+    @Test("Ein neuer Anfang bleibt für die Frage empfänglich")
+    func afreshSetupStillAsks() {
+        let handoff = ProfileHandoffModel()
+        handoff.start(hasCompletedProfile: true, isProfileAcknowledged: true, mayReceiveCloudData: true)
+        handoff.registerAdditionalProfile()
+        handoff.startFreshSetup()
+
+        handoff.duplicateProfilesDidAppear()
+        #expect(handoff.stage == .choosingProfile)
+    }
 }

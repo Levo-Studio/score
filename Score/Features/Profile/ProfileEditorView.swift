@@ -166,18 +166,39 @@ struct ProfileEditorView: View {
     /// Das Verkleinern läuft ausserhalb des Hauptaktors: ein Fünf-Megabyte-Foto
     /// zu dekodieren und neu zu zeichnen dauert lange genug, um die Oberfläche
     /// hängen zu lassen.
+    ///
+    /// ## Warum der Aufschub über das Warten hinweg gehalten wird
+    ///
+    /// Zwischen dem Tipp auf ein Foto und der fertig verkleinerten Fassung
+    /// liegen Sekunden — bei einem Bild, das erst aus iCloud geladen wird, auch
+    /// deutlich mehr. `profile` ist ein Modellobjekt und gehört dem Kontext, der
+    /// beim Start dieses Vorgangs galt. Tauschte der Speicher in der Zwischenzeit
+    /// seinen Container (``ScoreDataStore/reopen(make:)``), schriebe die letzte
+    /// Zeile das Bild in ein Objekt eines abgeräumten Kontexts: kein Fehler, kein
+    /// Hinweis, das Bild ist einfach nicht da.
+    ///
+    /// Das Blatt selbst ist zwar über ``SwiftUI/View/holdsUnsavedInput()``
+    /// angemeldet, aber diese Anmeldung verfällt nach ``UnsavedInputRegistry/maxHold``
+    /// von selbst — bei einem Blatt, das lange offen steht, ist sie womöglich
+    /// schon weg. Der Ladevorgang meldet sich deshalb für seine eigene Dauer
+    /// noch einmal an; dieselbe Vorsichtsmassnahme wie beim Schreiben eines
+    /// Imports, siehe ``ImportWriteGuard``.
     private func loadImage(from item: PhotosPickerItem) async {
         isPreparingImage = true
         defer { isPreparingImage = false }
 
-        guard let data = try? await item.loadTransferable(type: Data.self) else {
-            didFailToLoadImage = true
-            return
+        let prepared = await UnsavedInputRegistry.shared.holding {
+            guard let data = try? await item.loadTransferable(type: Data.self) else {
+                return Data?.none
+            }
+            return await Task.detached(priority: .userInitiated) {
+                ProfileImage.prepared(from: data)
+            }.value
         }
 
-        guard let prepared = await Task.detached(priority: .userInitiated, operation: {
-            ProfileImage.prepared(from: data)
-        }).value else {
+        // Ein Fehlschlag beim Lesen und einer beim Verkleinern sind für den
+        // Nutzer dasselbe: Dieses Bild geht nicht, nimm ein anderes.
+        guard let prepared else {
             didFailToLoadImage = true
             return
         }

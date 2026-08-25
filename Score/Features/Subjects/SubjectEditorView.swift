@@ -35,6 +35,13 @@ struct SubjectEditorView: View {
 
     @State private var draft: SubjectDraft
 
+    /// Das Fach, dessen Löschung zur Bestätigung ansteht.
+    ///
+    /// Dasselbe Muster wie in der Fächerliste: Der Dialog hängt an der Anfrage
+    /// und nicht an einem `Bool`, damit er nicht ohne Name und Zahl erscheinen
+    /// kann.
+    @State private var pendingDeletion: SubjectDeletion.Request?
+
     init(target: SubjectEditorTarget, onDeleted: (() -> Void)? = nil) {
         self.target = target
         self.onDeleted = onDeleted
@@ -92,6 +99,15 @@ struct SubjectEditorView: View {
                         .font(.chipLabel)
                         .foregroundStyle(ScorePalette.inkSecondary)
                 }
+            }
+            // Dieselbe Frage wie beim Wisch in der Fächerliste, aus derselben
+            // Fassung: Zwei Wege zum selben Löschen dürfen nicht verschieden
+            // warnen.
+            .subjectDeleteConfirmation($pendingDeletion, among: subjects) { _ in
+                // Das Fach ist weg — eine offene Fachansicht zeigt sonst auf
+                // einen toten Datensatz, und der Editor hat kein Ziel mehr.
+                onDeleted?()
+                dismiss()
             }
         }
     }
@@ -334,11 +350,18 @@ struct SubjectEditorView: View {
         dismiss()
     }
 
+    /// Fragt nach, statt sofort zu löschen.
+    ///
+    /// Vorher lag hier ein `modelContext.delete(subject)`. Das war doppelt
+    /// falsch: Es löschte ohne die Frage, die der Wisch in der Fächerliste
+    /// stellt — und es löschte nur das Fach. Halbjahre und Leistungen wären der
+    /// Kaskade des Stores überlassen gewesen, die keine verfolgten
+    /// Einzellöschungen erzeugt; ohne die käme das Fach auf dem zweiten Gerät
+    /// zurück. Die Begründung steht ausführlich bei
+    /// ``SubjectDeletion/delete(_:in:)``, gelöscht wird jetzt dort.
     private func delete() {
         guard let subject = target.editedSubject, subject.isCustom else { return }
-        modelContext.delete(subject)
-        onDeleted?()
-        dismiss()
+        pendingDeletion = SubjectDeletion.request(for: subject)
     }
 }
 

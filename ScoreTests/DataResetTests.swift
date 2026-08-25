@@ -89,6 +89,25 @@ struct DataResetTests {
         #expect(!summary.isEmpty)
     }
 
+    /// Der Dialog sprach von „deinem Profil", `deleteAll` löscht aber **jedes**.
+    /// Wer zwei Profile nebeneinander führt, verlor das zweite mit, ohne dass es
+    /// je dagestanden hätte. Die Zusammenfassung zählt sie deshalb.
+    @Test("Die Vorschau zählt jedes Profil, nicht nur eines")
+    func summaryCountsEveryProfile() throws {
+        let context = try Self.makeContext()
+        context.insert(StudentProfile(firstName: "Jonas", hasCompletedOnboarding: true))
+        try context.save()
+
+        let summary = try DataReset.summary(in: context)
+        #expect(summary.profileCount == 2)
+        #expect(summary.hasProfile)
+
+        // Und das Löschen räumt tatsächlich beide weg — genau das, was der
+        // Dialog jetzt ankündigt.
+        try DataReset.deleteAll(in: context, defaults: Self.makeDefaults())
+        #expect(try context.fetchCount(FetchDescriptor<StudentProfile>()) == 0)
+    }
+
     @Test("Nach dem Löschen ist der Speicher leer")
     func deletesEverything() throws {
         let context = try Self.makeContext()

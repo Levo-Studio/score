@@ -45,6 +45,10 @@ struct PointsPad: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                // Sechzehn gleich klingende Zahlenknöpfe: Ohne das Merkmal ist der
+                // bereits eingetragene Punktwert beim Vorlesen nicht von den
+                // fünfzehn anderen zu unterscheiden.
+                .accessibilityAddTraits(selection == value ? .isSelected : [])
             }
         }
         .scoreAnimation(ScoreMotion.tap, value: selection)

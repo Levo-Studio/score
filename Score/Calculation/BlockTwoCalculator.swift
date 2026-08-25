@@ -29,9 +29,12 @@ import Foundation
 /// verschiebt sich dadurch nicht: bei 15 und 15 steht wieder 15.
 ///
 /// Ein nicht ganzzahliges Ergebnis wird kaufmännisch gerundet — ab der Dezimale 5
-/// aufwärts. Score rundet dabei den **vierfachen Wert je Fach** und nicht erst die
-/// Summe: die Verordnung spricht vom Ergebnis des einzelnen Prüfungsfachs, und
-/// nur so bleibt der Beitrag eines Fachs für sich genommen nachrechenbar.
+/// aufwärts. Gerundet wird das **Prüfungsergebnis selbst**, und erst die ganze
+/// Zahl geht vervierfacht in den Block ein. Die Verordnung kennt nur ganzzahlige
+/// Prüfungsergebnisse von 0 bis 15; der Faktor 4 kommt danach. Der Beitrag eines
+/// Fachs ist deshalb immer durch 4 teilbar. Wer stattdessen den vervierfachten
+/// Wert rundet, kommt bei schriftlich 10 und mündlich 11 auf 41 statt auf die
+/// amtlichen 40 — (20 + 11) ÷ 3 = 10,33 → 10 → 40.
 ///
 /// ## Noch nicht geprüft ist nicht null
 ///
@@ -123,9 +126,14 @@ enum BlockTwoCalculator {
             }
         }
 
-        /// Was dieses Fach zu Block II beiträgt: das Ergebnis mal vier, gerundet.
+        /// Was dieses Fach zu Block II beiträgt: das gerundete Ergebnis mal vier.
+        ///
+        /// Erst runden, dann vervierfachen — nicht umgekehrt. Das
+        /// Prüfungsergebnis eines Fachs ist amtlich eine ganze Zahl von 0 bis 15;
+        /// die vierfache Wertung setzt darauf auf. Aus schriftlich 10 und
+        /// mündlich 11 wird so (20 + 11) ÷ 3 = 10,33 → 10 → 40 und nicht 41.
         var points: Int? {
-            result.map { Int(($0 * Double(weight)).rounded()) }
+            result.map { Int($0.rounded()) * weight }
         }
     }
 
@@ -136,17 +144,47 @@ enum BlockTwoCalculator {
         /// Die fünf Prüfungen in fester Reihenfolge: erst schriftlich, dann mündlich.
         var exams: [Exam]
         /// Wie viele der fünf Prüfungen ein Ergebnis haben.
+        ///
+        /// Nie mehr als fünf: mehr Prüfungen als die Verordnung kennt, kann es
+        /// nicht geben. Siehe ``expectedExamCount``.
         var recordedExamCount: Int
         /// Wie viele Prüfungen es überhaupt gibt.
         ///
         /// Amtlich immer fünf. Solange die Prüfungsfächer nicht vollständig
         /// gewählt sind, kennt Score weniger — die Zahl steht deshalb hier und ist
         /// keine Konstante der Anzeige.
+        ///
+        /// Nach oben ist sie auf fünf begrenzt. Eine Fächerwahl mit vier
+        /// Leistungsfächern und zwei mündlichen Prüfungsfächern ist nicht
+        /// vorgesehen, kann aber im Datenbestand stehen — etwa nach einem Import
+        /// oder einem Sync über zwei Geräte. Score rechnet solche Fälle weiter,
+        /// meldet aber keine sechste Prüfung: sonst stünde „6 von 5 eingetragen"
+        /// auf dem Bildschirm. Ob eine dieser Prüfungen noch offen ist, sagt
+        /// ``isComplete`` — die zählt an dieser Zahl vorbei.
         var expectedExamCount: Int
 
-        /// Ob alle fünf Prüfungen ein Ergebnis haben.
+        /// Ob für jede Prüfung ein Ergebnis vorliegt.
+        ///
+        /// Zwei Bedingungen, und beide sind nötig: Es müssen mindestens die
+        /// amtlichen fünf Prüfungen im Bestand stehen — wer seine mündlichen
+        /// Prüfungsfächer noch nicht gewählt hat, hat drei, und dann ist gar
+        /// nichts vollständig —, und **jede** Prüfung im Bestand muss ein
+        /// Ergebnis haben.
+        ///
+        /// Gezählt wird deshalb über ``exams`` und nicht über ``recordedExamCount``
+        /// und ``expectedExamCount``: Beide sind auf fünf gedeckelt, und der
+        /// Deckel würde die Lücke verdecken. Stünden sechs Prüfungsfächer im
+        /// Bestand und hätten fünf davon ein Ergebnis, käme der Deckel auf
+        /// recorded 5 und expected 5, der Block gälte als abgeschlossen und
+        /// ``AbiturResult/Outcome/isPassed`` könnte wahr werden — obwohl eine
+        /// echte Prüfung leer dasteht.
+        ///
+        /// ``missingExamCount`` zählt aus demselben Grund über ``exams`` und ist
+        /// genau dann 0, wenn hier `true` steht. Die beiden dürfen sich nicht
+        /// widersprechen: Sonst gälte eine Prüfung als weder erfasst noch
+        /// fehlend und fiele aus der Hochrechnung heraus.
         var isComplete: Bool {
-            expectedExamCount == examCount && recordedExamCount == examCount
+            exams.count >= examCount && exams.allSatisfy { $0.result != nil }
         }
 
         /// Der Schnitt über die Prüfungen, die schon ein Ergebnis haben.
@@ -159,8 +197,46 @@ enum BlockTwoCalculator {
         }
 
         /// Wie viele der fünf Prüfungen noch fehlen.
+        ///
+        /// Gerechnet gegen die amtliche Fünf und **nicht** gegen
+        /// ``expectedExamCount``. Fünf Prüfungen sind die Prüfungsordnung und
+        /// keine Aussage über den Datenbestand: Dass die beiden mündlichen
+        /// Prüfungsfächer noch nicht gewählt sind — der Normalzustand in
+        /// Kursstufe 1 und im grössten Teil von Kursstufe 2 —, heisst nur, dass
+        /// Score die Fächer noch nicht kennt. Die Prüfungen kommen trotzdem.
+        ///
+        /// Gegen ``expectedExamCount`` gerechnet würden für diese Nutzer nur drei
+        /// Prüfungen fortgeschrieben. ``AbiturResult/Outcome/totalPoints`` käme
+        /// damit höchstens auf 600 + 180 = 780, die Note aber weiter aus der
+        /// Tabelle von 0 bis 900 — der erwartete Schnitt fiele um rund eine ganze
+        /// Note, ohne dass sich an den Daten etwas geändert hätte.
+        ///
+        /// Gezählt wird deshalb aus zwei Teilen: die Prüfungen, die im Bestand
+        /// stehen und noch kein Ergebnis haben, plus die, die Score noch gar
+        /// nicht kennt, weil die Fächerwahl offen ist.
+        ///
+        /// Der Umweg über ``recordedExamCount`` allein ginge schief, sobald mehr
+        /// als fünf Prüfungen im Bestand stehen — vier Leistungsfächer nach einem
+        /// Import oder Sync. ``recordedExamCount`` ist auf fünf gedeckelt, und
+        /// bei sechs Prüfungen mit fünf Ergebnissen stünde hier 0, während
+        /// ``isComplete`` zu Recht `false` sagt. ``projectedPoints(assuming:)``
+        /// schriebe die offene sechste Prüfung dann nicht fort, und sie ginge
+        /// faktisch als 0 Punkte ein — genau das, was die Regel „noch nicht
+        /// geprüft ist nicht null" verbietet. Aus fünf Ergebnissen à 6 Punkten
+        /// würden so 120 statt 144 Punkte, und
+        /// ``AbiturResult/Outcome/failedConditions`` meldete womöglich einen
+        /// gerissenen Prüfungsblock, den es nicht gibt.
+        ///
+        /// Nach oben bleibt es trotzdem bei fünf, wie bei den 300 Punkten und bei
+        /// ``recordedExamCount``: Mehr als fünf Prüfungen sieht die Verordnung
+        /// nicht vor, und ein Datenfehler darf die Hochrechnung nicht über die
+        /// amtliche Grenze heben. Der Deckel ändert am Kern nichts — diese Zahl
+        /// ist genau dann 0, wenn ``isComplete`` gilt. Beide sagen dasselbe, und
+        /// keine offene Prüfung verschwindet mehr zwischen ihnen.
         var missingExamCount: Int {
-            max(0, examCount - recordedExamCount)
+            let openInStock = exams.count { $0.result == nil }
+            let notYetChosen = max(0, examCount - exams.count)
+            return min(examCount, openInStock + notYetChosen)
         }
 
         /// Die hochgerechnete Punktzahl, wenn die fehlenden Prüfungen auf einem
@@ -174,8 +250,15 @@ enum BlockTwoCalculator {
         /// - Parameter level: Das angenommene Ergebnis je fehlender Prüfung, 0 bis
         ///   15. Der Aufrufer nimmt dafür den Schnitt der schon geprüften Fächer
         ///   oder, wenn es keinen gibt, das Niveau des Kursblocks.
+        ///
+        /// Gedeckelt wie ``points`` selbst: Stehen mehr als fünf Prüfungen im
+        /// Bestand, könnten erfasste und fortgeschriebene zusammen über die 300
+        /// Punkte hinauslaufen, die es in diesem Block gibt.
         func projectedPoints(assuming level: Double) -> Int {
-            points + missingExamCount * Int((level * Double(weight)).rounded())
+            min(
+                maximumPoints,
+                points + missingExamCount * Int((level * Double(weight)).rounded())
+            )
         }
 
         /// Ob die Mindestbedingung von 100 Punkten erfüllt ist.
@@ -192,11 +275,24 @@ enum BlockTwoCalculator {
     /// Stellt die fünf Prüfungen aus den Fächern zusammen und rechnet Block II.
     static func calculate(for subjects: [SubjectInput]) -> Outcome {
         let exams = self.exams(in: subjects)
+
+        // Mehr als fünf Prüfungen sieht die Verordnung nicht vor. Im Datenbestand
+        // stehen kann es trotzdem: vier Leistungsfächer neben zwei mündlichen
+        // Prüfungsfächern ergeben sechs Prüfungen — nach einem Import, einem Sync
+        // über zwei Geräte oder einer noch unfertigen Fächerwahl. Score rechnet
+        // dann weiter, aber innerhalb der amtlichen Grenzen: der Beitrag ist bei
+        // 300 Punkten gedeckelt, und gezählt werden höchstens fünf Prüfungen.
+        // Ohne den Deckel stünden bis zu 360 Punkte in einem Block, den es nur bis
+        // 300 gibt, und ``Outcome/missingExamCount`` würde negativ.
+        //
+        // Der Deckel gilt nur für die Zählung, nicht für die Vollständigkeit:
+        // ``Outcome/isComplete`` sieht die Prüfungen selbst an, damit eine sechste
+        // ohne Ergebnis nicht hinter der Fünf verschwindet.
         return Outcome(
-            points: exams.compactMap(\.points).reduce(0, +),
+            points: min(maximumPoints, exams.compactMap(\.points).reduce(0, +)),
             exams: exams,
-            recordedExamCount: exams.count { $0.result != nil },
-            expectedExamCount: exams.count
+            recordedExamCount: min(examCount, exams.count { $0.result != nil }),
+            expectedExamCount: min(examCount, exams.count)
         )
     }
 

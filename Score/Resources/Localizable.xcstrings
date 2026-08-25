@@ -1443,6 +1443,23 @@
         }
       }
     },
+    "Am Fach stehen ungesicherte Änderungen. Sie gehen verloren, wenn du jetzt woandershin wechselst.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Am Fach stehen ungesicherte Änderungen. Sie gehen verloren, wenn du jetzt woandershin wechselst."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This subject has unsaved changes. They are gone if you move somewhere else now."
+          }
+        }
+      }
+    },
     "Amtliche Tabelle in Stufen von 18 Punkten · ab 823 steht 1,0": {
       "extractionState": "manual",
       "localizations": {
@@ -1613,13 +1630,13 @@
         }
       }
     },
-    "Automatisch geklammert: Es zählen nur %lld Kurse, und dieser gehört zu den schwächsten. Ab %lld Punkten bleibt ein Wahl-Basisfach-Kurs drin.": {
+    "Automatisch geklammert: Es zählen nur %lld Kurse, und dieser gehört zu den schwächsten. Der schwächste Wahl-Basisfach-Kurs, der es noch hineingeschafft hat, steht bei %lld Punkten — bei Gleichstand entscheidet Fach und Halbjahr.": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Automatisch geklammert: Es zählen nur %1$lld Kurse, und dieser gehört zu den schwächsten. Ab %2$#@points@ bleibt ein Wahl-Basisfach-Kurs drin."
+            "value": "Automatisch geklammert: Es zählen nur %1$lld Kurse, und dieser gehört zu den schwächsten. Der schwächste Wahl-Basisfach-Kurs, der es noch hineingeschafft hat, steht bei %2$#@points@ — bei Gleichstand entscheidet Fach und Halbjahr."
           },
           "substitutions": {
             "points": {
@@ -1647,7 +1664,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bracketed automatically: only %1$lld courses count, and this one is among the weakest. From %2$#@points@ upwards an elective basic course stays in."
+            "value": "Bracketed automatically: only %1$lld courses count, and this one is among the weakest. The weakest elective course that still made it in sits at %2$#@points@ — ties are settled by subject and semester."
           },
           "substitutions": {
             "points": {
@@ -2180,6 +2197,65 @@
         }
       }
     },
+    "Damit verschwinden alle %lld Profile, %lld Fächer und %lld Leistungen — von diesem Gerät und aus deiner iCloud, also auch von deinen anderen Geräten. Einen Server von uns gibt es nicht, dort bleibt nichts zurück. Rückgängig machen lässt sich das nicht.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Damit verschwinden alle %lld Profile, %lld Fächer und %lld Leistungen — von diesem Gerät und aus deiner iCloud, also auch von deinen anderen Geräten. Einen Server von uns gibt es nicht, dort bleibt nichts zurück. Rückgängig machen lässt sich das nicht."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This removes all %1$lld profiles, %2$#@subjects@ and %3$#@entries@ — from this device and from your iCloud, and therefore from your other devices too. We run no server of our own, so nothing is left behind there. This cannot be undone."
+          },
+          "substitutions": {
+            "entries": {
+              "argNum": 3,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg grade"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg grades"
+                    }
+                  }
+                }
+              }
+            },
+            "subjects": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg subject"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg subjects"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Damit verschwinden dein Profil, %lld Fächer und %lld Leistungen — von diesem Gerät und aus deiner iCloud, also auch von deinen anderen Geräten. Einen Server von uns gibt es nicht, dort bleibt nichts zurück. Rückgängig machen lässt sich das nicht.": {
       "extractionState": "manual",
       "localizations": {
@@ -2583,6 +2659,105 @@
           "stringUnit": {
             "state": "translated",
             "value": "Your profile"
+          }
+        }
+      }
+    },
+    "Deine %lld Fächer mit %lld Leistungen werden gelöscht, und dein Profil übernimmt Name, Bundesland, Jahrgang und Klassenstufe aus der Datei. Aus der Datei kommen %lld Fächer mit %lld Leistungen. Rückgängig machen lässt sich das nicht.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine %lld Fächer mit %lld Leistungen werden gelöscht, und dein Profil übernimmt Name, Bundesland, Jahrgang und Klassenstufe aus der Datei. Aus der Datei kommen %lld Fächer mit %lld Leistungen. Rückgängig machen lässt sich das nicht."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your %1$#@current@ with %2$#@currentGrades@ will be deleted, and your profile takes its name, state, year and class level from the file. The file brings %3$#@incoming@ with %4$#@incomingGrades@. This cannot be undone."
+          },
+          "substitutions": {
+            "current": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg subject"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg subjects"
+                    }
+                  }
+                }
+              }
+            },
+            "currentGrades": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg grade"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg grades"
+                    }
+                  }
+                }
+              }
+            },
+            "incoming": {
+              "argNum": 3,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg subject"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg subjects"
+                    }
+                  }
+                }
+              }
+            },
+            "incomingGrades": {
+              "argNum": 4,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg grade"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg grades"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -3118,6 +3293,23 @@
         }
       }
     },
+    "Diese Leistung gibt es nicht mehr — vermutlich wurde sie auf einem anderen Gerät gelöscht. Deine Änderungen konnten deshalb nicht gespeichert werden.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Leistung gibt es nicht mehr — vermutlich wurde sie auf einem anderen Gerät gelöscht. Deine Änderungen konnten deshalb nicht gespeichert werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This grade no longer exists — it was probably deleted on another device. Your changes could not be saved."
+          }
+        }
+      }
+    },
     "Diese Wahl hast du selbst getroffen. Score rechnet damit, auch wenn eine andere Kombination besser ausfiele. Nimm ein Kennzeichen weg, und Score wählt wieder von sich aus.": {
       "extractionState": "manual",
       "localizations": {
@@ -3209,6 +3401,23 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Dieses Fach gibt es nicht mehr — vermutlich wurde es auf einem anderen Gerät gelöscht. Deine Eingabe konnte deshalb nicht gespeichert werden.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Fach gibt es nicht mehr — vermutlich wurde es auf einem anderen Gerät gelöscht. Deine Eingabe konnte deshalb nicht gespeichert werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This subject no longer exists — it was probably deleted on another device. Your entry could not be saved."
           }
         }
       }
@@ -4977,6 +5186,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Grade deleted"
+          }
+        }
+      }
+    },
+    "Leistung nicht gespeichert": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leistung nicht gespeichert"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grade not saved"
           }
         }
       }
@@ -7485,6 +7711,23 @@
         }
       }
     },
+    "Weiter bearbeiten": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weiter bearbeiten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep editing"
+          }
+        }
+      }
+    },
     "Wertungen": {
       "extractionState": "manual",
       "localizations": {
@@ -8263,6 +8506,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Save changes"
+          }
+        }
+      }
+    },
+    "Änderungen verwerfen?": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Änderungen verwerfen?"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard changes?"
           }
         }
       }

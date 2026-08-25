@@ -110,6 +110,8 @@ final class ManualCloudSync {
     private let defaults: UserDefaults
     private let saveAndReopen: @MainActor () async throws -> Void
     private let isAvailable: @MainActor () -> Bool
+    private let holdsUnsavedInput: @MainActor () -> Bool
+    private let whenNothingIsOpen: @MainActor (@escaping () -> Void) -> Void
 
     private var observation: NotificationObservation?
     private var run: Task<Void, Never>?
@@ -136,6 +138,9 @@ final class ManualCloudSync {
     ///     speisen die Ereignisse selbst ein und schalten das ab.
     ///   - saveAndReopen: Was der Abgleich tatsächlich tut.
     ///   - isAvailable: Ob dieser Prozess überhaupt abgleichen kann.
+    ///   - holdsUnsavedInput: Ob gerade ein Blatt mit ungesicherter Eingabe
+    ///     offen steht. Dann verschiebt sich der automatische Abgleich.
+    ///   - whenNothingIsOpen: Wie ein verschobener Abgleich nachgeholt wird.
     init(
         defaults: UserDefaults = .standard,
         observesEvents: Bool = true,
@@ -144,6 +149,12 @@ final class ManualCloudSync {
         saveAndReopen: @escaping @MainActor () async throws -> Void = ScoreDataStore.saveAndReopen,
         isAvailable: @escaping @MainActor () -> Bool = {
             CloudKitAvailability.isEntitled && CloudSyncActivation.isActiveInThisSession
+        },
+        holdsUnsavedInput: @escaping @MainActor () -> Bool = {
+            UnsavedInputRegistry.shared.holdsUnsavedInput
+        },
+        whenNothingIsOpen: @escaping @MainActor (@escaping () -> Void) -> Void = {
+            UnsavedInputRegistry.shared.whenNothingIsOpen($0)
         }
     ) {
         self.defaults = defaults
@@ -151,6 +162,8 @@ final class ManualCloudSync {
         self.settleDuration = settleDuration
         self.saveAndReopen = saveAndReopen
         self.isAvailable = isAvailable
+        self.holdsUnsavedInput = holdsUnsavedInput
+        self.whenNothingIsOpen = whenNothingIsOpen
         self.lastSyncedAt = defaults.object(forKey: Key.lastSyncedAt) as? Date
 
         if observesEvents {
@@ -168,13 +181,72 @@ final class ManualCloudSync {
         isAvailable() && phase != .running
     }
 
+    /// Wer den Abgleich angestossen hat.
+    enum Trigger {
+        /// Der Nutzer hat „Jetzt synchronisieren" getippt.
+        case manual
+        /// Die App ist in den Vordergrund zurückgekommen, siehe `ScoreApp`.
+        case automatic
+    }
+
+    /// Ob ein automatischer Abgleich gerade auf ein offenes Blatt wartet.
+    ///
+    /// Nach aussen sichtbar, damit Tests die Verschiebung nachweisen können; die
+    /// Oberfläche zeigt sie **nicht** an. Ein Abgleich, den niemand angestossen
+    /// hat, muss auch nicht erklären, warum er noch nicht lief.
+    private(set) var isDeferred = false
+
+    /// Ob bei der Anmeldestelle bereits eine Nachhol-Schliessung liegt.
+    ///
+    /// Getrennt von ``isDeferred``, weil beides auseinanderlaufen kann: Kam der
+    /// nachgeholte Lauf nicht zustande, ist die Schliessung verbraucht, der Lauf
+    /// aber weiterhin vorgemerkt — und der nächste Aufschub muss dann eine neue
+    /// Schliessung hinterlegen dürfen.
+    private var isArmed = false
+
     /// Stösst einen Abgleich an.
     ///
     /// Während ein Lauf unterwegs ist, tut ein weiterer Tipp nichts.
-    func start() {
+    ///
+    /// ## Warum ein automatischer Lauf warten kann
+    ///
+    /// Der Abgleich öffnet den Speicher neu und tauscht dabei den
+    /// `ModelContainer` — alle Modellobjekte des alten Kontexts werden ungültig
+    /// (siehe ``ScoreDataStore/reopen(make:)``). Steht dabei ein Eingabe-Blatt
+    /// offen, hängen dessen ungesicherte Eingaben am alten Kontext, und beim
+    /// Bestätigen liefe das Einfügen über die Kontextgrenze. Zweimal wurde
+    /// versucht, das in der Oberfläche aufzufangen; beide Male blieb ein Weg
+    /// über die Grenze übrig. Deshalb wartet der Tausch, statt dass die Ansichten
+    /// ihn überstehen müssen — ``UnsavedInputRegistry`` erklärt es ausführlich.
+    ///
+    /// Verschoben heisst **nicht** abgesagt: Sobald das letzte Blatt zu ist,
+    /// läuft der Abgleich nach. Ein Abgleich, der nie läuft, wäre nur die
+    /// nächste Regression.
+    ///
+    /// Der Abgleich von Hand wartet nicht. Er ist bei offenem Blatt gar nicht
+    /// erreichbar — die Einstellungen liegen hinter einem anderen Reiter, und
+    /// das Blatt liegt über allem. Ihn trotzdem zu sperren hiesse, auf einen
+    /// ausdrücklichen Tipp hin stumm nichts zu tun.
+    func start(trigger: Trigger = .manual) {
         guard phase != .running, isAvailable() else { return }
 
+        if trigger == .automatic, holdsUnsavedInput() {
+            deferUntilNothingIsOpen()
+            return
+        }
+
+        isDeferred = false
         reset?.cancel()
+
+        // Auch die Karenz des vorigen Laufs. Ohne das gehörte sie noch dem alten
+        // Lauf und prüfte nur, ob **irgendein** Lauf gerade unterwegs ist:
+        // Scheiterte Lauf A nach dem Einrichten — etwa an einem fehlenden Konto —
+        // und tippt der Nutzer innerhalb der Karenz erneut, meldete die alte
+        // Karenz Erfolg für einen Lauf, den es nicht mehr gibt, und schriebe dazu
+        // einen Zeitstempel, zu dem nie etwas abgeglichen wurde.
+        settle?.cancel()
+        settle = nil
+
         phase = .running
 
         run = Task { [weak self] in
@@ -195,6 +267,53 @@ final class ManualCloudSync {
             try? await Task.sleep(for: Self.timeout)
             guard !Task.isCancelled else { return }
             self.timeoutDidElapse()
+        }
+    }
+
+    /// Merkt den Abgleich vor, bis das letzte Blatt zu ist.
+    ///
+    /// Höchstens einmal: Wer die App zweimal hintereinander in den Vordergrund
+    /// holt, während dasselbe Blatt offen steht, bekommt einen nachgeholten
+    /// Abgleich und nicht zwei.
+    private func deferUntilNothingIsOpen() {
+        isDeferred = true
+
+        // Die Vormerkung und die Schliessung bei der Anmeldestelle sind zwei
+        // verschiedene Dinge. Nur die Schliessung darf es einmal geben — die
+        // Vormerkung kann sie überdauern, wenn der nachgeholte Lauf nicht
+        // zustande kam.
+        guard !isArmed else { return }
+        armCatchUp()
+    }
+
+    /// Hinterlegt bei der Anmeldestelle, was beim nächsten freien Moment zu tun
+    /// ist.
+    ///
+    /// ## Warum `isDeferred` hier nicht vorab fällt
+    ///
+    /// Vorher stand hier `isDeferred = false` **vor** `start`. Scheiterte `start`
+    /// dann an seiner Wache — ein Lauf ist schon unterwegs, oder dieser Prozess
+    /// kann gar nicht abgleichen —, war der aufgeschobene Lauf ersatzlos weg und
+    /// wurde nirgends neu vorgemerkt. Die Zusage „genau einmal nachgeholt" galt
+    /// dann nicht.
+    ///
+    /// Jetzt setzt `start` die Vormerkung selbst zurück, und zwar erst, wenn der
+    /// Lauf wirklich beginnt. Kam er nicht zustande, bleibt er vorgemerkt: Der
+    /// nächste automatische Anstoss trifft entweder auf ein freies Feld und läuft
+    /// sofort, oder auf ein offenes Blatt und hinterlegt hier eine neue
+    /// Schliessung.
+    private func armCatchUp() {
+        isArmed = true
+
+        whenNothingIsOpen { [weak self] in
+            guard let self else { return }
+
+            // Die Schliessung ist verbraucht — noch **bevor** `start` läuft, denn
+            // `start` kann von sich aus eine neue hinterlegen wollen.
+            self.isArmed = false
+            guard self.isDeferred else { return }
+
+            self.start(trigger: .automatic)
         }
     }
 

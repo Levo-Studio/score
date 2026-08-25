@@ -90,3 +90,21 @@ extension BlockOneCalculator.CourseIdentifier {
 func course(_ subjectID: String, _ semesterIndex: Int) -> BlockOneCalculator.CourseIdentifier {
     BlockOneCalculator.CourseIdentifier(subjectID, semesterIndex)
 }
+
+// MARK: - Zugriff auf den Entwurf eines Eingabe-Blattes
+
+extension GradeEntryEdit {
+
+    /// Der Entwurf, den dieses Blatt hält.
+    ///
+    /// Nur für Tests: Sie tippen auf dem Entwurf, bevor überhaupt ein Kontext im
+    /// Spiel ist. Bei einer bestehenden Leistung gibt es keinen — dort hält das
+    /// Blatt bewusst nur eine Kennung, und ein Zugriff hier wäre ein Fehler im
+    /// Test und keine Aussage über den Code.
+    var draftUnderTest: GradeEntry {
+        guard let draftEntry else {
+            fatalError("Dieses Blatt zeigt eine bestehende Leistung und keinen Entwurf.")
+        }
+        return draftEntry
+    }
+}

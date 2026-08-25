@@ -296,6 +296,30 @@ struct BlockOneCalculatorTests {
         #expect(isClose(outcome.averagePoints, 11.6))
     }
 
+    @Test("Die automatische Wahl geht nach dem Ergebnis, nicht nach der Punktsumme")
+    func automaticDoubleWeightingMaximisesTheResult() {
+        // Zwei Leistungsfächer mit vier Kursen à 8 Punkten stehen bei je 32
+        // Punkten, eines mit zwei Kursen à 15 nur bei 30. Nach der Summe fiele die
+        // Wahl auf die beiden schwachen — mit jedem verdoppelten Kurs wächst aber
+        // auch der Nenner, und deshalb ist das die schlechtere Wahl.
+        let subjects = [
+            subject("lf-a", .leistungsfach, allPoints: 8),
+            subject("lf-b", .leistungsfach, points: [15, 15]),
+            subject("lf-c", .leistungsfach, allPoints: 8)
+        ]
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        // lf-a und lf-c: 94 + 64 = 158 auf 18 Wertungen = 8,77… → 351 Punkte.
+        // lf-a und lf-b: 94 + 62 = 156 auf 16 Wertungen = 9,75 → 390 Punkte.
+        #expect(outcome.doubleWeightedSubjectIDs == ["lf-a", "lf-b"])
+        #expect(outcome.usesAutomaticDoubleWeighting)
+        #expect(outcome.weightedPointsTotal == 156)
+        #expect(outcome.effectiveWeightingCount == 16)
+        #expect(isClose(outcome.averagePoints, 9.75))
+        #expect(outcome.points == 390)
+    }
+
     @Test("Genau zwei gesetzte Leistungsfächer übersteuern die automatische Wahl")
     func manualDoubleWeightingWins() {
         let subjects = [
@@ -499,6 +523,24 @@ struct BlockOneCalculatorTests {
         #expect(outcome.recordedCount == 2)
         #expect(outcome.includedCount == 2)
         #expect(isClose(outcome.averagePoints, 12))
+    }
+
+    @Test("Ein vollständiger Bestand mit nur einem Leistungsfach ist keine Hochrechnung")
+    func aFullYearWithOneAdvancedSubjectIsNoProjection() {
+        // Ein Leistungsfach und neun Basisfächer: 40 Kurse, alle erfasst, alle
+        // eingebracht. Doppelt gewertet werden kann nur das eine Leistungsfach,
+        // also stehen 44 Wertungen statt 48. Das ist eine ungewöhnliche
+        // Fächerwahl und trotzdem kein fehlender Kurs — gegen die 48 gemessen
+        // bliebe der Kursblock für immer eine Hochrechnung.
+        let subjects = [subject("lf-a", .leistungsfach, allPoints: 12)]
+            + (1...9).map { subject("bf-\($0)", .wahlBasisfach, allPoints: 12) }
+
+        let outcome = BlockOneCalculator.calculate(for: subjects)
+
+        #expect(outcome.includedCount == BlockOneCalculator.totalCourseCount)
+        #expect(outcome.effectiveWeightingCount == 44)
+        #expect(!outcome.isProjection)
+        #expect(outcome.points == 480)
     }
 }
 

@@ -24,16 +24,31 @@ struct SubjectDetailView: View {
     /// Die zuletzt gelöschte Leistung, solange sie sich zurückholen lässt.
     @State private var pendingUndo: PendingGradeEntryUndo?
 
+    /// Steht, wenn eine Eingabe nicht gespeichert werden konnte, weil ihr Fach
+    /// oder die bearbeitete Leistung inzwischen weg ist.
+    ///
+    /// Ohne diese Meldung ging das Blatt einfach zu und die Punkte waren weg —
+    /// oder, schlimmer, der Streifen meldete eine Leistung, die es gar nicht
+    /// gab.
+    @State private var lostInput: LostInput?
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ScrollView {
+        // Einmal je Durchlauf und nicht je Lesestelle: ``summary`` rechnet über
+        // ``BlockOneCalculator`` alle Fächer durch. Der Wert wurde zuvor an über
+        // einem Dutzend Stellen im Rumpf gelesen — beim Tippen im Titelfeld
+        // einer Leistung wurde Block I damit bei jedem Anschlag ein Dutzend Mal
+        // komplett neu berechnet.
+        let summary = self.summary
+
+        return ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 navigationRow
-                header
+                header(summary)
                 SemesterPicker(selection: $semesterIndex, labels: Semester.labels)
-                subjectGlowCard
-                semesterCard
+                subjectGlowCard(summary)
+                semesterCard(summary)
                 entrySection(
                     title: "Schriftliche Leistungen",
                     kind: .written,
@@ -66,25 +81,52 @@ struct SubjectDetailView: View {
         .overlay(alignment: .bottom) {
             undoOverlay
         }
+        .alert(
+            "Leistung nicht gespeichert",
+            isPresented: lostInputAlert,
+            presenting: lostInput
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { lost in
+            lost.message
+        }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $isEditorPresented) {
+            // Der Editor hält einen Entwurf, der erst beim Sichern ins Modell
+            // geht — solange er steht, wird der Speicher nicht getauscht.
             SubjectEditorView(target: .existing(subject)) { dismiss() }
+                .holdsUnsavedInput()
         }
         // Mittig und nicht von unten: siehe ``ScoreOverlaySheet``.
         .scoreOverlaySheet(item: closingEntrySheet) { edit in
-            GradeEntrySheet(
-                entry: edit.entry,
-                subject: subject,
-                semesterEntries: currentSemester?.entries ?? [],
-                onDelete: { discard(edit) },
-                onConfirm: { confirm(edit) },
-                isNew: edit.isNew
-            )
+            entrySheet(edit)
+        }
+        // Derselbe Griff wie auf dem iPad, aus demselben Grund: Der Griff auf das
+        // Schliessen oben hängt an der Bindung und läuft nur, wenn jemand das
+        // Blatt zumacht. Verschwindet stattdessen die ganze Ansicht, ohne dass
+        // jemand sie schliesst — ein Wechsel des Reiters, ein Abbau beim
+        // Neuöffnen des Speichers, ein gelöschtes Fach —, käme er nie dran, und
+        // die gerade eingetippten Punkte wären weg. Hier ist die letzte
+        // Gelegenheit, sie zu behalten.
+        .onDisappear {
+            guard let edit = editedEntry else { return }
+            // Erst leeren: Der Entwurf ist danach entweder angelegt oder
+            // verfallen, und ein zweiter Durchlauf legte ihn ein zweites Mal an.
+            editedEntry = nil
+            // Ohne Streifen: Er hinge an dieser Ansicht, die gerade abgebaut
+            // wird, und erschiene nie. Siehe ``keepIfEdited(_:offersUndo:)``.
+            keepIfEdited(edit, offersUndo: false)
         }
     }
 
     // MARK: - Abgeleitete Werte
 
+    /// Der Stand dieses Fachs im gewählten Halbjahr.
+    ///
+    /// Teuer: Die Auskunft entsteht über ``BlockOneCalculator`` und damit aus
+    /// allen Fächern. Deshalb wird sie im Rumpf genau einmal gelesen und von
+    /// dort an die Karten weitergereicht, statt sie in jeder Karte erneut
+    /// abzufragen.
     private var summary: SubjectSummary {
         SubjectOverview.summary(for: subject, semesterIndex: semesterIndex, among: allSubjects)
     }
@@ -140,7 +182,7 @@ struct SubjectDetailView: View {
 
     // MARK: - Kopf
 
-    private var header: some View {
+    private func header(_ summary: SubjectSummary) -> some View {
         HStack(spacing: 13) {
             SubjectDot(color: subject.color, size: 46, cornerRadius: 15)
 
@@ -175,7 +217,7 @@ struct SubjectDetailView: View {
     /// Die kleine Schwester der Dashboard-Karte: gleicher Aufbau, aber der Schein
     /// hat die Farbe des Fachs statt des Markenpetrols. So bleibt beim Blättern
     /// durch die Fächer sofort klar, wo man ist.
-    private var subjectGlowCard: some View {
+    private func subjectGlowCard(_ summary: SubjectSummary) -> some View {
         VStack(alignment: .leading, spacing: 0) {
                 Text("Schnitt über alle Halbjahre")
                     .font(.cardLabel)
@@ -211,7 +253,7 @@ struct SubjectDetailView: View {
 
                     Spacer(minLength: ScoreMetrics.Spacing.xs)
 
-                    semesterResultText
+                    semesterResultText(summary)
                         .font(ScoreTypography.archivo(600, 13))
                         .monospacedDigit()
                         .foregroundStyle(ScorePalette.scoreInk)
@@ -261,7 +303,7 @@ struct SubjectDetailView: View {
     /// Liefert `Text`, damit der Plural von „Punkte" aus dem String-Katalog
     /// kommt; die Zahlen selbst bleiben unverändert. Zusammengesetzt wird als
     /// `AttributedString`, weil die Verkettung zweier `Text` abgekündigt ist.
-    private var semesterResultText: Text {
+    private func semesterResultText(_ summary: SubjectSummary) -> Text {
         let grade = ScoreNumberFormat.grade(summary.result.map { SubjectMath.grade(fromPoints: Double($0)) })
         guard let result = summary.result else {
             return Text(verbatim: ScoreNumberFormat.placeholder)
@@ -275,7 +317,7 @@ struct SubjectDetailView: View {
 
     // MARK: - Halbjahres-Karte
 
-    private var semesterCard: some View {
+    private func semesterCard(_ summary: SubjectSummary) -> some View {
         ScoreCard {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
@@ -283,7 +325,7 @@ struct SubjectDetailView: View {
                         .font(.cardTitle)
                         .foregroundStyle(ScorePalette.ink)
                     Spacer(minLength: ScoreMetrics.Spacing.xs)
-                    if let stateText = semesterStateText {
+                    if let stateText = semesterStateText(summary) {
                         ScoreBadge(title: stateText)
                     }
                 }
@@ -341,7 +383,7 @@ struct SubjectDetailView: View {
     ///
     /// Bewusst ein Badge und kein eigener Bildschirm: es ist eine Randnotiz, kein
     /// Problem, das gelöst werden müsste.
-    private var semesterStateText: LocalizedStringKey? {
+    private func semesterStateText(_ summary: SubjectSummary) -> LocalizedStringKey? {
         if !summary.isActive { return "nicht belegt" }
         switch summary.bracketReason {
         case .manual: return "von dir geklammert"
@@ -493,17 +535,77 @@ struct SubjectDetailView: View {
         }
     }
 
+    /// Der Inhalt des Eingabe-Blattes.
+    ///
+    /// Die Leistung wird in **jedem** Durchlauf frisch im geltenden Kontext
+    /// gesucht, statt sie beim Öffnen festzuhalten. Das Blatt kann lange stehen,
+    /// und ein Containertausch dazwischen macht jedes festgehaltene Objekt
+    /// ungültig — getippter Titel und getippte Punkte landeten dann in einer
+    /// Leiche und wären stumm verloren. Die Begründung im Ganzen steht in
+    /// ``GradeEntryEdit``.
+    @ViewBuilder
+    private func entrySheet(_ edit: GradeEntryEdit) -> some View {
+        if let entry = edit.resolve(in: modelContext) {
+            GradeEntrySheet(
+                entry: entry,
+                subject: subject,
+                semesterEntries: currentSemester?.entries ?? [],
+                onDelete: { discard(edit) },
+                onConfirm: { confirm(edit) },
+                isNew: edit.isNew
+            )
+        } else {
+            // Die Leistung wurde gelöscht, während das Blatt offen stand. Ohne
+            // Objekt gibt es nichts mehr zu bearbeiten; das Blatt geht zu und
+            // sagt, warum. Der Griff hängt an `onAppear` und nicht am Rumpf:
+            // Zustand mitten im Aufbau zu ändern, ist genau die Sorte
+            // Nebenwirkung, die SwiftUI nicht schuldet.
+            Color.clear
+                .frame(width: 0, height: 0)
+                .onAppear { lose(edit) }
+        }
+    }
+
+    /// Das Blatt zumachen und den Verlust melden.
+    ///
+    /// Ausdrücklich **nicht** über ``closingEntrySheet``: Dort hinge
+    /// ``keepIfEdited(_:offersUndo:)`` daran, und das hätte hier nichts zu tun —
+    /// verloren ist eine bestehende Leistung, kein Entwurf.
+    private func lose(_ edit: GradeEntryEdit) {
+        editedEntry = nil
+        lostInput = edit.loss
+    }
+
+    /// Die Bindung des Hinweises. „OK" räumt ihn ab.
+    private var lostInputAlert: Binding<Bool> {
+        Binding(
+            get: { lostInput != nil },
+            set: { if !$0 { lostInput = nil } }
+        )
+    }
+
     /// Die Schaltfläche unten im Blatt: ein Entwurf wird verworfen, eine
     /// bestehende Leistung gelöscht.
     ///
     /// Ein Entwurf steht in keinem Kontext — es gibt nichts zu löschen und
     /// nichts zurückzunehmen, also auch keinen Streifen.
+    ///
+    /// Gelöscht wird die Leistung des **geltenden** Kontexts, nicht die, mit der
+    /// das Blatt aufging: `delete` nimmt eine Abschrift und ruft
+    /// `modelContext.delete` — beides auf einem Objekt aus einem abgeräumten
+    /// Kontext wäre ein Griff über die Kontextgrenze.
     private func discard(_ edit: GradeEntryEdit) {
-        if edit.isNew {
+        guard !edit.isNew else {
             editedEntry = nil
-        } else {
-            delete(edit.entry)
+            return
         }
+
+        guard let entry = edit.resolve(in: modelContext) else {
+            lose(edit)
+            return
+        }
+
+        delete(entry)
     }
 
     /// Das Blatt, mit einem Griff auf sein Schliessen.
@@ -524,8 +626,13 @@ struct SubjectDetailView: View {
     /// „Fertig": der Entwurf wird angelegt, ohne Streifen — die Bestätigung war
     /// ausdrücklich.
     private func confirm(_ edit: GradeEntryEdit) {
-        edit.commit(to: modelContext)
+        let committed = edit.commit(to: modelContext)
         editedEntry = nil
+
+        // Ein Fehlschlag heisst: Fach oder Leistung wurden inzwischen gelöscht,
+        // meist vom zweiten Gerät. Ohne diese Meldung ginge das Blatt einfach zu
+        // und die eingetippten Punkte wären ohne ein Wort weg.
+        if committed == nil { lostInput = edit.loss }
     }
 
     /// Das Blatt wurde geschlossen, ohne dass jemand „Fertig" oder „Verwerfen"
@@ -534,11 +641,29 @@ struct SubjectDetailView: View {
     /// Ein unangetasteter Entwurf verfällt. Wurde tatsächlich etwas eingegeben,
     /// entsteht die Leistung trotzdem — und der Streifen bietet sie zur Rücknahme
     /// an, genau wie eine gelöschte Note.
-    private func keepIfEdited(_ edit: GradeEntryEdit) {
+    ///
+    /// - Parameter offersUndo: Ob der Streifen angeboten wird. Aus `onDisappear`
+    ///   heraus nicht: Der Streifen ist ein `@State` dieser Ansicht, und eine
+    ///   Ansicht, die gerade abgebaut wird, zeigt ihn nicht mehr an. Ein
+    ///   Versprechen, das nicht eingelöst wird, ist schlechter als keines —
+    ///   behalten wird die Leistung trotzdem, und löschen lässt sie sich mit
+    ///   einem Wisch.
+    private func keepIfEdited(_ edit: GradeEntryEdit, offersUndo: Bool = true) {
         guard edit.isNew, edit.hasInput else { return }
 
-        edit.commit(to: modelContext)
-        showUndo(.creation(of: edit.entry))
+        guard let entry = edit.commit(to: modelContext) else {
+            // Kein Streifen: Er meldete „Leistung angelegt" für eine Leistung,
+            // die es nicht gibt, und sein Rückgängig löschte ein Objekt, das nie
+            // eingefügt wurde. Gemeldet wird der Verlust trotzdem — aber nur,
+            // wenn diese Ansicht noch steht, siehe `offersUndo`.
+            if offersUndo { lostInput = edit.loss }
+            return
+        }
+
+        guard offersUndo else { return }
+        // Die Leistung aus `commit`, nicht die aus dem Entwurf: Angeboten wird
+        // genau das, was gerade eingefügt wurde.
+        showUndo(.creation(of: entry))
     }
 
     /// Löscht eine Leistung sofort und bietet sie zur Rücknahme an.

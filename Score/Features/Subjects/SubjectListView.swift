@@ -57,6 +57,20 @@ struct SubjectListView: View {
 
     @State private var openedSubjectIdentifier: UUID?
 
+    /// Der Bildschirm wird beim Reiterwechsel neu gebaut (``screenSwitch``
+    /// vergibt ihm eine neue Identität). Steht der Wunsch schon beim Bau fest,
+    /// ist die Fachansicht Teil des **ersten** Bildes: Der Reiterwechsel trägt
+    /// sie herein, und die Liste ist dabei nie zu sehen.
+    ///
+    /// Vorher wurde der Wunsch erst nach dem Erscheinen eingelöst. Sofort
+    /// eingelöst gab es keine Bewegung, weil für SwiftUI nichts wechselte;
+    /// verzögert eingelöst sah man erst die Liste und dann den Sprung. Beides
+    /// war falsch — richtig ist, gar nicht erst zu wechseln.
+    init(subjectToOpen: Binding<UUID?>? = nil) {
+        self.subjectToOpen = subjectToOpen
+        _openedSubjectIdentifier = State(initialValue: subjectToOpen?.wrappedValue)
+    }
+
     private var summaries: [SubjectSummary] {
         SubjectOverview.summaries(of: subjects, semesterIndex: semesterIndex)
     }
@@ -82,19 +96,18 @@ struct SubjectListView: View {
             // einer Systemliste.
             .closesOpenSwipeRow()
             .toolbar(.hidden, for: .navigationBar)
-            .onChange(of: subjectToOpen?.wrappedValue, initial: true) { _, wunsch in
-                guard let wunsch else { return }
+            .onAppear {
+                // Der Wunsch ist eingelöst, sobald dieser Bildschirm steht.
+                // Bliebe er stehen, führte jede Rückkehr in den Reiter erneut
+                // in dasselbe Fach.
                 subjectToOpen?.wrappedValue = nil
-
-                // Nicht sofort: Wird das Ziel im selben Umlauf gesetzt, in dem
-                // dieser Bildschirm überhaupt erst erscheint, ist es für
-                // SwiftUI kein Übergang, sondern der Anfangszustand — die
-                // Fachansicht stand ohne jede Bewegung da. Erst nachdem der
-                // Reiterwechsel durch ist, wird daraus ein Vorwärtsschieben.
-                Task {
-                    try? await Task.sleep(for: .milliseconds(320))
-                    openedSubjectIdentifier = wunsch
-                }
+            }
+            .onChange(of: subjectToOpen?.wrappedValue) { _, wunsch in
+                // Für den Fall, dass der Wunsch eintrifft, während dieser
+                // Bildschirm schon steht.
+                guard let wunsch else { return }
+                openedSubjectIdentifier = wunsch
+                subjectToOpen?.wrappedValue = nil
             }
             .navigationDestination(item: $openedSubjectIdentifier) { identifier in
                 OpenedSubjectScreen(identifier: identifier)

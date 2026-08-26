@@ -21,9 +21,6 @@ struct MainShell: View {
 
     /// Das Fach, das vom Dashboard aus geöffnet werden soll.
     @State private var subjectToOpen: UUID?
-
-    /// Ob das offene Fach vom Dashboard aus geöffnet wurde.
-    @State private var cameFromDashboard = false
     @State private var tabBeforeAdding: ScoreTab = .dashboard
 
     /// Der Reiter, dessen Inhalt tatsächlich steht.
@@ -48,10 +45,6 @@ struct MainShell: View {
                 .padding(.bottom, ScoreMetrics.Spacing.xs)
         }
         .onChange(of: selectedTab) { previous, current in
-            // Wer den Reiter von Hand wechselt, hat den Weg vom Dashboard
-            // verlassen — dann führt Zurück wieder in die Liste.
-            if current != .subjects { cameFromDashboard = false }
-
             guard current == .add else { return }
             tabBeforeAdding = previous == .add ? .dashboard : previous
             selectedTab = tabBeforeAdding
@@ -73,22 +66,11 @@ struct MainShell: View {
                     // Erst den Wunsch hinterlegen, dann den Reiter wechseln:
                     // Die Fächerliste liest ihn beim Aufbau und öffnet direkt.
                     subjectToOpen = identifier
-                    cameFromDashboard = true
                     selectedTab = .subjects
                 }
             )
         case .subjects, .add:
-            SubjectListView(
-                subjectToOpen: $subjectToOpen,
-                onSubjectClosed: {
-                    // Zurück heisst zurück zum Ausgangspunkt. Wer vom Dashboard
-                    // kam, landet sonst in der Fächerliste — einem Bildschirm,
-                    // den er nie geöffnet hat.
-                    guard cameFromDashboard else { return }
-                    cameFromDashboard = false
-                    selectedTab = .dashboard
-                }
-            )
+            SubjectListView(subjectToOpen: $subjectToOpen)
         case .settings:
             SettingsView()
         }

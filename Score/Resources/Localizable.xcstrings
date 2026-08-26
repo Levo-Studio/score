@@ -3637,6 +3637,17 @@
         }
       }
     },
+    "Noch keins gewählt": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch keins gewählt"
+          }
+        }
+      }
+    },
     "Noch nicht eingetragen": {
       "extractionState": "manual",
       "localizations": {

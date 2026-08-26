@@ -216,6 +216,77 @@ extension ChipCloud where Trailing == EmptyView {
 
 // MARK: - Zusammenfassung
 
+/// Eine Zeile der Abschluss-Karte, deren Wert eine **Liste von Fächern** ist.
+///
+/// Warum nicht wie ``SummaryRow`` rechtsbündig: Dort steht der Wert rechts und
+/// bricht nach links um. Bei vier Fächern geht das noch, bei sieben entsteht ein
+/// rechtsbündiger Block mit ausgefransten Zeilenanfängen — man muss jede Zeile
+/// neu suchen, und wo ein Fach aufhört und das nächste beginnt, verrät nur ein
+/// Komma.
+///
+/// Deshalb steht die Beschriftung hier über den Fächern, und die Fächer stehen
+/// einzeln als Plättchen nebeneinander — dieselbe Form, in der sie zwei
+/// Schritte vorher ausgewählt wurden. Die Zahl daneben beantwortet die Frage,
+/// die man bei einer langen Liste zuerst hat: wie viele sind es.
+struct SummaryListRow: View {
+
+    let label: LocalizedStringKey
+    let names: [String]
+    var isFirst = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline, spacing: ScoreMetrics.Spacing.sm) {
+                Text(label)
+                    .font(.summaryLabel)
+                    .foregroundStyle(ScorePalette.inkSecondary)
+
+                Spacer(minLength: 0)
+
+                if !names.isEmpty {
+                    Text(verbatim: "\(names.count)")
+                        .font(.summaryLabel)
+                        .monospacedDigit()
+                        .foregroundStyle(ScorePalette.inkSecondary)
+                }
+            }
+
+            if names.isEmpty {
+                Text("Noch keins gewählt")
+                    .font(.micro)
+                    .foregroundStyle(ScorePalette.inkSecondary)
+            } else {
+                ChipFlowLayout(spacing: 6) {
+                    ForEach(names, id: \.self) { name in
+                        Text(verbatim: name)
+                            .font(.micro)
+                            .foregroundStyle(ScorePalette.ink)
+                            .lineLimit(1)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 6)
+                            .background(ScorePalette.fill)
+                            .clipShape(Capsule())
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, ScoreMetrics.Spacing.md)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .top) {
+            if !isFirst {
+                Rectangle()
+                    .fill(ScorePalette.line)
+                    .frame(height: 1)
+            }
+        }
+        // Eine Zeile, ein Sprachausgabe-Element: „Pflicht-Basisfächer, sieben,
+        // Französisch, Spanisch …" statt sieben einzelner Plättchen.
+        .accessibilityElement(children: .combine)
+    }
+}
+
+
 /// Eine Zeile der Abschluss-Karte: Bezeichnung links, Wert rechts.
 ///
 /// Der Wert kommt als fertiger `Text`, weil in dieser Karte beides vorkommt:

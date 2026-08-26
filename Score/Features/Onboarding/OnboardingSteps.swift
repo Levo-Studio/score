@@ -480,10 +480,10 @@ struct SummaryStep: View {
                     SummaryRow(label: "Klasse", value: Text(model.summaryClassLevel))
                     SummaryRow(label: "Bundesland", value: Text(verbatim: model.federalState))
                     SummaryRow(label: "Abitur", value: Text(verbatim: String(model.graduationYear)))
-                    SummaryRow(label: "Leistungsfächer", value: Text(verbatim: model.summaryList(model.advancedSubjects)))
-                    SummaryRow(label: "Pflicht-Basisfächer", value: Text(verbatim: model.summaryList(model.sortedRequiredBasicSubjects)))
-                    SummaryRow(label: "Wahl-Basisfächer", value: Text(verbatim: model.summaryList(model.sortedElectiveBasicSubjects)))
-                    SummaryRow(label: "Mündliche Prüfung", value: Text(verbatim: model.summaryList(model.sortedOralExamSubjects)))
+                    SummaryListRow(label: "Leistungsfächer", names: model.advancedSubjects)
+                    SummaryListRow(label: "Pflicht-Basisfächer", names: model.sortedRequiredBasicSubjects)
+                    SummaryListRow(label: "Wahl-Basisfächer", names: model.sortedElectiveBasicSubjects)
+                    SummaryListRow(label: "Mündliche Prüfung", names: model.sortedOralExamSubjects)
                 }
             }
             .staggeredAppearance(index: 3)

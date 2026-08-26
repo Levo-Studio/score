@@ -33,32 +33,6 @@ struct DashedChip: View {
 
     @State private var isEditing = false
 
-    /// Wann die Eingabe geöffnet wurde. `nil`, solange der Tag ruht.
-    ///
-    /// Der Fokus geht nicht nur verloren, wenn der Nutzer die Eingabe verlässt.
-    /// Er geht auch verloren, während die Tastatur vom vorigen Anlegen noch
-    /// schliesst — dieser Widerruf trifft dann die gerade erst geöffnete
-    /// Eingabe. Die beiden Fälle unterscheiden sich in ihrem Zeitpunkt, und
-    /// dieser Zeitstempel ist der Bezugspunkt dafür.
-    @State private var editingStartedAt: Date?
-
-    /// Wie lange nach dem Öffnen ein Fokusverlust noch der schliessenden
-    /// Tastatur zugerechnet wird.
-    ///
-    /// Ihr Widerruf trifft unmittelbar nach dem Öffnen ein — die Tastatur
-    /// braucht für ihr Schliessen rund eine Viertelsekunde, und der Widerruf
-    /// kommt an deren Ende. Die Spanne liegt darüber, damit sie ihn sicher
-    /// fängt, und bleibt kurz genug, dass sie keinen Tipp des Nutzers mehr
-    /// erwischt: Wer den Tag antippt, braucht länger, um wieder daneben zu
-    /// tippen.
-    private static let keyboardHandoverWindow: TimeInterval = 0.6
-
-    /// Ob dieser Fokusverlust noch von der schliessenden Tastatur stammen kann.
-    private var focusLossBelongsToClosingKeyboard: Bool {
-        guard let editingStartedAt else { return false }
-        return Date.now.timeIntervalSince(editingStartedAt) < Self.keyboardHandoverWindow
-    }
-
     @FocusState private var isFocused: Bool
 
     private var canCommit: Bool {
@@ -100,7 +74,6 @@ struct DashedChip: View {
     private var idle: some View {
         Button {
             isEditing = true
-            editingStartedAt = .now
             isFocused = true
         } label: {
             shell {
@@ -128,7 +101,16 @@ struct DashedChip: View {
                 .submitLabel(.done)
                 .focused($isFocused)
                 .frame(width: 118)
-                .onSubmit(commit)
+                // Leer bestätigt heisst „doch nicht": Dann kommt der ruhige Tag
+                // zurück, statt ein leeres Feld in der Wolke stehenzulassen.
+                .onSubmit {
+                    if canCommit {
+                        commit()
+                    } else {
+                        isEditing = false
+                        isFocused = false
+                    }
+                }
 
             if canCommit {
                 Button(action: commit) {
@@ -151,42 +133,42 @@ struct DashedChip: View {
         .onChange(of: isFocused) { _, focused in
             guard !focused else { return }
 
-            // Wer die Eingabe mit einem Namen darin verlässt, verliert ihn
-            // nicht — er wird übernommen.
-            if canCommit {
-                commit()
-                return
-            }
+            // Steht ein Name da, wird er übernommen — wer die Eingabe verlässt,
+            // verliert ihn nicht.
+            if canCommit { commit() }
 
-            // Eine leere Eingabe verliert den Fokus aus zwei ganz verschiedenen
-            // Gründen, und sie unterscheiden sich im Zeitpunkt. Unmittelbar
-            // nach dem Öffnen widerruft ihn die Tastatur, die vom vorigen
-            // Anlegen noch schliesst — der Widerruf landet in der frisch
-            // geöffneten Eingabe. Genau daran verpuffte jedes weitere eigene
-            // Fach: der Tag klappte zu, ehe getippt werden konnte. Dieser
-            // Verlust wird ignoriert und der Fokus zurückgeholt.
-            guard !focusLossBelongsToClosingKeyboard else {
-                isFocused = true
-                return
-            }
-
-            // Später kommt der Verlust vom Nutzer: Er hat neben die Eingabe
-            // getippt. Dieser Tipp wirkt — und zwar der erste, nicht erst der
-            // zweite.
-
-            // Ohne Text kommt der ruhige Tag zurück statt eines leeren Feldes
-            // in der Wolke.
-            editingStartedAt = nil
-            isEditing = false
+            // Sonst geschieht nichts. Früher schloss sich die Eingabe hier von
+            // selbst, und ob das rechtens war, entschied eine Stoppuhr: Ein
+            // Widerruf innerhalb von 0,6 Sekunden galt als der einer noch
+            // schliessenden Tastatur und wurde übergangen, ein späterer als
+            // Tipp des Nutzers.
+            //
+            // Auf dem Simulator ging das auf, auf einem Gerät nicht. Dort
+            // braucht die Tastatur länger, der Widerruf kam nach der Frist,
+            // und die gerade geöffnete Eingabe klappte wieder zu — der Tag
+            // reagierte scheinbar gar nicht mehr. Eine Frist, die vom
+            // Tempo des Geräts abhängt, ist keine Antwort auf die Frage
+            // „wollte der Nutzer das?".
+            //
+            // Jetzt bleibt die Eingabe offen, bis sie leer bestätigt oder der
+            // Schritt gewechselt wird. Eine offene leere Eingabe stört
+            // niemanden; eine, die unter der Hand zuklappt, kostet die Eingabe.
         }
     }
 
+    /// Übernimmt den Namen und hält die Eingabe offen.
+    ///
+    /// Die Tastatur bleibt bewusst stehen. Sie zu schliessen und beim nächsten
+    /// Fach sofort wieder zu öffnen war die Ursache des Fehlers oben — und wer
+    /// ein eigenes Fach anlegt, legt ohnehin oft gleich das nächste an.
+    ///
+    /// Bleibt der Text stehen, hat der Aufrufer ihn nicht angenommen. Dann darf
+    /// hier nichts zurückgesetzt werden: Der Name muss stehen bleiben, damit
+    /// man ihn ändern kann, statt ihn neu zu tippen.
     private func commit() {
         guard canCommit else { return }
         onCommit()
-        isEditing = false
-        editingStartedAt = nil
-        isFocused = false
+        isFocused = true
     }
 }
 

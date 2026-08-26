@@ -129,16 +129,19 @@ struct DashedChipHitTests {
         model.step = .electiveBasicSubjects
 
         try await withStep(model) { window in
-            // Ein einmaliges Gelingen beweist bei einem sporadischen Fehler
-            // nichts. Drei Durchläufe hintereinander, jeder über dieselben
-            // Flächen, die ein Finger trifft.
+            // Einmal öffnen, dann dreimal eintragen. Die Eingabe bleibt nach
+            // dem Anlegen offen und behält den Fokus — wer ein eigenes Fach
+            // anlegt, legt oft gleich das nächste an, und vor allem schliesst
+            // sich damit die Tastatur nicht zwischendurch.
+            let tag = try #require(Self.node(labelled: "Eigenes Fach", in: window))
+            #expect(tag.accessibilityActivate())
+            try await Self.settle()
+
             for name in ["Astronomie", "Philosophie", "Robotik"] {
-                let tag = try #require(
-                    Self.node(labelled: "Eigenes Fach", in: window),
-                    "Der Tag muss nach jedem Anlegen wieder dastehen"
+                #expect(
+                    !Self.textFields(in: window).isEmpty,
+                    "Die Eingabe muss zwischen zwei Fächern offen bleiben"
                 )
-                #expect(tag.accessibilityActivate())
-                try await Self.settle()
 
                 // Was das Tippen tut: es schreibt in die gebundene Zeichenkette.
                 model.customSubjectDraft = name
@@ -161,58 +164,56 @@ struct DashedChipHitTests {
         }
     }
 
-    @Test("Drei eigene Fächer, auch wenn die Tastatur vom vorigen noch schliesst")
-    func threeSubjectsWhileTheKeyboardIsStillClosing() async throws {
+    @Test("Ein Fokus-Widerruf schliesst die geöffnete Eingabe nicht")
+    func aRevokedFocusDoesNotCloseTheEditor() async throws {
         let model = OnboardingViewModel()
         model.step = .electiveBasicSubjects
 
         try await withStep(model) { window in
-            // Warum dieser Test neben ``threeSubjectsInARow`` steht: dort ist
-            // die Tastatur nie im Weg, hier schon. Auf dem Gerät gibt die
-            // Tastatur den Fokus erst frei, während der Nutzer den Tag längst
-            // wieder angetippt hat — der Widerruf landet dann in der frisch
-            // geöffneten Eingabe. Vorher klappte sie daran sofort zu: das erste
-            // eigene Fach entstand, jedes weitere verpuffte.
-            for name in ["Astronomie", "Philosophie", "Robotik"] {
-                let tag = try #require(
-                    Self.node(labelled: "Eigenes Fach", in: window),
-                    "Der Tag muss nach jedem Anlegen wieder dastehen"
-                )
-                #expect(tag.accessibilityActivate())
-                try await Self.settle(seconds: 0.2)
+            // Auf dem Gerät gibt eine noch schliessende Tastatur den Fokus erst
+            // frei, wenn der Nutzer den Tag längst wieder angetippt hat — der
+            // Widerruf landet dann in der frisch geöffneten Eingabe.
+            //
+            // Vorher entschied eine Stoppuhr, ob dieser Widerruf zählt: bis
+            // 0,6 Sekunden nach dem Öffnen galt er als der der Tastatur, danach
+            // als Tipp des Nutzers. Auf dem Simulator ging das auf, auf einem
+            // Gerät nicht — dort kam er nach der Frist, und die Eingabe klappte
+            // zu. Für den Nutzer sah es aus, als täte der Tag nichts mehr.
+            //
+            // Jetzt hängt nichts mehr an einer Frist: Ein Widerruf schliesst
+            // die Eingabe nie.
+            let tag = try #require(Self.node(labelled: "Eigenes Fach", in: window))
+            #expect(tag.accessibilityActivate())
+            try await Self.settle()
 
-                let field = try #require(
-                    Self.textFields(in: window).first,
-                    "Ein Tipp auf den Tag muss die Eingabe öffnen"
-                )
-                // Genau der Widerruf, den die schliessende Tastatur schickt.
-                _ = field.resignFirstResponder()
-                try await Self.settle()
+            let field = try #require(Self.textFields(in: window).first)
 
-                #expect(
-                    !Self.textFields(in: window).isEmpty,
-                    "Die frisch geöffnete Eingabe darf daran nicht zuklappen"
-                )
+            // Erst sofort — wie der Widerruf der schliessenden Tastatur.
+            _ = field.resignFirstResponder()
+            try await Self.settle()
+            #expect(!Self.textFields(in: window).isEmpty)
 
-                model.customSubjectDraft = name
-                try await Self.settle()
+            // Und dann spät, weit jenseits der alten Frist.
+            try await Self.settle(seconds: 0.9)
+            _ = field.resignFirstResponder()
+            try await Self.settle()
+            #expect(
+                !Self.textFields(in: window).isEmpty,
+                "Auch ein später Widerruf darf die Eingabe nicht kosten"
+            )
 
-                let ok = try #require(
-                    Self.node(labelled: "OK", in: window),
-                    "Die Bestätigung muss stehen, sobald ein Name eingetippt ist"
-                )
-                #expect(ok.accessibilityActivate())
-                try await Self.settle()
-
-                #expect(model.electiveBasicSubjects.contains(name))
-            }
-
-            #expect(model.electiveBasicSubjects == ["Astronomie", "Philosophie", "Robotik"])
+            // Und sie nimmt weiterhin einen Namen an.
+            model.customSubjectDraft = "Astronomie"
+            try await Self.settle()
+            let ok = try #require(Self.node(labelled: "OK", in: window))
+            #expect(ok.accessibilityActivate())
+            try await Self.settle()
+            #expect(model.electiveBasicSubjects.contains("Astronomie"))
         }
     }
 
-    @Test("Der erste Tipp neben die leere Eingabe schliesst sie")
-    func tappingBesideTheEmptyEditorClosesIt() async throws {
+    @Test("Leer bestätigt schliesst die Eingabe")
+    func submittingAnEmptyEditorClosesIt() async throws {
         let model = OnboardingViewModel()
         model.step = .electiveBasicSubjects
 
@@ -221,24 +222,20 @@ struct DashedChipHitTests {
             #expect(tag.accessibilityActivate())
             try await Self.settle()
 
-            #expect(
-                !Self.textFields(in: window).isEmpty,
+            let field = try #require(
+                Self.textFields(in: window).first,
                 "Ein Tipp auf den Tag muss die Eingabe öffnen"
             )
 
-            // Der Nutzer tippt nichts und tippt dann daneben — aber erst,
-            // nachdem die Spanne für die schliessende Tastatur verstrichen ist.
-            // Genau daran hängt der Unterschied: Was so spät kommt, ist kein
-            // Widerruf der Tastatur mehr, sondern eine Entscheidung.
-            try await Self.settle(seconds: 0.9)
-
-            let field = try #require(Self.textFields(in: window).first)
-            _ = field.resignFirstResponder()
+            // Der Weg heraus ist eine Entscheidung und kein Nebeneffekt: leer
+            // bestätigen. Vorher schloss ein Fokusverlust die Eingabe, und ob
+            // er vom Nutzer kam oder von der Tastatur, entschied eine Frist.
+            field.sendActions(for: .editingDidEndOnExit)
             try await Self.settle()
 
             #expect(
                 Self.textFields(in: window).isEmpty,
-                "Der erste Tipp neben die leere Eingabe muss sie schliessen"
+                "Leer bestätigt muss die Eingabe schliessen"
             )
             #expect(
                 Self.node(labelled: "Eigenes Fach", in: window) != nil,

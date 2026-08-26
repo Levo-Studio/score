@@ -284,6 +284,7 @@ struct AdvancedSubjectsStep: View {
                 toggle: { model.toggleAdvancedSubject($0) },
                 draft: $model.customSubjectDraft,
                 onCommitCustom: { model.commitCustomSubject() },
+                notice: model.customSubjectNotice,
                 note: "Danach kommen die Basisfächer: erst die, die du belegen musst, dann die, die du frei dazuwählst."
             )
         }
@@ -325,6 +326,7 @@ struct RequiredBasicSubjectsStep: View {
                 toggle: { model.toggleRequiredBasicSubject($0) },
                 draft: $model.customSubjectDraft,
                 onCommitCustom: { model.commitCustomSubject() },
+                notice: model.customSubjectNotice,
                 note: "Was in deiner Kurswahl nicht als Pflicht steht, nimmst du hier heraus — es kommt im nächsten Schritt wieder."
             )
         }
@@ -352,6 +354,7 @@ struct ElectiveBasicSubjectsStep: View {
                 toggle: { model.toggleElectiveBasicSubject($0) },
                 draft: $model.customSubjectDraft,
                 onCommitCustom: { model.commitCustomSubject() },
+                notice: model.customSubjectNotice,
                 note: "Auch sie zählen in deinen Schnitt. Fehlt eines, legst du es später in den Fächern nach."
             )
         }
@@ -384,7 +387,8 @@ struct OralExamSubjectsStep: View {
                 selection: model.oralExamSubjects,
                 toggle: { model.toggleOralExamSubject($0) },
                 customDraft: $model.customSubjectDraft,
-                createCustom: { model.commitCustomSubject() }
+                createCustom: { model.commitCustomSubject() },
+                notice: model.customSubjectNotice
             )
             .staggeredAppearance(index: 3)
         }
@@ -408,6 +412,8 @@ private struct SubjectSelectionSection: View {
     let toggle: (String) -> Void
     @Binding var draft: String
     let onCommitCustom: () -> Void
+    /// Warum der zuletzt eingetippte Name nicht übernommen wurde.
+    var notice: String?
     var note: LocalizedStringKey?
 
     var body: some View {
@@ -426,7 +432,20 @@ private struct SubjectSelectionSection: View {
                 ) {
                     DashedChip(title: "Eigenes Fach", text: $draft, onCommit: onCommitCustom)
                 }
+
+                // Steht direkt unter der Wolke, wo der Tag ist — dort schaut
+                // hin, wer gerade OK gedrückt hat.
+                if let notice {
+                    Text(verbatim: notice)
+                        .font(.optionMeta)
+                        .lineSpacing(4.5)
+                        .foregroundStyle(ScorePalette.warn)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 2)
+                        .transition(.opacity)
+                }
             }
+            .scoreAnimation(ScoreMotion.rowIn, value: notice)
             .staggeredAppearance(index: 3)
 
             if let note {

@@ -1982,6 +1982,17 @@
         }
       }
     },
+    "Du hast schon drei Leistungsfächer. Wähl eines ab, dann kommt dieses hinein.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du hast schon drei Leistungsfächer. Wähl eines ab, dann kommt dieses hinein."
+          }
+        }
+      }
+    },
     "Du kannst jede Angabe später in den Einstellungen ändern.": {
       "extractionState": "manual",
       "localizations": {
@@ -2665,6 +2676,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "In diesem Build nicht verfügbar"
+          }
+        }
+      }
+    },
+    "In diesem Fach wirst du schon schriftlich geprüft. Wähl ein anderes.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In diesem Fach wirst du schon schriftlich geprüft. Wähl ein anderes."
           }
         }
       }

@@ -46,6 +46,13 @@ struct OralExamSubjectSelection: View {
     /// fehlt, der müsste ihn verlassen, es anderswo anlegen und zurückkommen.
     let createCustom: () -> Void
 
+    /// Warum der zuletzt eingetippte Name nicht übernommen wurde.
+    ///
+    /// Ein Name, in dessen Fach bereits schriftlich geprüft wird, ging hier
+    /// vorher stumm verloren: Der Text verschwand, kein Chip kam, nichts
+    /// erklärte es. Die Sackgasse ist genau das, was dieser Tag vermeiden soll.
+    var notice: String?
+
     /// Ein wählbares Fach.
     struct Option: Identifiable, Hashable {
         let id: String
@@ -81,6 +88,15 @@ struct OralExamSubjectSelection: View {
                 }
 
                 DashedChip(title: "Eigenes Fach", text: $customDraft, onCommit: createCustom)
+            }
+
+            if let notice {
+                Text(verbatim: notice)
+                    .font(.optionMeta)
+                    .lineSpacing(4.5)
+                    .foregroundStyle(ScorePalette.warn)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .transition(.opacity)
             }
 
             note

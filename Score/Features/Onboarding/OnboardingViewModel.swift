@@ -75,7 +75,23 @@ final class OnboardingViewModel {
     var customBasicNames: [String] = []
 
     /// Der Text im Eingabefeld für ein eigenes Fach.
-    var customSubjectDraft = ""
+    var customSubjectDraft = "" {
+        didSet {
+            // Wer weitertippt, hat die Rückmeldung gelesen. Sie verschwindet
+            // beim ersten Anschlag und bleibt nicht als Vorwurf stehen.
+            if customSubjectDraft != oldValue { customSubjectNotice = nil }
+        }
+    }
+
+    /// Warum der zuletzt eingetippte Name nicht übernommen wurde.
+    ///
+    /// Vorher endeten zwei Fälle stumm: ein Name bei schon vollen
+    /// Leistungsfächern, und im Prüfungsschritt ein Name, in dem bereits
+    /// schriftlich geprüft wird. In beiden verschwand der getippte Text, kein
+    /// Chip erschien, und es gab keine Meldung — von aussen sah das aus, als
+    /// wäre der Knopf kaputt. Jetzt bleibt der Name stehen und die App sagt,
+    /// was los ist.
+    var customSubjectNotice: String?
 
     // MARK: - Der vorhandene Bestand
 
@@ -287,6 +303,7 @@ final class OnboardingViewModel {
         }
 
         customSubjectDraft = ""
+        customSubjectNotice = nil
         step = next
     }
 
@@ -295,6 +312,7 @@ final class OnboardingViewModel {
 
         guard let previous = OnboardingStep(rawValue: step.rawValue - 1) else { return }
         customSubjectDraft = ""
+        customSubjectNotice = nil
         step = previous
     }
 
@@ -360,6 +378,17 @@ final class OnboardingViewModel {
 
         switch step {
         case .advancedSubjects:
+            // Bei vollen Leistungsfächern darf der Name nicht einfach als
+            // grauer Chip ans Ende der Liste rutschen: Der Nutzer wollte ihn
+            // wählen, nicht anlegen. Er bleibt im Feld stehen, bis Platz ist.
+            if !advancedSubjects.contains(name),
+               advancedSubjects.count >= Self.requiredAdvancedSubjectCount {
+                customSubjectNotice = String.scoreLocalized(
+                    "Du hast schon drei Leistungsfächer. Wähl eines ab, dann kommt dieses hinein."
+                )
+                return
+            }
+
             if !isKnown { customAdvancedNames.append(name) }
             // Ein eingetippter Name heisst „dazu", nie „weg": stünde hier das
             // blosse Umschalten, nähme ein zweimal getippter Name das Fach
@@ -378,7 +407,15 @@ final class OnboardingViewModel {
             //
             // Ein Leistungsfach bleibt aussen vor: in ihm wird bereits
             // schriftlich geprüft, ein viertes Mal geprüft wird nicht.
-            guard !advancedSubjects.contains(name) else { break }
+            // In einem Leistungsfach wird bereits schriftlich geprüft. Das
+            // stumm zu verschlucken war der Fehler: Der Name verschwand, kein
+            // Chip kam, nichts erklärte es.
+            guard !advancedSubjects.contains(name) else {
+                customSubjectNotice = String.scoreLocalized(
+                    "In diesem Fach wirst du schon schriftlich geprüft. Wähl ein anderes."
+                )
+                return
+            }
             if !isKnown { customBasicNames.append(name) }
             electiveBasicSubjects.insert(name)
             if !oralExamSubjects.contains(name) { toggleOralExamSubject(name) }

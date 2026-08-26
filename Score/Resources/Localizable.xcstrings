@@ -2048,6 +2048,17 @@
         }
       }
     },
+    "Ein Fachname braucht wenigstens einen Buchstaben.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein Fachname braucht wenigstens einen Buchstaben."
+          }
+        }
+      }
+    },
     "Eine der drei Bedingungen ist gerissen. Damit ist das Abitur nicht bestanden, unabhängig von der Gesamtpunktzahl.": {
       "extractionState": "manual",
       "localizations": {
@@ -4931,6 +4942,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zwei deiner drei Leistungsfächer zählen mit allen vier Kursen doppelt — welche zwei, entscheidest du. Score hat die günstigste Kombination gewählt. Im Fach-Editor kannst du sie selbst setzen."
+          }
+        }
+      }
+    },
+    "Zwischen zwei und vierzig Zeichen, bitte.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zwischen zwei und vierzig Zeichen, bitte."
           }
         }
       }

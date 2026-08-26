@@ -366,15 +366,76 @@ final class OnboardingViewModel {
 
     /// Übernimmt das eingetippte Fach in den Schritt, in dem es eingegeben wurde,
     /// und wählt es gleich aus.
-    func commitCustomSubject() {
-        let name = customSubjectDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
+    // MARK: - Was der Nutzer eintippt, ist selten genau, was im Katalog steht
 
-        let isKnown = SubjectCatalog.template(named: name) != nil
-            || stockNames.contains(name)
-            || customAdvancedNames.contains(name)
-            || customCoreNames.contains(name)
-            || customBasicNames.contains(name)
+    /// Alle Fachnamen, die es in diesem Durchlauf schon gibt.
+    ///
+    /// Über alle Kategorien hinweg: Ein Fach ist ein Fach, egal in welcher
+    /// Spalte es gerade steht. Wer „Religion" tippt, meint das Religion aus der
+    /// Wolke — auch wenn es dort als Pflicht-Basisfach geführt wird.
+    private var allKnownNames: [String] {
+        SubjectCatalog.all.map(\.name)
+            + stockNames
+            + customAdvancedNames
+            + customCoreNames
+            + customBasicNames
+    }
+
+    /// Vergleichsform eines Namens: ohne Gross- und Kleinschreibung, ohne
+    /// Akzente, ohne doppelte Leerzeichen.
+    ///
+    /// Ohne sie legte „religion" ein zweites Fach neben „Religion" an — zwei
+    /// Chips für dasselbe Fach, und gewählt war das falsche. Für die Rechnung
+    /// wären das zwei Fächer mit je eigenen Kursen gewesen.
+    private static func comparable(_ name: String) -> String {
+        name
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+            .split(separator: " ", omittingEmptySubsequences: true)
+            .joined(separator: " ")
+    }
+
+    /// Der bereits vorhandene Name zu einer Eingabe, falls es ihn gibt.
+    ///
+    /// Zurück kommt die **vorhandene** Schreibweise, nicht die eingetippte:
+    /// Der Katalog gibt die Schreibweise vor, nicht der Tippfehler.
+    private func existingName(matching input: String) -> String? {
+        let wanted = Self.comparable(input)
+        return allKnownNames.first { Self.comparable($0) == wanted }
+    }
+
+    /// Wie lang ein Fachname mindestens und höchstens sein darf.
+    ///
+    /// Ein Zeichen ist kein Fach, und alles jenseits von vierzig sprengt jeden
+    /// Chip. Beides fing vorher niemand ab.
+    private static let nameLengthRange = 2...40
+
+    func commitCustomSubject() {
+        let typed = customSubjectDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !typed.isEmpty else { return }
+
+        guard Self.nameLengthRange.contains(typed.count) else {
+            customSubjectNotice = String.scoreLocalized(
+                "Zwischen zwei und vierzig Zeichen, bitte."
+            )
+            return
+        }
+
+        // Mindestens ein Buchstabe. „123" und „🍕🍕🍕" gingen vorher durch und
+        // standen danach als Fach in der Wolke. Die Regel bleibt bewusst weit:
+        // „Chinesisch 2" oder „Sport (Neigung)" sind gültige Fachnamen, und
+        // eine Liste erlaubter Zeichen hätte sie mit ausgesperrt.
+        guard typed.contains(where: \.isLetter) else {
+            customSubjectNotice = String.scoreLocalized(
+                "Ein Fachname braucht wenigstens einen Buchstaben."
+            )
+            return
+        }
+
+        // Gibt es das Fach schon, wird es gewählt und nicht ein zweites Mal
+        // angelegt — in seiner vorhandenen Schreibweise.
+        let existing = existingName(matching: typed)
+        let name = existing ?? typed
+        let isKnown = existing != nil
 
         switch step {
         case .advancedSubjects:

@@ -258,8 +258,20 @@ final class OnboardingViewModel {
     /// tippte, bekam ein aktives „Weiter" und ging mit zwei Leistungsfächern
     /// weiter, obwohl der Schritt drei verlangt.
     private var pendingCustomSubjectAddsAdvanced: Bool {
+        // Kein Platz mehr, kein weiteres Fach. Ohne diese Bedingung rechnete
+        // die Zeile bei drei gewählten Fächern und einem getippten Namen
+        // 3 + 1 = 4, „Weiter" wurde grau — und die Einrichtung war eine
+        // Sackgasse: Der Name liess sich nicht anlegen, weil die drei voll
+        // waren, und weiter ging es nicht, weil er dastand. Ohne jeden Hinweis.
+        guard advancedSubjects.count < Self.requiredAdvancedSubjectCount else { return false }
+
         let name = customSubjectDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !name.isEmpty && !advancedSubjects.contains(name)
+        guard !name.isEmpty else { return false }
+
+        // Ein Name, der ein vorhandenes Fach meint, zählt nur, wenn dieses Fach
+        // noch nicht gewählt ist — sonst zählte es doppelt.
+        let gemeint = existingName(matching: name) ?? name
+        return !advancedSubjects.contains(gemeint)
     }
 
     /// Ob der aktuelle Schritt vollständig beantwortet ist.
@@ -469,7 +481,6 @@ final class OnboardingViewModel {
         // angelegt — in seiner vorhandenen Schreibweise.
         let existing = existingName(matching: typed)
         let name = existing ?? typed
-        let isKnown = existing != nil
 
         // Ein Fach hat genau eine Rolle. Steht es schon in einer anderen, war
         // das blosse Einfügen hier eine zweite — und in der Wolke blieb es
@@ -508,16 +519,19 @@ final class OnboardingViewModel {
                 return
             }
 
-            if !isKnown { customAdvancedNames.append(name) }
+            // Massgeblich ist, ob der Name in **dieser** Wolke steht — nicht,
+            // ob es ihn irgendwo gibt. Sonst wird er gewählt und bleibt
+            // unsichtbar, weil die Liste dieses Schritts ihn nicht führt.
+            if !advancedOptions.contains(name) { customAdvancedNames.append(name) }
             // Ein eingetippter Name heisst „dazu", nie „weg": stünde hier das
             // blosse Umschalten, nähme ein zweimal getippter Name das Fach
             // wieder heraus.
             if !advancedSubjects.contains(name) { toggleAdvancedSubject(name) }
         case .requiredBasicSubjects:
-            if !isKnown { customCoreNames.append(name) }
+            if !requiredBasicOptions.contains(name) { customCoreNames.append(name) }
             requiredBasicSubjects.insert(name)
         case .electiveBasicSubjects:
-            if !isKnown { customBasicNames.append(name) }
+            if !electiveBasicOptions.contains(name) { customBasicNames.append(name) }
             electiveBasicSubjects.insert(name)
         case .oralExamSubjects:
             // Wer erst hier merkt, dass ihm ein Fach fehlt, legt es hier an:
@@ -535,7 +549,7 @@ final class OnboardingViewModel {
                 )
                 return
             }
-            if !isKnown { customBasicNames.append(name) }
+            if !electiveBasicOptions.contains(name) { customBasicNames.append(name) }
             electiveBasicSubjects.insert(name)
             if !oralExamSubjects.contains(name) { toggleOralExamSubject(name) }
         default:

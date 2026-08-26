@@ -409,6 +409,40 @@ final class OnboardingViewModel {
     /// Chip. Beides fing vorher niemand ab.
     private static let nameLengthRange = 2...40
 
+    /// In welcher Rolle ein Fach in diesem Durchlauf schon gewählt ist.
+    ///
+    /// Ein Fach hat genau eine. Die Auswahllisten filtern einander deshalb
+    /// heraus — was als Pflicht-Basisfach gewählt ist, steht in der Wahl-Wolke
+    /// nicht mehr zur Wahl.
+    enum ChosenRole {
+        case advanced, required, elective
+    }
+
+    func chosenRole(of name: String) -> ChosenRole? {
+        if advancedSubjects.contains(name) { return .advanced }
+        if requiredBasicSubjects.contains(name) { return .required }
+        if electiveBasicSubjects.contains(name) { return .elective }
+        return nil
+    }
+
+    /// Die Rolle, die der laufende Schritt vergibt.
+    private var roleOfCurrentStep: ChosenRole? {
+        switch step {
+        case .advancedSubjects: .advanced
+        case .requiredBasicSubjects: .required
+        case .electiveBasicSubjects: .elective
+        default: nil
+        }
+    }
+
+    private static func roleName(_ role: ChosenRole) -> String {
+        switch role {
+        case .advanced: String.scoreLocalized("Leistungsfach")
+        case .required: String.scoreLocalized("Pflicht-Basisfach")
+        case .elective: String.scoreLocalized("Wahl-Basisfach")
+        }
+    }
+
     func commitCustomSubject() {
         let typed = customSubjectDraft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !typed.isEmpty else { return }
@@ -436,6 +470,30 @@ final class OnboardingViewModel {
         let existing = existingName(matching: typed)
         let name = existing ?? typed
         let isKnown = existing != nil
+
+        // Ein Fach hat genau eine Rolle. Steht es schon in einer anderen, war
+        // das blosse Einfügen hier eine zweite — und in der Wolke blieb es
+        // unsichtbar, weil die Listen einander herausfiltern. Genau so liess
+        // sich „Religion" scheinbar nicht hinzufügen: Es wurde eingefügt und
+        // war trotzdem nirgends zu sehen.
+        if let role = chosenRole(of: name), let hier = roleOfCurrentStep {
+            customSubjectNotice = role == hier
+                ? String.scoreLocalized("Steht schon in deiner Wahl.")
+                : String(
+                    format: String.scoreLocalized(
+                        "%@ ist schon als %@ gewählt. Nimm es dort heraus, dann kommt es hierher."
+                    ),
+                    name,
+                    Self.roleName(role)
+                )
+            return
+        }
+
+        // Ein Fach hat genau eine Rolle. Steht es schon in einer anderen, war
+        // das blosse Einfügen hier eine zweite — und in der Wolke blieb es
+        // unsichtbar, weil die Listen einander herausfiltern. Genau so liess
+        // sich „Religion" scheinbar nicht hinzufügen: Es wurde eingefügt und
+        // war trotzdem nirgends zu sehen.
 
         switch step {
         case .advancedSubjects:

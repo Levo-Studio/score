@@ -87,3 +87,52 @@ struct CustomSubjectMatchingTests {
         #expect(model.electiveBasicSubjects.contains("Chinesisch 2"))
     }
 }
+
+/// Ein Fach, das anderswo schon gewählt ist, wird nicht zum zweiten Mal vergeben.
+@MainActor
+@Suite("Eigenes Fach: eine Rolle je Fach")
+struct CustomSubjectRoleTests {
+
+    @Test("Als Pflicht gewählt, in der Wahl eingetippt: Score sagt wo es steht")
+    func alreadyRequired() {
+        let model = OnboardingViewModel()
+        model.step = .requiredBasicSubjects
+        model.toggleRequiredBasicSubject("Religion")
+
+        model.step = .electiveBasicSubjects
+        model.customSubjectDraft = "Religion"
+        model.commitCustomSubject()
+
+        // Vorher wurde es zusätzlich eingefügt und war trotzdem unsichtbar,
+        // weil die Wahl-Wolke alles Gewählte herausfiltert.
+        #expect(!model.electiveBasicSubjects.contains("Religion"))
+        #expect(model.requiredBasicSubjects.contains("Religion"))
+        #expect(model.customSubjectNotice != nil)
+        #expect(model.customSubjectDraft == "Religion")
+    }
+
+    @Test("Als Leistungsfach gewählt, in der Wahl eingetippt")
+    func alreadyAdvanced() {
+        let model = OnboardingViewModel()
+        model.step = .advancedSubjects
+        model.toggleAdvancedSubject("Religion")
+
+        model.step = .electiveBasicSubjects
+        model.customSubjectDraft = "Religion"
+        model.commitCustomSubject()
+
+        #expect(!model.electiveBasicSubjects.contains("Religion"))
+        #expect(model.customSubjectNotice != nil)
+    }
+
+    @Test("Noch nirgends gewählt: es kommt hinein, egal wo es sonst stünde")
+    func notChosenAnywhereGoesIn() {
+        let model = OnboardingViewModel()
+        model.step = .electiveBasicSubjects
+        model.customSubjectDraft = "Religion"
+        model.commitCustomSubject()
+
+        #expect(model.electiveBasicSubjects.contains("Religion"))
+        #expect(model.customSubjectNotice == nil)
+    }
+}

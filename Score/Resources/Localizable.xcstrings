@@ -1,6 +1,17 @@
 {
   "sourceLanguage": "de",
   "strings": {
+    "%@ ist schon als %@ gewählt. Nimm es dort heraus, dann kommt es hierher.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ist schon als %@ gewählt. Nimm es dort heraus, dann kommt es hierher."
+          }
+        }
+      }
+    },
     "%@ löschen": {
       "extractionState": "manual",
       "localizations": {
@@ -4402,6 +4413,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Steht nur auf deinem Dashboard, sonst nirgends."
+          }
+        }
+      }
+    },
+    "Steht schon in deiner Wahl.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Steht schon in deiner Wahl."
           }
         }
       }

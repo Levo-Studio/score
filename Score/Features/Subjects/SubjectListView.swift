@@ -55,6 +55,13 @@ struct SubjectListView: View {
     /// Reiter erneut in dasselbe Fach.
     var subjectToOpen: Binding<UUID?>?
 
+    /// Wird gerufen, wenn die Fachansicht wieder zugeht.
+    ///
+    /// Nur dafür da, den Weg zurück dorthin zu führen, wo der Nutzer hergekommen
+    /// ist: Wer ein Fach vom Dashboard aus öffnet, will beim Zurückwischen auch
+    /// dorthin zurück und nicht in einer Liste landen, die er nie gesehen hat.
+    var onSubjectClosed: (() -> Void)?
+
     @State private var openedSubjectIdentifier: UUID?
 
     private var summaries: [SubjectSummary] {
@@ -82,6 +89,9 @@ struct SubjectListView: View {
             // einer Systemliste.
             .closesOpenSwipeRow()
             .toolbar(.hidden, for: .navigationBar)
+            .onChange(of: openedSubjectIdentifier) { vorher, jetzt in
+                if vorher != nil, jetzt == nil { onSubjectClosed?() }
+            }
             .onChange(of: subjectToOpen?.wrappedValue, initial: true) { _, wunsch in
                 guard let wunsch else { return }
                 openedSubjectIdentifier = wunsch

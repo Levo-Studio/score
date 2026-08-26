@@ -91,6 +91,9 @@ struct SubjectDetailView: View {
             lost.message
         }
         .toolbar(.hidden, for: .navigationBar)
+        // Ohne diese Zeile gäbe es keinen Wisch zurück: Die versteckte Leiste
+        // nimmt UIKit die Geste mit.
+        .interactivePopGesture()
         .sheet(isPresented: $isEditorPresented) {
             // Der Editor hält einen Entwurf, der erst beim Sichern ins Modell
             // geht — solange er steht, wird der Speicher nicht getauscht.

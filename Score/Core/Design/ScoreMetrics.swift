@@ -43,6 +43,21 @@ enum ScoreMetrics {
     /// Freiraum unter dem Inhalt, damit die schwebende Tab-Bar nichts verdeckt.
     static let tabBarClearance: CGFloat = 150
 
+    /// Der seitliche Rand der schwebenden Tab-Bar.
+    ///
+    /// Enger als ``screenPadding``: Die Leiste ist ein eigenes Element über dem
+    /// Inhalt und kein Teil davon. Auf denselben Rand gesetzt wirkte sie wie
+    /// eine weitere Karte in der Spalte, statt darüber zu schweben — Apple
+    /// setzt seine schwebenden Leisten aus demselben Grund enger.
+    static let tabBarInset: CGFloat = 16
+
+    /// Der Abstand der Tab-Bar zum unteren Sicherheitsbereich.
+    ///
+    /// Null: Der Sicherheitsbereich trägt am Home-Indikator bereits gut dreissig
+    /// Punkt. Ein weiterer Abstand darüber schob die Leiste sichtbar zu hoch in
+    /// den Inhalt hinein.
+    static let tabBarBottomInset: CGFloat = 0
+
     /// Mindestgrösse einer Tap-Fläche.
     static let minimumTapTarget: CGFloat = 44
 

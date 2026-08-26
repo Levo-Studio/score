@@ -41,8 +41,8 @@ struct MainShell: View {
                 .screenSwitch(visibleTab)
 
             LiquidGlassTabBar(selection: $selectedTab)
-                .padding(.horizontal, ScoreMetrics.screenPadding)
-                .padding(.bottom, ScoreMetrics.Spacing.xs)
+                .padding(.horizontal, ScoreMetrics.tabBarInset)
+                .padding(.bottom, ScoreMetrics.tabBarBottomInset)
         }
         .onChange(of: selectedTab) { previous, current in
             guard current == .add else { return }

@@ -18,6 +18,9 @@ struct MainShell: View {
     /// Fach-Editor über dem zuletzt gezeigten Reiter — ein Reiter, auf dem man
     /// stehenbleiben kann, wäre hier sinnlos.
     @State private var isAddingSubject = false
+
+    /// Das Fach, das vom Dashboard aus geöffnet werden soll.
+    @State private var subjectToOpen: UUID?
     @State private var tabBeforeAdding: ScoreTab = .dashboard
 
     /// Der Reiter, dessen Inhalt tatsächlich steht.
@@ -56,11 +59,18 @@ struct MainShell: View {
     private var content: some View {
         switch selectedTab {
         case .dashboard:
-            DashboardView(profile: profile) {
-                selectedTab = .subjects
-            }
+            DashboardView(
+                profile: profile,
+                onShowAllSubjects: { selectedTab = .subjects },
+                onOpenSubject: { identifier in
+                    // Erst den Wunsch hinterlegen, dann den Reiter wechseln:
+                    // Die Fächerliste liest ihn beim Aufbau und öffnet direkt.
+                    subjectToOpen = identifier
+                    selectedTab = .subjects
+                }
+            )
         case .subjects, .add:
-            SubjectListView()
+            SubjectListView(subjectToOpen: $subjectToOpen)
         case .settings:
             SettingsView()
         }

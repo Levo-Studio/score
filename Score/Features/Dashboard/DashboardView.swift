@@ -13,6 +13,12 @@ struct DashboardView: View {
     /// Wird vom „Alle"-Link ausgelöst und wechselt in die Fächerliste.
     let onShowAllSubjects: () -> Void
 
+    /// Öffnet ein Fach aus der Ausschnitt-Liste heraus.
+    ///
+    /// Die Zeilen sahen aus wie die der Fächerliste und taten nichts. Wer sein
+    /// Fach vor sich sieht, tippt es an — und landete bisher nirgends.
+    let onOpenSubject: (UUID) -> Void
+
     @Query(sort: [SortDescriptor(\Subject.sortIndex)]) private var subjects: [Subject]
 
     /// Die feste deutsche Locale, die die App an ihrer Wurzel setzt. Das Datum in
@@ -44,9 +50,14 @@ struct DashboardView: View {
     /// Dashboard, so wie der Fach-Editor und das Eingabe-Sheet auch.
     @State private var isBreakdownPresented = false
 
-    init(profile: StudentProfile, onShowAllSubjects: @escaping () -> Void) {
+    init(
+        profile: StudentProfile,
+        onShowAllSubjects: @escaping () -> Void,
+        onOpenSubject: @escaping (UUID) -> Void = { _ in }
+    ) {
         self.profile = profile
         self.onShowAllSubjects = onShowAllSubjects
+        self.onOpenSubject = onOpenSubject
         _selectedSemester = AppStorage(
             wrappedValue: profile.classLevel.availableSemesters.last
                 ?? SubjectPreference.defaultSemesterIndex,
@@ -61,8 +72,28 @@ struct DashboardView: View {
     /// Das Dashboard zeigt einen Ausschnitt, keine Liste: vier Fächer, dahinter
     /// führt „Alle" in die Fächerliste. Sonst wäre der Bildschirm zweimal
     /// dasselbe.
+    ///
+    /// Welche vier, war bisher die Reihenfolge der Abfrage — also keine. Jetzt
+    /// steht oben, woran zuletzt gearbeitet wurde: Wer eine Note einträgt und
+    /// aufs Dashboard zurückgeht, findet das Fach dort, statt es zu suchen. Bei
+    /// gleichem Stand entscheidet der Name, damit die Auswahl nicht bei jedem
+    /// Aufbau springt.
     private var recentSubjects: [Subject] {
-        Array(subjects.prefix(4))
+        let sortiert = subjects.sorted { links, rechts in
+            let a = lastChange(of: links)
+            let b = lastChange(of: rechts)
+            if a != b { return (a ?? .distantPast) > (b ?? .distantPast) }
+            return links.name.localizedStandardCompare(rechts.name) == .orderedAscending
+        }
+        return Array(sortiert.prefix(4))
+    }
+
+    /// Wann in diesem Fach zuletzt etwas eingetragen wurde — im **gezeigten**
+    /// Halbjahr, denn genau dessen Kurse stehen hier.
+    private func lastChange(of subject: Subject) -> Date? {
+        (subject.semester(at: selectedSemester)?.entries ?? [])
+            .map(\.createdAt)
+            .max()
     }
 
     var body: some View {
@@ -180,12 +211,17 @@ struct DashboardView: View {
             } else {
                 VStack(spacing: ScoreMetrics.Spacing.xs) {
                     ForEach(Array(recentSubjects.enumerated()), id: \.element.id) { index, subject in
-                        SubjectRow(
-                            subject: subject,
-                            semesterIndex: selectedSemester,
-                            result: model.result(for: subject, semesterIndex: selectedSemester),
-                            entryCount: model.entryCount(for: subject, semesterIndex: selectedSemester)
-                        )
+                        Button {
+                            onOpenSubject(subject.identifier)
+                        } label: {
+                            SubjectRow(
+                                subject: subject,
+                                semesterIndex: selectedSemester,
+                                result: model.result(for: subject, semesterIndex: selectedSemester),
+                                entryCount: model.entryCount(for: subject, semesterIndex: selectedSemester)
+                            )
+                        }
+                        .buttonStyle(.plain)
                         // Die Zeilen fahren nacheinander ein, aber erst nachdem
                         // Karte und Umschalter darüber stehen — daher der Vorlauf.
                         .rowAppearance(index: index, base: 0.08)

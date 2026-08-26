@@ -48,6 +48,13 @@ struct SubjectListView: View {
     /// die Kontextgrenze. Eine Kennung ist ein blosser Wert und übersteht den
     /// Tausch; das Fach dazu holt ``OpenedSubjectScreen`` frisch aus der
     /// Abfrage. Die Navigation des iPads führt aus demselben Grund `UUID`s.
+    /// Ein Fach, das von aussen geöffnet werden soll — vom Dashboard aus.
+    ///
+    /// Als Bindung und nicht als Wert, weil der Wunsch verbraucht wird: Nach
+    /// dem Öffnen wird er zurückgesetzt, sonst führte jede Rückkehr in diesen
+    /// Reiter erneut in dasselbe Fach.
+    var subjectToOpen: Binding<UUID?>?
+
     @State private var openedSubjectIdentifier: UUID?
 
     private var summaries: [SubjectSummary] {
@@ -75,6 +82,11 @@ struct SubjectListView: View {
             // einer Systemliste.
             .closesOpenSwipeRow()
             .toolbar(.hidden, for: .navigationBar)
+            .onChange(of: subjectToOpen?.wrappedValue, initial: true) { _, wunsch in
+                guard let wunsch else { return }
+                openedSubjectIdentifier = wunsch
+                subjectToOpen?.wrappedValue = nil
+            }
             .navigationDestination(item: $openedSubjectIdentifier) { identifier in
                 OpenedSubjectScreen(identifier: identifier)
             }

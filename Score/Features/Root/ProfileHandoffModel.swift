@@ -166,6 +166,16 @@ final class ProfileHandoffModel {
     /// vorhandenen Profile bleiben stehen, es kommt eines dazu. Das Kennzeichen
     /// muss trotzdem zurück — bis das Onboarding durch ist, ist auf diesem Gerät
     /// wieder eine Einrichtung offen.
+    /// Die zweite Einrichtung wurde abgebrochen.
+    ///
+    /// Der Merker fällt mit: Ohne ihn bliebe die App der Meinung, hier entstehe
+    /// noch ein Profil, und verschluckte die Frage nach einem fremden.
+    func cancelAdditionalProfile() {
+        isAddingProfileHere = false
+        didCompleteOnboardingHere = false
+        stage = .ready
+    }
+
     func registerAdditionalProfile() {
         didCompleteOnboardingHere = false
         isAddingProfileHere = true

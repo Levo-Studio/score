@@ -146,7 +146,12 @@ struct ContentView: View {
                     OnboardingView(onWillFinish: { handoff.onboardingDidComplete() })
                 }
             case .onboarding:
-                OnboardingView(onWillFinish: { handoff.onboardingDidComplete() })
+                OnboardingView(
+                    onWillFinish: { handoff.onboardingDidComplete() },
+                    // Abbrechen gibt es nur, wenn schon ein Profil dasteht:
+                    // Beim ersten Start führte es ins Leere.
+                    onCancel: completedProfiles.isEmpty ? nil : { handoff.cancelAdditionalProfile() }
+                )
             }
         }
         .screenSwitch(handoff.stage)

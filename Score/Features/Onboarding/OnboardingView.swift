@@ -21,6 +21,15 @@ struct OnboardingView: View {
     /// iCloud hereingekommen ist.
     var onWillFinish: (() -> Void)?
 
+    /// Bricht die Einrichtung ab und kehrt in die App zurück.
+    ///
+    /// Nur gesetzt, wenn es schon ein eingerichtetes Profil gibt — beim allerersten
+    /// Start gäbe es nichts, wohin man zurückkehren könnte, und ein Abbrechen wäre
+    /// eine Sackgasse. Wer dagegen aus den Einstellungen heraus ein zweites Profil
+    /// anlegt und es sich anders überlegt, sass bisher fest: Es gab keinen Weg
+    /// heraus ausser die Einrichtung zu Ende zu bringen.
+    var onCancel: (() -> Void)?
+
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     /// Das frisch angelegte Profil ist das, mit dem dieses Gerät weiterläuft.
@@ -74,6 +83,21 @@ struct OnboardingView: View {
     /// Die einspaltige Fassung: iPhone und iPad im Hochformat.
     private var compactLayout: some View {
         VStack(spacing: 0) {
+            if let onCancel {
+                HStack {
+                    Spacer(minLength: 0)
+                    Button(action: onCancel) {
+                        Text("Abbrechen")
+                            .font(.chipLabel)
+                            .foregroundStyle(ScorePalette.inkSecondary)
+                            .frame(minHeight: ScoreMetrics.minimumTapTarget)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, ScoreMetrics.Spacing.xl)
+            }
+
             if model.step != .welcome {
                 OnboardingProgressBar(
                     currentStep: model.progressStepNumber,

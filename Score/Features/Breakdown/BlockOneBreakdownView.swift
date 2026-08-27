@@ -1061,7 +1061,7 @@ struct BlockOneBreakdownView: View {
         in entry: BlockOneBreakdown.SubjectEntry
     ) -> some View {
         let isOn = course.state.isIncluded
-        let hatKurs = course.state.points != nil
+        let isRecorded = course.state.points != nil
 
         return Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
             .font(.system(size: 15, weight: .semibold))
@@ -1074,8 +1074,8 @@ struct BlockOneBreakdownView: View {
             // fiel er weg, und die Kachel mit Note war höher als ihre
             // Nachbarn — eine Reihe, in der eine Kachel herausragt, liest sich
             // wie ein Fehler.
-            .opacity(hatKurs ? (isTogglable(course, in: entry) ? 1 : 0.35) : 0)
-            .accessibilityHidden(!hatKurs)
+            .opacity(isRecorded ? (isTogglable(course, in: entry) ? 1 : 0.35) : 0)
+            .accessibilityHidden(!isRecorded)
     }
 
     /// Ob dieser Kurs hier von Hand umgeschaltet werden kann.

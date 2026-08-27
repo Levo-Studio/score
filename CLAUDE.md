@@ -183,6 +183,53 @@ Für Formeln: mehrere reale Notenbilder mit amtlicher Quelle je Testfall.
   PR-Titeln oder -Beschreibungen.
 - Auf aktuellem `main` rebased, keine Merge-Commits im PR.
 
+## Der PR
+
+Die Vorlage liegt in `.github/pull_request_template.md` und wird vollständig
+ausgefüllt, keine Zeile gelöscht ausser den ausdrücklich optionalen. In Kurzform:
+
+- **Was sich ändert und warum**, ein bis drei Sätze. Bei einem Fehler: was kaputt
+  war und woran es lag.
+- **App-Store-Release-Notes** — siehe unten. Bei reinem Refactoring, Tests oder
+  Doku ausdrücklich „keine, weil nichts für Nutzer sichtbar".
+- **Schemaänderung ja/nein** — Pflichtangabe, auch bei nein. Bei ja: Modell,
+  Feld, Typ und ob das Feld `@Attribute(.allowsCloudEncryption)` trägt; dazu die
+  Ausgabe von `python3 scripts/check-encryption.py` (Exit 0). Neue Attribute
+  brauchen einen Vorgabewert oder sind optional, sonst scheitert die Spiegelung
+  nach CloudKit. Den Deploy des Schemas nach Production macht der Eigentümer
+  selbst, bevor er die Version einreicht — der PR sagt ihm nur, dass es fällig
+  ist.
+- **Bundesland und amtliche Quelle**, nur bei Rechen-Beiträgen.
+- **Tests**: welche dazugekommen sind, Gegenprobe gemacht, volle Suite gelaufen
+  mit Ergebnis.
+- **Von Hand geprüft**: was im Simulator ausprobiert wurde, iPhone und — falls
+  betroffen — iPad.
+- **Doku mitgezogen** oder begründet, warum nichts fällig war.
+- **Durchgesehen**: kleine Einzelcommits, keine Tool-Trailer, keine
+  auskommentierten Reste, keine `print`-Aufrufe, keine unbeabsichtigten
+  Änderungen an `Score.xcodeproj/project.pbxproj`, auf aktuellem `main` rebased,
+  neue sichtbare Texte im String-Katalog.
+
+## App-Store-Release-Notes
+
+Jeder PR, der für Nutzer sichtbar etwas ändert, schlägt den Text vor, der bei
+Apple unter „Neues in dieser Version" erscheint: **auf Deutsch, aus Sicht des
+Nutzers, ein bis drei Sätze oder ein paar Stichpunkte** — Apple erlaubt 4000
+Zeichen, gelesen werden die ersten zwei. Keine Versionsnummern, keine
+Commit-Hashes, keine Dateinamen, keine Danksagungen; die Credits stehen im
+README.
+
+Gut:
+
+```
+Bei der Einrichtung ging es mit drei Leistungsfächern nicht mehr weiter.
+Jetzt kommst du durch.
+```
+
+Schlecht: „`OnboardingFlowModel` prüft `canContinue` jetzt korrekt (Fix in
+`SubjectSelectionView.swift`)." Das beschreibt den Code, nicht die Änderung, die
+jemand am Gerät merkt.
+
 ## Doku gehört zur Änderung
 
 Im **selben** Commit beziehungsweise PR, nicht hinterher:

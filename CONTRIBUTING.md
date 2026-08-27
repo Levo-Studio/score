@@ -122,6 +122,50 @@ Ein brauchbares Bug-Issue enthält:
 „Geht nicht" reicht nicht. Ich kann nichts reproduzieren, was ich nicht
 nachstellen kann.
 
+## Branches
+
+Du arbeitest in deinem Fork, aber auch dort gilt: **nicht auf `main`**. Der
+bleibt sauber, damit du jederzeit neu abzweigen kannst, ohne dir eigene Arbeit
+in den Weg zu legen.
+
+Vor jedem neuen Branch einmal ziehen — sonst liegt dein PR auf einem Stand von
+vorgestern, und du rebasest hinterher:
+
+```bash
+git fetch --all --prune
+```
+
+Der Name trägt ein Präfix, das sagt, worum es geht. Kleingeschrieben,
+Bindestriche, konkret. `fix/klammern-in-der-aufschluesselung` sagt etwas,
+`fix/bugs` sagt nichts.
+
+| Präfix | Wofür |
+|---|---|
+| `feat/` | Neue Funktionen |
+| `fix/` | Fehlerbehebungen |
+| `hotfix/` | Dringende Korrekturen an einer veröffentlichten Version |
+| `security/` | Sicherheit, Härtung, Rechte |
+| `refactor/` | Umbau ohne Verhaltensänderung |
+| `perf/` | Laufzeit und Speicher |
+| `design/` | Oberfläche und Gestaltung |
+| `feedback/` | Änderungen aus Rückmeldungen |
+| `ci/` | Automatisierung, Pipelines |
+| `deps/` | Abhängigkeiten |
+| `migration/` | Schema- und Datenmigrationen |
+| `docs/` | Nur Dokumentation |
+| `test/` | Nur Tests |
+| `chore/` | Wartung, Werkzeug, Konfiguration |
+| `spike/` | Versuch, wird verworfen |
+| `release/` | Vorbereitung einer Version |
+| `revert/` | Rücknahme |
+
+Kein Präfix, das nach dem benutzten Werkzeug benannt ist — kein `claude/`, kein
+`codex/`. Der Branch heisst nach der Arbeit, nicht nach dem Hammer.
+
+Ein Branch, ein Thema. Merkst du mittendrin, dass ein grösseres Stück dazukommt,
+das für sich steht: mach dafür einen eigenen auf. Zwei Themen in einem PR heissen,
+dass ich beide zusammen ablehnen oder zusammen annehmen muss.
+
 ## Neues Bundesland hinzufügen
 
 Erst die unangenehme Wahrheit: **Es gibt keine Bundesland-Abstraktion.** Kein

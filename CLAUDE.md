@@ -4,6 +4,19 @@ Diese Datei beschreibt **Score** und sonst nichts. Keine Infrastruktur, keine
 Server, kein Deployment, keine anderen Projekte. Was hier steht, gilt für Arbeit
 in diesem Repository.
 
+## Zuerst lesen
+
+Drei Dateien im Repo gelten mit. Lies sie, bevor du etwas anfasst:
+
+- `CONTRIBUTING.md` — derselbe Inhalt wie hier, nur im vollen Text und für
+  Menschen geschrieben. Im Zweifel gilt, was dort steht.
+- `README.md` — die Rechnung (Kursblock, Prüfungsblock, Notentabelle) und die
+  Architektur. Wer an einer Formel arbeitet, hat das gelesen.
+- `FEATURES.md` — was die App heute kann und was ausdrücklich noch fehlt.
+
+Diese drei werden bei Feature-Änderungen **mitgezogen**, im selben Commit
+beziehungsweise PR. Siehe „Doku gehört zur Änderung".
+
 ## Was Score ist
 
 Score ist ein Abi-Planer für iOS und iPadOS 26, geschrieben in SwiftUI. Noten
@@ -108,6 +121,20 @@ Katalog wird von Hand gepflegt (`extractionState: manual`); Xcodes automatische
 Extraktion trägt hier nichts Brauchbares nach. Die Oberfläche ist einsprachig
 deutsch — keine zweite Sprache anlegen, keine englischen Fassungen ergänzen.
 Kein sichtbarer String steht als Literal in einer View.
+
+## Code-Stil
+
+- **Vier Leerzeichen**, keine Tabs.
+- `// MARK: -` zur Gliederung jeder Datei, die mehr als einen Typ oder mehr als
+  eine Handvoll Funktionen enthält.
+- **Keine Zahlen- oder Farbliterale in Feature-Dateien.** Kein `.padding(17)`,
+  kein `Color(hex:)`, kein von Hand nachgebautes `timingCurve`. Fehlt ein Wert,
+  kommt er in die Design-Schicht.
+- **Es ist kein Linter und kein Formatter konfiguriert** — kein SwiftLint, kein
+  SwiftFormat, keine `.editorconfig`. Es gibt also nichts, was Stil erzwingt:
+  Orientiere dich am Stil der Datei, die du anfasst.
+- Formatierung nie zusammen mit Logik ändern. Wenn dir beim Lesen eine
+  Einrückung auffällt: eigener Commit oder gar nicht.
 
 ## Kommentare
 

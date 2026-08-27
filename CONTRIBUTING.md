@@ -407,6 +407,10 @@ Warum erklären. Wenn du mit Claude arbeitest, benutz sie gern. Sie sorgt dafür
 dass dabei Code herauskommt, der zu diesem Projekt passt, statt generischem
 SwiftUI mit `.padding(17)` und englischen Strings.
 
+Sag ihm am Anfang, es soll `CONTRIBUTING.md`, `CLAUDE.md` und `README.md` lesen,
+bevor es irgendetwas anfasst. Das kostet dich einen Satz und spart dir die Runde,
+in der du hinterher Literale, englische Strings und Kommentare geradeziehst.
+
 Was ich **nicht** will: PRs, die erkennbar niemand gelesen hat. Halb passende
 Kommentare, Tests, die nichts prüfen, Code, der zufällig grün wird. Das Werkzeug
 ist mir egal, das Ergebnis nicht. Wer hier einen PR aufmacht, steht dafür gerade

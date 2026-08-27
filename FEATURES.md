@@ -169,7 +169,7 @@ von *Bewegung reduzieren* an einer Stelle.
 **Barrierefreiheit:** Beschriftungen und Auswahl-Zustände für VoiceOver,
 Trefferflächen ab 44 Punkt, Dynamic Type.
 
-**Deutsch**, 438 Schlüssel im String-Katalog.
+**Deutsch**, 439 Schlüssel im String-Katalog.
 
 Dateien: `Score/Core/Design/`, `Score/Resources/`
 

@@ -257,7 +257,7 @@ der Navigation. Das stimmte für das iPad und war fürs iPhone falsch. Es hat f�
 Runden Nacharbeit gekostet, weil alle dem Kommentar geglaubt haben.
 
 Die Oberfläche ist auf Deutsch. Jeder sichtbare Text gehört in
-`Score/Resources/Localizable.xcstrings` (438 Schlüssel), der von Hand gepflegt
+`Score/Resources/Localizable.xcstrings` (439 Schlüssel), der von Hand gepflegt
 wird — `extractionState: manual`, Xcodes automatische Extraktion trägt hier
 nichts Brauchbares nach.
 

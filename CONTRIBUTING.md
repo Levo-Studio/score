@@ -23,10 +23,11 @@ man nicht mehr weiss, ob die Gewichtung in Spalte F noch stimmt. Genau dafür is
 Score gebaut: damit die Zahl stimmt und man sieht, wie sie zustande kommt.
 
 Das Problem hat aber jeder Abiturient in jedem Bundesland, und die sechzehn
-Formeln baue ich nicht alleine — schon Baden-Württemberg hat mich Wochen
-gekostet, und das ist das Land, dessen Verordnung ich auswendig kann. Wenn Leute
-mitbauen, wird daraus etwas, das tatsächlich allen hilft. Sonst bleibt es eine
-gute App für ein Bundesland.
+Formeln baue ich nicht alleine. Die App stand in unter einer Woche bei Apple in
+der Prüfung — was mich dabei zum Mäusemelken gebracht hat, war ausschliesslich
+die Formel. Und das war das Land, dessen Verordnung ich auswendig kann. Wenn
+Leute mitbauen, wird daraus etwas, das tatsächlich allen hilft. Sonst bleibt es
+eine gute App für ein Bundesland.
 
 ## Setup
 

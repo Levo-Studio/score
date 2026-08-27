@@ -35,6 +35,14 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild test \
 - [ ] iPhone:
 - [ ] iPad (falls betroffen):
 
+## Doku mitgezogen
+
+- [ ] `FEATURES.md` — neues oder geändertes Feature eingetragen
+      (auch „Was es (noch) nicht gibt" geprüft)
+- [ ] `README.md` — falls sich Rechnung, Architektur, Zahlen oder Bau-Anleitung ändern
+- [ ] `CONTRIBUTING.md` — falls sich ändert, wie man beiträgt
+- [ ] Nichts davon fällig, weil: <!-- kurz begründen -->
+
 ## Durchgesehen
 
 - [ ] Kleine Einzelcommits, ein Commit = eine logische Änderung

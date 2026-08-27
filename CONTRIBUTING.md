@@ -261,6 +261,40 @@ Die Oberfläche ist auf Deutsch. Jeder sichtbare Text gehört in
 wird — `extractionState: manual`, Xcodes automatische Extraktion trägt hier
 nichts Brauchbares nach.
 
+## Doku gehört zum Beitrag
+
+Drei Dateien beschreiben, was Score ist. Wer das Verhalten ändert, ändert sie
+mit — im **selben PR**, nicht hinterher:
+
+| Datei | Wann fällig |
+|---|---|
+| [`FEATURES.md`](FEATURES.md) | Immer, wenn ein Feature dazukommt, verschwindet oder sich merklich anders verhält. Auch der Abschnitt „Was es (noch) nicht gibt" will gepflegt sein — was du gebaut hast, steht dort vielleicht noch als Lücke. |
+| [`README.md`](README.md) | Wenn sich etwas ändert, das im README steht: die Rechnung, die Architektur, Zahlen wie Tests oder Katalog-Schlüssel, die Bau-Anleitung. |
+| `CONTRIBUTING.md` | Wenn sich ändert, wie man beiträgt — neue Abhängigkeit, neuer Testbefehl, neue Struktur. |
+
+Warum ich darauf bestehe: Ich habe beim Aufräumen vier Zahlen im README
+gefunden, die nicht mehr stimmten — 85 Tests statt 487, zwei Sprachen statt
+einer. Keine davon war je gelogen, alle waren mal richtig. Doku, die niemand
+mitzieht, ist nach drei Monaten schlechter als keine, weil man ihr glaubt.
+
+Bei reinen Bugfixes und Refactorings ist meist nichts fällig. Im Zweifel: lieber
+eine Zeile zu viel.
+
+## Vom PR bis in den App Store
+
+1. Du machst den PR auf. Ich lese ihn selbst und kommentiere.
+2. Was ich anmerke, arbeitest du ein. **Alle offenen Punkte werden geschlossen,
+   bevor gemergt wird** — auch die kleinen. Wenn du anderer Meinung bist, sag
+   das; ich habe mich in diesem Projekt oft genug geirrt.
+3. Passt alles, merge ich auf `main`.
+4. Ich baue das Archiv in Xcode, lade es hoch und reiche die Version bei Apple
+   ein. Das übernehme ich, weil Zertifikat und App-Store-Zugang an mir hängen.
+5. Ich sage dir Bescheid, sobald deine Änderung live ist.
+6. Du darfst dich in die Credits im [README](README.md#credits) eintragen — die
+   Regeln dafür stehen dort.
+
+Wie lange Schritt 4 dauert, hängt an Apple. Üblich ist ein Tag, manchmal drei.
+
 ## Harte Regeln
 
 > **Ein PR, der diese Regeln verletzt, wird ohne inhaltliche Diskussion
@@ -334,6 +368,9 @@ keine Änderungen an `Score.xcodeproj/project.pbxproj`, die du nicht beabsichtig
 hast — Xcode schreibt dort gern ungefragt herum, und `DEVELOPMENT_TEAM` sowie
 der iCloud-Container gehören nicht in deinen Diff. Keine Formatierung ausserhalb
 des Scopes.
+
+**Doku im selben PR mitgezogen.**
+Neues Feature ohne Zeile in `FEATURES.md` ist unvollständig. Siehe oben.
 
 **Auf den aktuellen `main` rebased, keine Merge-Commits im PR.**
 

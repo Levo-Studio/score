@@ -295,6 +295,33 @@ eine Zeile zu viel.
 
 Wie lange Schritt 4 dauert, hängt an Apple. Üblich ist ein Tag, manchmal drei.
 
+## Wie ich mit KI arbeite
+
+Ja, ich benutze Claude. Wer bitte nicht.
+
+Aber nicht zum Vibecoden. Ich benutze es so, wie ein Architekt sein Werkzeug
+benutzt: Ich entscheide, was gebaut wird und wie es aussehen soll, das Werkzeug
+setzt um, und ich lese jede Zeile, die dabei herauskommt, bevor sie hier
+landet. Was ich nicht erklären kann, kommt nicht rein — dieselbe Latte, die ich
+an deine PRs lege.
+
+Im Repo liegt eine [`CLAUDE.md`](CLAUDE.md) mit den Projektregeln: Rechenkern
+ohne Datenbank, keine Modellobjekte in der Navigation, Design-Schicht als
+einzige Quelle für Farbe, Mass und Bewegung, Kommentare auf Deutsch, die das
+Warum erklären. Wenn du mit Claude arbeitest, benutz sie gern. Sie sorgt dafür,
+dass dabei Code herauskommt, der zu diesem Projekt passt, statt generischem
+SwiftUI mit `.padding(17)` und englischen Strings.
+
+Was ich **nicht** will: PRs, die erkennbar niemand gelesen hat. Halb passende
+Kommentare, Tests, die nichts prüfen, Code, der zufällig grün wird. Das Werkzeug
+ist mir egal, das Ergebnis nicht. Wer hier einen PR aufmacht, steht dafür gerade
+und kann jede Zeile darin erklären — und zwar auch die, die er nicht selbst
+getippt hat.
+
+Ich sage das so offen, weil mir das Projekt wichtig ist und ich will, dass Leute
+beitragen. Wer erst raten muss, ob KI hier verpönt ist, macht am Ende gar
+nichts auf. Also: benutz, was du willst, und steh dafür ein.
+
 ## Harte Regeln
 
 > **Ein PR, der diese Regeln verletzt, wird ohne inhaltliche Diskussion

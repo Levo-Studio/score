@@ -33,7 +33,7 @@ final class AppSettings {
     ///
     /// „Aus" heisst dort nicht zwingend „hell", sondern „nicht dunkel": wer vorher
     /// auf Systemautomatik stand und den Schalter ausschaltet, will hell sehen.
-    /// Zurückschalten führt deshalb nach `dark`, nicht nach `system`.
+    /// Zurückschalten führt deshalb nach `light`, nicht nach `system`.
     var isDarkModeEnabled: Bool {
         get { appearance == .dark }
         set { appearance = newValue ? .dark : .light }

@@ -4,7 +4,7 @@ import SwiftData
 /// Ein Halbjahr eines Fachs — im Zeugnis das „Halbjahresergebnis".
 ///
 /// Das Ergebnis selbst wird nicht gespeichert, sondern aus den einzelnen
-/// Leistungen gerechnet (siehe `SubjectMath.result(for:in:)`). So bleibt es
+/// Leistungen gerechnet (siehe `SubjectMath.result(for:)`). So bleibt es
 /// automatisch richtig, wenn eine Note nachgetragen oder eine Gewichtung
 /// geändert wird, und es kann beim Sync nicht von den Leistungen abweichen,
 /// aus denen es entstanden ist.

@@ -79,8 +79,9 @@ final class Subject {
     /// anderes als „Grenze 4": ein Fach mit nur drei belegten Halbjahren behält
     /// ohne Grenze auch dann alle drei, wenn später ein viertes dazukommt.
     ///
-    /// Für Leistungsfächer wird der Wert ignoriert — sie bringen immer alle vier
-    /// Halbjahre ein, das ist die Regel und keine Einstellung.
+    /// Bei Prüfungsfächern wird der Wert ignoriert — sie bringen immer alle
+    /// belegten Halbjahre ein, das ist die Regel und keine Einstellung. Siehe
+    /// ``effectiveCourseLimit``, wo genau das steht.
     @Attribute(.allowsCloudEncryption) var maximumContributedCourses: Int?
 
     /// Ob dieses Fach eines der beiden **mündlichen Prüfungsfächer** ist.

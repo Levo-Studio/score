@@ -106,11 +106,13 @@ import Foundation
 ///
 /// ## Welche zwei Leistungsfächer doppelt zählen
 ///
-/// **Das entscheidet der Schüler**, nicht die Schule. Score nimmt von sich aus die
-/// Kombination, die das beste Ergebnis bringt — das sind die beiden
-/// Leistungsfächer mit der höchsten Punktsumme über ihre vier Kurse, und weil die
-/// zwölf Leistungsfachkurse ohnehin alle eingehen, lässt sich diese Wahl
-/// unabhängig von der Klammerung treffen: sie berührt nur den Zähler.
+/// **Das entscheidet der Schüler**, nicht die Schule. Score nimmt von sich aus das
+/// Paar, das **den höchsten Kursblock ergibt** — ausdrücklich nicht die beiden
+/// Leistungsfächer mit der höchsten Punktsumme. Die Doppelwertung erhöht nämlich
+/// nicht nur den Zähler, sondern über die zusätzlichen Wertungen auch den Nenner;
+/// welche Kurse dabei überhaupt eingehen, sagt erst die Klammerung. Die Wahl
+/// hängt also an ihr und lässt sich nicht vorab treffen. Die Begründung im
+/// Einzelnen steht an ``doubleWeightedSubjects(in:among:)``.
 ///
 /// Wer es anders will, setzt die Wahl selbst — ``SubjectInput/isDoubleWeighted``.
 /// Sind **genau zwei** Leistungsfächer so gekennzeichnet, gilt diese Wahl; sonst
@@ -219,7 +221,7 @@ enum BlockOneCalculator {
         var usesAutomaticDoubleWeighting: Bool
         /// Zu jedem geklammerten Kurs der Grund, aus dem er nicht mitzählt.
         ///
-        /// Enthält alle drei Gründe. Die abgeleiteten Mengen darunter greifen
+        /// Enthält alle vier Gründe. Die abgeleiteten Mengen darunter greifen
         /// jeweils einen heraus.
         var bracketReasons: [CourseIdentifier: BracketReason]
         /// Wie viele Kurse eingebracht werden.
@@ -422,8 +424,8 @@ enum BlockOneCalculator {
     ///
     /// Verglichen wird der Schnitt je Wertung als Bruch, über Kreuz multipliziert:
     /// so entscheidet keine Gleitkommastelle über die Wahl. Bei Gleichstand
-    /// entscheidet die Fachkennung, damit die Wahl nicht bei jedem Aufruf zwischen
-    /// zwei gleich guten Paaren springt.
+    /// Bei zwei gleich guten Paaren entscheidet die Fachkennung, damit die Wahl
+    /// nicht bei jedem Aufruf zwischen ihnen springt.
     ///
     /// - Parameter included: Die Kurse, die in den Kursblock eingehen. Nur sie
     ///   werden verdoppelt — ein geklammerter Kurs bleibt geklammert.

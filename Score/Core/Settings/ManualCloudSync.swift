@@ -35,7 +35,10 @@ import SwiftUI
 ///
 /// Nicht vom Antippen. Die Spiegelung meldet jeden Lauf über
 /// `eventChangedNotification` samt Ende und Erfolg; erst ein **abgeschlossener,
-/// fehlerfreier** Import- oder Exportlauf setzt den Zeitstempel. Er liegt in
+/// fehlerfreier** Import- oder Exportlauf setzt den Zeitstempel. Ausnahme ist der
+/// Lauf, der nichts zu tragen hat: Meldet die Spiegelung nur ihr Einrichten und
+/// kommt in der Karenz danach kein Import und kein Export mehr, war der Abgleich
+/// trotzdem erfolgreich und setzt den Zeitstempel ebenfalls. Er liegt in
 /// `UserDefaults` und ausdrücklich nicht im Datenmodell: Ein Zeitstempel, der
 /// selbst synchronisiert wird, zeigte den Abgleich des anderen Geräts an.
 @MainActor
@@ -71,6 +74,12 @@ final class ManualCloudSync {
         /// Kein iCloud-Konto angemeldet.
         case noAccount
         /// Die Spiegelung meldete einen Fehler.
+        ///
+        /// Wird derzeit von keinem Pfad gesetzt: ``apply(_:)`` beendet nur beim
+        /// fehlenden Konto sofort, jeder andere Fehler läuft in die Zeitgrenze
+        /// und endet als ``timedOut``. Der Fall bleibt stehen, weil die
+        /// Oberfläche ihn schon beschreiben kann — wer ihn wieder setzt, braucht
+        /// keinen neuen Satz zu erfinden.
         case sync
         /// Es kam gar keine Rückmeldung.
         case timedOut
@@ -346,10 +355,6 @@ final class ManualCloudSync {
         /// abgeräumt wurde. Beim Neuöffnen ist das der Normalfall und kein
         /// Grund, dem Nutzer einen Fehler zu melden.
         var isTeardown = false
-
-        /// Ob CloudKit den Fehler von sich aus wiederholt. Dann ist der Lauf
-        /// nicht gescheitert, sondern noch unterwegs — die Zeitgrenze entscheidet.
-        var isRetryable = false
     }
 
     /// Verarbeitet einen Lauf — auch einen, den niemand angestossen hat.
@@ -368,11 +373,6 @@ final class ManualCloudSync {
         if event.hasFailed {
             guard phase == .running else { return }
 
-            // Ein Fehler, den CloudKit selbst wiederholt, beendet den Lauf
-            // nicht. Ihn als Fehlschlag zu melden hiesse, aufzugeben, während
-            // die Spiegelung noch arbeitet — und der nächste Versuch kommt
-            // vielleicht eine Sekunde später durch. Bleibt es dabei, greift die
-            // Zeitgrenze und sagt es ehrlich.
             // Nur das fehlende Konto beendet den Lauf sofort — dagegen kann
             // der Nutzer etwas tun. Jeder andere Fehler kann zum Vorgang
             // gehören statt zu seinem Ergebnis: Beim Neuöffnen des Speichers
@@ -470,8 +470,7 @@ final class ManualCloudSync {
                 endDate: raw.endDate,
                 hasFailed: raw.error != nil,
                 isNoAccount: raw.error.map(Self.isNoAccountError) ?? false,
-                isTeardown: raw.error.map(Self.isTeardownError) ?? false,
-                isRetryable: raw.error.map { CloudSyncFailure.diagnose($0) == .retryable } ?? false
+                isTeardown: raw.error.map(Self.isTeardownError) ?? false
             )
 
             MainActor.assumeIsolated {

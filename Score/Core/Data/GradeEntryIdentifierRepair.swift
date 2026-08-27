@@ -39,9 +39,10 @@ enum GradeEntryIdentifierRepair {
     /// Stellt sicher, dass keine zwei Leistungen dieselbe Kennung tragen.
     ///
     /// Behalten darf die Kennung die **älteste** Leistung; die jüngeren bekommen
-    /// eine neue. Die Reihenfolge ist nicht beliebig, sondern die der Liste: Wer
-    /// eine offene Kennung hält — ein stehendes Blatt, ein Rücknahme-Streifen —,
-    /// meint damit am ehesten die zuerst angelegte.
+    /// eine neue. Dafür wird nach ``GradeEntry/createdAt`` sortiert und nicht in
+    /// der Reihenfolge gelaufen, in der die Abfrage die Leistungen liefert — die
+    /// ist beliebig. Wer eine offene Kennung hält — ein stehendes Blatt, ein
+    /// Rücknahme-Streifen —, meint damit am ehesten die zuerst angelegte.
     ///
     /// - Returns: Wie viele Leistungen eine neue Kennung bekommen haben.
     @discardableResult

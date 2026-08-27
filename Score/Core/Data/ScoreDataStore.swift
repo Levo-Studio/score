@@ -155,15 +155,6 @@ final class ScoreDataStore {
         self.fallback = fallback
     }
 
-    /// Öffnet den Speicher neu und startet damit die CloudKit-Spiegelung neu.
-    ///
-    /// Das ist der eigentliche Anstoss hinter „Jetzt synchronisieren": Ein frisch
-    /// geladener Store lässt `NSPersistentCloudKitContainer` seine Läufe von
-    /// vorn beginnen — einrichten, importieren, exportieren.
-    ///
-    /// Schlägt das Anlegen fehl, bleibt der bisherige Container stehen und der
-    /// Fehler geht nach oben. Der schlechteste denkbare Ausgang wäre eine App
-    /// ohne Speicher; ein misslungener Abgleich ist dagegen harmlos.
     /// Wie lange zwischen den beiden Stufen des Neuöffnens gewartet wird.
     ///
     /// Lang genug für eine Runde der Oberfläche, kurz genug, dass niemand in
@@ -205,7 +196,7 @@ final class ScoreDataStore {
     /// alten losgelassen hat, ist der Platz frei, und die zweite Stufe legt den
     /// Spiegel neu an.
     ///
-    /// In der Zwischenzeit — gut eine Zehntelsekunde — läuft die App auf
+    /// In der Zwischenzeit — knapp eine halbe Sekunde, siehe ``handoverDelay`` — läuft die App auf
     /// demselben Datenbestand, nur ohne Spiegelung. Verloren geht dabei nichts:
     /// Es ist dieselbe Datei, und was in dieser Spanne geschrieben würde, nimmt
     /// die zweite Stufe beim Einrichten mit.
@@ -307,7 +298,7 @@ final class ScoreDataStore {
         try await store.reopen()
     }
 
-    // MARK: - Der Start in drei Stufen
+    // MARK: - Der Start in vier Stufen
 
     /// Es gibt in dieser Sitzung keinen dauerhaften Speicher, den man neu
     /// öffnen könnte.
@@ -357,7 +348,7 @@ final class ScoreDataStore {
     /// lässt sich nicht mehr öffnen. Eine App, die sich nicht öffnen lässt, kann
     /// dem Nutzer nichts mehr erklären und ihm auch nichts mehr retten.
     ///
-    /// Deshalb drei Stufen, in dieser Reihenfolge:
+    /// Deshalb vier Stufen, in dieser Reihenfolge:
     ///
     /// 1. **Der gewünschte Speicher** — mit CloudKit, wenn der Prozess das darf
     ///    und der Nutzer es will.
@@ -427,11 +418,15 @@ final class ScoreDataStore {
         return Startup(container: nil, usesCloudKit: false, fallback: .noModel)
     }
 
-    /// Öffnet den Speicher — mit iCloud, wenn der Prozess das darf und der
-    /// Nutzer es will, sonst lokal.
+    /// Öffnet den Speicher in der verlangten Betriebsart.
     ///
-    /// Die Prüfung auf das Entitlement ist kein Gürtel-und-Hosenträger, sondern
-    /// notwendig: fehlt es, **stürzt CloudKit ab**, und zwar nicht beim Anlegen
+    /// Die Funktion schaltet allein über ``mode`` und prüft **nichts** nach; ob
+    /// `.cloudKit` überhaupt zulässig ist, muss der Aufrufer sichergestellt
+    /// haben. In der App tut das ``init()`` über ``CloudKitAvailability`` und
+    /// ``AppSettings/isCloudSyncEnabled``.
+    ///
+    /// Diese Prüfung ist kein Gürtel-und-Hosenträger, sondern notwendig: fehlt
+    /// das Entitlement, **stürzt CloudKit ab**, und zwar nicht beim Anlegen
     /// des Containers, sondern später und asynchron auf
     /// `com.apple.coredata.cloudkit.queue`, wenn das Mirroring seinen Container
     /// aufbauen will. `ModelContainer(for:)` ist zu diesem Zeitpunkt längst

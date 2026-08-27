@@ -335,26 +335,12 @@ struct PadSubjectDetailView: View {
                     isFirst: false
                 )
 
-                CourseBracketRow(
-                    isBracketed: bracketBinding,
-                    allowsBracketing: summary.allowsBracketing,
-                    bracketReason: summary.bracketReason,
-                    isActive: summary.isActive
-                )
                 .padding(.top, ScoreMetrics.Spacing.xs)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
     }
 
-    /// Die Klammer des gerade gewählten Halbjahres — dieselbe Bindung wie auf
-    /// dem iPhone, siehe `SubjectDetailView`.
-    private var bracketBinding: Binding<Bool> {
-        Binding(
-            get: { currentSemester?.isManuallyBracketed ?? false },
-            set: { currentSemester?.isManuallyBracketed = $0 }
-        )
-    }
 
     private func semesterRow(
         label: Text,

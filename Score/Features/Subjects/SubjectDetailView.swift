@@ -349,28 +349,10 @@ struct SubjectDetailView: View {
                     )
                 }
 
-                CourseBracketRow(
-                    isBracketed: bracketBinding,
-                    allowsBracketing: summary.allowsBracketing,
-                    bracketReason: summary.bracketReason,
-                    isActive: summary.isActive
-                )
             }
         }
     }
 
-    /// Die Klammer des gerade gewählten Halbjahres.
-    ///
-    /// Schreibt direkt ins Modell: Klammern ist eine einzelne, sofort sichtbare
-    /// Entscheidung und kein Formular, das man abbricht. Fehlt der Halbjahres-
-    /// Datensatz — was nach dem Anlegen eines Fachs nie vorkommt —, bleibt der
-    /// Schalter wirkungslos, statt still einen neuen anzulegen.
-    private var bracketBinding: Binding<Bool> {
-        Binding(
-            get: { currentSemester?.isManuallyBracketed ?? false },
-            set: { currentSemester?.isManuallyBracketed = $0 }
-        )
-    }
 
     /// Die Beschriftung einer Anteils-Kachel: „Schriftlich · 60 %".
     ///

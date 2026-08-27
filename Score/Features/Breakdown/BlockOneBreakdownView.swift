@@ -1056,21 +1056,26 @@ struct BlockOneBreakdownView: View {
     ///
     /// Wo nichts eingetragen ist, steht auch kein Haken: ein nicht belegtes
     /// Halbjahr ist kein Kurs, über den zu entscheiden wäre.
-    @ViewBuilder
     private func check(
         _ course: BlockOneBreakdown.Course,
         in entry: BlockOneBreakdown.SubjectEntry
     ) -> some View {
-        if course.state.points != nil {
-            let isOn = course.state.isIncluded
-            Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(isOn ? ScorePalette.accent : ScorePalette.inkSecondary)
-                // Gesperrt heisst blass, nicht weg: Bei einem Prüfungsfach ist
-                // die Frage „kann ich das klammern?" berechtigt, und ein
-                // fehlender Haken liesse sie unbeantwortet.
-                .opacity(isTogglable(course, in: entry) ? 1 : 0.35)
-        }
+        let isOn = course.state.isIncluded
+        let hatKurs = course.state.points != nil
+
+        return Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(isOn ? ScorePalette.accent : ScorePalette.inkSecondary)
+            // Gesperrt heisst blass, nicht weg: Bei einem Prüfungsfach ist
+            // die Frage „kann ich das klammern?" berechtigt, und ein
+            // fehlender Haken liesse sie unbeantwortet.
+            //
+            // Wo gar kein Kurs ist, bleibt der Platz trotzdem stehen. Vorher
+            // fiel er weg, und die Kachel mit Note war höher als ihre
+            // Nachbarn — eine Reihe, in der eine Kachel herausragt, liest sich
+            // wie ein Fehler.
+            .opacity(hatKurs ? (isTogglable(course, in: entry) ? 1 : 0.35) : 0)
+            .accessibilityHidden(!hatKurs)
     }
 
     /// Ob dieser Kurs hier von Hand umgeschaltet werden kann.

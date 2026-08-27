@@ -280,6 +280,56 @@ mitzieht, ist nach drei Monaten schlechter als keine, weil man ihr glaubt.
 Bei reinen Bugfixes und Refactorings ist meist nichts fällig. Im Zweifel: lieber
 eine Zeile zu viel.
 
+## Schemaänderungen gehören in den PR
+
+Score speichert über SwiftData in die private CloudKit-Datenbank des Nutzers.
+Damit ist **jede Änderung an einer `@Model`-Klasse in `Score/Models/` eine
+Schemaänderung** — ein neues Attribut, ein geänderter Typ, eine neue Beziehung.
+Auch dann, wenn es im Simulator sofort läuft.
+
+Zwei Dinge machen das unangenehmer, als es klingt:
+
+**Verschlüsselt oder nicht ist endgültig.** Für CloudKit sind das zwei
+verschiedene Feldtypen. Nach dem ersten Production-Deploy lässt sich ein Feld
+nicht mehr umstellen — ein vergessenes `@Attribute(.allowsCloudEncryption)`
+bleibt für immer im Klartext, und die einzige Reparatur ist ein zweites Feld
+daneben und eine Datenwanderung.
+
+**Das Schema muss vor der App live sein.** Ein neues Feld entsteht in der
+Development-Umgebung und wird von dort nach Production deployt. Geht die neue
+App-Version raus, bevor das passiert ist, findet die Spiegelung das Feld nicht
+und der Abgleich bricht — bei Nutzern, nicht bei dir.
+
+Deshalb ist der Block **Schemaänderung** in der PR-Vorlage Pflicht, auch wenn
+die Antwort „nein" ist. Bei nein genügt das Häkchen. Bei ja gehört hinein:
+
+- **Welches Modell, welches Feld, welcher Typ** — je eine Zeile.
+- **Ob das Feld verschlüsselt ist**, also `@Attribute(.allowsCloudEncryption)`
+  trägt. Das trägt jedes gespeicherte Attribut; ausgenommen sind allein die vier
+  Beziehungen, die als `CKReference` gespiegelt werden und auflösbar bleiben
+  müssen.
+- **Das Ergebnis von `python3 scripts/check-encryption.py`**, mit Ausgabe. Heute
+  meldet es „31 von 31 gespeicherten Attributen verschlüsselt, 4 Beziehungen
+  ausgenommen" und beendet sich mit 0. Etwas anderes als Exit 0 ist kein
+  Diskussionsgegenstand, sondern ein Fehler im PR.
+
+```bash
+python3 scripts/check-encryption.py
+```
+
+**Jedes neue Attribut braucht einen Vorgabewert.** Optional oder mit
+Standardwert — sonst hat der bestehende Datenbestand nichts dafür, und die
+Spiegelung nach CloudKit scheitert. Das ist der häufigste Weg, sich das Schema
+zu zerschiessen.
+
+Den Deploy von Development nach Production mache **ich**, bevor ich die Version
+bei Apple einreiche. Du kannst ihn gar nicht machen, er hängt am Container. Dein
+Block im PR sagt mir nur, dass er fällig ist — fehlt er, merke ich es
+möglicherweise erst, wenn die Version draussen ist.
+
+Und weil das alles gilt: Ein Entwurf, der ohne Modelländerung auskommt, ist fast
+immer der bessere.
+
 ## Vom PR bis in den App Store
 
 1. Du machst den PR auf. Ich lese ihn selbst und kommentiere.

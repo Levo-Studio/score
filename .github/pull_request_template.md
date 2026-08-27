@@ -21,6 +21,34 @@
 - [ ] Keine nötig, weil nichts für Nutzer sichtbar ist (reines Refactoring,
       Tests oder Doku)
 
+## Schemaänderung (SwiftData / CloudKit)
+
+<!-- Pflichtangabe, auch wenn die Antwort „nein" ist. Jede Änderung an einer
+     @Model-Klasse in Score/Models/ ist eine Schemaänderung. -->
+
+- [ ] **Nein** — kein `@Model` angefasst, kein Attribut, keine Beziehung
+- [ ] **Ja** — dann die Tabelle ausfüllen:
+
+| Modell | Feld | Typ | Verschlüsselt (`@Attribute(.allowsCloudEncryption)`) |
+|---|---|---|---|
+|  |  |  |  |
+
+- [ ] Jedes neue Attribut hat einen Vorgabewert oder ist optional — sonst
+      scheitert die Spiegelung nach CloudKit
+- [ ] `python3 scripts/check-encryption.py` gelaufen, Exit 0
+
+```
+python3 scripts/check-encryption.py
+```
+
+<!-- Ausgabe des Skripts hier einfügen, zum Beispiel:
+     31 von 31 gespeicherten Attributen verschlüsselt, 4 Beziehungen ausgenommen -->
+
+> Verschlüsselt oder nicht ist nach dem ersten Production-Deploy **endgültig**.
+> Den Deploy des Schemas von Development nach Production mache ich selbst,
+> bevor ich die Version einreiche — dieser Block sagt mir nur, dass er fällig
+> ist.
+
 ## Bundesland und Quelle
 
 <!-- Nur bei Rechen-Beiträgen, sonst löschen.

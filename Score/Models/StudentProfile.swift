@@ -140,6 +140,23 @@ enum ClassLevel: String, Codable, CaseIterable, Sendable {
 
 /// Die Bundesländer, die im Onboarding zur Auswahl stehen.
 enum FederalState {
+
+    /// Das Land, dessen Abiturregel Score tatsächlich rechnet.
+    static let supported = "Baden-Württemberg"
+
+    /// Ob Score für dieses Land rechnen kann.
+    ///
+    /// Heute genau eines. Die übrigen stehen trotzdem in der Liste — sichtbar,
+    /// aber nicht wählbar: Ein Land, das gar nicht erst auftaucht, sieht aus wie
+    /// vergessen; ein gesperrtes sagt „das kommt noch, aber noch nicht".
+    ///
+    /// Vorher liessen sie sich wählen, und die App rechnete stumm weiter nach
+    /// Baden-Württemberg. Das war schlicht falsch: eine Zusage, die kein
+    /// Rechenschritt einlöst.
+    static func isSupported(_ state: String) -> Bool {
+        state == supported
+    }
+
     static let all = [
         "Baden-Württemberg",
         "Bayern",

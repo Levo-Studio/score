@@ -34,20 +34,48 @@ struct ScoreChip: View {
 
     let title: Text
     let isSelected: Bool
+
+    /// Ob der Chip überhaupt wählbar ist.
+    ///
+    /// Gesperrt heisst blass und ohne Wirkung, nicht verschwunden: Wer ein
+    /// Bundesland sucht, das es hier noch nicht gibt, soll das sehen und nicht
+    /// suchen.
+    var isEnabled: Bool = true
     let action: () -> Void
 
     /// Für Beschriftungen aus dem String-Katalog — Fachtyp, Art einer Leistung.
-    init(title: LocalizedStringKey, isSelected: Bool, action: @escaping () -> Void) {
-        self.init(title: Text(title), isSelected: isSelected, action: action)
+    init(
+        title: LocalizedStringKey,
+        isSelected: Bool,
+        isEnabled: Bool = true,
+        action: @escaping () -> Void
+    ) {
+        self.init(title: Text(title), isSelected: isSelected, isEnabled: isEnabled, action: action)
     }
 
     /// Für rohe Eingaben, die nie übersetzt werden dürfen — Fachnamen, Kürzel,
     /// Bundesländer, Jahreszahlen.
-    init(verbatimTitle: String, isSelected: Bool, action: @escaping () -> Void) {
-        self.init(title: Text(verbatim: verbatimTitle), isSelected: isSelected, action: action)
+    init(
+        verbatimTitle: String,
+        isSelected: Bool,
+        isEnabled: Bool = true,
+        action: @escaping () -> Void
+    ) {
+        self.init(
+            title: Text(verbatim: verbatimTitle),
+            isSelected: isSelected,
+            isEnabled: isEnabled,
+            action: action
+        )
     }
 
-    private init(title: Text, isSelected: Bool, action: @escaping () -> Void) {
+    private init(
+        title: Text,
+        isSelected: Bool,
+        isEnabled: Bool = true,
+        action: @escaping () -> Void
+    ) {
+        self.isEnabled = isEnabled
         self.title = title
         self.isSelected = isSelected
         self.action = action
@@ -71,11 +99,14 @@ struct ScoreChip: View {
                 )
         }
         .buttonStyle(.plain)
+        .disabled(!isEnabled)
+        .opacity(isEnabled ? 1 : 0.4)
         .scoreAnimation(ScoreMotion.selection, value: isSelected)
         // Der Chip kennt seinen Zustand selbst, also gehört das Merkmal hierher
         // und nicht an jede der vielen Aufrufstellen. Gewählt heisst sonst nur
         // „petrol statt hell" — eine rein sichtbare Aussage.
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityAddTraits(isEnabled ? [] : .isStaticText)
     }
 }
 

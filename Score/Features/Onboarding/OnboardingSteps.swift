@@ -217,7 +217,7 @@ struct RegionStep: View {
             OnboardingHeader(
                 kicker: model.stepKicker,
                 title: "Bundesland und Abi-Jahr",
-                text: "Die Abiregel unterscheidet sich je Land. Score rechnet nach BW."
+                text: "Die Abiregel unterscheidet sich je Land. Score rechnet bisher nur Baden-Württemberg."
             )
 
             VStack(alignment: .leading, spacing: 10) {
@@ -229,8 +229,20 @@ struct RegionStep: View {
                     items: FederalState.all,
                     title: { $0 },
                     isSelected: { $0 == model.federalState },
-                    toggle: { model.federalState = $0 }
+                    toggle: { model.federalState = $0 },
+                    isEnabled: FederalState.isSupported
                 )
+
+                // Die übrigen Länder stehen sichtbar, aber gesperrt da. Vorher
+                // liessen sie sich wählen, und Score rechnete stumm weiter nach
+                // Baden-Württemberg — eine Zusage, die kein Rechenschritt
+                // einlöst.
+                Text("Andere Bundesländer kommen, sobald ihre Formel steht. Score rechnet nur, was es wirklich rechnen kann.")
+                    .font(.optionMeta)
+                    .lineSpacing(4.5)
+                    .foregroundStyle(ScorePalette.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 2)
             }
             .staggeredAppearance(index: 3)
 

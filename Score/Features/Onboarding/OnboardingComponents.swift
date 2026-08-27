@@ -171,6 +171,9 @@ struct ChipCloud<Item: Hashable, Trailing: View>: View {
     let title: (Item) -> String
     let isSelected: (Item) -> Bool
     let toggle: (Item) -> Void
+
+    /// Ob ein einzelnes Element wählbar ist. Voreingestellt: alle.
+    var isEnabled: (Item) -> Bool = { _ in true }
     var spacing: CGFloat = ScoreMetrics.Spacing.xs
 
     /// Der Abstand zweier Chips in der Staffel. Die Design-Datei rechnet für die
@@ -183,7 +186,11 @@ struct ChipCloud<Item: Hashable, Trailing: View>: View {
     var body: some View {
         ChipFlowLayout(spacing: spacing) {
             ForEach(Array(items.enumerated()), id: \.element) { index, item in
-                ScoreChip(verbatimTitle: title(item), isSelected: isSelected(item)) {
+                ScoreChip(
+                    verbatimTitle: title(item),
+                    isSelected: isSelected(item),
+                    isEnabled: isEnabled(item)
+                ) {
                     toggle(item)
                 }
                 .staggeredAppearance(index: index, step: staggerStep, base: 0.14)
@@ -201,13 +208,15 @@ extension ChipCloud where Trailing == EmptyView {
         title: @escaping (Item) -> String,
         isSelected: @escaping (Item) -> Bool,
         toggle: @escaping (Item) -> Void,
-        spacing: CGFloat = ScoreMetrics.Spacing.xs
+        spacing: CGFloat = ScoreMetrics.Spacing.xs,
+        isEnabled: @escaping (Item) -> Bool = { _ in true }
     ) {
         self.init(
             items: items,
             title: title,
             isSelected: isSelected,
             toggle: toggle,
+            isEnabled: isEnabled,
             spacing: spacing,
             trailing: { EmptyView() }
         )

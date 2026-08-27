@@ -879,6 +879,17 @@
         }
       }
     },
+    "Andere Bundesländer kommen, sobald ihre Formel steht. Score rechnet nur, was es wirklich rechnen kann.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Andere Bundesländer kommen, sobald ihre Formel steht. Score rechnet nur, was es wirklich rechnen kann."
+          }
+        }
+      }
+    },
     "Anteil an der Teilnote": {
       "extractionState": "manual",
       "localizations": {
@@ -1795,13 +1806,13 @@
         }
       }
     },
-    "Die Abiregel unterscheidet sich je Land. Score rechnet nach BW.": {
+    "Die Abiregel unterscheidet sich je Land. Score rechnet bisher nur Baden-Württemberg.": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die Abiregel unterscheidet sich je Land. Score rechnet nach BW."
+            "value": "Die Abiregel unterscheidet sich je Land. Score rechnet bisher nur Baden-Württemberg."
           }
         }
       }

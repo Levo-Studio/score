@@ -150,8 +150,14 @@ struct PadSettingsView: View {
             PadSettingsRow(title: "Bundesland", isFirst: false) {
                 Menu {
                     Picker("Bundesland", selection: federalStateBinding) {
+                        // Nicht unterstützte Länder stehen sichtbar, aber
+                        // gesperrt da: Ein Land, das gar nicht auftaucht, sieht
+                        // aus wie vergessen. Wählbar waren sie vorher — und
+                        // Score rechnete stumm weiter nach Baden-Württemberg.
                         ForEach(FederalState.all, id: \.self) { state in
-                            Text(verbatim: state).tag(state)
+                            Text(verbatim: state)
+                                .tag(state)
+                                .disabled(!FederalState.isSupported(state))
                         }
                     }
                     .labelsHidden()

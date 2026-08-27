@@ -11,6 +11,7 @@
 
 <p align="center">
   <a href="CONTRIBUTING.md"><b>Mitbauen</b></a> ·
+  <a href="FEATURES.md">Features</a> ·
   <a href="#die-rechnung">Die Rechnung</a> ·
   <a href="#verschlüsselung">Verschlüsselung</a> ·
   <a href="#bauen-und-testen">Bauen</a>
@@ -40,6 +41,8 @@ kein Konto, kein Login. **31 von 31 gespeicherten Attributen sind verschlüsselt
 | **Tests** | 487 in 60 Suites, Swift Testing, ohne Simulator-Zustand im Rechenkern |
 | **Sprache** | Deutsch, 438 Schlüssel im String-Katalog, von Hand gepflegt |
 | **Lizenz** | Source-available, nicht Open Source |
+
+Was die App heute alles kann, steht in **[FEATURES.md](FEATURES.md)**.
 
 ### Was ich noch nicht alleine schaffe
 
@@ -216,6 +219,56 @@ aussehen müssen und was beim Hinzufügen eines Bundeslands auf dich zukommt:
 
 Kurzfassung: kleine Einzelcommits, Tests dabei, und bei Formeln die amtliche
 Verordnung als Quelle. Ungefähr richtig geht bei mir halt nicht.
+
+### Vom PR bis in den App Store
+
+1. Du machst den PR auf. Ich lese ihn selbst und kommentiere.
+2. Was ich anmerke, arbeitest du ein. Offene Punkte werden geschlossen, bevor
+   gemergt wird — auch die kleinen.
+3. Passt alles, merge ich auf `main`.
+4. Ich baue das Archiv in Xcode, lade es hoch und reiche die Version bei Apple
+   ein. Das mache ich, weil das Zertifikat und der App-Store-Zugang an mir
+   hängen — nicht, weil ich dir nicht traue.
+5. Ich sage dir Bescheid, wenn deine Änderung live ist.
+6. Du darfst dich unten eintragen.
+
+Wie lange Schritt 4 dauert, hängt an Apple und nicht an mir. Üblich ist ein Tag,
+manchmal drei.
+
+## Credits
+
+**Creator und Maintainer**
+
+[**Julius Grimm**](https://github.com/justthatrandomcoder) — Idee, Design,
+Rechenkern, App Store. [Levo Studio](https://levo-studio.com)
+
+**Contributors**
+
+<!-- Neue Zeilen bitte unten anhängen, alphabetisch nach Name.
+     Format: | Name | @github | Was | PR | -->
+
+| Name | GitHub | Beitrag | PR |
+|---|---|---|---|
+| _noch niemand — sei die erste Zeile_ | | | |
+
+Wenn dein PR gemergt und die Version veröffentlicht ist, darfst du dich selbst
+hier eintragen. Dafür gibt es Regeln, und die sind nicht verhandelbar:
+
+- **Eine Zeile, ein Beitrag.** Keine Absätze, keine Logos, keine Banner, keine
+  Firmenlinks.
+- **Eintrag im selben PR wie der Beitrag**, nicht als eigener „add me"-PR.
+- **Nur was tatsächlich drin ist.** Der Beitrag steht in einem Satz da, nicht
+  als Aufsatz: „Formel Bayern", „Fix im Import", „Barrierefreiheit Tab-Bar".
+- **GitHub-Handle statt Mailadresse.** Keine privaten Kontaktdaten, weder deine
+  noch fremde.
+- **Kein Werbeplatz.** Keine Verweise auf eigene Produkte, Agenturen,
+  Dienstleistungen oder Kryptoprojekte. Ein Link auf dein GitHub-Profil ist der
+  Link, den du bekommst.
+- **Keine fremden Namen.** Du trägst dich selbst ein, niemanden sonst.
+
+Ein Eintrag, der sich nicht daran hält, fliegt kommentarlos wieder raus. Ansonsten
+gilt: Wer hier steht, hat etwas beigetragen, das Leute auf ihren Geräten benutzen.
+Das ist der Punkt.
 
 ## Lizenz
 

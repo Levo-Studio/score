@@ -3,6 +3,24 @@
 <!-- Ein bis drei Sätze. Was gilt nach diesem PR, was vorher nicht galt.
      Wenn es einen Fehler behebt: was war kaputt und woran lag es. -->
 
+## App-Store-Release-Notes
+
+<!-- Der Text, der bei Apple unter „Neues in dieser Version" erscheinen soll.
+     Auf Deutsch, aus Sicht des Nutzers, ein bis drei Sätze oder ein paar
+     Stichpunkte. Keine Versionsnummern, keine Commit-Hashes, keine
+     Dateinamen, keine Danksagungen — die Credits stehen im README.
+
+     Beispiel:
+     Bei der Einrichtung ging es mit drei Leistungsfächern nicht mehr
+     weiter. Jetzt kommst du durch. -->
+
+```
+
+```
+
+- [ ] Keine nötig, weil nichts für Nutzer sichtbar ist (reines Refactoring,
+      Tests oder Doku)
+
 ## Bundesland und Quelle
 
 <!-- Nur bei Rechen-Beiträgen, sonst löschen.

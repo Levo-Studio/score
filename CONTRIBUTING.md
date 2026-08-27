@@ -295,6 +295,51 @@ eine Zeile zu viel.
 
 Wie lange Schritt 4 dauert, hängt an Apple. Üblich ist ein Tag, manchmal drei.
 
+## App-Store-Release-Notes
+
+Was bei Apple unter „Neues in dieser Version" steht, schreibe ich heute selbst,
+nachdem ich deinen PR gelesen habe. Das ist genau die falsche Reihenfolge: Du
+weisst am besten, was sich für den Nutzer ändert. Deshalb schlägst du den Text
+im PR vor.
+
+**Jeder PR, der für Nutzer sichtbar etwas ändert, bringt seine Release-Notes
+mit.** Ich darf sie kürzen, umstellen oder mit anderen PRs zusammenziehen — aber
+ich fange nicht mehr bei null an.
+
+So sieht ein brauchbarer Vorschlag aus:
+
+- **Auf Deutsch, aus Sicht des Nutzers.** Nicht aus Sicht des Codes. Niemand im
+  App Store weiss, was ein `SubjectDraft` ist.
+- **Kurz.** Ein bis drei Sätze oder ein paar Stichpunkte. Apple erlaubt 4000
+  Zeichen; gelesen werden die ersten zwei Zeilen.
+- **Keine Versionsnummern, keine Commit-Hashes, keine Dateinamen, keine
+  Danksagungen.** Die Version steht ohnehin daneben, und die Credits stehen im
+  [README](README.md#credits) — dort gehören sie hin, nicht in den Store-Text.
+- **Reine Refactorings, Tests und Doku brauchen keine.** Dann schreibst du
+  ausdrücklich „keine, weil nichts für Nutzer sichtbar" und lässt das Feld nicht
+  einfach leer. Leer heisst für mich vergessen.
+
+Gut — zwei echte Änderungen aus der Historie, so wie sie im Store stehen könnten:
+
+```
+Bei der Einrichtung ging es mit drei Leistungsfächern nicht mehr weiter.
+Jetzt kommst du durch.
+
+Zurückwischen führt wieder dorthin, wo du hergekommen bist — auch wenn du
+vom Dashboard aus in ein Fach gesprungen bist.
+```
+
+Schlecht — derselbe Sachverhalt, aber für niemanden ausserhalb dieses Repos
+lesbar:
+
+```
+v1.2 (69cff29): OnboardingFlowModel prüft jetzt canContinue korrekt,
+Fix in SubjectSelectionView.swift. Danke an @beispiel für den Report!
+```
+
+Version, Hash, Dateiname, Klassenname, Danksagung — fünf Dinge, die im Store
+nichts verloren haben, und kein einziger Satz darüber, was der Nutzer davon hat.
+
 ## Wie ich mit KI arbeite
 
 Ja, ich benutze Claude. Wer bitte nicht.

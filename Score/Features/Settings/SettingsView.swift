@@ -400,7 +400,7 @@ private struct SettingsRowLabel<Accessory: View>: View {
         .frame(minHeight: 56)
         .contentShape(Rectangle())
         .overlay(alignment: .top) {
-            Divider2()
+            RowHairline()
         }
     }
 }
@@ -426,20 +426,6 @@ private struct SettingsValue: View {
         content
             .font(.settingsRowValue)
             .foregroundStyle(isWarning ? ScorePalette.warn : ScorePalette.inkSecondary)
-    }
-}
-
-/// Die Haarlinie zwischen zwei Zeilen.
-///
-/// Sie hängt oben an jeder Zeile und wird von der Karte oben abgeschnitten —
-/// so braucht keine Zeile zu wissen, ob sie die erste ist.
-private struct Divider2: View {
-
-    var body: some View {
-        Rectangle()
-            .fill(ScorePalette.line)
-            .frame(height: 1)
-            .offset(y: -1)
     }
 }
 

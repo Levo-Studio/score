@@ -366,10 +366,7 @@ struct PadSubjectDetailView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .overlay(alignment: .top) {
             if !isFirst {
-                Rectangle()
-                    .fill(ScorePalette.line)
-                    .frame(height: 1)
-                    .offset(y: -1)
+                RowHairline()
             }
         }
     }

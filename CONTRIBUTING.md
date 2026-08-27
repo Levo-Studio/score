@@ -341,7 +341,8 @@ immer der bessere.
    ein. Das übernehme ich, weil Zertifikat und App-Store-Zugang an mir hängen.
 5. Ich sage dir Bescheid, sobald deine Änderung live ist.
 6. Du darfst dich in die Credits im [README](README.md#credits) eintragen — die
-   Regeln dafür stehen dort.
+   Regeln dafür stehen dort. Ausserdem stehst du in den Release-Notes bei Apple,
+   siehe unten.
 
 Wie lange Schritt 4 dauert, hängt an Apple. Üblich ist ein Tag, manchmal drei.
 
@@ -362,21 +363,41 @@ So sieht ein brauchbarer Vorschlag aus:
   App Store weiss, was ein `SubjectDraft` ist.
 - **Kurz.** Ein bis drei Sätze oder ein paar Stichpunkte. Apple erlaubt 4000
   Zeichen; gelesen werden die ersten zwei Zeilen.
-- **Keine Versionsnummern, keine Commit-Hashes, keine Dateinamen, keine
-  Danksagungen.** Die Version steht ohnehin daneben, und die Credits stehen im
-  [README](README.md#credits) — dort gehören sie hin, nicht in den Store-Text.
+- **Keine Versionsnummern, keine Commit-Hashes, keine Dateinamen.** Die Version
+  steht ohnehin daneben, der Rest interessiert im Store niemanden.
+- **Beiträge von aussen werden genannt.** Kommt die Änderung nicht vom
+  Eigentümer, steht als **eigene, letzte Zeile** unter dem Text:
+
+  ```
+  Beigetragen von [Name oder @handle]
+  ```
+
+  Bei mehreren Beitragenden durch Komma getrennt. Die Zeile steht am Ende und
+  nicht mitten im Text — wer etwas beiträgt, soll es dort lesen können, wo es
+  tatsächlich alle Nutzer sehen, und nicht nur im README. Dafür gilt dieselbe
+  Linie wie bei den [Credits](README.md#credits):
+  - Nur Name oder GitHub-Handle, sonst nichts.
+  - Keine Links, keine Firmen, keine Produkte, keine Mailadressen.
+  - Nur wer wirklich beigetragen hat, und jeder nur sich selbst.
+  - Bei einer Änderung des Eigentümers entfällt die Zeile — er dankt sich
+    nicht selbst.
 - **Reine Refactorings, Tests und Doku brauchen keine.** Dann schreibst du
   ausdrücklich „keine, weil nichts für Nutzer sichtbar" und lässt das Feld nicht
   einfach leer. Leer heisst für mich vergessen.
 
-Gut — zwei echte Änderungen aus der Historie, so wie sie im Store stehen könnten:
+Gut — zwei echte Änderungen aus der Historie, so wie sie im Store stehen
+könnten, die zweite davon aus einem Beitrag von aussen:
 
 ```
 Bei der Einrichtung ging es mit drei Leistungsfächern nicht mehr weiter.
 Jetzt kommst du durch.
+```
 
+```
 Zurückwischen führt wieder dorthin, wo du hergekommen bist — auch wenn du
 vom Dashboard aus in ein Fach gesprungen bist.
+
+Beigetragen von @beispiel
 ```
 
 Schlecht — derselbe Sachverhalt, aber für niemanden ausserhalb dieses Repos
@@ -384,11 +405,11 @@ lesbar:
 
 ```
 v1.2 (69cff29): OnboardingFlowModel prüft jetzt canContinue korrekt,
-Fix in SubjectSelectionView.swift. Danke an @beispiel für den Report!
+Fix in SubjectSelectionView.swift.
 ```
 
-Version, Hash, Dateiname, Klassenname, Danksagung — fünf Dinge, die im Store
-nichts verloren haben, und kein einziger Satz darüber, was der Nutzer davon hat.
+Version, Hash, Dateiname, Klassenname — vier Dinge, die im Store nichts
+verloren haben, und kein einziger Satz darüber, was der Nutzer davon hat.
 
 ## Wie ich mit KI arbeite
 

@@ -8,11 +8,19 @@
 <!-- Der Text, der bei Apple unter „Neues in dieser Version" erscheinen soll.
      Auf Deutsch, aus Sicht des Nutzers, ein bis drei Sätze oder ein paar
      Stichpunkte. Keine Versionsnummern, keine Commit-Hashes, keine
-     Dateinamen, keine Danksagungen — die Credits stehen im README.
+     Dateinamen.
+
+     Kommt der Beitrag von aussen, gehört als eigene, letzte Zeile dazu:
+     Beigetragen von [Name oder @handle]
+     Bei mehreren durch Komma getrennt. Nur Name oder GitHub-Handle, keine
+     Links, Firmen, Produkte oder Mailadressen, und nur wer wirklich
+     beigetragen hat.
 
      Beispiel:
      Bei der Einrichtung ging es mit drei Leistungsfächern nicht mehr
-     weiter. Jetzt kommst du durch. -->
+     weiter. Jetzt kommst du durch.
+
+     Beigetragen von @beispiel -->
 
 ```
 

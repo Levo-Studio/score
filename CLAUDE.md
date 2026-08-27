@@ -216,14 +216,22 @@ Jeder PR, der für Nutzer sichtbar etwas ändert, schlägt den Text vor, der bei
 Apple unter „Neues in dieser Version" erscheint: **auf Deutsch, aus Sicht des
 Nutzers, ein bis drei Sätze oder ein paar Stichpunkte** — Apple erlaubt 4000
 Zeichen, gelesen werden die ersten zwei. Keine Versionsnummern, keine
-Commit-Hashes, keine Dateinamen, keine Danksagungen; die Credits stehen im
-README.
+Commit-Hashes, keine Dateinamen.
+
+Kommt die Änderung nicht vom Eigentümer, steht als **eigene, letzte Zeile**
+unter dem Text `Beigetragen von [Name oder @handle]`, bei mehreren Beitragenden
+durch Komma getrennt — am Ende, nicht mitten im Text, damit Beitragende dort
+genannt sind, wo es alle Nutzer lesen. Nur Name oder GitHub-Handle, keine Links,
+Firmen, Produkte oder Mailadressen; nur wer wirklich beigetragen hat, und jeder
+nur sich selbst. Bei einer Änderung des Eigentümers entfällt die Zeile.
 
 Gut:
 
 ```
 Bei der Einrichtung ging es mit drei Leistungsfächern nicht mehr weiter.
 Jetzt kommst du durch.
+
+Beigetragen von @beispiel
 ```
 
 Schlecht: „`OnboardingFlowModel` prüft `canContinue` jetzt korrekt (Fix in

@@ -498,7 +498,7 @@ enum BlockOneCalculator {
     ///
     /// - Returns: Die Kurse, die weiter in der Klammerung stehen, und daneben die,
     ///   die schon an der Grenze ihres eigenen Fachs scheitern.
-    static func coursesWithinSubjectLimits(
+    private static func coursesWithinSubjectLimits(
         _ courses: [Course],
         of subjects: [SubjectInput]
     ) -> (within: [Course], beyond: [Course]) {

@@ -145,16 +145,6 @@ enum AbiturResult {
             !isProjection && failedConditions.isEmpty
         }
 
-        /// Wie viele Punkte im Kursblock noch bis zur Mindestbedingung fehlen.
-        var courseBlockPointsMissing: Int {
-            max(0, BlockOneCalculator.passingPoints - courseBlock.points)
-        }
-
-        /// Wie viele Punkte im Prüfungsblock noch bis zur Mindestbedingung fehlen.
-        var examBlockPointsMissing: Int {
-            max(0, BlockTwoCalculator.passingPoints - projectedExamBlockPoints)
-        }
-
         /// Wie viele Punkte bis zur nächstbesseren Note fehlen.
         var pointsToNextGrade: Int? {
             AbiturGradeTable.pointsToNextGrade(fromTotalPoints: totalPoints)

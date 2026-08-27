@@ -1,5 +1,4 @@
 import Foundation
-import SwiftData
 
 /// Die Rechnung innerhalb eines Fachs: von den einzelnen Leistungen über die
 /// beiden Teilnoten zum Halbjahresergebnis.

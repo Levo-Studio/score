@@ -18,17 +18,6 @@ enum SubjectKind: String, Codable, CaseIterable, Sendable {
     case pflichtBasisfach = "kernfach"
     case wahlBasisfach = "basisfach"
 
-    /// Ob das Fach zwingend in Block I einfliesst.
-    ///
-    /// Leistungs- und Pflicht-Basisfächer sind gesetzt, nur Wahl-Basisfächer
-    /// stehen zur Auswahl.
-    nonisolated var isMandatory: Bool {
-        switch self {
-        case .leistungsfach, .pflichtBasisfach: true
-        case .wahlBasisfach: false
-        }
-    }
-
     /// Das Kürzel neben dem Fachnamen in Listen.
     ///
     /// Steht im Katalog, weil die Abkürzung an der Sprache hängt: „LF" ist die

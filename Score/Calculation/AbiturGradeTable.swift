@@ -91,9 +91,6 @@ enum AbiturGradeTable {
     /// Prüfungsblock.
     static let maximumTotal = 900
 
-    /// Die beste Note, und zugleich die Punktzahl, ab der sie steht.
-    static let bestGrade = 1.0
-
     /// Die Durchschnittsnote zu einer Gesamtpunktzahl.
     ///
     /// - Returns: `nil` unterhalb von 300 Punkten. Dort gibt es keine Note,

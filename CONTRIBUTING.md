@@ -56,7 +56,7 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild \
 
 Du brauchst **keins**. `CODE_SIGNING_ALLOWED=NO` ist genau dafür da: Ohne
 Signierung fehlt das iCloud-Entitlement, und die App merkt das selbst
-(`CloudKitAvailability` in `Score/Core/Data/`) und fällt auf einen rein lokalen
+(`CloudKitAvailability` in `Score/Core/Settings/`) und fällt auf einen rein lokalen
 Speicher zurück. Alles ausser dem iCloud-Abgleich funktioniert damit.
 
 Ohne diese Prüfung stürzt das CloudKit-Mirroring asynchron ab, lange nachdem

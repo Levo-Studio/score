@@ -30,7 +30,12 @@ struct ZZRealFlowProbe {
                 .frame(width: size.width, height: size.height)
         )
         root.view.frame = CGRect(origin: .zero, size: size)
-        let window = UIWindow(frame: CGRect(origin: .zero, size: size))
+        // Über die Szene und nicht über `init(frame:)`: Letzteres ist seit
+        // iOS 26 abgekündigt, und dieselbe Prüfung in `DashedChipHitTests`
+        // macht es längst so.
+        let scene = try #require(UIApplication.shared.connectedScenes.first as? UIWindowScene)
+        let window = UIWindow(windowScene: scene)
+        window.frame = root.view.frame
         window.rootViewController = root
         window.makeKeyAndVisible()
         root.view.layoutIfNeeded()

@@ -286,7 +286,8 @@ Levo Studio. Alles darüber hinaus geht nur mit schriftlicher Vereinbarung.
 
 Wer per Pull Request beiträgt, räumt Levo Studio die Rechte ein, den Beitrag im
 Projekt und in der veröffentlichten App zu nutzen — behält aber seine
-Urheberschaft und steht in den [Credits](#credits).
+Urheberschaft, steht in den [Credits](#credits) und wird in den
+Release-Notes bei Apple genannt.
 
 Der vollständige Text steht in [`LICENSE`](LICENSE).
 

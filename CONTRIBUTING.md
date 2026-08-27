@@ -540,8 +540,9 @@ ein Produkt von Levo Studio.
 
 Mit einem PR räumst du Levo Studio das Recht ein, deinen Beitrag im Projekt und
 in der veröffentlichten App zu nutzen, auch in künftigen Fassungen. Deine
-Urheberschaft bleibt bei dir, und du stehst in den
-[Credits](README.md#credits) — das ist der Deal, und er gilt in beide Richtungen.
+Urheberschaft bleibt bei dir, du stehst in den [Credits](README.md#credits), und
+in den Release-Notes bei Apple wirst du genannt — das ist der Deal, und er gilt
+in beide Richtungen.
 
 ## Kontakt
 

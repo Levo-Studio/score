@@ -9,35 +9,46 @@
   Abi-Planer für Baden-Württemberg · SwiftUI · iOS und iPadOS 26
 </p>
 
+<p align="center">
+  <a href="CONTRIBUTING.md"><b>Mitbauen</b></a> ·
+  <a href="#die-rechnung">Die Rechnung</a> ·
+  <a href="#verschlüsselung">Verschlüsselung</a> ·
+  <a href="#bauen-und-testen">Bauen</a>
+</p>
+
 ---
 
-Score rechnet das baden-württembergische Abitur so, wie es amtlich berechnet
-wird: Noten werden als einzelne Leistungen erfasst, daraus entsteht je Halbjahr
-ein Kursergebnis von 0 bis 15, aus 40 eingebrachten Kursen und fünf Prüfungen
-eine Gesamtpunktzahl, und aus ihr die Note des Zeugnisses. Alles liegt in der
-privaten iCloud des Nutzers — es gibt kein Backend und kein Konto.
+Ein Abi-Planer, der nicht aussieht wie eine Excel-Tabelle von 2009 — und der
+keinen Account will, nur um eine schlechte Mathenote zu speichern.
 
-<table>
-  <tr>
-    <td width="50%">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset=".github/assets/dashboard-dark.png">
-        <img src=".github/assets/dashboard-light.png" alt="Übersicht auf dem iPhone">
-      </picture>
-    </td>
-    <td width="50%">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset=".github/assets/blockone-dark.png">
-        <img src=".github/assets/blockone-light.png" alt="Aufschlüsselung der Rechnung">
-      </picture>
-    </td>
-  </tr>
-</table>
+Score rechnet das baden-württembergische Abitur so, wie es amtlich gerechnet
+wird. Nicht ungefähr. Noten werden als einzelne Leistungen erfasst, daraus
+entsteht je Halbjahr ein Kursergebnis von 0 bis 15, aus 40 eingebrachten Kursen
+und fünf Prüfungen eine Gesamtpunktzahl, und aus ihr die Note des Zeugnisses.
+Jede Zwischenzahl lässt sich aufklappen: welche 40 Kurse zählen, welche zwei
+Leistungsfächer doppelt, wo geklammert wird und ab welcher Punktzahl es eng
+wird.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/ipad-dark.png">
-  <img src=".github/assets/ipad-light.png" alt="Score auf dem iPad">
-</picture>
+Alles liegt auf dem Gerät und in der privaten iCloud des Nutzers. Kein Backend,
+kein Konto, kein Login. **31 von 31 gespeicherten Attributen sind verschlüsselt**
+— Apple sieht die Struktur der Daten, nicht ihre Werte.
+
+|  |  |
+|---|---|
+| **Rechenkern** | 40 Kurse, 48 Wertungen, fünf Prüfungen, amtliche Notentabelle |
+| **Speicher** | SwiftData + CloudKit, vier Rückfallstufen, kein `fatalError` im Startpfad |
+| **Tests** | 487 in 60 Suites, Swift Testing, ohne Simulator-Zustand im Rechenkern |
+| **Sprache** | Deutsch, 438 Schlüssel im String-Katalog, von Hand gepflegt |
+| **Lizenz** | Source-available, nicht Open Source |
+
+### Was ich noch nicht alleine schaffe
+
+Score kann ein Bundesland. Sechzehn wären besser, und dafür brauche ich Leute.
+Wie das geht — und wo Baden-Württemberg heute unangenehm fest verdrahtet ist —
+steht ehrlich in **[CONTRIBUTING.md](CONTRIBUTING.md)**. Bugfixes, UI, Doku und
+Tests genauso gern.
+
+**Ich freue mich über PRs.**
 
 ## Die Rechnung
 
@@ -60,8 +71,9 @@ Kursblock = Summe über alle 48 Wertungen ÷ 48 × 40      höchstens 600
 ```
 
 Welche zwei doppelt zählen, entscheidet der Schüler. Score nimmt von sich aus die
-günstigste Kombination und zeigt sie an; im Fach-Editor lässt sie sich selbst
-setzen.
+günstigste Kombination — und zwar nach dem tatsächlich resultierenden Ergebnis,
+nicht nach der höheren Punktsumme. Bei ungleich vielen erfassten Kursen wächst
+mit der Summe auch der Nenner; wer das übersieht, verschenkt Notenstufen.
 
 Wer ein Fach über die Pflicht hinaus belegt hat, kann festlegen, wie viele seiner
 Halbjahre es einbringt. Diese Grenze greift **vor** der Klammerung — ein Kurs, den
@@ -74,8 +86,13 @@ Jedes Ergebnis zählt vierfach. Kommt zu einer schriftlichen Prüfung eine münd
 hinzu, gilt für dieses Fach `(schriftlich × 2 + mündlich) ÷ 3`, und dieses
 Ergebnis geht vierfach ein.
 
+Gerundet wird dabei das **Ergebnis**, nicht sein vierfacher Wert: Aus schriftlich
+10 und mündlich 11 werden (20 + 11) ÷ 3 = 10,33 → 10 → **40 Punkte**, nicht 41.
+Ein Detail, an dem sich leicht ein Punkt je Fach verliert.
+
 Solange Prüfungen fehlen, gehen sie **nicht als 0** ein: Score schreibt sie auf
-dem gezeigten Niveau fort und weist das Ergebnis als Hochrechnung aus.
+dem gezeigten Niveau fort und weist das Ergebnis als Hochrechnung aus. Ein
+Halbjahr ohne Note ist kein Kurs mit null Punkten — dieselbe Regel gilt überall.
 
 ### Note — aus der Tabelle, nicht aus einer Formel
 
@@ -87,7 +104,8 @@ bestanden.
 Die Tabelle liegt als Tabelle im Code und nicht als Gerade. Die kursierende Formel
 `17/3 − Gesamtpunktzahl/180` trifft die Stufen zwar, wenn man abschneidet — aber
 an den Stufengrenzen liefert Gleitkomma-Arithmetik Werte wie 1,2000000000000002,
-und amtlich ist ohnehin die Tabelle.
+und amtlich ist ohnehin die Tabelle. Die ebenfalls verbreitete Schreibweise
+`5,66 − Punkte/180` ist schlicht falsch gerundet: 17/3 ist 5,6666…, nicht 5,66.
 
 Drei Mindestbedingungen müssen zugleich erfüllt sein: 200 im Kursblock, 100 im
 Prüfungsblock, 300 insgesamt. Wer eine reisst, hat nicht bestanden, gleich was die
@@ -107,7 +125,7 @@ Verschlüsselt wird ein Feld aber nur, wenn es `@Attribute(.allowsCloudEncryptio
 trägt — dann landet es in `CKRecord.encryptedValues`, und der Schlüssel hängt am
 iCloud-Schlüsselbund. Apple sieht die Struktur der Daten, nicht ihre Werte.
 
-**30 von 30 gespeicherten Attributen** tragen das Flag. Ausgenommen sind nur die
+**31 von 31 gespeicherten Attributen** tragen das Flag. Ausgenommen sind nur die
 vier Beziehungen: sie werden als `CKReference` gespiegelt, und eine Referenz muss
 für CloudKit auflösbar bleiben.
 
@@ -119,7 +137,7 @@ Schema-Deploy:
 
 ```bash
 python3 scripts/check-encryption.py
-# 25 von 25 gespeicherten Attributen verschlüsselt, 4 Beziehungen ausgenommen.
+# 31 von 31 gespeicherten Attributen verschlüsselt, 4 Beziehungen ausgenommen.
 ```
 
 Exit 0, wenn alles sitzt, sonst 1.
@@ -133,7 +151,7 @@ Score/
   Core/Design/   Farben, Typografie, Masse, Bewegung, Komponenten
   Core/…         Daten, Einstellungen, Formatierung, Medien
   Features/      ein Ordner je Bildschirm
-ScoreTests/      85 Tests in 13 Suites (Swift Testing)
+ScoreTests/      487 Tests in 60 Suites (Swift Testing)
 scripts/         check-encryption.py
 ```
 
@@ -141,6 +159,11 @@ scripts/         check-encryption.py
 arbeiten auf reinen `Sendable`-Werten, nicht auf `@Model`-Klassen. Deshalb lässt
 sich die Auswahllogik ohne `ModelContainer`, ohne Simulator-Zustand und ohne
 CloudKit testen — und die Tests laufen in Millisekunden statt Sekunden.
+
+**Keine Ansicht hält ein Modellobjekt über die Zeit.** Navigation, Entwürfe und
+der Rücknahme-Streifen führen Kennungen und lösen im geltenden Kontext auf. Das
+klingt nach Kleinigkeit und ist keine: Der iCloud-Abgleich tauscht den
+`ModelContainer`, und dabei wird jedes Objekt des alten Kontexts ungültig.
 
 **Die Design-Schicht ist die einzige Quelle für Farbe, Mass und Bewegung.**
 `ScorePalette` löst jeden Token dynamisch nach Hell und Dunkel auf, `ScoreMetrics`
@@ -151,8 +174,9 @@ damit sie nicht an einer von hundert Aufrufstellen vergessen werden kann.
 **iPhone und iPad teilen Modelle, Rechenkern und Design-Schicht**, haben aber
 eigene Shells (`MainShell` mit Tab-Bar, `PadShell` mit Sidebar und Split View).
 
-Oberflächensprachen: **Deutsch und Englisch**, 268 Einträge im String-Katalog.
-Schriften sind Archivo und Public Sans, beide unter der SIL Open Font License.
+Oberflächensprache ist **Deutsch**, 438 Einträge im String-Katalog, von Hand
+gepflegt. Schriften sind Archivo und Public Sans, beide unter der SIL Open Font
+License.
 
 ## Bauen und Testen
 
@@ -179,9 +203,19 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild test \
 und die App fällt automatisch auf einen rein lokalen Speicher zurück
 (`CloudKitAvailability`). Ohne diese Prüfung stürzt das CloudKit-Mirroring
 asynchron ab, lange nachdem `ModelContainer(for:)` erfolgreich zurückgekehrt ist.
+Ein eigenes Developer-Team brauchst du deshalb nicht.
 
 Das Projekt nutzt synchronisierte Ordner — neue Dateien unter `Score/` landen
 ohne Zutun im Target.
+
+## Mitbauen
+
+Wie ein Beitrag aussehen soll, was ein gutes Issue enthält, wie die Commits
+aussehen müssen und was beim Hinzufügen eines Bundeslands auf dich zukommt:
+**[CONTRIBUTING.md](CONTRIBUTING.md)**.
+
+Kurzfassung: kleine Einzelcommits, Tests dabei, und bei Formeln die amtliche
+Verordnung als Quelle. Ungefähr richtig geht bei mir halt nicht.
 
 ## Lizenz
 

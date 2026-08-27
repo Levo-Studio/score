@@ -621,9 +621,24 @@ final class UnsavedInputRegistry {
     /// Wartet auf die nächste ablaufende Anmeldung.
     private var lapse: Task<Void, Never>?
 
-    /// - Parameter maxHold: Wie lange eine Anmeldung längstens gilt.
-    init(maxHold: Duration = defaultMaxHold) {
+    /// Woher die Anmeldestelle die Zeit nimmt.
+    ///
+    /// In der App die Uhr. In Tests eine, die sich stellen lässt: Ob eine
+    /// Anmeldung überfällig ist, liess sich sonst nur über echtes Warten
+    /// herstellen — und damit hing das Ergebnis daran, wie beschäftigt der
+    /// Rechner gerade war. Ein Schlaf von 60 Millisekunden kann unter Last
+    /// 300 dauern, und dann verfällt auch die Anmeldung, die stehen sollte.
+    private let now: () -> ContinuousClock.Instant
+
+    /// - Parameters:
+    ///   - maxHold: Wie lange eine Anmeldung längstens gilt.
+    ///   - now: Die Zeitquelle. Voreinstellung ist die Uhr.
+    init(
+        maxHold: Duration = defaultMaxHold,
+        now: @escaping () -> ContinuousClock.Instant = { .now }
+    ) {
         self.maxHold = maxHold
+        self.now = now
     }
 
     /// Eine Ansicht mit ungesicherter Eingabe ist aufgegangen.
@@ -632,7 +647,7 @@ final class UnsavedInputRegistry {
     /// sich wieder zurücknehmen.
     func begin() -> Hold {
         let hold = Hold()
-        holds[hold] = .now
+        holds[hold] = now()
         scheduleLapse()
         return hold
     }
@@ -687,7 +702,7 @@ final class UnsavedInputRegistry {
         let deadline = earliest.advanced(by: maxHold)
 
         lapse = Task { [weak self] in
-            let remaining = ContinuousClock.now.duration(to: deadline)
+            let remaining = self?.now().duration(to: deadline) ?? .zero
             if remaining > .zero {
                 try? await Task.sleep(for: remaining)
             }
@@ -703,8 +718,8 @@ final class UnsavedInputRegistry {
     /// pauschaler Reset auch diesem den Schutz — und zwar genau in dem Moment,
     /// in dem er gebraucht wird.
     private func dropOverdueHolds() {
-        let now = ContinuousClock.now
-        let overdue = holds.filter { $0.value.duration(to: now) >= maxHold }
+        let jetzt = now()
+        let overdue = holds.filter { $0.value.duration(to: jetzt) >= maxHold }
         guard !overdue.isEmpty else {
             scheduleLapse()
             return

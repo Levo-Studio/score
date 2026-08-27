@@ -63,7 +63,13 @@ struct UnsavedInputHandoverTests {
 
     /// Wartet, bis die Bedingung eintritt — höchstens aber zwei Sekunden.
     private func waitUntil(_ condition: () -> Bool) async {
-        let deadline = Date.now.addingTimeInterval(2)
+        // Grosszügig: Ein erfüllter Zustand kehrt sofort zurück, die Frist
+        // kostet also nur im Fehlerfall Zeit. Mit zwei Sekunden fielen diese
+        // Tests unter Last durch — nicht weil etwas kaputt war, sondern weil
+        // der Rechner mit anderem beschäftigt war. Ein Test, der bei Last
+        // rot wird, verliert genau dann seine Aussagekraft, wenn man sie
+        // braucht.
+        let deadline = Date.now.addingTimeInterval(10)
         while !condition(), Date.now < deadline {
             try? await Task.sleep(for: .milliseconds(20))
         }
@@ -277,20 +283,29 @@ struct UnsavedInputHandoverTests {
     /// gerade verfällt.
     @Test("Die Frist nimmt nur die überfällige Anmeldung zurück")
     func onlyTheOverdueHoldLapses() async {
-        let registry = UnsavedInputRegistry(maxHold: .milliseconds(400))
+        // Die Uhr wird gestellt statt abgewartet. Vorher stand hier echtes
+        // Warten, und damit hing das Ergebnis daran, wie beschäftigt der
+        // Rechner war: Ein Schlaf von 60 Millisekunden kann unter Last 300
+        // dauern — dann verfiel auch die Anmeldung, die stehen sollte, und der
+        // Test wurde rot, ohne dass etwas kaputt war.
+        let uhr = Uhr()
+        let registry = UnsavedInputRegistry(maxHold: .milliseconds(300), now: uhr.jetzt)
         let reopens = Reopens()
         let sync = makeSync(registry: registry, reopens: reopens)
 
         // Die alte Anmeldung, die niemand zurücknimmt.
         _ = registry.begin()
-        try? await Task.sleep(for: .milliseconds(300))
 
-        // Darüber geht ein echtes Blatt auf.
+        // Eine halbe Sekunde später — jenseits der Frist — geht ein echtes
+        // Blatt auf. Das Anmelden räumt die überfällige gleich mit weg.
+        uhr.weiter(.milliseconds(500))
         let fresh = registry.begin()
         sync.start(trigger: .automatic)
 
-        // Jetzt ist die alte überfällig, das echte Blatt aber noch lange nicht.
-        try? await Task.sleep(for: .milliseconds(250))
+        // Das Wegräumen der überfälligen Anmeldung läuft in einer eigenen
+        // Aufgabe — abgewartet wird der Zustand, nicht eine Zeitspanne.
+        await waitUntil { registry.openCount == 1 }
+
         #expect(registry.openCount == 1)
         #expect(reopens.count == 0)
         #expect(sync.isDeferred)
@@ -298,6 +313,14 @@ struct UnsavedInputHandoverTests {
         registry.end(fresh)
         await waitUntil { reopens.count == 1 }
         #expect(reopens.count == 1)
+    }
+
+    /// Eine Uhr, die sich stellen lässt.
+    @MainActor
+    private final class Uhr {
+        private var stand = ContinuousClock.now
+        func jetzt() -> ContinuousClock.Instant { stand }
+        func weiter(_ um: Duration) { stand = stand.advanced(by: um) }
     }
 
     // MARK: - Arbeit über ein Warten hinweg

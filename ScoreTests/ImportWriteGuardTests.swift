@@ -55,7 +55,13 @@ struct ImportWriteGuardTests {
     }
 
     private func waitUntil(_ condition: () -> Bool) async {
-        let deadline = Date.now.addingTimeInterval(2)
+        // Grosszügig: Ein erfüllter Zustand kehrt sofort zurück, die Frist
+        // kostet also nur im Fehlerfall Zeit. Mit zwei Sekunden fielen diese
+        // Tests unter Last durch — nicht weil etwas kaputt war, sondern weil
+        // der Rechner mit anderem beschäftigt war. Ein Test, der bei Last
+        // rot wird, verliert genau dann seine Aussagekraft, wenn man sie
+        // braucht.
+        let deadline = Date.now.addingTimeInterval(10)
         while !condition(), Date.now < deadline {
             try? await Task.sleep(for: .milliseconds(20))
         }

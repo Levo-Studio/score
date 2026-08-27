@@ -176,10 +176,6 @@ struct BlockOneBreakdown {
         let courseLimit: Int?
 
         var id: String { "\(subjectID)-\(reason)" }
-
-        /// Die höchste Punktzahl, die hier herausfällt — die Zahl, an der man
-        /// den Abstand zur Klammergrenze abliest.
-        var bestPoints: Int? { courses.compactMap { $0.state.points }.max() }
     }
 
     /// Eine der fünf Prüfungen, so wie sie auf dem Bildschirm steht.

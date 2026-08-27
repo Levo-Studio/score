@@ -89,11 +89,9 @@ enum ScorePalette {
 
     // MARK: - Fachfarben
 
-    /// Die sechs wählbaren Fachfarben. Sie sind bewusst in beiden Schemata identisch,
-    /// damit ein Fach beim Wechsel von Hell auf Dunkel wiedererkennbar bleibt.
-    static let subjectColors: [Color] = subjectColorValues.map { Color($0) }
-
-    /// Dieselben Werte als Rohzahl — so werden sie im Datenmodell abgelegt.
+    /// Die sechs wählbaren Fachfarben als Rohzahl — so werden sie im Datenmodell
+    /// abgelegt. Sie sind bewusst in beiden Schemata identisch, damit ein Fach
+    /// beim Wechsel von Hell auf Dunkel wiedererkennbar bleibt.
     static let subjectColorValues: [UInt32] = [
         0x1C6B6E,   // Petrol
         0x3E7CA6,   // Blau

@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import UniformTypeIdentifiers
 
 /// Die Einstellungen: zwei Karten, darunter das Studio-Zeichen.
 ///

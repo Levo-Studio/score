@@ -243,12 +243,6 @@ final class OnboardingViewModel {
 
     // MARK: - Weiterkommen
 
-    /// Ob im gestrichelten „Eigenes Fach"-Tag ein Name steht, der noch nicht
-    /// bestätigt wurde.
-    var hasPendingCustomSubject: Bool {
-        !customSubjectDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-
     /// Ob der eingetippte Name beim Weitergehen tatsächlich ein weiteres
     /// Leistungsfach ergäbe.
     ///
@@ -573,11 +567,6 @@ final class OnboardingViewModel {
         case .kursstufe1: "Klasse 11 · KS1"
         case .kursstufe2: "Klasse 12 · KS2"
         }
-    }
-
-    /// Fasst eine Auswahl für die Abschluss-Karte zusammen.
-    func summaryList(_ names: [String]) -> String {
-        names.isEmpty ? ScoreNumberFormat.placeholder : names.joined(separator: ", ")
     }
 
     var sortedRequiredBasicSubjects: [String] {

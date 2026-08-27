@@ -1,202 +1,256 @@
 Score Source-Available License
-Version 1.0
+Version 2.0
 
-Copyright (c) 2026 Levo Studio. All rights reserved.
+Copyright (c) 2026 Levo Studio. Alle Rechte vorbehalten.
 
-This license lets you read this software, and run it for yourself. It does
-not let you sell it, build on it, or ship a changed version of it. If you
-want to do any of those things, you need a separate written agreement with
-Levo Studio.
+## In kurz
 
-This is not an open source licence. It does not meet the Open Source
-Definition, because it restricts both commercial use and modification.
+Der Code von Score ist offen. Du darfst ihn lesen, klonen, ändern, selbst bauen
+und auf deinen Geräten benutzen — und du darfst deine eigene Fassung über dein
+eigenes TestFlight kostenlos an einen überschaubaren Kreis verteilen. Was du
+nicht darfst: Score verkaufen, in den App Store bringen oder dich als Urheber
+oder Anbieter ausgeben, unter welchem Namen auch immer. Score ist und bleibt ein
+Produkt von Levo Studio. Pull Requests sind ausdrücklich erwünscht, jeder Beitrag
+wird in den Credits genannt.
 
-## 1. Acceptance
+Das ist keine Open-Source-Lizenz im Sinne der Open Source Definition, weil sie
+die Veröffentlichung und die kommerzielle Nutzung einschränkt. Ab hier stehen die
+Paragrafen. Wenn die Zusammenfassung und die Paragrafen sich widersprechen, gelten
+die Paragrafen.
 
-By exercising any permission granted below, you accept this license and
-agree to its terms. If you do not accept them, you have no permissions
-under this license.
+## 1. Annahme
 
-## 2. Grant of Copyright License
+Wer eine der unten eingeräumten Erlaubnisse nutzt, nimmt diese Lizenz an. Wer sie
+nicht annimmt, hat keine Rechte an der Software.
 
-Subject to every condition and limitation in this license, the licensor
-grants you a worldwide, royalty-free, non-exclusive, non-transferable,
-non-sublicensable license to:
+## 2. Rechteeinräumung
 
-  (a) access, read, view and study the source code of the software;
+Unter den Bedingungen und Grenzen dieser Lizenz räumt der Lizenzgeber dir ein
+weltweites, unentgeltliches, nicht ausschliessliches, nicht übertragbares und
+nicht unterlizenzierbares Recht ein,
 
-  (b) reproduce the software on machines you own or control, and compile,
-      build and execute it, in each case solely for a permitted purpose as
-      defined in section 3; and
+  (a) den Quellcode der Software abzurufen, zu lesen und zu studieren;
 
-  (c) distribute exact, unmodified copies of the software, complete and
-      unaltered, provided you comply with section 6.
+  (b) die Software auf Geräten, die du besitzt oder kontrollierst, zu
+      vervielfältigen, zu kompilieren, zu bauen und auszuführen;
 
-No other rights are granted. Sections 4 and 5 limit this grant, and they
-prevail over anything in this section that could be read otherwise.
+  (c) die Software für deine eigene Nutzung zu ändern und die geänderte Fassung
+      unter (b) zu bauen und auszuführen;
 
-## 3. Permitted Purposes
+  (d) die Software oder deine geänderte Fassung nach Massgabe von Abschnitt 4
+      über dein eigenes TestFlight zu verteilen; und
 
-You may exercise the permissions in section 2 only for:
+  (e) unveränderte, vollständige Kopien der Software nach Massgabe von
+      Abschnitt 5 weiterzugeben.
 
-  (a) your own personal, private use;
+Weitere Rechte werden nicht eingeräumt. Abschnitt 3 begrenzt diese Einräumung und
+geht ihr im Zweifel vor.
 
-  (b) study of the software, including for education, teaching and
-      independent research; and
+## 3. Was nicht erlaubt ist
 
-  (c) evaluating the software in order to decide whether to seek a
-      commercial license from the licensor.
+Ohne gesonderte schriftliche Vereinbarung mit Levo Studio ist untersagt:
 
-Use by a natural person acting outside any trade, business, craft or
-profession is a permitted purpose. Use by or on behalf of an organisation,
-in the course of employment, or in support of an activity that generates or
-is intended to generate revenue, is not.
+  (a) die Software oder eine daraus abgeleitete Fassung im App Store, in einem
+      anderen App-Store, Marktplatz oder Vertriebskanal zu veröffentlichen —
+      gleich unter welchem Namen und gleich in wessen Entwicklerkonto;
 
-## 4. No Commercial Use
+  (b) die Software oder eine daraus abgeleitete Fassung zu verkaufen, zu
+      vermieten, zu verleasen, zu unterlizenzieren oder auf sonstige Weise gegen
+      Entgelt oder eine andere Gegenleistung weiterzugeben;
 
-You may not use the software, in whole or in part, for any commercial
-purpose. Commercial purpose includes, without limitation:
+  (c) die Software zu nutzen, um Dritten ein Produkt oder einen Dienst
+      anzubieten, entgeltlich oder unentgeltlich, einschliesslich jedes
+      gehosteten oder als Software-as-a-Service betriebenen Angebots;
 
-  (a) selling, licensing, renting, leasing, lending or otherwise supplying
-      the software or access to it in exchange for consideration;
+  (d) die Software in ein kommerziell angebotenes Produkt oder einen kommerziell
+      angebotenen Dienst einzubauen;
 
-  (b) using the software to provide a product or service to a third party,
-      whether or not for a fee, including as part of any hosted, managed or
-      software-as-a-service offering;
+  (e) sich als Urheber, Herausgeber oder Anbieter von Score auszugeben oder
+      diesen Eindruck zu erwecken;
 
-  (c) using the software in the internal operations of any business,
-      commercial enterprise, governmental body, or other organisation; and
+  (f) eine geänderte Fassung der Software öffentlich zugänglich zu machen, zu
+      veröffentlichen oder öffentlich zu verbreiten; ausgenommen ist allein die
+      Verteilung nach Abschnitt 4 und das Einreichen von Beiträgen nach
+      Abschnitt 6;
 
-  (d) incorporating the software into any product or service that is
-      offered commercially.
+  (g) Urheber-, Lizenz- oder Herkunftshinweise in der Software zu entfernen, zu
+      verändern oder unkenntlich zu machen.
 
-Use by a registered charity or comparable not-for-profit body in furtherance
-of its charitable purposes, and not in competition with the licensor, is not
-treated as commercial use for the purposes of this section.
+Ein öffentlicher Fork des Quellcodes auf einer Code-Hosting-Plattform, der die
+Hinweise nach (g) unverändert lässt und der Vorbereitung eines Beitrags nach
+Abschnitt 6 oder dem eigenen Gebrauch dient, gilt nicht als Veröffentlichung im
+Sinne von (f).
 
-## 5. No Derivative Works
+## 4. Eigenes TestFlight
 
-You may not modify, adapt, alter, translate, port, refactor, decompile,
-disassemble, reverse engineer, or otherwise create any derivative work based
-on the software, and you may not distribute, publish, communicate to the
-public or otherwise make available any such derivative work.
+Du darfst deine Fassung der Software über ein TestFlight-Programm deines eigenen
+Apple-Entwicklerkontos verteilen. Dafür gilt:
 
-For the avoidance of doubt:
+  (a) unentgeltlich — weder für den Zugang zum Build noch für die App selbst noch
+      für etwas, das daran gekoppelt ist, darf ein Entgelt verlangt werden;
 
-  (a) local, temporary modification of the source code solely for the
-      purpose of study, or in order to compile and run the software on your
-      own machine under section 2(b), is permitted, provided the result is
-      never distributed, published or made available to any third party;
+  (b) an einen begrenzten Kreis, den du persönlich kennst oder der dich
+      persönlich angefragt hat. Ein öffentlicher TestFlight-Link, eine Verteilung
+      über soziale Netzwerke, Foren, Werbung oder Presse ist keine Verteilung an
+      einen begrenzten Kreis;
 
-  (b) combining or linking the software, in whole or in part, with other
-      software so as to produce a combined work is not permitted; and
+  (c) kein Einreichen zur App-Store-Freigabe. TestFlight-Beta-Prüfung ist davon
+      unberührt;
 
-  (c) reverse engineering that may not lawfully be restricted under
-      applicable mandatory law, including where permitted by Article 6 of
-      Directive 2009/24/EC, is permitted to the extent of that law and no
-      further.
+  (d) unter einem eigenen Namen und einem eigenen App-Symbol, wenn du die
+      Software geändert hast. Abschnitt 7 gilt;
 
-## 6. Redistribution
+  (e) mit einem sichtbaren Hinweis in der App oder in der TestFlight-Beschreibung,
+      dass die Fassung auf Score von Levo Studio beruht, nicht von Levo Studio
+      stammt und von Levo Studio nicht unterstützt wird.
 
-If you distribute copies of the software under section 2(c), you must:
+## 5. Weitergabe unveränderter Kopien
 
-  (a) distribute the software complete and unmodified, including all source
-      code as received;
+Wer unveränderte Kopien der Software weitergibt, muss
 
-  (b) include this license file, unaltered, with every copy;
+  (a) sie vollständig und unverändert weitergeben, einschliesslich des gesamten
+      erhaltenen Quellcodes;
 
-  (c) retain all copyright, attribution and licence notices contained in the
-      software; and
+  (b) diese Lizenzdatei unverändert beilegen;
 
-  (d) not charge any fee or other consideration for the copy, and not impose
-      any additional or different terms on any recipient.
+  (c) alle Urheber-, Lizenz- und Herkunftshinweise erhalten; und
 
-## 7. Notices
+  (d) dafür kein Entgelt und keine sonstige Gegenleistung verlangen und dem
+      Empfänger keine zusätzlichen oder abweichenden Bedingungen auferlegen.
 
-You must not remove, obscure or alter any copyright notice, licence notice,
-attribution or other identifying mark contained in the software.
+## 6. Beiträge
 
-## 8. Patents
+Beiträge sind erwünscht. Wer eine Idee hat, die Score besser macht, soll einen
+Pull Request stellen.
 
-The licensor grants you no patent rights under this license, whether express
-or implied. If you initiate or knowingly assist in any patent claim alleging
-that the software infringes a patent, every license granted to you under
-this license terminates immediately.
+  (a) Wer einen Beitrag einreicht, räumt Levo Studio ein weltweites,
+      unentgeltliches, unwiderrufliches, zeitlich unbefristetes, nicht
+      ausschliessliches und unterlizenzierbares Recht ein, den Beitrag zu
+      vervielfältigen, zu ändern, zu verbreiten, öffentlich zugänglich zu machen
+      und zu verwerten — im Projekt, in der veröffentlichten App und in künftigen
+      Fassungen, auch wenn diese entgeltlich angeboten werden.
 
-## 9. Trademarks
+  (b) Die Urheberschaft am Beitrag bleibt beim Beitragenden. Die Rechteeinräumung
+      nach (a) ist keine Übertragung der Urheberschaft.
 
-This license grants you no rights in the trade marks, service marks, trade
-names, logos or product names of Levo Studio, including the names "Levo
-Studio" and "Score". You must not use them to endorse or promote anything,
-or in a way that suggests any association with or endorsement by Levo
-Studio.
+  (c) Der Beitragende wird in den Credits des Projekts genannt. Die Regeln für
+      den Eintrag stehen im README.
 
-## 10. Termination
+  (d) Wer einen Beitrag einreicht, versichert, dass er die dafür nötigen Rechte
+      hat und dass der Beitrag keine Rechte Dritter verletzt.
 
-Your rights under this license terminate automatically if you breach any of
-its terms.
+  (e) Levo Studio ist nicht verpflichtet, einen Beitrag anzunehmen, zu
+      übernehmen oder zu veröffentlichen.
 
-If your breach is capable of being cured, your rights are reinstated
-retroactively provided you cure the breach within 30 days of becoming aware
-of it, and you have not previously had rights reinstated under this section.
+## 7. Marken und Gestaltung
 
-Sections 7, 9, 11 and 12 survive termination.
+Diese Lizenz räumt keine Rechte an Marken, Kennzeichen, Namen, Logos oder
+Produktnamen von Levo Studio ein, insbesondere nicht an den Bezeichnungen
+"Levo Studio" und "Score" und nicht am App-Symbol, an der Wort-Bild-Marke und an
+der visuellen Gestaltung der App.
 
-## 11. Disclaimer of Warranty
+Du darfst diese Zeichen nicht für ein eigenes Produkt, einen eigenen Dienst oder
+eine eigene Fassung der Software verwenden und nicht so auftreten, dass eine
+Verbindung zu Levo Studio oder eine Billigung durch Levo Studio nahegelegt wird.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. TO THE EXTENT
-THIS DISCLAIMER IS UNENFORCEABLE UNDER APPLICABLE LAW, IT SHALL BE CONSTRUED
-AS THE BROADEST DISCLAIMER THAT IS ENFORCEABLE.
+Erlaubt ist die blosse sachliche Nennung: dass deine Fassung auf Score von
+Levo Studio beruht, darfst du sagen. Nach Abschnitt 4 (e) musst du es sogar.
 
-The software calculates an indicative school grade average. It is not an
-official statement of any examination result, and it carries no guarantee of
-correctness or of conformity with any current examination regulation.
+## 8. Patente
 
-## 12. Limitation of Liability
+Diese Lizenz räumt keine Patentrechte ein, weder ausdrücklich noch
+stillschweigend. Wer ein Patentverfahren mit der Behauptung einleitet oder
+wissentlich unterstützt, die Software verletze ein Patent, verliert alle Rechte
+aus dieser Lizenz mit sofortiger Wirkung.
 
-TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL THE
-LICENSOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY
-OR CONSEQUENTIAL DAMAGES, OR FOR ANY LOSS OF PROFITS, REVENUE, DATA OR
-OPPORTUNITY, ARISING OUT OF OR IN CONNECTION WITH THIS LICENSE OR THE USE OF
-OR INABILITY TO USE THE SOFTWARE, HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY.
+## 9. Beendigung
 
-Nothing in this license excludes or limits liability that cannot lawfully be
-excluded or limited, including liability for death or personal injury caused
-by negligence, or for fraud.
+Deine Rechte aus dieser Lizenz enden automatisch, wenn du gegen eine ihrer
+Bedingungen verstösst.
 
-## 13. Definitions
+Ist der Verstoss heilbar, leben deine Rechte rückwirkend wieder auf, sofern du
+den Verstoss innerhalb von 30 Tagen ab Kenntnis abstellst und dir nicht schon
+einmal nach diesem Abschnitt Rechte wieder eingeräumt wurden.
 
-**Licensor** means Levo Studio, the rights holder in the software.
+Die Abschnitte 3 (g), 6, 7, 10, 11 und 13 gelten über die Beendigung hinaus fort.
+Endet deine Lizenz, musst du jede Verteilung nach Abschnitt 4 unverzüglich
+einstellen.
 
-**Software** means the work made available under this license, including its
-source code, build configuration, assets and accompanying files, in each
-version made available by the licensor.
+## 10. Gewährleistungsausschluss
 
-**You** means the individual or entity exercising permissions under this
-license. **Your** has a corresponding meaning.
+DIE SOFTWARE WIRD OHNE MÄNGELGEWÄHR UND OHNE JEDE GEWÄHRLEISTUNG BEREITGESTELLT,
+WEDER AUSDRÜCKLICH NOCH STILLSCHWEIGEND, EINSCHLIESSLICH DER GEWÄHRLEISTUNG DER
+MARKTGÄNGIGKEIT, DER EIGNUNG FÜR EINEN BESTIMMTEN ZWECK, DER RECHTSINHABERSCHAFT
+UND DER NICHTVERLETZUNG VON RECHTEN DRITTER. IST DIESER AUSSCHLUSS NACH
+ANWENDBAREM RECHT UNWIRKSAM, GILT ER IM WEITESTGEHENDEN ZULÄSSIGEN UMFANG.
 
-**Derivative work** means any work based upon the software, including any
-modification, adaptation, translation, extension, or any other form in which
-the software may be recast, transformed or built upon.
+Die Software berechnet einen unverbindlichen Richtwert für einen Notendurchschnitt.
+Sie ist keine amtliche Auskunft über ein Prüfungsergebnis. Für die Richtigkeit der
+Werte und für die Übereinstimmung mit einer geltenden Prüfungsordnung wird nicht
+eingestanden.
 
-## 14. Third-Party Components
+## 11. Haftungsbeschränkung
 
-The typefaces bundled with the software, Archivo and Public Sans, are
-licensed separately under the SIL Open Font License 1.1. Their licence texts
-are included alongside the font files. This license does not restrict your
-rights in those typefaces, and the SIL Open Font License does not grant you
-any rights in the remainder of the software.
+Der Lizenzgeber haftet nicht für Schäden, die aus dieser Lizenz oder aus der
+Nutzung oder Nichtnutzbarkeit der Software entstehen, insbesondere nicht für
+mittelbare Schäden, Folgeschäden, entgangenen Gewinn, entgangene Einnahmen,
+Datenverlust oder entgangene Chancen — gleich aus welchem Rechtsgrund.
 
-## 15. Other Terms
+Unberührt bleibt die Haftung für Vorsatz und grobe Fahrlässigkeit, für die
+Verletzung von Leben, Körper und Gesundheit, nach dem Produkthaftungsgesetz sowie
+für die schuldhafte Verletzung wesentlicher Vertragspflichten; im letzten Fall ist
+die Haftung auf den vertragstypischen, vorhersehbaren Schaden begrenzt. Haftung,
+die nach zwingendem Recht nicht ausgeschlossen oder begrenzt werden kann, wird
+weder ausgeschlossen noch begrenzt.
 
-Rights beyond those granted here — including commercial use, modification,
-and distribution of derivative works — are available by separate written
-agreement.
+## 12. Begriffe
+
+**Lizenzgeber** ist Levo Studio, Rechteinhaber an der Software.
+
+**Software** ist das unter dieser Lizenz bereitgestellte Werk mit Quellcode,
+Build-Konfiguration, Gestaltungsmitteln und beiliegenden Dateien, in jeder vom
+Lizenzgeber bereitgestellten Fassung.
+
+**Du** ist die natürliche oder juristische Person, die Rechte aus dieser Lizenz
+ausübt.
+
+**Geänderte Fassung** ist jede Bearbeitung, Anpassung, Übersetzung, Erweiterung
+oder sonstige Umgestaltung der Software sowie jedes Werk, das auf ihr aufbaut.
+
+**Beitrag** ist jedes Werk, das jemand bewusst zur Aufnahme in das Projekt
+einreicht, insbesondere per Pull Request.
+
+**Öffentlich** meint jeden über den begrenzten Kreis nach Abschnitt 4 (b)
+hinausgehenden Empfängerkreis.
+
+## 13. Recht und Gerichtsstand
+
+Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts
+und der Verweisungsnormen des internationalen Privatrechts. Zwingende
+Verbraucherschutzvorschriften des Staates, in dem ein Verbraucher seinen
+gewöhnlichen Aufenthalt hat, bleiben unberührt.
+
+Ausschliesslicher Gerichtsstand für alle Streitigkeiten aus oder im Zusammenhang
+mit dieser Lizenz ist der Sitz von Levo Studio, soweit ein solcher Gerichtsstand
+zulässig vereinbart werden kann.
+
+Ist eine Bestimmung dieser Lizenz unwirksam, bleiben die übrigen wirksam. An die
+Stelle der unwirksamen Bestimmung tritt, was ihrem Zweck am nächsten kommt.
+
+## 14. Komponenten Dritter
+
+Die mitgelieferten Schriften Archivo und Public Sans stehen gesondert unter der
+SIL Open Font License 1.1. Ihre Lizenztexte liegen bei den Schriftdateien. Diese
+Lizenz beschränkt deine Rechte an diesen Schriften nicht, und die SIL Open Font
+License räumt dir keine Rechte am übrigen Teil der Software ein.
+
+## 15. Weitergehende Rechte
+
+Alles, was hier nicht erlaubt ist — Veröffentlichung in einem Store, kommerzielle
+Nutzung, Weitergabe geänderter Fassungen an die Öffentlichkeit — geht nur mit
+einer gesonderten schriftlichen Vereinbarung. Frag einfach.
 
 ---
 
-Rights holder: **Levo Studio**
-Contact: me@juliusgrimm.dev
+Rechteinhaber: **Levo Studio**
+Kontakt: me@juliusgrimm.dev

@@ -381,12 +381,20 @@ Prozent stimmt, merkt den Fehler genau dann, wenn es zu spät ist.
 
 ## Lizenz
 
-Score ist **source-available, nicht Open Source** (siehe [`LICENSE`](LICENSE)).
-Lesen, selbst bauen und für sich ausführen ist erlaubt; kommerzielle Nutzung,
-abgeleitete Werke und die Weitergabe veränderter Fassungen nicht.
+Score ist **Open Source mit Grenzen** (siehe [`LICENSE`](LICENSE)). Lesen, ändern,
+selbst bauen und für sich ausführen ist erlaubt — und du darfst deine Fassung
+kostenlos über dein eigenes TestFlight an einen begrenzten Kreis verteilen, unter
+eigenem Namen und mit Hinweis auf die Herkunft.
 
-Mit einem PR stimmst du zu, dass dein Beitrag unter derselben Lizenz Teil des
-Projekts wird.
+Nicht erlaubt: App Store oder ein anderer Store, Verkauf und jede entgeltliche
+Weitergabe, das Auftreten als Urheber oder Anbieter von Score, die Nutzung von
+Name, Marke, Logo oder Gestaltung für ein eigenes Produkt. Score ist und bleibt
+ein Produkt von Levo Studio.
+
+Mit einem PR räumst du Levo Studio das Recht ein, deinen Beitrag im Projekt und
+in der veröffentlichten App zu nutzen, auch in künftigen Fassungen. Deine
+Urheberschaft bleibt bei dir, und du stehst in den
+[Credits](README.md#credits) — das ist der Deal, und er gilt in beide Richtungen.
 
 ## Kontakt
 

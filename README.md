@@ -40,7 +40,7 @@ kein Konto, kein Login. **31 von 31 gespeicherten Attributen sind verschlüsselt
 | **Speicher** | SwiftData + CloudKit, vier Rückfallstufen, kein `fatalError` im Startpfad |
 | **Tests** | 487 in 60 Suites, Swift Testing, ohne Simulator-Zustand im Rechenkern |
 | **Sprache** | Deutsch, 438 Schlüssel im String-Katalog, von Hand gepflegt |
-| **Lizenz** | Source-available, nicht Open Source |
+| **Lizenz** | Source-available — eigenes TestFlight erlaubt, App Store nicht |
 
 Was die App heute alles kann, steht in **[FEATURES.md](FEATURES.md)**.
 
@@ -272,10 +272,21 @@ Das ist der Punkt.
 
 ## Lizenz
 
-Source-available, **nicht** Open Source. Der Code darf gelesen und für sich selbst
-gebaut und ausgeführt werden. Nicht erlaubt sind kommerzielle Nutzung, abgeleitete
-Werke und die Weitergabe veränderter Fassungen. Dafür braucht es eine schriftliche
-Vereinbarung mit Levo Studio.
+Open Source mit Grenzen. Der Code ist offen: lesen, klonen, ändern, selbst bauen,
+auf deinen Geräten benutzen. **Du darfst deine eigene Fassung sogar über dein
+eigenes TestFlight verteilen** — kostenlos, an einen Kreis, den du kennst, unter
+eigenem Namen und mit dem Hinweis, dass sie auf Score beruht, aber nicht von
+Levo Studio kommt.
+
+Nicht erlaubt sind die Veröffentlichung im App Store oder einem anderen Store,
+Verkauf und jede entgeltliche Weitergabe, das Auftreten als Urheber oder Anbieter
+von Score und die Nutzung des Namens „Score", der Marke „Levo Studio", des Logos
+oder der Gestaltung für ein eigenes Produkt. Score ist und bleibt ein Produkt von
+Levo Studio. Alles darüber hinaus geht nur mit schriftlicher Vereinbarung.
+
+Wer per Pull Request beiträgt, räumt Levo Studio die Rechte ein, den Beitrag im
+Projekt und in der veröffentlichten App zu nutzen — behält aber seine
+Urheberschaft und steht in den [Credits](#credits).
 
 Der vollständige Text steht in [`LICENSE`](LICENSE).
 

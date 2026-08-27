@@ -183,6 +183,49 @@ Für Formeln: mehrere reale Notenbilder mit amtlicher Quelle je Testfall.
   PR-Titeln oder -Beschreibungen.
 - Auf aktuellem `main` rebased, keine Merge-Commits im PR.
 
+## Branches
+
+**Nie direkt auf `main` committen**, ausser der Eigentümer sagt es ausdrücklich.
+
+Vor jedem neuen Branch:
+
+```bash
+git fetch --all --prune
+```
+
+Ist der Ausgangsbranch hinter seinem Remote, erst ziehen, dann abzweigen — sonst
+liegt der PR auf einem alten Stand und muss hinterher rebased werden.
+
+Branch-Namen tragen ein Präfix, das sagt, worum es geht. Kleingeschrieben,
+Bindestriche, konkret: `fix/klammern-in-der-aufschluesselung`, nicht `fix/bugs`.
+
+| Präfix | Wofür |
+|---|---|
+| `feat/` | Neue Funktionen |
+| `fix/` | Fehlerbehebungen |
+| `hotfix/` | Dringende Korrekturen an einer veröffentlichten Version |
+| `security/` | Sicherheit, Härtung, Rechte |
+| `refactor/` | Umbau ohne Verhaltensänderung |
+| `perf/` | Laufzeit und Speicher |
+| `design/` | Oberfläche und Gestaltung |
+| `feedback/` | Änderungen aus Rückmeldungen |
+| `ci/` | Automatisierung, Pipelines |
+| `deps/` | Abhängigkeiten |
+| `migration/` | Schema- und Datenmigrationen |
+| `docs/` | Nur Dokumentation |
+| `test/` | Nur Tests |
+| `chore/` | Wartung, Werkzeug, Konfiguration |
+| `spike/` | Versuch, wird verworfen |
+| `release/` | Vorbereitung einer Version |
+| `revert/` | Rücknahme |
+
+**Kein `claude/`-Präfix** und kein anderes, das nach dem benutzten Werkzeug
+benannt ist. Der Branch heisst nach der Arbeit, nicht nach dem Hammer.
+
+Kommt während der Arbeit an einem Branch ein **grösseres** Teilstück dazu, das
+für sich steht: erst fragen, ob es einen eigenen Branch bekommt. Kleines
+innerhalb des laufenden Themas bleibt, wo es ist.
+
 ## Der PR
 
 Die Vorlage liegt in `.github/pull_request_template.md` und wird vollständig

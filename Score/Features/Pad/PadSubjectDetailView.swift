@@ -511,7 +511,7 @@ struct PadSubjectDetailView: View {
 
     private func entryRow(_ entry: GradeEntry, share: Double) -> some View {
         HStack(spacing: ScoreMetrics.Spacing.sm) {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xxs) {
                 Text(entry.title)
                     .font(.rowTitle)
                     .foregroundStyle(ScorePalette.ink)

@@ -118,7 +118,7 @@ struct BlockOneBreakdownView: View {
 
     private var closeRow: some View {
         Button(action: onClose) {
-            HStack(spacing: 4) {
+            HStack(spacing: ScoreMetrics.Spacing.xxs) {
                 Image(systemName: layout.closesUpward ? "xmark" : "chevron.left")
                     .font(.system(size: 11, weight: .semibold))
                 Text(layout.closesUpward ? "Schliessen" : "Übersicht")
@@ -690,7 +690,7 @@ struct BlockOneBreakdownView: View {
             Circle()
                 .fill(ScorePalette.accent.opacity(barOpacity(group.kind)))
                 .frame(width: 9, height: 9)
-                .padding(.top, 4)
+                .padding(.top, ScoreMetrics.Spacing.xxs)
 
             VStack(alignment: .leading, spacing: 3) {
                 originHeadline(group)
@@ -1016,7 +1016,7 @@ struct BlockOneBreakdownView: View {
         in entry: BlockOneBreakdown.SubjectEntry
     ) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            HStack(spacing: 4) {
+            HStack(spacing: ScoreMetrics.Spacing.xxs) {
                 Text(verbatim: Semester.label(course.semesterIndex))
                     .font(.rowValueCaption)
                     .monospacedDigit()

@@ -185,7 +185,7 @@ struct ProfileChoiceView: View {
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(ScorePalette.accent)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xxs) {
                 sharedCounts
                     .font(.summaryValue)
                     .foregroundStyle(ScorePalette.ink)

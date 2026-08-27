@@ -156,7 +156,7 @@ struct SubjectDetailView: View {
             Button {
                 dismiss()
             } label: {
-                HStack(spacing: 4) {
+                HStack(spacing: ScoreMetrics.Spacing.xxs) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 11, weight: .semibold))
                     Text("Fächer")

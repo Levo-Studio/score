@@ -174,7 +174,7 @@ struct SubjectListView: View {
                     .font(.system(size: 10, weight: .semibold))
             }
             .foregroundStyle(ScorePalette.inkSecondary)
-            .padding(.horizontal, 4)
+            .padding(.horizontal, ScoreMetrics.Spacing.xxs)
             .frame(maxWidth: .infinity, minHeight: ScoreMetrics.minimumTapTarget, alignment: .leading)
             .contentShape(Rectangle())
         }
@@ -482,7 +482,7 @@ private struct SubjectListRow: View {
             }
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+        .padding(.vertical, ScoreMetrics.Spacing.sm)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(ScorePalette.surface)
         .clipShape(RoundedRectangle(cornerRadius: ScoreMetrics.Radius.row, style: .continuous))

@@ -389,7 +389,7 @@ struct OralExamToggle: View {
     var body: some View {
         if draft.kind != .leistungsfach {
             HStack(alignment: .top, spacing: ScoreMetrics.Spacing.sm) {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xxs) {
                     Text("Mündliches Prüfungsfach")
                         .font(.rowTitle)
                         .foregroundStyle(ScorePalette.ink)
@@ -436,7 +436,7 @@ struct DoubleWeightingToggle: View {
     var body: some View {
         if draft.allowsDoubleWeighting {
             HStack(alignment: .top, spacing: ScoreMetrics.Spacing.sm) {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: ScoreMetrics.Spacing.xxs) {
                     Text("Doppelt gewertet")
                         .font(.rowTitle)
                         .foregroundStyle(ScorePalette.ink)

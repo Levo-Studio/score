@@ -362,11 +362,11 @@ struct ImportChoiceSheet: View {
                 .sheetContentAppearance(index: 0)
 
             fileSummary
-                .padding(.top, 12)
+                .padding(.top, ScoreMetrics.Spacing.sm)
                 .sheetContentAppearance(index: 1)
 
             options
-                .padding(.top, 16)
+                .padding(.top, ScoreMetrics.Spacing.md)
                 .sheetContentAppearance(index: 2)
         }
         // Dieselben Masse wie bei „Konto wechseln": beide Blätter kommen aus

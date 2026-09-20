@@ -454,6 +454,13 @@ final class ScoreDataStore {
         // an ``GradeEntryIdentifierRepair``.
         GradeEntryIdentifierRepair.run(in: container.mainContext)
 
+        // Und aus demselben Grund gleich daneben: Eine Datei aus einer Fassung
+        // ohne ``Subject/writtenWeight`` trägt für **jedes** Fach die Vorgabe
+        // 50 : 50, obwohl im Prozentwert daneben etwas anderes steht. Warum das
+        // hier läuft und woran der Durchgang seinen Fall erkennt, hängt an
+        // ``WeightingMigration``.
+        WeightingMigration.run(in: container.mainContext)
+
         return container
     }
 }

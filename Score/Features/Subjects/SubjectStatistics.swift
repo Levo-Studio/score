@@ -19,12 +19,12 @@ struct SubjectStatistics {
     init(subject: Subject) {
         results = Semester.allIndices.map { index in
             guard let semester = subject.semester(at: index) else { return nil }
+            // Jedes Halbjahr mit der Gewichtung, die für **es** gilt. Vorher
+            // ging hier der Prozentwert des Fachs über alle vier, und die
+            // Balken der Fachansicht standen damit anders als das Ergebnis, das
+            // in der Halbjahres-Karte daneben steht.
             return SubjectMath.result(
-                for: SemesterInput(
-                    semester,
-                    writtenShare: subject.writtenShare,
-                    isActive: subject.isActive(in: index)
-                )
+                for: SemesterInput(semester, in: subject, isActive: subject.isActive(in: index))
             )
         }
         entryCount = subject.orderedSemesters.reduce(0) { $0 + ($1.entries?.count ?? 0) }

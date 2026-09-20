@@ -502,6 +502,58 @@ struct ScreenshotTests {
         }
     }
 
+    /// Die Gewichtung als Bruch, mit einem Halbjahr, das aus der Reihe fällt.
+    ///
+    /// Das ist der Fall, der die frei einstellbare Gewichtung überhaupt ausgelöst
+    /// hat: In Mathematik zählt schriftlich zu mündlich über die Kursstufe 3 : 1,
+    /// im letzten Halbjahr aber nur noch 2 : 1. Als Prozentwert wäre das zweite
+    /// Verhältnis gar nicht darstellbar — 66,666 gibt es als ganze Zahl nicht.
+    ///
+    /// Das Bild hält beide Zustände fest, die sonst nirgends belegt sind: die
+    /// Bruchdarstellung statt der Prozentanzeige und die aufgeklappte Liste, in
+    /// der alle vier Halbjahre nebeneinander stehen. Wichtig daran ist die
+    /// Ablesezeile — sie muss in jedem Zustand sagen, welche Zahl zu welcher
+    /// Teilnote gehört, sonst ist „2 : 1" nicht zu lesen.
+    @Test("Die Gewichtung als Bruch, je Halbjahr verschieden")
+    func weightingAsFractionPerSemester() async throws {
+        let container = try Self.makeStoredSubjects()
+        let context = container.mainContext
+        let subjects = try context.fetch(FetchDescriptor<Subject>())
+        let mathematik = try #require(subjects.first { $0.name == "Mathematik" })
+
+        mathematik.usesFractionWeighting = true
+        mathematik.weighting = Weighting([.written: 3, .oral: 1])
+        // Nur 4/4 weicht ab. Die übrigen drei bleiben ohne eigene Gewichtung und
+        // folgen dem Fach — genau so, wie der Schalter es beim Einschalten anlegt.
+        mathematik.semester(at: 3)?.weighting = Weighting([.written: 2, .oral: 1])
+        try context.save()
+
+        for scheme in ColorScheme.allCases {
+            try await capture(
+                "gewichtung-bruch-iphone",
+                scheme: scheme,
+                size: CGSize(width: Device.phone.width, height: 2200),
+                context: context
+            ) {
+                SubjectEditorView(target: .existing(mathematik))
+            }
+
+            try await capture(
+                "gewichtung-bruch-ipad",
+                scheme: scheme,
+                size: Device.pad,
+                context: context
+            ) {
+                PadSubjectEditorView(
+                    target: .existing(mathematik),
+                    route: .constant(.subject(mathematik.identifier)),
+                    draftState: PadEditorDraftState()
+                )
+                .background(ScorePalette.background)
+            }
+        }
+    }
+
     /// Ein Fach ohne Prüfung: Physik ist Wahl-Basisfach und wird nicht geprüft —
     /// unter den Leistungen steht deshalb kein Prüfungsabschnitt.
     @Test("Ein gewöhnliches Fach zeigt keinen Prüfungsabschnitt")

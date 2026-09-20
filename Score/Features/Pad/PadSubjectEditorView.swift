@@ -112,13 +112,33 @@ struct PadSubjectEditorView: View {
     /// Nutzer von Hand wieder zurückgenommen hat, zu Recht als „nichts offen".
     /// Bei einem neuen Fach ist der Vergleichswert der leere Entwurf.
     private var hasUnsavedChanges: Bool {
-        let saved = SubjectDraft(subject: target.editedSubject)
-        return draft.name != saved.name
+        Self.hasChanges(in: draft, comparedTo: SubjectDraft(subject: target.editedSubject))
+    }
+
+    /// Der Vergleich zweier Entwürfe, Feld für Feld.
+    ///
+    /// ## Warum die Liste vollständig sein muss
+    ///
+    /// ``SubjectDraft`` ist nicht `Equatable` — verglichen wird Feld für Feld,
+    /// und diese Liste wird von Hand gepflegt. Fehlt in ihr ein Feld, geht die Änderung auf
+    /// dem iPad beim Routenwechsel **stumm** verloren: Die Hülle fragt vor dem
+    /// Wechsel, ob etwas offen ist, bekommt „nein" und baut den Editor mitsamt
+    /// seinem `@State` ab. Die Frage „Änderungen verwerfen?" erscheint gar nicht
+    /// erst. Genau so fielen das Anzeigekennzeichen und die Gewichtungen der
+    /// Halbjahre durch.
+    ///
+    /// Sie steht als eigene Funktion da und nicht im Rumpf der Ansicht, damit
+    /// ein Test sie erreicht — eine Liste, die niemand prüfen kann, ist beim
+    /// nächsten neuen Feld wieder unvollständig.
+    static func hasChanges(in draft: SubjectDraft, comparedTo saved: SubjectDraft) -> Bool {
+        draft.name != saved.name
             || draft.abbreviation != saved.abbreviation
             || draft.colorValue != saved.colorValue
             || draft.kind != saved.kind
             || draft.activeSemesters != saved.activeSemesters
-            || draft.writtenShare != saved.writtenShare
+            || draft.weighting != saved.weighting
+            || draft.usesFractionWeighting != saved.usesFractionWeighting
+            || draft.semesterWeightings != saved.semesterWeightings
             || draft.maximumContributedCourses != saved.maximumContributedCourses
             || draft.isOralExamSubject != saved.isOralExamSubject
             || draft.isDoubleWeighted != saved.isDoubleWeighted
@@ -295,33 +315,15 @@ struct PadSubjectEditorView: View {
         }
     }
 
+    /// Dieselbe Karte wie auf dem iPhone — nur die Hülle darum ist die des iPads.
+    ///
+    /// Vorher stand hier eine zweite Fassung mit eigener Überschrift und eigenem
+    /// Aufbau. Zwei Fassungen derselben Einstellung laufen beim nächsten
+    /// Handgriff auseinander; welche von beiden dann die richtige ist, merkt man
+    /// erst am Gerät.
     private var weightCard: some View {
         PadCard(horizontalPadding: 18, verticalPadding: 18, cornerRadius: 24) {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .firstTextBaseline) {
-                    PadCardTitle(title: "Gewichtung schriftlich zu mündlich")
-                    Spacer(minLength: ScoreMetrics.Spacing.xs)
-                    Text(verbatim: "\(draft.writtenShare) : \(100 - draft.writtenShare)")
-                        .font(.chipLabel)
-                        .monospacedDigit()
-                        .foregroundStyle(ScorePalette.accent)
-                }
-
-                WeightSlider(writtenShare: $draft.writtenShare)
-
-                HStack {
-                    Text("Schriftlich")
-                    Spacer()
-                    Text("Mündlich")
-                }
-                .font(ScoreTypography.publicSans(400, 10.5))
-                .foregroundStyle(ScorePalette.inkSecondary)
-
-                Text("Gilt für alle vier Halbjahre dieses Fachs. Einzelne Leistungen gewichtest du in der Fachansicht.")
-                    .font(ScoreTypography.publicSans(400, 11.5))
-                    .foregroundStyle(ScorePalette.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            SubjectWeightingSection(draft: $draft)
         }
     }
 

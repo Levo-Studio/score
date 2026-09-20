@@ -26,6 +26,14 @@ import SwiftUI
 @Model
 final class Subject {
 
+    /// Das Gewicht, mit dem beide Teilnoten eines neuen Fachs anfangen.
+    ///
+    /// Steht als eigene Konstante da, weil an ihr die Migration hängt: Ein Fach
+    /// gilt für ``WeightingMigration`` genau dann als noch nicht gewandert, wenn
+    /// beide Gewichte **exakt** auf diesem Wert stehen. Zwei Literale, die
+    /// auseinanderlaufen können, wären hier ein stiller Datenfehler.
+    static let defaultWeight = 50
+
     /// Eine stabile Kennung, die über Geräte hinweg gleich bleibt.
     ///
     /// Die `persistentModelID` von SwiftData taugt dafür nicht: sie ist lokal und
@@ -57,9 +65,54 @@ final class Subject {
 
     /// Anteil der schriftlichen Note an diesem Fach, in Prozent.
     ///
-    /// Der mündliche Anteil ist immer `100 - writtenShare`. Voreinstellung ist
-    /// 50:50, pro Fach überschreibbar.
+    /// ## Warum das Feld neben den Gewichten stehen bleibt
+    ///
+    /// Die Gewichtung des Fachs steht seit ``writtenWeight`` und ``oralWeight``
+    /// als Verhältnis da — dieses Feld ist nicht mehr die Quelle der Rechnung,
+    /// sondern eine **bewusste Doppelschreibung für ältere Geräte**. Version 1.1
+    /// ist veröffentlicht und kennt nur diesen einen Wert; schriebe die neue
+    /// Fassung ausschliesslich Gewichte, stünde ein iPad mit 1.1 daneben stumm
+    /// auf 50 : 50, obwohl auf dem iPhone 2 : 1 eingestellt ist. Deshalb zieht
+    /// ``weighting`` diesen Prozentwert bei **jeder** Änderung mit.
+    ///
+    /// Gerundet wird dabei, und das geht nicht ohne Verlust: 2 : 1 ist 66,666 %
+    /// und landet hier als 67. Genau dieser Verlust war der Grund für die
+    /// Gewichte — er trifft ab jetzt nur noch das alte Gerät, nicht mehr die
+    /// Rechnung.
+    ///
+    /// Raus darf das Feld, sobald 1.1 nicht mehr im Umlauf ist. Vorher nicht:
+    /// ein Feld, das eine ausgelieferte Fassung liest, ist Teil des Schemas.
     @Attribute(.allowsCloudEncryption) var writtenShare: Int = 50
+
+    /// Das Gewicht der schriftlichen Teilnote in diesem Fach.
+    ///
+    /// Zusammen mit ``oralWeight`` das Verhältnis, in dem die Teilnoten zählen —
+    /// warum Gewichte und keine Prozente, steht in ``Weighting``. Gelesen und
+    /// geschrieben wird über ``weighting``; die beiden Zahlen liegen nur deshalb
+    /// einzeln im Modell, weil CloudKit keine zusammengesetzten Werte spiegelt.
+    ///
+    /// Die Vorgabe ist ``defaultWeight`` für beide Seiten und damit dieselbe
+    /// Gewichtung wie der bisherige Vorgabe-Prozentwert 50. Dass hier 50 und
+    /// nicht 1 steht, ist Absicht: Der gespeicherte Bestand wandert über
+    /// ``WeightingMigration`` genau dann, wenn beide Gewichte noch **exakt** auf
+    /// der Vorgabe stehen, und 50 : 50 unterscheidet sich von jeder Gewichtung,
+    /// die aus einem Prozentwert entsteht.
+    @Attribute(.allowsCloudEncryption) var writtenWeight: Int = Subject.defaultWeight
+
+    /// Das Gewicht der mündlichen Teilnote in diesem Fach. Siehe ``writtenWeight``.
+    @Attribute(.allowsCloudEncryption) var oralWeight: Int = Subject.defaultWeight
+
+    /// Ob die Oberfläche die Gewichtung dieses Fachs als Bruch zeigt.
+    ///
+    /// **Reine Darstellung.** An der Rechnung ändert das Kennzeichen nichts —
+    /// 2 : 1 und 67 % sind zwei Schreibweisen für dieselben Gewichte, und welche
+    /// von beiden jemand lesen will, hängt am Fach: In Mathematik steht im
+    /// Schulheft „2 : 1", in Gemeinschaftskunde „60 %".
+    ///
+    /// Am Fach und nicht am Profil, weil die Wahl je Fach fällt. Ein einzelnes
+    /// Feld je Fach löst CloudKit ausserdem nach „letzter Schreiber gewinnt" auf
+    /// — dieselbe Überlegung wie bei ``isOralExamSubject``.
+    @Attribute(.allowsCloudEncryption) var usesFractionWeighting: Bool = false
 
     /// Die belegten Halbjahre als Indizes 0 bis 3.
     ///
@@ -161,7 +214,8 @@ final class Subject {
         isDoubleWeighted: Bool = false,
         writtenExamPoints: Int? = nil,
         oralExamPoints: Int? = nil,
-        sortIndex: Int = 0
+        sortIndex: Int = 0,
+        usesFractionWeighting: Bool = false
     ) {
         self.identifier = identifier
         self.name = name
@@ -170,6 +224,18 @@ final class Subject {
         self.kindRawValue = kind.rawValue
         self.isCustom = isCustom
         self.writtenShare = writtenShare
+
+        // Die Gewichte kommen aus dem Prozentwert und stehen nicht als eigene
+        // Parameter daneben. Sonst liesse sich ein Fach mit 60 % schriftlich und
+        // dem Verhältnis 1 : 1 anlegen, und welche der beiden Angaben dann gölte,
+        // wäre eine Frage ohne gute Antwort. Wer ein Verhältnis braucht, das sich
+        // als ganzer Prozentwert nicht schreiben lässt — 2 : 1 etwa —, setzt
+        // danach ``weighting``; das schreibt den Prozentwert mit.
+        let weighting = Weighting(writtenShare: writtenShare)
+        self.writtenWeight = weighting.weight(for: .written)
+        self.oralWeight = weighting.weight(for: .oral)
+        self.usesFractionWeighting = usesFractionWeighting
+
         self.activeSemesters = activeSemesters
         self.maximumContributedCourses = maximumContributedCourses
         self.isOralExamSubject = isOralExamSubject
@@ -198,8 +264,47 @@ extension Subject {
     }
 
     /// Anteil der mündlichen Note in Prozent.
+    ///
+    /// Bleibt der Gegenwert zu ``writtenShare`` und damit dieselbe gerundete
+    /// Lesart wie dort — nicht `weighting.share(of: .oral)`. Die beiden Werte
+    /// müssen sich zu 100 ergänzen; zwei getrennt gerundete Anteile täten das bei
+    /// 2 : 1 nicht (67 und 33 gegenüber 66,67 und 33,33), und in der Oberfläche
+    /// stünde dann „67 % · 34 %".
     var oralShare: Int {
         100 - writtenShare
+    }
+
+    /// Die Gewichtung des Fachs — das Verhältnis, in dem die Teilnoten zählen.
+    ///
+    /// Der einzige Weg an ``writtenWeight`` und ``oralWeight`` heran, und er ist
+    /// es aus einem Grund: **Das Schreiben zieht ``writtenShare`` mit.** Version
+    /// 1.1 ist veröffentlicht und liest nur den Prozentwert; würde er hier nicht
+    /// mitgeschrieben, sähe ein Gerät mit 1.1 weiter 50 : 50. Wer die Gewichte
+    /// einzeln setzt, umgeht genau das — deshalb geht jede Änderung über diese
+    /// Stelle.
+    ///
+    /// ## Was CloudKit daraus machen kann
+    ///
+    /// Gewichte und Prozentwert sind für CloudKit **drei eigene Felder**, und
+    /// aufgelöst wird je Feld nach „letzter Schreiber gewinnt". Ändert jemand auf
+    /// einem Gerät mit 1.1 den Prozentwert, während hier schon ein Verhältnis
+    /// steht, kommt der neue Prozentwert an, die Gewichte bleiben stehen — und
+    /// die beiden Angaben laufen auseinander. ``WeightingMigration`` greift dann
+    /// nicht mehr, denn die Gewichte stehen nicht mehr auf der Vorgabe.
+    ///
+    /// Das ist mit CloudKit nicht sauber aufzulösen: Es gibt keinen gemeinsamen
+    /// Zeitstempel für „diese drei Felder gehören zusammen", und jede Heuristik
+    /// darüber, welche Seite gewinnt, würde irgendwann die Einstellung des
+    /// Nutzers überschreiben. Der Fall erledigt sich, wenn 1.1 aus dem Verkehr
+    /// ist; bis dahin gilt, was auf dem neueren Gerät steht — die Rechnung liest
+    /// die Gewichte.
+    var weighting: Weighting {
+        get { Weighting([.written: writtenWeight, .oral: oralWeight]) }
+        set {
+            writtenWeight = newValue.weight(for: .written)
+            oralWeight = newValue.weight(for: .oral)
+            writtenShare = Int(newValue.share(of: .written).rounded())
+        }
     }
 
     /// Die Halbjahre in fester Reihenfolge, unabhängig davon, wie SwiftData sie liefert.

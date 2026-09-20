@@ -791,6 +791,17 @@
         }
       }
     },
+    "Alle vier haben die Gewichtung von oben übernommen. Ändere die Halbjahre, die davon abweichen.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle vier haben die Gewichtung von oben übernommen. Ändere die Halbjahre, die davon abweichen."
+          }
+        }
+      }
+    },
     "Alles bereit, %@.": {
       "extractionState": "manual",
       "localizations": {
@@ -853,6 +864,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Als %@ fortfahren"
+          }
+        }
+      }
+    },
+    "Als Bruch angeben": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Als Bruch angeben"
           }
         }
       }
@@ -2421,13 +2443,13 @@
         }
       }
     },
-    "Gewichtung schriftlich zu mündlich": {
+    "Gewichtung je Halbjahr": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gewichtung schriftlich zu mündlich"
+            "value": "Gewichtung je Halbjahr"
           }
         }
       }
@@ -2775,6 +2797,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. In den Schnitt gehen 40 Kurse ein — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso."
+          }
+        }
+      }
+    },
+    "Jedes Halbjahr rechnet mit seinem eigenen Verhältnis. Schaltest du wieder ab, gilt für alle vier die Gewichtung von oben.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jedes Halbjahr rechnet mit seinem eigenen Verhältnis. Schaltest du wieder ab, gilt für alle vier die Gewichtung von oben."
           }
         }
       }
@@ -3923,6 +3956,17 @@
         }
       }
     },
+    "Prozent in Fünferschritten. Ein Drittel lässt sich so nicht treffen, ein Bruch schon.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prozent in Fünferschritten. Ein Drittel lässt sich so nicht treffen, ein Bruch schon."
+          }
+        }
+      }
+    },
     "Prüfungen": {
       "extractionState": "manual",
       "localizations": {
@@ -4336,6 +4380,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Seitenleiste einblenden"
+          }
+        }
+      }
+    },
+    "Sieben feste Verhältnisse stehen zur Wahl — mehr kommt in keiner Schulordnung vor.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sieben feste Verhältnisse stehen zur Wahl — mehr kommt in keiner Schulordnung vor."
           }
         }
       }
@@ -5254,6 +5309,17 @@
         }
       }
     },
+    "Ändert sich das Verhältnis über die Kursstufe — in 4/4 anders als davor —, stell es hier je Halbjahr ein.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ändert sich das Verhältnis über die Kursstufe — in 4/4 anders als davor —, stell es hier je Halbjahr ein."
+          }
+        }
+      }
+    },
     "Änderungen sichern": {
       "extractionState": "manual",
       "localizations": {
@@ -5298,13 +5364,13 @@
         }
       }
     },
-    "Ø %@ gesamt · %lld:%lld": {
+    "Ø %@ gesamt · %@": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ø %@ gesamt · %lld:%lld"
+            "value": "Ø %@ gesamt · %@"
           }
         }
       }

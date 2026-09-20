@@ -82,7 +82,7 @@ Score/
   Features/          ein Ordner je Bildschirm: Dashboard, Subjects, Breakdown,
                      GradeEntry, Onboarding, Profile, Settings, Root, Pad
   Resources/         Localizable.xcstrings, Schriften
-ScoreTests/          44 Testdateien (Swift Testing)
+ScoreTests/          47 Testdateien (Swift Testing)
 scripts/             check-encryption.py
 ```
 
@@ -242,7 +242,7 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild test \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Stand heute: **487 Tests in 60 Suites**, grün. Ein PR, der sie rot macht, wird
+Stand heute: **539 Tests in 66 Suites**, grün. Ein PR, der sie rot macht, wird
 nicht gemergt — auch dann nicht, wenn der rote Test „schon vorher komisch war".
 Ist er tatsächlich kaputt, repariere ihn in einem eigenen Commit und schreib
 dazu, warum er falsch lag.
@@ -301,7 +301,7 @@ der Navigation. Das stimmte für das iPad und war fürs iPhone falsch. Es hat f�
 Runden Nacharbeit gekostet, weil alle dem Kommentar geglaubt haben.
 
 Die Oberfläche ist auf Deutsch. Jeder sichtbare Text gehört in
-`Score/Resources/Localizable.xcstrings` (439 Schlüssel), der von Hand gepflegt
+`Score/Resources/Localizable.xcstrings` (445 Schlüssel), der von Hand gepflegt
 wird — `extractionState: manual`, Xcodes automatische Extraktion trägt hier
 nichts Brauchbares nach.
 
@@ -353,7 +353,7 @@ die Antwort „nein" ist. Bei nein genügt das Häkchen. Bei ja gehört hinein:
   Beziehungen, die als `CKReference` gespiegelt werden und auflösbar bleiben
   müssen.
 - **Das Ergebnis von `python3 scripts/check-encryption.py`**, mit Ausgabe. Heute
-  meldet es „31 von 31 gespeicherten Attributen verschlüsselt, 4 Beziehungen
+  meldet es „36 von 36 gespeicherten Attributen verschlüsselt, 4 Beziehungen
   ausgenommen" und beendet sich mit 0. Etwas anderes als Exit 0 ist kein
   Diskussionsgegenstand, sondern ein Fehler im PR.
 

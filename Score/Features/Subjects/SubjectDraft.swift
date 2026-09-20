@@ -17,7 +17,32 @@ struct SubjectDraft {
     var colorValue: Int
     var kind: SubjectKind
     var activeSemesters: Set<Int>
-    var writtenShare: Int
+
+    /// Das Verhältnis, in dem die Teilnoten dieses Fachs zusammenzählen.
+    ///
+    /// Ein ``Weighting`` und kein Prozentwert mehr: 2 : 1 lässt sich als ganze
+    /// Zahl von 0 bis 100 nicht schreiben, und 67 : 33 ist eben nicht 2 : 1.
+    /// Der Prozentwert am Fach wird beim Sichern mitgezogen — das erledigt
+    /// ``Subject/weighting``, nicht diese Stelle.
+    var weighting: Weighting
+
+    /// Ob die Oberfläche die Gewichtung dieses Fachs als Bruch zeigt.
+    ///
+    /// Reine Darstellung, an der Rechnung ändert sie nichts. Sie steht trotzdem
+    /// im Entwurf und nicht im lokalen Zustand einer Ansicht: Die Wahl gehört
+    /// zum Fach und wird mitgesichert, sonst stünde beim nächsten Öffnen wieder
+    /// die andere Schreibweise da.
+    var usesFractionWeighting: Bool
+
+    /// Die **eigene** Gewichtung je Halbjahr, nach Index 0 bis 3.
+    ///
+    /// Ein Halbjahr ohne Eintrag folgt dem Fach — dieselbe Lesart wie
+    /// ``SemesterResult/weighting``, wo dafür `nil` steht. Ein Wörterbuch statt
+    /// vier optionaler Felder, weil „kein Eintrag" und „folgt dem Fach" hier
+    /// dasselbe sind und sich so nicht auseinanderentwickeln können.
+    ///
+    /// Geschrieben wird erst beim Sichern, wie alles andere im Entwurf auch.
+    var semesterWeightings: [Int: Weighting]
 
     /// Wie viele Halbjahre dieses Fach höchstens in Block I einbringt.
     /// `nil` heisst „alle belegten".
@@ -53,7 +78,12 @@ struct SubjectDraft {
             isOralExamSubject: subject?.isOralExamSubject ?? false
         )
         activeSemesters = Set(subject?.activeSemesters ?? Semester.allIndices)
-        writtenShare = subject?.writtenShare ?? 50
+        weighting = subject?.weighting ?? .even
+        usesFractionWeighting = subject?.usesFractionWeighting ?? false
+        semesterWeightings = (subject?.orderedSemesters ?? [])
+            .reduce(into: [:]) { result, semester in
+                result[semester.index] = semester.weighting
+            }
         maximumContributedCourses = subject?.maximumContributedCourses
         isOralExamSubject = subject?.isOralExamSubject ?? false
         isDoubleWeighted = subject?.isDoubleWeighted ?? false
@@ -229,6 +259,42 @@ struct SubjectDraft {
         return limit < activeSemesters.count ? max(1, limit) : nil
     }
 
+    // MARK: - Gewichtung je Halbjahr
+
+    /// Ob die Halbjahre eigene Gewichtungen tragen.
+    ///
+    /// ## Warum das kein eigenes Feld im Modell ist
+    ///
+    /// Der Zustand ist **ableitbar**: Der Schalter ist an, sobald mindestens ein
+    /// Halbjahr eine eigene Gewichtung trägt — also `SemesterResult.weighting`
+    /// nicht `nil` ist. Einschalten heisst „die Fachgewichtung in alle vier
+    /// schreiben", Ausschalten heisst „alle vier auf `nil`". Ein zusätzliches
+    /// Kennzeichen wäre dieselbe Aussage ein zweites Mal, und zwar eine, die
+    /// über CloudKit getrennt aufgelöst würde: Ein Gerät, auf dem das Kennzeichen
+    /// ankommt, die Gewichte aber nicht, zeigte vier leere Zeilen.
+    ///
+    /// **Einschalten erbt die Gewichtung, die vorher fürs Fach galt.** Niemand
+    /// soll beim Umlegen eines Schalters einen Sprung in seinen Noten sehen —
+    /// die Rechnung bleibt in dem Moment Zeichen für Zeichen dieselbe.
+    var usesSemesterWeighting: Bool {
+        get { !semesterWeightings.isEmpty }
+        set {
+            guard newValue != usesSemesterWeighting else { return }
+            semesterWeightings = newValue
+                ? Dictionary(uniqueKeysWithValues: Semester.allIndices.map { ($0, weighting) })
+                : [:]
+        }
+    }
+
+    /// Die Gewichtung, die für ein Halbjahr im Entwurf gilt.
+    ///
+    /// Die eigene, wenn es eine trägt, sonst die des Fachs — dieselbe Auflösung
+    /// wie ``SemesterResult/resolvedWeighting(in:)``, nur auf dem noch nicht
+    /// gesicherten Stand.
+    func weighting(for semesterIndex: Int) -> Weighting {
+        semesterWeightings[semesterIndex] ?? weighting
+    }
+
     // MARK: - Ändern
 
     /// Übernimmt Name, Kürzel, Farbe und Typ aus einer Katalogvorlage.
@@ -311,12 +377,17 @@ struct SubjectDraft {
             subject.colorValue = colorValue
             subject.kind = kind
             subject.activeSemesters = semesters
-            subject.writtenShare = writtenShare
+            // Über ``Subject/weighting`` und nicht an den Gewichten einzeln: Nur
+            // dieser Weg zieht den Prozentwert mit, den eine ältere App-Version
+            // auf einem zweiten Gerät als einzige Angabe liest.
+            subject.weighting = weighting
+            subject.usesFractionWeighting = usesFractionWeighting
             subject.maximumContributedCourses = resolvedCourseLimit
             subject.isOralExamSubject = resolvedOralExamSubject
             subject.isDoubleWeighted = resolvedDoubleWeighted
             subject.writtenExamPoints = resolvedWrittenExamPoints
             subject.oralExamPoints = resolvedOralExamPoints
+            applySemesterWeightings(to: subject, in: context)
             return subject
         }
 
@@ -326,16 +397,22 @@ struct SubjectDraft {
             colorValue: colorValue,
             kind: kind,
             isCustom: SubjectCatalog.template(named: finalName) == nil,
-            writtenShare: writtenShare,
             activeSemesters: semesters,
             maximumContributedCourses: resolvedCourseLimit,
             isOralExamSubject: resolvedOralExamSubject,
             isDoubleWeighted: resolvedDoubleWeighted,
             writtenExamPoints: resolvedWrittenExamPoints,
             oralExamPoints: resolvedOralExamPoints,
-            sortIndex: (existingSubjects.map(\.sortIndex).max() ?? -1) + 1
+            sortIndex: (existingSubjects.map(\.sortIndex).max() ?? -1) + 1,
+            usesFractionWeighting: usesFractionWeighting
         )
         context.insert(subject)
+
+        // Erst anlegen, dann die Gewichtung setzen: ``Subject/init`` nimmt nur
+        // einen Prozentwert entgegen, und ein Verhältnis wie 2 : 1 liesse sich
+        // darüber nicht anlegen, ohne es auf 67 : 33 zu runden. Die Begründung
+        // steht dort im Kommentar über den Gewichten.
+        subject.weighting = weighting
 
         // Die vier Halbjahre entstehen zusammen mit dem Fach. Sonst müsste jede
         // Ansicht damit rechnen, dass ein Halbjahr fehlt.
@@ -344,7 +421,35 @@ struct SubjectDraft {
             semester.subject = subject
             context.insert(semester)
         }
+        applySemesterWeightings(to: subject, in: context)
 
         return subject
+    }
+
+    /// Schreibt die eigenen Gewichtungen der Halbjahre ins Modell.
+    ///
+    /// Ein Halbjahr, zu dem der Entwurf nichts sagt, bekommt ausdrücklich `nil`
+    /// und folgt damit wieder dem Fach — genau das ist das Ausschalten des
+    /// Schalters, siehe ``usesSemesterWeighting``.
+    ///
+    /// **Ein Halbjahr kann im Speicher fehlen.** Ein Fach, das in einer frühen
+    /// Fassung angelegt oder aus einer Datei gelesen wurde, bringt nicht
+    /// zwingend alle vier mit. Ein fehlendes entsteht hier nur dann, wenn es
+    /// tatsächlich eine eigene Gewichtung zu tragen hat: „folgt dem Fach"
+    /// braucht keinen Datensatz, und einen anzulegen wäre ein Satz in iCloud,
+    /// der nichts aussagt.
+    private func applySemesterWeightings(to subject: Subject, in context: ModelContext) {
+        for index in Semester.allIndices {
+            let own = semesterWeightings[index]
+
+            if let semester = subject.semester(at: index) {
+                semester.weighting = own
+            } else if let own {
+                let semester = SemesterResult(index: index)
+                semester.subject = subject
+                semester.weighting = own
+                context.insert(semester)
+            }
+        }
     }
 }

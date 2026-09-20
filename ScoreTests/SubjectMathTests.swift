@@ -203,6 +203,240 @@ struct SubjectMathTests {
         }
     }
 
+    // MARK: - Gewichtung
+
+    @Suite("Gewichtung")
+    struct Weightings {
+
+        @Test("Das Verhältnis 2 zu 1 trifft das Drittel, das ein Prozentanteil nie treffen konnte")
+        func twoToOne() {
+            // (13*2 + 9*1) / 3 = 35/3 = 11,67 -> gerundet 12
+            let input = SemesterInput(
+                index: 0,
+                weighting: Weighting([.written: 2, .oral: 1]),
+                entries: [
+                    GradeInput(points: 13, kind: .written),
+                    GradeInput(points: 9, kind: .oral)
+                ]
+            )
+
+            #expect(SubjectMath.result(for: input) == 12)
+        }
+
+        @Test("Umgekehrt gewichtet, 1 zu 2, kippt dasselbe Notenbild nach unten")
+        func oneToTwo() {
+            // (13*1 + 9*2) / 3 = 31/3 = 10,33 -> gerundet 10
+            let input = SemesterInput(
+                index: 0,
+                weighting: Weighting([.written: 1, .oral: 2]),
+                entries: [
+                    GradeInput(points: 13, kind: .written),
+                    GradeInput(points: 9, kind: .oral)
+                ]
+            )
+
+            #expect(SubjectMath.result(for: input) == 10)
+        }
+
+        @Test("Gleich gewichtet liegt dasselbe Notenbild dazwischen")
+        func even() {
+            // (13 + 9) / 2 = 11
+            let input = SemesterInput(
+                index: 0,
+                weighting: .even,
+                entries: [
+                    GradeInput(points: 13, kind: .written),
+                    GradeInput(points: 9, kind: .oral)
+                ]
+            )
+
+            #expect(SubjectMath.result(for: input) == 11)
+        }
+
+        @Test("Bei ganzen Teilnoten sind 2 zu 1 und 67 zu 33 nicht zu unterscheiden")
+        func twoToOneMatchesSixtySevenForWholePoints() {
+            // Nachgerechnet, nicht vermutet: über alle 256 Paare aus 0 bis 15
+            // Punkten fällt kein einziges Ergebnis auseinander.
+            //
+            // Der Grund steckt im Abstand zur Rundungsgrenze. Mit d = schriftlich
+            // minus mündlich ist das Ergebnis bei 2 : 1 gleich mündlich + 2d/3 und
+            // bei 67 : 33 gleich mündlich + 0,67d. Beide unterscheiden sich um
+            // 0,00333 * d, bei d = 15 also um höchstens 0,05. 2d/3 hat aber immer
+            // den Nachkommateil 0, 0,333 oder 0,667 und liegt damit mindestens
+            // 0,167 von der nächsten halben Punktzahl entfernt — weit genug, dass
+            // die kleine Abweichung keine Grenze überspringt.
+            //
+            // Wer also 2 : 1 einstellt und wer 67 % einstellt, bekommt dieselbe
+            // Zeugnisnote, solange beide Teilnoten aus je einer Leistung stammen.
+            for written in GradeEntry.pointsRange {
+                for oral in GradeEntry.pointsRange {
+                    let entries = [
+                        GradeInput(points: written, kind: .written),
+                        GradeInput(points: oral, kind: .oral)
+                    ]
+                    let ratio = SemesterInput(
+                        index: 0,
+                        weighting: Weighting([.written: 2, .oral: 1]),
+                        entries: entries
+                    )
+                    let percent = SemesterInput(index: 0, writtenShare: 67, entries: entries)
+
+                    #expect(SubjectMath.result(for: ratio) == SubjectMath.result(for: percent))
+                }
+            }
+        }
+
+        @Test("Bei halben Teilnoten trennen sich 2 zu 1 und 67 zu 33 dann doch")
+        func twoToOneDiffersFromSixtySevenForHalfPoints() {
+            // Die mündliche Teilnote ist das Mittel aus 14 und 13, also 13,5 —
+            // eine halbe Punktzahl entsteht, sobald eine Teilnote aus mehr als
+            // einer Leistung kommt.
+            //
+            // 2 : 1   -> (6*2 + 13,5) / 3   = 25,5/3 = 8,5   -> 9
+            // 67 : 33 -> (6*67 + 13,5*33) / 100 = 8,475      -> 8
+            let entries = [
+                GradeInput(points: 6, kind: .written),
+                GradeInput(points: 14, kind: .oral),
+                GradeInput(points: 13, kind: .oral)
+            ]
+
+            let ratio = SemesterInput(
+                index: 0,
+                weighting: Weighting([.written: 2, .oral: 1]),
+                entries: entries
+            )
+            let percent = SemesterInput(index: 0, writtenShare: 67, entries: entries)
+
+            #expect(SubjectMath.result(for: ratio) == 9)
+            #expect(SubjectMath.result(for: percent) == 8)
+        }
+
+        @Test("Zwei Halbjahre desselben Fachs dürfen verschieden gewichtet sein")
+        func weightingPerSemester() {
+            // Dasselbe Notenbild, zweimal:
+            // 3 : 1 -> (14*3 + 8) / 4 = 12,5 -> 13
+            // 2 : 1 -> (14*2 + 8) / 3 = 12   -> 12
+            let entries = [
+                GradeInput(points: 14, kind: .written),
+                GradeInput(points: 8, kind: .oral)
+            ]
+            let semesters = [
+                SemesterInput(
+                    index: 0,
+                    weighting: Weighting([.written: 3, .oral: 1]),
+                    entries: entries
+                ),
+                SemesterInput(
+                    index: 1,
+                    weighting: Weighting([.written: 2, .oral: 1]),
+                    entries: entries
+                )
+            ]
+
+            #expect(semesters.map { SubjectMath.result(for: $0) } == [13, 12])
+            #expect(isClose(SubjectMath.subjectAverage(for: semesters) ?? .nan, 12.5))
+        }
+
+        @Test("Nur schriftliche Noten zählen allein, auch wenn das Verhältnis mündlich betont")
+        func writtenOnly() {
+            let input = SemesterInput(
+                index: 0,
+                weighting: Weighting([.written: 1, .oral: 2]),
+                entries: [GradeInput(points: 7, kind: .written)]
+            )
+
+            #expect(SubjectMath.result(for: input) == 7)
+        }
+
+        @Test("Nur mündliche Noten zählen allein, auch bei 3 zu 1")
+        func oralOnly() {
+            let input = SemesterInput(
+                index: 0,
+                weighting: Weighting([.written: 3, .oral: 1]),
+                entries: [GradeInput(points: 11, kind: .oral)]
+            )
+
+            #expect(SubjectMath.result(for: input) == 11)
+        }
+
+        @Test("Ohne jede Leistung gibt es auch mit Verhältnis kein Ergebnis")
+        func withoutEntries() {
+            let input = SemesterInput(
+                index: 0,
+                weighting: Weighting([.written: 2, .oral: 1]),
+                entries: []
+            )
+
+            #expect(SubjectMath.result(for: input) == nil)
+        }
+
+        @Test("Ein Gewicht von null lässt seine Teilnote aussen vor")
+        func zeroWeightIsIgnored() {
+            let input = SemesterInput(
+                index: 0,
+                weighting: Weighting([.written: 1, .oral: 0]),
+                entries: [
+                    GradeInput(points: 12, kind: .written),
+                    GradeInput(points: 4, kind: .oral)
+                ]
+            )
+
+            #expect(SubjectMath.result(for: input) == 12)
+        }
+
+        @Test("Steht nur die Teilnote ohne Gewicht da, zählt sie trotzdem")
+        func zeroWeightAloneStillCounts() {
+            // Sonst verschwände eine erfasste Note, weil der Nutzer ein
+            // Verhältnis für eine Teilnote eingestellt hat, die es nicht gibt.
+            let input = SemesterInput(
+                index: 0,
+                weighting: Weighting([.written: 1, .oral: 0]),
+                entries: [GradeInput(points: 4, kind: .oral)]
+            )
+
+            #expect(SubjectMath.result(for: input) == 4)
+        }
+
+        @Test("Eine Gewichtung ohne jedes Gewicht fällt auf gleiche Anteile zurück")
+        func allZeroFallsBackToEven() {
+            // 0 : 0 beschreibt kein Verhältnis. Statt durch null zu teilen oder
+            // das Halbjahr um sein Ergebnis zu bringen, zählt dann alles gleich:
+            // (12 + 10) / 2 = 11
+            let input = SemesterInput(
+                index: 0,
+                weighting: Weighting([.written: 0, .oral: 0]),
+                entries: [
+                    GradeInput(points: 12, kind: .written),
+                    GradeInput(points: 10, kind: .oral)
+                ]
+            )
+
+            #expect(SubjectMath.result(for: input) == 11)
+        }
+
+        @Test("Ein Prozentanteil liest sich als Gewichtung wieder als Prozent")
+        func shareOfPercentWeighting() {
+            let weighting = Weighting(writtenShare: 60)
+
+            #expect(isClose(weighting.share(of: .written), 60))
+            #expect(isClose(weighting.share(of: .oral), 40))
+        }
+
+        @Test("Aus 2 zu 1 werden 66,67 Prozent")
+        func shareOfRatio() {
+            let weighting = Weighting([.written: 2, .oral: 1])
+
+            #expect(isClose(weighting.share(of: .written), 200.0 / 3.0))
+        }
+
+        @Test("Gleich gewichtet ist gleich, auch in anderen Zahlen geschrieben")
+        func equalRatiosAreEqual() {
+            #expect(Weighting([.written: 3, .oral: 2]) == Weighting(writtenShare: 60))
+            #expect(Weighting([.written: 1, .oral: 1]) == Weighting.even)
+            #expect(Weighting([.written: 2, .oral: 1]) != Weighting(writtenShare: 67))
+        }
+    }
+
     // MARK: - Schnitte
 
     @Suite("Schnitte")

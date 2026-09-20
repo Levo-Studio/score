@@ -434,7 +434,15 @@ private struct SubjectListRow: View {
             return Text("In diesem Halbjahr nicht belegt")
         }
         let average = ScoreNumberFormat.points(summary.average)
-        return Text("Ø \(average) gesamt · \(subject.writtenShare):\(subject.oralShare)")
+        // Die Gewichtung des Fachs, und zwar in der Schreibweise, die das Fach
+        // führt: „2 : 1" bei einem Bruch, „60 : 40" in Prozent. Ein Fach, das
+        // im Editor als Bruch dasteht, soll in der Liste nicht plötzlich
+        // gerundete Prozente zeigen.
+        let ratio = WeightingDisplay.ratio(
+            subject.weighting,
+            asFraction: subject.usesFractionWeighting
+        )
+        return Text("Ø \(average) gesamt · \(ratio)")
     }
 
     var body: some View {

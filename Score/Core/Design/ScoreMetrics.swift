@@ -35,6 +35,37 @@ enum ScoreMetrics {
         static let xl: CGFloat = 26
     }
 
+    /// Masse einer Ablesezeile: je Spalte ein Wert über seiner Beschriftung,
+    /// die Spalten durch eine Haarlinie getrennt.
+    ///
+    /// Die Form gibt es zweimal — in der Fusszeile der Score-Karte und in der
+    /// Gewichtung des Fach-Editors. Die Werte stehen deshalb hier und nicht in
+    /// einem der beiden Bauteile.
+    enum Readout {
+        /// Abstand zwischen einem Wert und seiner Beschriftung darunter.
+        static let valueLabelSpacing: CGFloat = 6
+
+        /// Einzug einer Spalte hinter der Haarlinie.
+        static let columnInset: CGFloat = 14
+
+        /// Luft über und unter einer Spalte.
+        ///
+        /// Sie gibt der senkrechten Haarlinie ihre Höhe: ohne sie endete der
+        /// Strich bündig an Ober- und Unterkante des Textes und sähe aus wie
+        /// ein zufälliger Rest.
+        static let columnPadding: CGFloat = Spacing.sm
+
+        /// Wie weit ein Wert schrumpfen darf, bevor er umbricht.
+        ///
+        /// Bei sehr grosser Schrift steht in einer schmalen Spalte sonst „60 …"
+        /// statt „60 %". Weiter als hier soll er nicht schrumpfen — darunter
+        /// wird die Zahl kleiner als ihre eigene Beschriftung.
+        static let minimumScale: CGFloat = 0.7
+    }
+
+    /// Die Stärke einer Haarlinie — Kartenkante, Trenner, Spaltenstrich.
+    static let hairline: CGFloat = 1
+
     /// Seitlicher Rand eines Bildschirms auf dem iPhone.
     static let screenPadding: CGFloat = 20
 

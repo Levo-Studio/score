@@ -63,32 +63,50 @@ enum SubjectMath {
 
     /// Das Halbjahresergebnis eines Fachs, 0 bis 15 Punkte.
     ///
-    /// Schriftliche und mündliche Teilnote werden im Verhältnis des Fachs
-    /// verrechnet und auf eine ganze Punktzahl gerundet — im Zeugnis steht immer
-    /// eine ganze Zahl.
+    /// Die Teilnoten des Halbjahres werden im Verhältnis des Fachs verrechnet und
+    /// auf eine ganze Punktzahl gerundet — im Zeugnis steht immer eine ganze Zahl.
     ///
-    /// Fehlt eine der beiden Teilnoten, zählt die andere allein. Wer in einem Fach
-    /// nur mündliche Noten hat, bekommt trotzdem ein Ergebnis.
+    /// Gerechnet wird über **alle** Arten von Teilnoten, die Leistungen tragen,
+    /// nicht über das feste Paar aus schriftlich und mündlich. Kommt der
+    /// praktische Teil in Kunst, Musik und Sport dazu, zählt er hier ohne
+    /// weiteres Zutun mit — ``Weighting`` trägt dann auch sein Gewicht.
+    ///
+    /// Fehlt eine Teilnote, zählt die andere allein. Wer in einem Fach nur
+    /// mündliche Noten hat, bekommt trotzdem ein Ergebnis, und zwar unabhängig
+    /// vom eingestellten Verhältnis: gewichtet wird nur, was tatsächlich da ist.
     ///
     /// - Returns: `nil`, wenn das Halbjahr nicht belegt ist oder keine Leistung
     ///   erfasst wurde.
     static func result(for semester: SemesterInput) -> Int? {
         guard semester.isActive else { return nil }
 
-        let written = partialGrade(for: semester.entries.filter { $0.kind == .written })
-        let oral = partialGrade(for: semester.entries.filter { $0.kind == .oral })
+        let weighting = semester.weighting
 
+        // Der Weg über `GradeKind.allCases` und nicht über die Schlüssel eines
+        // Dictionary ist Absicht: Gleitkomma-Addition ist nicht assoziativ, und
+        // genau an der halben Punktzahl entschiede sonst die zufällige
+        // Laufreihenfolge darüber, ob auf- oder abgerundet wird.
+        let parts: [(weight: Int, grade: Double)] = GradeKind.allCases.compactMap { kind in
+            let entries = semester.entries.filter { $0.kind == kind }
+            guard let grade = partialGrade(for: entries) else { return nil }
+            return (weighting.weight(for: kind), grade)
+        }
+
+        guard !parts.isEmpty else { return nil }
+
+        let weightTotal = parts.reduce(0) { $0 + $1.weight }
         let combined: Double
-        switch (written, oral) {
-        case (nil, nil):
-            return nil
-        case let (value?, nil):
-            combined = value
-        case let (nil, value?):
-            combined = value
-        case let (writtenValue?, oralValue?):
-            let share = Double(semester.writtenShare)
-            combined = (writtenValue * share + oralValue * (100 - share)) / 100
+        if weightTotal > 0 {
+            let weighted = parts.reduce(0.0) { $0 + $1.grade * Double($1.weight) }
+            combined = weighted / Double(weightTotal)
+        } else {
+            // Alles, was vorliegt, hat das Gewicht null — etwa die einzige
+            // mündliche Teilnote eines Fachs, das rein schriftlich gewichtet ist.
+            // Dann zählen die vorhandenen Teilnoten gleich viel. Der Nutzer hat
+            // die Note erfasst; sie wegen einer Einstellung zu verwerfen, die von
+            // einer gar nicht vorhandenen Teilnote handelt, wäre falsch — und
+            // durch null zu teilen erst recht.
+            combined = parts.reduce(0.0) { $0 + $1.grade } / Double(parts.count)
         }
 
         return GradeEntry.clamp(Int(combined.rounded()))
@@ -173,7 +191,14 @@ struct GradeInput: Sendable, Equatable {
 struct SemesterInput: Sendable, Equatable {
     var index: Int
     var isActive: Bool
-    var writtenShare: Int
+
+    /// In welchem Verhältnis die Teilnoten dieses Halbjahres zusammenzählen.
+    ///
+    /// Sitzt am Halbjahr und nicht am Fach, weil ein Verhältnis sich über die
+    /// Kursstufe ändern darf: ein Mathematik-Leistungsfach, das in 1/4 bis 3/4
+    /// mit 3 : 1 gewichtet wird und in 4/4 mit 2 : 1.
+    var weighting: Weighting
+
     var entries: [GradeInput]
 
     /// Ob der Nutzer diesen Kurs von Hand geklammert hat.
@@ -185,15 +210,41 @@ struct SemesterInput: Sendable, Equatable {
     init(
         index: Int,
         isActive: Bool = true,
-        writtenShare: Int = 50,
+        weighting: Weighting = .even,
         entries: [GradeInput],
         isManuallyBracketed: Bool = false
     ) {
         self.index = index
         self.isActive = isActive
-        self.writtenShare = writtenShare
+        self.weighting = weighting
         self.entries = entries
         self.isManuallyBracketed = isManuallyBracketed
+    }
+
+    /// Dasselbe Halbjahr, beschrieben über den schriftlichen Prozentanteil.
+    ///
+    /// Der gespeicherte Bestand kennt nur diesen einen Wert, und die Aufrufer,
+    /// die aus dem Datenmodell kommen, haben nichts anderes in der Hand. Die
+    /// Überladung nimmt ihnen die Umrechnung ab und hält zugleich fest, wo die
+    /// Prozentwelt endet: ab hier rechnet der Kern mit Verhältnissen.
+    ///
+    /// Ohne Vorgabewert, anders als beim Verhältnis darüber — mit einem wären
+    /// beide Überladungen bei `SemesterInput(index:entries:)` gleich gut
+    /// anwendbar, und der Aufruf liesse sich nicht mehr auflösen.
+    init(
+        index: Int,
+        isActive: Bool = true,
+        writtenShare: Int,
+        entries: [GradeInput],
+        isManuallyBracketed: Bool = false
+    ) {
+        self.init(
+            index: index,
+            isActive: isActive,
+            weighting: Weighting(writtenShare: writtenShare),
+            entries: entries,
+            isManuallyBracketed: isManuallyBracketed
+        )
     }
 }
 
@@ -299,11 +350,38 @@ extension GradeInput {
 }
 
 extension SemesterInput {
+
+    /// Ein Halbjahr mit der Gewichtung, die für es gilt.
+    ///
+    /// Die eigene, wenn es eine trägt, sonst die des Fachs — siehe
+    /// ``SemesterResult/resolvedWeighting(in:)``. Das ist der Weg, den der
+    /// Rechenkern geht; die Überladung mit dem Prozentwert darunter steht noch
+    /// für Aufrufer, die nur das Fach in der Hand haben.
+    init(_ semester: SemesterResult, in subject: Subject, isActive: Bool) {
+        self.init(
+            index: semester.index,
+            isActive: isActive,
+            weighting: semester.resolvedWeighting(in: subject),
+            entries: (semester.entries ?? []).map(GradeInput.init),
+            isManuallyBracketed: semester.isManuallyBracketed
+        )
+    }
+
+    /// Dasselbe Halbjahr, beschrieben über einen schriftlichen Prozentanteil.
+    ///
+    /// Umgerechnet wird beim Übergang — ``Weighting/init(writtenShare:)``. Die
+    /// eigene Gewichtung des Halbjahres bleibt dabei **aussen vor**: Wer diesen
+    /// Weg nimmt, gibt eine Gewichtung von aussen vor und meint auch die.
+    ///
+    /// In der App ruft sie niemand mehr: ``SubjectStatistics`` war die letzte
+    /// Stelle und geht seit der Oberfläche für die Gewichtung je Halbjahr über
+    /// die Überladung darüber. Sie bleibt für Tests, die ein Halbjahr mit einem
+    /// Prozentwert beschreiben, ohne dafür ein Fach anlegen zu müssen.
     init(_ semester: SemesterResult, writtenShare: Int, isActive: Bool) {
         self.init(
             index: semester.index,
             isActive: isActive,
-            writtenShare: writtenShare,
+            weighting: Weighting(writtenShare: writtenShare),
             entries: (semester.entries ?? []).map(GradeInput.init),
             isManuallyBracketed: semester.isManuallyBracketed
         )
@@ -311,19 +389,33 @@ extension SemesterInput {
 }
 
 extension SubjectInput {
+
+    /// Jedes Halbjahr bringt seine eigene Gewichtung mit, wenn es eine trägt;
+    /// sonst gilt die des Fachs. Ein Fach kann damit in 1/4 bis 3/4 mit 3 : 1
+    /// gewichtet sein und in 4/4 mit 2 : 1, ohne dass die anderen drei Halbjahre
+    /// etwas davon mitbekommen.
+    ///
+    /// Ein Halbjahr, das es im Speicher gar nicht gibt — weil in ihm nie etwas
+    /// erfasst wurde —, folgt ebenfalls dem Fach. Es hat keine Leistungen und
+    /// damit ohnehin kein Ergebnis; die Gewichtung steht nur da, damit der Wert
+    /// vollständig ist.
     init(_ subject: Subject) {
+        let subjectWeighting = subject.weighting
+
         self.init(
             id: subject.identifier.uuidString,
             kind: subject.kind,
             semesters: Semester.allIndices.map { index in
-                let semester = subject.semester(at: index)
-                return SemesterInput(
-                    index: index,
-                    isActive: subject.isActive(in: index),
-                    writtenShare: subject.writtenShare,
-                    entries: (semester?.entries ?? []).map(GradeInput.init),
-                    isManuallyBracketed: semester?.isManuallyBracketed ?? false
-                )
+                let isActive = subject.isActive(in: index)
+                guard let semester = subject.semester(at: index) else {
+                    return SemesterInput(
+                        index: index,
+                        isActive: isActive,
+                        weighting: subjectWeighting,
+                        entries: []
+                    )
+                }
+                return SemesterInput(semester, in: subject, isActive: isActive)
             },
             maximumContributedCourses: subject.maximumContributedCourses,
             isOralExamSubject: subject.isOralExamSubject,

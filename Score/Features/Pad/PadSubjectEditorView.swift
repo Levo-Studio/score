@@ -118,7 +118,7 @@ struct PadSubjectEditorView: View {
             || draft.colorValue != saved.colorValue
             || draft.kind != saved.kind
             || draft.activeSemesters != saved.activeSemesters
-            || draft.writtenShare != saved.writtenShare
+            || draft.weighting != saved.weighting
             || draft.maximumContributedCourses != saved.maximumContributedCourses
             || draft.isOralExamSubject != saved.isOralExamSubject
             || draft.isDoubleWeighted != saved.isDoubleWeighted
@@ -295,33 +295,15 @@ struct PadSubjectEditorView: View {
         }
     }
 
+    /// Dieselbe Karte wie auf dem iPhone — nur die Hülle darum ist die des iPads.
+    ///
+    /// Vorher stand hier eine zweite Fassung mit eigener Überschrift und eigenem
+    /// Aufbau. Zwei Fassungen derselben Einstellung laufen beim nächsten
+    /// Handgriff auseinander; welche von beiden dann die richtige ist, merkt man
+    /// erst am Gerät.
     private var weightCard: some View {
         PadCard(horizontalPadding: 18, verticalPadding: 18, cornerRadius: 24) {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .firstTextBaseline) {
-                    PadCardTitle(title: "Gewichtung schriftlich zu mündlich")
-                    Spacer(minLength: ScoreMetrics.Spacing.xs)
-                    Text(verbatim: "\(draft.writtenShare) : \(100 - draft.writtenShare)")
-                        .font(.chipLabel)
-                        .monospacedDigit()
-                        .foregroundStyle(ScorePalette.accent)
-                }
-
-                WeightSlider(writtenShare: $draft.writtenShare)
-
-                HStack {
-                    Text("Schriftlich")
-                    Spacer()
-                    Text("Mündlich")
-                }
-                .font(ScoreTypography.publicSans(400, 10.5))
-                .foregroundStyle(ScorePalette.inkSecondary)
-
-                Text("Gilt für alle vier Halbjahre dieses Fachs. Einzelne Leistungen gewichtest du in der Fachansicht.")
-                    .font(ScoreTypography.publicSans(400, 11.5))
-                    .foregroundStyle(ScorePalette.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            SubjectWeightingSection(draft: $draft)
         }
     }
 

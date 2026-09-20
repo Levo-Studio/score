@@ -857,6 +857,17 @@
         }
       }
     },
+    "Als Bruch angeben": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Als Bruch angeben"
+          }
+        }
+      }
+    },
     "Am Fach stehen ungesicherte Änderungen. Sie gehen verloren, wenn du jetzt woandershin wechselst.": {
       "extractionState": "manual",
       "localizations": {
@@ -2421,17 +2432,6 @@
         }
       }
     },
-    "Gewichtung schriftlich zu mündlich": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gewichtung schriftlich zu mündlich"
-          }
-        }
-      }
-    },
     "Gilt für alle vier Halbjahre dieses Fachs. Einzelne Leistungen gewichtest du in der Fachansicht.": {
       "extractionState": "manual",
       "localizations": {
@@ -3923,6 +3923,17 @@
         }
       }
     },
+    "Prozent in Fünferschritten. Ein Drittel lässt sich so nicht treffen, ein Bruch schon.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prozent in Fünferschritten. Ein Drittel lässt sich so nicht treffen, ein Bruch schon."
+          }
+        }
+      }
+    },
     "Prüfungen": {
       "extractionState": "manual",
       "localizations": {
@@ -4336,6 +4347,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Seitenleiste einblenden"
+          }
+        }
+      }
+    },
+    "Sieben feste Verhältnisse stehen zur Wahl — mehr kommt in keiner Schulordnung vor.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sieben feste Verhältnisse stehen zur Wahl — mehr kommt in keiner Schulordnung vor."
           }
         }
       }

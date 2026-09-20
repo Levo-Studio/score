@@ -17,7 +17,22 @@ struct SubjectDraft {
     var colorValue: Int
     var kind: SubjectKind
     var activeSemesters: Set<Int>
-    var writtenShare: Int
+
+    /// Das Verhältnis, in dem die Teilnoten dieses Fachs zusammenzählen.
+    ///
+    /// Ein ``Weighting`` und kein Prozentwert mehr: 2 : 1 lässt sich als ganze
+    /// Zahl von 0 bis 100 nicht schreiben, und 67 : 33 ist eben nicht 2 : 1.
+    /// Der Prozentwert am Fach wird beim Sichern mitgezogen — das erledigt
+    /// ``Subject/weighting``, nicht diese Stelle.
+    var weighting: Weighting
+
+    /// Ob die Oberfläche die Gewichtung dieses Fachs als Bruch zeigt.
+    ///
+    /// Reine Darstellung, an der Rechnung ändert sie nichts. Sie steht trotzdem
+    /// im Entwurf und nicht im lokalen Zustand einer Ansicht: Die Wahl gehört
+    /// zum Fach und wird mitgesichert, sonst stünde beim nächsten Öffnen wieder
+    /// die andere Schreibweise da.
+    var usesFractionWeighting: Bool
 
     /// Wie viele Halbjahre dieses Fach höchstens in Block I einbringt.
     /// `nil` heisst „alle belegten".
@@ -53,7 +68,8 @@ struct SubjectDraft {
             isOralExamSubject: subject?.isOralExamSubject ?? false
         )
         activeSemesters = Set(subject?.activeSemesters ?? Semester.allIndices)
-        writtenShare = subject?.writtenShare ?? 50
+        weighting = subject?.weighting ?? .even
+        usesFractionWeighting = subject?.usesFractionWeighting ?? false
         maximumContributedCourses = subject?.maximumContributedCourses
         isOralExamSubject = subject?.isOralExamSubject ?? false
         isDoubleWeighted = subject?.isDoubleWeighted ?? false
@@ -311,7 +327,11 @@ struct SubjectDraft {
             subject.colorValue = colorValue
             subject.kind = kind
             subject.activeSemesters = semesters
-            subject.writtenShare = writtenShare
+            // Über ``Subject/weighting`` und nicht an den Gewichten einzeln: Nur
+            // dieser Weg zieht den Prozentwert mit, den eine ältere App-Version
+            // auf einem zweiten Gerät als einzige Angabe liest.
+            subject.weighting = weighting
+            subject.usesFractionWeighting = usesFractionWeighting
             subject.maximumContributedCourses = resolvedCourseLimit
             subject.isOralExamSubject = resolvedOralExamSubject
             subject.isDoubleWeighted = resolvedDoubleWeighted
@@ -326,16 +346,22 @@ struct SubjectDraft {
             colorValue: colorValue,
             kind: kind,
             isCustom: SubjectCatalog.template(named: finalName) == nil,
-            writtenShare: writtenShare,
             activeSemesters: semesters,
             maximumContributedCourses: resolvedCourseLimit,
             isOralExamSubject: resolvedOralExamSubject,
             isDoubleWeighted: resolvedDoubleWeighted,
             writtenExamPoints: resolvedWrittenExamPoints,
             oralExamPoints: resolvedOralExamPoints,
-            sortIndex: (existingSubjects.map(\.sortIndex).max() ?? -1) + 1
+            sortIndex: (existingSubjects.map(\.sortIndex).max() ?? -1) + 1,
+            usesFractionWeighting: usesFractionWeighting
         )
         context.insert(subject)
+
+        // Erst anlegen, dann die Gewichtung setzen: ``Subject/init`` nimmt nur
+        // einen Prozentwert entgegen, und ein Verhältnis wie 2 : 1 liesse sich
+        // darüber nicht anlegen, ohne es auf 67 : 33 zu runden. Die Begründung
+        // steht dort im Kommentar über den Gewichten.
+        subject.weighting = weighting
 
         // Die vier Halbjahre entstehen zusammen mit dem Fach. Sonst müsste jede
         // Ansicht damit rechnen, dass ein Halbjahr fehlt.

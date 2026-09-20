@@ -301,30 +301,7 @@ struct SubjectEditorView: View {
 
     private var weightCard: some View {
         ScoreCard {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("Gewichtung")
-                        .font(.cardTitle)
-                        .foregroundStyle(ScorePalette.ink)
-                    Spacer(minLength: ScoreMetrics.Spacing.xs)
-                    Text(verbatim: "\(draft.writtenShare) : \(100 - draft.writtenShare)")
-                        .font(ScoreTypography.publicSans(500, 12))
-                        .monospacedDigit()
-                        .foregroundStyle(ScorePalette.accent)
-                }
-
-                WeightSlider(writtenShare: $draft.writtenShare)
-                    .padding(.top, ScoreMetrics.Spacing.sm)
-
-                HStack {
-                    Text("Schriftlich")
-                    Spacer()
-                    Text("Mündlich")
-                }
-                .font(ScoreTypography.publicSans(400, 10.5))
-                .foregroundStyle(ScorePalette.inkSecondary)
-                .padding(.top, 6)
-            }
+            SubjectWeightingSection(draft: $draft)
         }
     }
 

@@ -80,7 +80,7 @@ enum SubjectMath {
     static func result(for semester: SemesterInput) -> Int? {
         guard semester.isActive else { return nil }
 
-        let weighting = Weighting(writtenShare: semester.writtenShare)
+        let weighting = semester.weighting
 
         // Der Weg über `GradeKind.allCases` und nicht über die Schlüssel eines
         // Dictionary ist Absicht: Gleitkomma-Addition ist nicht assoziativ, und
@@ -191,7 +191,14 @@ struct GradeInput: Sendable, Equatable {
 struct SemesterInput: Sendable, Equatable {
     var index: Int
     var isActive: Bool
-    var writtenShare: Int
+
+    /// In welchem Verhältnis die Teilnoten dieses Halbjahres zusammenzählen.
+    ///
+    /// Sitzt am Halbjahr und nicht am Fach, weil ein Verhältnis sich über die
+    /// Kursstufe ändern darf: ein Mathematik-Leistungsfach, das in 1/4 bis 3/4
+    /// mit 3 : 1 gewichtet wird und in 4/4 mit 2 : 1.
+    var weighting: Weighting
+
     var entries: [GradeInput]
 
     /// Ob der Nutzer diesen Kurs von Hand geklammert hat.
@@ -203,15 +210,41 @@ struct SemesterInput: Sendable, Equatable {
     init(
         index: Int,
         isActive: Bool = true,
-        writtenShare: Int = 50,
+        weighting: Weighting = .even,
         entries: [GradeInput],
         isManuallyBracketed: Bool = false
     ) {
         self.index = index
         self.isActive = isActive
-        self.writtenShare = writtenShare
+        self.weighting = weighting
         self.entries = entries
         self.isManuallyBracketed = isManuallyBracketed
+    }
+
+    /// Dasselbe Halbjahr, beschrieben über den schriftlichen Prozentanteil.
+    ///
+    /// Der gespeicherte Bestand kennt nur diesen einen Wert, und die Aufrufer,
+    /// die aus dem Datenmodell kommen, haben nichts anderes in der Hand. Die
+    /// Überladung nimmt ihnen die Umrechnung ab und hält zugleich fest, wo die
+    /// Prozentwelt endet: ab hier rechnet der Kern mit Verhältnissen.
+    ///
+    /// Ohne Vorgabewert, anders als beim Verhältnis darüber — mit einem wären
+    /// beide Überladungen bei `SemesterInput(index:entries:)` gleich gut
+    /// anwendbar, und der Aufruf liesse sich nicht mehr auflösen.
+    init(
+        index: Int,
+        isActive: Bool = true,
+        writtenShare: Int,
+        entries: [GradeInput],
+        isManuallyBracketed: Bool = false
+    ) {
+        self.init(
+            index: index,
+            isActive: isActive,
+            weighting: Weighting(writtenShare: writtenShare),
+            entries: entries,
+            isManuallyBracketed: isManuallyBracketed
+        )
     }
 }
 
@@ -317,11 +350,16 @@ extension GradeInput {
 }
 
 extension SemesterInput {
+
+    /// Der Anteil bleibt hier ein Prozentwert, weil der Aufrufer keinen anderen
+    /// hat: `Subject.writtenShare` ist eine Zahl von 0 bis 100, und ob ein Fach
+    /// je Halbjahr unterschiedlich gewichtet, weiss das Datenmodell noch nicht.
+    /// Umgerechnet wird beim Übergang — ``Weighting/init(writtenShare:)``.
     init(_ semester: SemesterResult, writtenShare: Int, isActive: Bool) {
         self.init(
             index: semester.index,
             isActive: isActive,
-            writtenShare: writtenShare,
+            weighting: Weighting(writtenShare: writtenShare),
             entries: (semester.entries ?? []).map(GradeInput.init),
             isManuallyBracketed: semester.isManuallyBracketed
         )
@@ -329,7 +367,15 @@ extension SemesterInput {
 }
 
 extension SubjectInput {
+
+    /// Alle vier Halbjahre bekommen dieselbe Gewichtung, weil das Fach nur eine
+    /// kennt: `Subject.writtenShare` gilt für das ganze Fach. Dass die Rechnung
+    /// je Halbjahr ein eigenes Verhältnis verträgt, ist hier schon wahr — es
+    /// steht nur noch nichts Unterschiedliches in der Datenbank. Wenn das Modell
+    /// die Gewichte trägt, ändert sich genau diese eine Zeile.
     init(_ subject: Subject) {
+        let weighting = Weighting(writtenShare: subject.writtenShare)
+
         self.init(
             id: subject.identifier.uuidString,
             kind: subject.kind,
@@ -338,7 +384,7 @@ extension SubjectInput {
                 return SemesterInput(
                     index: index,
                     isActive: subject.isActive(in: index),
-                    writtenShare: subject.writtenShare,
+                    weighting: weighting,
                     entries: (semester?.entries ?? []).map(GradeInput.init),
                     isManuallyBracketed: semester?.isManuallyBracketed ?? false
                 )

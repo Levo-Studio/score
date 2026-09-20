@@ -98,6 +98,14 @@ extension Font {
     /// Punktzahl am Ende einer Fachzeile, `800 20px`.
     static let rowValue = ScoreTypography.archivo(800, 20)
 
+    /// Der Wert in einer Ablesezeile, `700 20px` — das Gewicht oder der Prozentwert
+    /// über seiner Beschriftung.
+    ///
+    /// Eine Spur leichter als ``rowValue``: Der steht allein am Ende einer Zeile
+    /// und darf ziehen, hier stehen zwei oder drei Werte nebeneinander und sollen
+    /// sich die Aufmerksamkeit teilen.
+    static let readoutValue = ScoreTypography.archivo(700, 20)
+
     /// Beschriftung der Halbjahres-Segmente, `600 12px`.
     static let segmentLabel = ScoreTypography.archivo(600, 12)
 

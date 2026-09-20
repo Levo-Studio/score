@@ -66,16 +66,20 @@ struct PadSubjectEditorView: View {
 
     var body: some View {
         ScrollView {
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .top, spacing: ScoreMetrics.Spacing.lg) {
-                    identityColumn.frame(width: 452)
-                    calculationColumn.frame(minWidth: 340)
+            VStack(spacing: ScoreMetrics.Spacing.lg) {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .top, spacing: ScoreMetrics.Spacing.lg) {
+                        identityColumn.frame(width: 452)
+                        calculationColumn.frame(minWidth: 340)
+                    }
+
+                    VStack(spacing: ScoreMetrics.Spacing.lg) {
+                        identityColumn
+                        calculationColumn
+                    }
                 }
 
-                VStack(spacing: ScoreMetrics.Spacing.lg) {
-                    identityColumn
-                    calculationColumn
-                }
+                footer
             }
             .padding(.horizontal, PadMetrics.contentPadding)
             .padding(.top, 22)
@@ -129,29 +133,6 @@ struct PadSubjectEditorView: View {
             nameCard
             if isNew { presetCard }
             appearanceCard
-
-            Button(action: save) {
-                Text(isNew ? "Fach anlegen" : "Änderungen sichern")
-                    .font(.buttonLabel)
-                    .foregroundStyle(ScorePalette.accentInk)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 17)
-                    .background(ScorePalette.accent)
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            }
-            .buttonStyle(.plain)
-
-            if canDelete {
-                Button(role: .destructive, action: delete) {
-                    Text("Fach löschen")
-                        .font(ScoreTypography.publicSans(500, 13))
-                        .foregroundStyle(ScorePalette.warn)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, ScoreMetrics.Spacing.xs)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
         }
     }
 
@@ -340,6 +321,44 @@ struct PadSubjectEditorView: View {
                     .font(ScoreTypography.publicSans(400, 11.5))
                     .foregroundStyle(ScorePalette.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    // MARK: - Fuss
+
+    /// Sichern und Löschen, unter beiden Spalten über die ganze Breite.
+    ///
+    /// Beides stand einmal am Ende der linken Spalte. Die rechte ist mit
+    /// Fachtyp, belegten Halbjahren und Gewichtung aber fast immer höher — der
+    /// Knopf sass damit auf halber Höhe der Seite, während daneben weiter Inhalt
+    /// stand. Beim Bearbeiten eines bestehenden Fachs fällt links zusätzlich die
+    /// Vorlagenkarte weg und der Versatz wurde noch grösser. Am Fuss des Editors
+    /// steht der Knopf in beiden Anordnungen des ``ViewThatFits`` an derselben
+    /// Stelle: nebeneinander wie gestapelt.
+    private var footer: some View {
+        VStack(spacing: ScoreMetrics.Spacing.sm) {
+            Button(action: save) {
+                Text(isNew ? "Fach anlegen" : "Änderungen sichern")
+                    .font(.buttonLabel)
+                    .foregroundStyle(ScorePalette.accentInk)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 17)
+                    .background(ScorePalette.accent)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            }
+            .buttonStyle(.plain)
+
+            if canDelete {
+                Button(role: .destructive, action: delete) {
+                    Text("Fach löschen")
+                        .font(ScoreTypography.publicSans(500, 13))
+                        .foregroundStyle(ScorePalette.warn)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, ScoreMetrics.Spacing.xs)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
         }
     }

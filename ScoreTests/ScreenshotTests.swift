@@ -469,6 +469,39 @@ struct ScreenshotTests {
         }
     }
 
+    /// Der Fach-Editor des iPads beim Bearbeiten — der schlimmste Fall für den
+    /// Knopf am Fuss: Die Vorlagenkarte steht nur bei einem neuen Fach, die linke
+    /// Spalte ist hier also noch kürzer als die rechte. Geografie ist für das
+    /// Bild ein selbst angelegtes Fach, damit unter dem Sichern auch das Löschen
+    /// steht.
+    @Test("Der Fach-Editor des iPads mit den Knöpfen am Fuss")
+    func subjectEditorButtonsAtTheFoot() async throws {
+        let container = try Self.makeStoredSubjects { subject in
+            if subject.name == "Geografie" { subject.isCustom = true }
+        }
+        let context = container.mainContext
+        let subjects = try context.fetch(FetchDescriptor<Subject>())
+        let geografie = try #require(subjects.first { $0.name == "Geografie" })
+
+        for scheme in ColorScheme.allCases {
+            // Höher als das Gerät: Der Editor scrollt, und der Fuss soll im Bild
+            // stehen. Was darunter leer bleibt, schneidet die Aufnahme ab.
+            try await capture(
+                "editor-fuss-ipad",
+                scheme: scheme,
+                size: CGSize(width: Device.pad.width, height: 1200),
+                context: context
+            ) {
+                PadSubjectEditorView(
+                    target: .existing(geografie),
+                    route: .constant(.subject(geografie.identifier)),
+                    draftState: PadEditorDraftState()
+                )
+                .background(ScorePalette.background)
+            }
+        }
+    }
+
     /// Ein Fach ohne Prüfung: Physik ist Wahl-Basisfach und wird nicht geprüft —
     /// unter den Leistungen steht deshalb kein Prüfungsabschnitt.
     @Test("Ein gewöhnliches Fach zeigt keinen Prüfungsabschnitt")

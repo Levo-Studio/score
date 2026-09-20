@@ -791,6 +791,17 @@
         }
       }
     },
+    "Alle vier haben die Gewichtung von oben übernommen. Ändere die Halbjahre, die davon abweichen.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle vier haben die Gewichtung von oben übernommen. Ändere die Halbjahre, die davon abweichen."
+          }
+        }
+      }
+    },
     "Alles bereit, %@.": {
       "extractionState": "manual",
       "localizations": {
@@ -2432,6 +2443,17 @@
         }
       }
     },
+    "Gewichtung je Halbjahr": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gewichtung je Halbjahr"
+          }
+        }
+      }
+    },
     "Gilt für alle vier Halbjahre dieses Fachs. Einzelne Leistungen gewichtest du in der Fachansicht.": {
       "extractionState": "manual",
       "localizations": {
@@ -2775,6 +2797,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Jede Leistung fließt mit ihrem Prozentwert in ihre Teilnote ein. In den Schnitt gehen 40 Kurse ein — hast du mehr, klammert Score von unten die schwächsten. Pflicht-Basisfächer bleiben immer drin, die Kurse deiner Prüfungsfächer ebenso."
+          }
+        }
+      }
+    },
+    "Jedes Halbjahr rechnet mit seinem eigenen Verhältnis. Schaltest du wieder ab, gilt für alle vier die Gewichtung von oben.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jedes Halbjahr rechnet mit seinem eigenen Verhältnis. Schaltest du wieder ab, gilt für alle vier die Gewichtung von oben."
           }
         }
       }
@@ -5272,6 +5305,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "von dir geklammert"
+          }
+        }
+      }
+    },
+    "Ändert sich das Verhältnis über die Kursstufe — in 4/4 anders als davor —, stell es hier je Halbjahr ein.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ändert sich das Verhältnis über die Kursstufe — in 4/4 anders als davor —, stell es hier je Halbjahr ein."
           }
         }
       }

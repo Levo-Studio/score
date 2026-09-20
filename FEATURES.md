@@ -42,7 +42,14 @@ Leistung ein Titel, eine Punktzahl von 0 bis 15 und ein Anteil. Der Anteil folgt
 wahlweise dem Vorgabewert der Art oder wird von Hand gesetzt.
 
 **Schriftlich-mündlich-Verhältnis** je Fach einstellbar; daraus entsteht das
-Halbjahresergebnis.
+Halbjahresergebnis. Wahlweise **in Prozent** (Fünferschritte) oder **als Bruch**
+— 2 : 1 und 1 : 2 lassen sich damit genau treffen, was als ganzzahliger
+Prozentwert nicht geht.
+
+**Verhältnis je Halbjahr.** Ändert es sich über die Kursstufe — in Mathematik
+etwa 3 : 1 bis 12-1 und 2 : 1 danach —, steht hinter einem Schalter eine Liste
+aller vier Halbjahre, jedes mit eigenem Verhältnis. Beim Einschalten erben alle
+vier das Verhältnis des Fachs; geändert wird nur, was davon abweicht.
 
 **Wischen zum Löschen** bei Leistungen und Fächern, mit Rückfrage beim Fach und
 einem Rücknahme-Streifen bei der Leistung.
@@ -111,7 +118,7 @@ Dateien: `Score/Features/Profile/`, `Score/Features/Root/`
 **Abgleich über die private CloudKit-Datenbank** des Nutzers. Kein Konto, kein
 Passwort — die Apple-ID des Geräts genügt.
 
-**Verschlüsselte Felder:** 31 von 31 gespeicherten Attributen liegen in
+**Verschlüsselte Felder:** 36 von 36 gespeicherten Attributen liegen in
 `CKRecord.encryptedValues`.
 
 **Abgleich von Hand** über einen Knopf, dazu Zustand und Zeitpunkt des letzten
@@ -169,7 +176,7 @@ von *Bewegung reduzieren* an einer Stelle.
 **Barrierefreiheit:** Beschriftungen und Auswahl-Zustände für VoiceOver,
 Trefferflächen ab 44 Punkt, Dynamic Type.
 
-**Deutsch**, 439 Schlüssel im String-Katalog.
+**Deutsch**, 445 Schlüssel im String-Katalog.
 
 Dateien: `Score/Core/Design/`, `Score/Resources/`
 
@@ -183,6 +190,9 @@ Ehrlichkeitshalber, damit niemand doppelt sucht:
   Baden-Württemberg — siehe „Neues Bundesland hinzufügen" in
   [CONTRIBUTING.md](CONTRIBUTING.md).
 - **Getrennte Fächer je Profil.** Profile teilen sich den Fächerbestand.
+- **Ein praktischer Teil** neben schriftlich und mündlich, wie ihn Kunst, Musik
+  und Sport kennen. Das Verhältnis trägt ihn bereits — es rechnet über beliebig
+  viele Teilnoten —, erfassen lässt er sich noch nicht.
 - **Widgets, Mitteilungen, Apple Watch, Mac.**
 - **Notenziel-Rechner** („was brauche ich noch für 1,9").
 - **Stundenplan, Hausaufgaben, Termine.** Score rechnet, es verwaltet keine

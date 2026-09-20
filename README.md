@@ -39,8 +39,8 @@ kein Konto, kein Login. **36 von 36 gespeicherten Attributen sind verschlüsselt
 |---|---|
 | **Rechenkern** | 40 Kurse, 48 Wertungen, fünf Prüfungen, amtliche Notentabelle |
 | **Speicher** | SwiftData + CloudKit, vier Rückfallstufen, kein `fatalError` im Startpfad |
-| **Tests** | 513 in 64 Suites, Swift Testing, ohne Simulator-Zustand im Rechenkern |
-| **Sprache** | Deutsch, 439 Schlüssel im String-Katalog, von Hand gepflegt |
+| **Tests** | 539 in 66 Suites, Swift Testing, ohne Simulator-Zustand im Rechenkern |
+| **Sprache** | Deutsch, 445 Schlüssel im String-Katalog, von Hand gepflegt |
 | **Lizenz** | Source-available — eigenes TestFlight erlaubt, App Store nicht |
 
 Was die App heute alles kann, steht in **[FEATURES.md](FEATURES.md)**. Wie sie
@@ -178,7 +178,7 @@ Schema-Deploy:
 
 ```bash
 python3 scripts/check-encryption.py
-# 31 von 31 gespeicherten Attributen verschlüsselt, 4 Beziehungen ausgenommen.
+# 36 von 36 gespeicherten Attributen verschlüsselt, 4 Beziehungen ausgenommen.
 ```
 
 Exit 0, wenn alles sitzt, sonst 1.
@@ -192,7 +192,7 @@ Score/
   Core/Design/   Farben, Typografie, Masse, Bewegung, Komponenten
   Core/…         Daten, Einstellungen, Formatierung, Medien
   Features/      ein Ordner je Bildschirm
-ScoreTests/      513 Tests in 64 Suites (Swift Testing)
+ScoreTests/      539 Tests in 66 Suites (Swift Testing)
 scripts/         check-encryption.py
 ```
 
@@ -215,7 +215,7 @@ damit sie nicht an einer von hundert Aufrufstellen vergessen werden kann.
 **iPhone und iPad teilen Modelle, Rechenkern und Design-Schicht**, haben aber
 eigene Shells (`MainShell` mit Tab-Bar, `PadShell` mit Sidebar und Split View).
 
-Oberflächensprache ist **Deutsch**, 439 Einträge im String-Katalog, von Hand
+Oberflächensprache ist **Deutsch**, 445 Einträge im String-Katalog, von Hand
 gepflegt. Schriften sind Archivo und Public Sans, beide unter der SIL Open Font
 License.
 

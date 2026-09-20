@@ -155,7 +155,7 @@ die dieselbe Zusage wiederholen.
 ## Tests
 
 `ScoreTests/`, **Swift Testing** (`@Test`, `@Suite`, `#expect`) — nicht XCTest.
-Stand: **487 Tests in 60 Suites**, grün. Ein Lauf, der rot ist, wird nicht
+Stand: **539 Tests in 66 Suites**, grün. Ein Lauf, der rot ist, wird nicht
 abgeliefert; ist ein Test tatsächlich falsch, wird er in einem eigenen Commit
 repariert, mit Begründung.
 

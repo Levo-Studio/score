@@ -335,11 +335,11 @@ struct SubjectDetailView: View {
 
                 HStack(spacing: 10) {
                     semesterTile(
-                        label: shareLabel("Schriftlich", percent: subject.writtenShare),
+                        label: shareLabel(.written),
                         value: ScoreNumberFormat.points(partialGrade(.written))
                     )
                     semesterTile(
-                        label: shareLabel("Mündlich", percent: subject.oralShare),
+                        label: shareLabel(.oral),
                         value: ScoreNumberFormat.points(partialGrade(.oral))
                     )
                     semesterTile(
@@ -354,14 +354,19 @@ struct SubjectDetailView: View {
     }
 
 
-    /// Die Beschriftung einer Anteils-Kachel: „Schriftlich · 60 %".
+    /// Die Beschriftung einer Anteils-Kachel: „Schriftlich · 60 %" — oder
+    /// „Schriftlich · 2", wenn das Fach sein Verhältnis als Bruch führt.
     ///
-    /// Der Prozentwert steht in beiden Sprachen gleich und gehört deshalb nicht
-    /// in den Katalog. Angehängt wird er als `AttributedString` — so bleibt das
-    /// Prozentzeichen ein Zeichen und wird nicht als Formatangabe gelesen, und
-    /// die abgekündigte Verkettung zweier `Text` entfällt.
-    private func shareLabel(_ title: String.LocalizationValue, percent: Int) -> Text {
-        Text(AttributedString.scoreLocalized(title) + AttributedString(" · \(percent) %"))
+    /// Genannt wird die Gewichtung **des gezeigten Halbjahres**. Hier stand
+    /// vorher der Prozentwert des Fachs, und der ist falsch, sobald ein Halbjahr
+    /// eine eigene Gewichtung trägt: Die Kachel behauptete dann 60 %, während
+    /// die Kurszahl daneben mit 75 % gerechnet war.
+    private func shareLabel(_ kind: GradeKind) -> Text {
+        WeightingDisplay.partLabel(
+            kind,
+            in: currentSemester?.resolvedWeighting(in: subject) ?? subject.weighting,
+            asFraction: subject.usesFractionWeighting
+        )
     }
 
     /// Der Hinweis, dass dieses Halbjahr nicht in den Score einfliesst.

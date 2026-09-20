@@ -81,6 +81,19 @@ enum WeightingDisplay {
             .joined(separator: separator)
     }
 
+    /// Der Name einer Teilnote mit ihrem Gewicht: „Schriftlich · 60 %" oder
+    /// „Schriftlich · 2".
+    ///
+    /// Für enge Kacheln und Zeilen, in denen keine Ablesezeile Platz hat — die
+    /// Halbjahres-Kachel der Fachansicht etwa. Zusammengesetzt wird als
+    /// `AttributedString`: So bleibt das Prozentzeichen ein Zeichen und wird
+    /// nicht als Formatangabe gelesen, und die abgekündigte Verkettung zweier
+    /// `Text` entfällt.
+    static func partLabel(_ kind: GradeKind, in weighting: Weighting, asFraction: Bool) -> Text {
+        let value = value(of: kind, in: weighting, asFraction: asFraction)
+        return Text(AttributedString.scoreLocalized(kind.weightingLabel) + AttributedString(" · \(value)"))
+    }
+
     /// Die Überschrift über einer Spalte von Verhältnissen: „Schriftlich : Mündlich".
     ///
     /// Sie sagt, in welcher Reihenfolge die Zahlen einer Zeile stehen, und steht

@@ -120,6 +120,21 @@ struct PadSubjectDetailView: View {
         SubjectMath.partialGrade(for: entries(kind).map(GradeInput.init))
     }
 
+    /// Die Beschriftung einer Teilnoten-Zeile: „Schriftlich · 60 %" — oder
+    /// „Schriftlich · 2", wenn das Fach sein Verhältnis als Bruch führt.
+    ///
+    /// Genannt wird die Gewichtung **des gezeigten Halbjahres**. Hier stand
+    /// vorher der Prozentwert des Fachs, und der ist falsch, sobald ein Halbjahr
+    /// eine eigene Gewichtung trägt: Die Zeile behauptete dann 60 %, während die
+    /// Kurszahl darunter mit 75 % gerechnet war.
+    private func shareLabel(_ kind: GradeKind) -> Text {
+        WeightingDisplay.partLabel(
+            kind,
+            in: currentSemester?.resolvedWeighting(in: subject) ?? subject.weighting,
+            asFraction: subject.usesFractionWeighting
+        )
+    }
+
     // MARK: - Kopfkarte
 
     private var headerCard: some View {
@@ -314,12 +329,12 @@ struct PadSubjectDetailView: View {
                 .padding(.bottom, ScoreMetrics.Spacing.sm)
 
                 semesterRow(
-                    label: Text("Schriftlich · \(subject.writtenShare) %"),
+                    label: shareLabel(.written),
                     value: ScoreNumberFormat.points(partialGrade(.written)),
                     isFirst: true
                 )
                 semesterRow(
-                    label: Text("Mündlich · \(subject.oralShare) %"),
+                    label: shareLabel(.oral),
                     value: ScoreNumberFormat.points(partialGrade(.oral)),
                     isFirst: false
                 )

@@ -373,10 +373,10 @@ extension SemesterInput {
     /// eigene Gewichtung des Halbjahres bleibt dabei **aussen vor**: Wer diesen
     /// Weg nimmt, gibt eine Gewichtung von aussen vor und meint auch die.
     ///
-    /// Bleibt für Aufrufstellen, die noch mit `Subject.writtenShare` arbeiten —
-    /// heute ``SubjectStatistics``. Sie zeigen damit die Gewichtung des Fachs
-    /// auch dort, wo ein Halbjahr eine eigene trägt; das fällt mit der
-    /// Oberfläche, die diese Einstellung erst bedienbar macht.
+    /// In der App ruft sie niemand mehr: ``SubjectStatistics`` war die letzte
+    /// Stelle und geht seit der Oberfläche für die Gewichtung je Halbjahr über
+    /// die Überladung darüber. Sie bleibt für Tests, die ein Halbjahr mit einem
+    /// Prozentwert beschreiben, ohne dafür ein Fach anlegen zu müssen.
     init(_ semester: SemesterResult, writtenShare: Int, isActive: Bool) {
         self.init(
             index: semester.index,

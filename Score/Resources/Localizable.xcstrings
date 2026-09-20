@@ -5364,13 +5364,13 @@
         }
       }
     },
-    "Ø %@ gesamt · %lld:%lld": {
+    "Ø %@ gesamt · %@": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ø %@ gesamt · %lld:%lld"
+            "value": "Ø %@ gesamt · %@"
           }
         }
       }

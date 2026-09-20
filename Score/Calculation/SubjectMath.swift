@@ -63,32 +63,50 @@ enum SubjectMath {
 
     /// Das Halbjahresergebnis eines Fachs, 0 bis 15 Punkte.
     ///
-    /// Schriftliche und mündliche Teilnote werden im Verhältnis des Fachs
-    /// verrechnet und auf eine ganze Punktzahl gerundet — im Zeugnis steht immer
-    /// eine ganze Zahl.
+    /// Die Teilnoten des Halbjahres werden im Verhältnis des Fachs verrechnet und
+    /// auf eine ganze Punktzahl gerundet — im Zeugnis steht immer eine ganze Zahl.
     ///
-    /// Fehlt eine der beiden Teilnoten, zählt die andere allein. Wer in einem Fach
-    /// nur mündliche Noten hat, bekommt trotzdem ein Ergebnis.
+    /// Gerechnet wird über **alle** Arten von Teilnoten, die Leistungen tragen,
+    /// nicht über das feste Paar aus schriftlich und mündlich. Kommt der
+    /// praktische Teil in Kunst, Musik und Sport dazu, zählt er hier ohne
+    /// weiteres Zutun mit — ``Weighting`` trägt dann auch sein Gewicht.
+    ///
+    /// Fehlt eine Teilnote, zählt die andere allein. Wer in einem Fach nur
+    /// mündliche Noten hat, bekommt trotzdem ein Ergebnis, und zwar unabhängig
+    /// vom eingestellten Verhältnis: gewichtet wird nur, was tatsächlich da ist.
     ///
     /// - Returns: `nil`, wenn das Halbjahr nicht belegt ist oder keine Leistung
     ///   erfasst wurde.
     static func result(for semester: SemesterInput) -> Int? {
         guard semester.isActive else { return nil }
 
-        let written = partialGrade(for: semester.entries.filter { $0.kind == .written })
-        let oral = partialGrade(for: semester.entries.filter { $0.kind == .oral })
+        let weighting = Weighting(writtenShare: semester.writtenShare)
 
+        // Der Weg über `GradeKind.allCases` und nicht über die Schlüssel eines
+        // Dictionary ist Absicht: Gleitkomma-Addition ist nicht assoziativ, und
+        // genau an der halben Punktzahl entschiede sonst die zufällige
+        // Laufreihenfolge darüber, ob auf- oder abgerundet wird.
+        let parts: [(weight: Int, grade: Double)] = GradeKind.allCases.compactMap { kind in
+            let entries = semester.entries.filter { $0.kind == kind }
+            guard let grade = partialGrade(for: entries) else { return nil }
+            return (weighting.weight(for: kind), grade)
+        }
+
+        guard !parts.isEmpty else { return nil }
+
+        let weightTotal = parts.reduce(0) { $0 + $1.weight }
         let combined: Double
-        switch (written, oral) {
-        case (nil, nil):
-            return nil
-        case let (value?, nil):
-            combined = value
-        case let (nil, value?):
-            combined = value
-        case let (writtenValue?, oralValue?):
-            let share = Double(semester.writtenShare)
-            combined = (writtenValue * share + oralValue * (100 - share)) / 100
+        if weightTotal > 0 {
+            let weighted = parts.reduce(0.0) { $0 + $1.grade * Double($1.weight) }
+            combined = weighted / Double(weightTotal)
+        } else {
+            // Alles, was vorliegt, hat das Gewicht null — etwa die einzige
+            // mündliche Teilnote eines Fachs, das rein schriftlich gewichtet ist.
+            // Dann zählen die vorhandenen Teilnoten gleich viel. Der Nutzer hat
+            // die Note erfasst; sie wegen einer Einstellung zu verwerfen, die von
+            // einer gar nicht vorhandenen Teilnote handelt, wäre falsch — und
+            // durch null zu teilen erst recht.
+            combined = parts.reduce(0.0) { $0 + $1.grade } / Double(parts.count)
         }
 
         return GradeEntry.clamp(Int(combined.rounded()))

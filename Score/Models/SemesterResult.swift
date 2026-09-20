@@ -12,7 +12,8 @@ import SwiftData
 /// ## Verschlüsselung
 ///
 /// **Jedes gespeicherte Attribut trägt `.allowsCloudEncryption`** und landet beim
-/// Sync in `CKRecord.encryptedValues` — `index` und `isManuallyBracketed`.
+/// Sync in `CKRecord.encryptedValues` — `index`, `isManuallyBracketed` und die
+/// beiden Gewichte.
 ///
 /// Ausgenommen sind **nur Beziehungen** — `subject` und `entries` werden beim
 /// Mirroring als `CKReference` gespiegelt, und eine Referenz lässt sich nicht
@@ -44,6 +45,26 @@ final class SemesterResult {
     /// zu verlieren. Die Regel steht ausführlich in ``BlockOneCalculator``.
     @Attribute(.allowsCloudEncryption) var isManuallyBracketed: Bool = false
 
+    /// Das Gewicht der schriftlichen Teilnote in **diesem** Halbjahr.
+    ///
+    /// `nil` heisst „folgt dem Fach" — dieselbe Lesart wie bei
+    /// ``Subject/maximumContributedCourses``, und aus demselben Grund: „keine
+    /// eigene Gewichtung" ist etwas anderes als „genau die, die das Fach gerade
+    /// hat". Stellt jemand sein Mathematik-Leistungsfach später von 3 : 1 auf
+    /// 2 : 1 um, sollen die Halbjahre mitgehen, die nie etwas Eigenes gesagt
+    /// haben — und die, in denen ausdrücklich 1 : 1 steht, sollen stehen
+    /// bleiben. Mit einem Vorgabewert statt `nil` liessen sich beide Fälle nicht
+    /// unterscheiden.
+    ///
+    /// Optional ist ausserdem die einzige Form, in der ein neues Attribut ohne
+    /// Vorgabe nach CloudKit gespiegelt werden darf.
+    ///
+    /// Gelesen und geschrieben wird über ``weighting``.
+    @Attribute(.allowsCloudEncryption) var writtenWeight: Int?
+
+    /// Das Gewicht der mündlichen Teilnote in diesem Halbjahr. Siehe ``writtenWeight``.
+    @Attribute(.allowsCloudEncryption) var oralWeight: Int?
+
     /// Das Fach, zu dem dieses Halbjahr gehört.
     var subject: Subject?
 
@@ -58,6 +79,36 @@ final class SemesterResult {
 }
 
 extension SemesterResult {
+
+    /// Die eigene Gewichtung dieses Halbjahres, oder `nil`, wenn es dem Fach folgt.
+    ///
+    /// Beide Gewichte zusammen oder keines: Ein halb gesetztes Paar — schriftlich
+    /// 2, mündlich `nil` — beschreibt kein Verhältnis, und die einzige Auslegung
+    /// wäre eine erfundene Zahl für die andere Seite. Deshalb zählt das Paar, und
+    /// ein Halbjahr, an dem nur eine der beiden Zahlen ankommt, folgt dem Fach.
+    ///
+    /// Anders als ``Subject/weighting`` schreibt diese Stelle **nichts** an
+    /// ältere Geräte mit: Version 1.1 kennt Gewichtung nur je Fach und hat für
+    /// ein Halbjahr gar kein Feld, in das sich etwas spiegeln liesse. Dort zählt
+    /// dann weiter die Gewichtung des Fachs — sichtbar anders, aber nicht falsch.
+    var weighting: Weighting? {
+        get {
+            guard let writtenWeight, let oralWeight else { return nil }
+            return Weighting([.written: writtenWeight, .oral: oralWeight])
+        }
+        set {
+            writtenWeight = newValue?.weight(for: .written)
+            oralWeight = newValue?.weight(for: .oral)
+        }
+    }
+
+    /// Die Gewichtung, die für dieses Halbjahr tatsächlich gilt.
+    ///
+    /// Die eigene, wenn es eine trägt, sonst die des Fachs. Der Übergabepunkt in
+    /// den Rechenkern liest genau das — siehe ``SemesterInput/init(_:in:isActive:)``.
+    func resolvedWeighting(in subject: Subject) -> Weighting {
+        weighting ?? subject.weighting
+    }
 
     /// Die Leistungen, die in die angegebene Teilnote zählen.
     func entries(for kind: GradeKind) -> [GradeEntry] {

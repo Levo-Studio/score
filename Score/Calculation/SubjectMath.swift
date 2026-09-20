@@ -351,10 +351,32 @@ extension GradeInput {
 
 extension SemesterInput {
 
-    /// Der Anteil bleibt hier ein Prozentwert, weil der Aufrufer keinen anderen
-    /// hat: `Subject.writtenShare` ist eine Zahl von 0 bis 100, und ob ein Fach
-    /// je Halbjahr unterschiedlich gewichtet, weiss das Datenmodell noch nicht.
-    /// Umgerechnet wird beim Übergang — ``Weighting/init(writtenShare:)``.
+    /// Ein Halbjahr mit der Gewichtung, die für es gilt.
+    ///
+    /// Die eigene, wenn es eine trägt, sonst die des Fachs — siehe
+    /// ``SemesterResult/resolvedWeighting(in:)``. Das ist der Weg, den der
+    /// Rechenkern geht; die Überladung mit dem Prozentwert darunter steht noch
+    /// für Aufrufer, die nur das Fach in der Hand haben.
+    init(_ semester: SemesterResult, in subject: Subject, isActive: Bool) {
+        self.init(
+            index: semester.index,
+            isActive: isActive,
+            weighting: semester.resolvedWeighting(in: subject),
+            entries: (semester.entries ?? []).map(GradeInput.init),
+            isManuallyBracketed: semester.isManuallyBracketed
+        )
+    }
+
+    /// Dasselbe Halbjahr, beschrieben über einen schriftlichen Prozentanteil.
+    ///
+    /// Umgerechnet wird beim Übergang — ``Weighting/init(writtenShare:)``. Die
+    /// eigene Gewichtung des Halbjahres bleibt dabei **aussen vor**: Wer diesen
+    /// Weg nimmt, gibt eine Gewichtung von aussen vor und meint auch die.
+    ///
+    /// Bleibt für Aufrufstellen, die noch mit `Subject.writtenShare` arbeiten —
+    /// heute ``SubjectStatistics``. Sie zeigen damit die Gewichtung des Fachs
+    /// auch dort, wo ein Halbjahr eine eigene trägt; das fällt mit der
+    /// Oberfläche, die diese Einstellung erst bedienbar macht.
     init(_ semester: SemesterResult, writtenShare: Int, isActive: Bool) {
         self.init(
             index: semester.index,
@@ -368,26 +390,32 @@ extension SemesterInput {
 
 extension SubjectInput {
 
-    /// Alle vier Halbjahre bekommen dieselbe Gewichtung, weil das Fach nur eine
-    /// kennt: `Subject.writtenShare` gilt für das ganze Fach. Dass die Rechnung
-    /// je Halbjahr ein eigenes Verhältnis verträgt, ist hier schon wahr — es
-    /// steht nur noch nichts Unterschiedliches in der Datenbank. Wenn das Modell
-    /// die Gewichte trägt, ändert sich genau diese eine Zeile.
+    /// Jedes Halbjahr bringt seine eigene Gewichtung mit, wenn es eine trägt;
+    /// sonst gilt die des Fachs. Ein Fach kann damit in 1/4 bis 3/4 mit 3 : 1
+    /// gewichtet sein und in 4/4 mit 2 : 1, ohne dass die anderen drei Halbjahre
+    /// etwas davon mitbekommen.
+    ///
+    /// Ein Halbjahr, das es im Speicher gar nicht gibt — weil in ihm nie etwas
+    /// erfasst wurde —, folgt ebenfalls dem Fach. Es hat keine Leistungen und
+    /// damit ohnehin kein Ergebnis; die Gewichtung steht nur da, damit der Wert
+    /// vollständig ist.
     init(_ subject: Subject) {
-        let weighting = Weighting(writtenShare: subject.writtenShare)
+        let subjectWeighting = subject.weighting
 
         self.init(
             id: subject.identifier.uuidString,
             kind: subject.kind,
             semesters: Semester.allIndices.map { index in
-                let semester = subject.semester(at: index)
-                return SemesterInput(
-                    index: index,
-                    isActive: subject.isActive(in: index),
-                    weighting: weighting,
-                    entries: (semester?.entries ?? []).map(GradeInput.init),
-                    isManuallyBracketed: semester?.isManuallyBracketed ?? false
-                )
+                let isActive = subject.isActive(in: index)
+                guard let semester = subject.semester(at: index) else {
+                    return SemesterInput(
+                        index: index,
+                        isActive: isActive,
+                        weighting: subjectWeighting,
+                        entries: []
+                    )
+                }
+                return SemesterInput(semester, in: subject, isActive: isActive)
             },
             maximumContributedCourses: subject.maximumContributedCourses,
             isOralExamSubject: subject.isOralExamSubject,

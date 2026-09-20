@@ -18,7 +18,13 @@ import Foundation
 ///
 /// Ob die Oberfläche daraus „2 : 1" oder „67 %" macht, ist Darstellung. Für die
 /// zweite Lesart gibt es ``share(of:)``.
-struct Weighting: Sendable {
+///
+/// `nonisolated`, weil eine `@Model`-Klasse es ist: Das Ziel dieses Moduls ist
+/// `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, SwiftData-Modelle nehmen daran
+/// aber nicht teil. ``Subject/weighting`` könnte eine an den Main-Actor gebundene
+/// Gewichtung sonst weder anlegen noch lesen. Zu binden gibt es hier ohnehin
+/// nichts — der Typ ist ein Wert ohne Zustand ausserhalb seiner selbst.
+nonisolated struct Weighting: Sendable {
 
     /// Die Spanne, in der ein einzelnes Gewicht liegt.
     ///

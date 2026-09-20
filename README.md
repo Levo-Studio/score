@@ -32,7 +32,7 @@ Leistungsfächer doppelt, wo geklammert wird und ab welcher Punktzahl es eng
 wird.
 
 Alles liegt auf dem Gerät und in der privaten iCloud des Nutzers. Kein Backend,
-kein Konto, kein Login. **31 von 31 gespeicherten Attributen sind verschlüsselt**
+kein Konto, kein Login. **36 von 36 gespeicherten Attributen sind verschlüsselt**
 — Apple sieht die Struktur der Daten, nicht ihre Werte.
 
 |  |  |
@@ -166,7 +166,7 @@ Verschlüsselt wird ein Feld aber nur, wenn es `@Attribute(.allowsCloudEncryptio
 trägt — dann landet es in `CKRecord.encryptedValues`, und der Schlüssel hängt am
 iCloud-Schlüsselbund. Apple sieht die Struktur der Daten, nicht ihre Werte.
 
-**31 von 31 gespeicherten Attributen** tragen das Flag. Ausgenommen sind nur die
+**36 von 36 gespeicherten Attributen** tragen das Flag. Ausgenommen sind nur die
 vier Beziehungen: sie werden als `CKReference` gespiegelt, und eine Referenz muss
 für CloudKit auflösbar bleiben.
 

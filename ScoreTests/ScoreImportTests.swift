@@ -42,10 +42,21 @@ struct ScoreImportTests {
         )
         context.insert(subject)
 
+        // Ein Verhältnis, das sich als ganzer Prozentwert nicht schreiben lässt:
+        // 2 : 1 sind 66,666 %. Genau daran zeigt sich, ob die Datei die Gewichte
+        // selbst trägt oder nur den gerundeten Anteil.
+        subject.weighting = Weighting([.written: 2, .oral: 1])
+        subject.usesFractionWeighting = true
+
         for index in Semester.allIndices {
             let semester = SemesterResult(index: index)
             semester.subject = subject
             semester.isManuallyBracketed = index == 2
+            // Nur 2/4 weicht ab; die drei anderen folgen dem Fach und tragen
+            // deshalb gar keine eigenen Gewichte.
+            if index == 1 {
+                semester.weighting = Weighting([.written: 3, .oral: 1])
+            }
             context.insert(semester)
 
             let entry = GradeEntry(
@@ -58,6 +69,27 @@ struct ScoreImportTests {
             )
             entry.semester = semester
             context.insert(entry)
+        }
+
+        return subject
+    }
+
+    /// Ein Fach ohne jede eigene Festlegung: Gewichtung auf der Vorgabe, vier
+    /// Halbjahre, von denen keines etwas Eigenes sagt.
+    @discardableResult
+    private static func insertPlainSubject(named name: String, in context: ModelContext) -> Subject {
+        let subject = Subject(
+            name: name,
+            abbreviation: String(name.prefix(2)),
+            colorValue: 0x11_11_11,
+            kind: .wahlBasisfach
+        )
+        context.insert(subject)
+
+        for index in Semester.allIndices {
+            let semester = SemesterResult(index: index)
+            semester.subject = subject
+            context.insert(semester)
         }
 
         return subject
@@ -79,6 +111,8 @@ struct ScoreImportTests {
         parts.append(subject.kind.rawValue)
         parts.append(String(subject.colorValue))
         parts.append(String(subject.writtenShare))
+        parts.append("\(subject.writtenWeight):\(subject.oralWeight)")
+        parts.append(String(subject.usesFractionWeighting))
         parts.append(subject.activeSemesters.map(String.init).joined(separator: ","))
         parts.append(subject.maximumContributedCourses.map(String.init) ?? "-")
         parts.append(String(subject.isOralExamSubject))
@@ -91,7 +125,11 @@ struct ScoreImportTests {
 
     private static func snapshot(of semester: SemesterResult) -> String {
         let entries = semester.orderedEntries.map(snapshot(of:)).sorted().joined(separator: ";")
-        return "\(semester.index)/\(semester.isManuallyBracketed)/[\(entries)]"
+        // Ein Halbjahr ohne eigene Gewichtung trägt einen Strich und nicht
+        // „50:50" — „folgt dem Fach" ist etwas anderes als „gleich gewichtet".
+        let written = semester.writtenWeight.map(String.init) ?? "-"
+        let oral = semester.oralWeight.map(String.init) ?? "-"
+        return "\(semester.index)/\(semester.isManuallyBracketed)/\(written):\(oral)/[\(entries)]"
     }
 
     private static func snapshot(of entry: GradeEntry) -> String {
@@ -125,6 +163,19 @@ struct ScoreImportTests {
         #expect(exported.semesters.first { $0.index == 0 }?.isManuallyBracketed == false)
         #expect(exported.isCustom == false)
         #expect(exported.sortIndex == 0)
+
+        // Die Gewichtung als Verhältnis, nicht als gerundeter Anteil — und der
+        // Anteil trotzdem daneben, weil Version 1.1 nur ihn liest.
+        #expect(exported.writtenWeight == 2)
+        #expect(exported.oralWeight == 1)
+        #expect(exported.usesFractionWeighting == true)
+        #expect(exported.writtenShare == 67)
+
+        // Je Halbjahr: 2/4 trägt seine eigene, die übrigen folgen dem Fach.
+        #expect(exported.semesters.first { $0.index == 1 }?.writtenWeight == 3)
+        #expect(exported.semesters.first { $0.index == 1 }?.oralWeight == 1)
+        #expect(exported.semesters.first { $0.index == 0 }?.writtenWeight == nil)
+        #expect(exported.semesters.first { $0.index == 0 }?.oralWeight == nil)
     }
 
     // MARK: - Reihenfolge und Herkunft
@@ -918,6 +969,246 @@ struct ScoreImportTests {
         let export = try ScoreImport.read(Data(file.utf8))
         #expect(export.subjects.first?.writtenShare == 0)
         #expect(export.subjects.first?.maximumContributedCourses == 1)
+    }
+
+    // MARK: - Die Gewichtung
+
+    @Test("Die Gewichtung übersteht Ausgabe und Einlesen")
+    func theWeightingSurvivesARoundTrip() throws {
+        let source = try Self.makeContext()
+        Self.makeSubject(in: source)
+        let data = try ScoreExport(profile: nil, subjects: try Self.fetchSubjects(in: source)).encoded()
+
+        let target = try Self.makeContext()
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .replace, in: target, profile: nil)
+
+        let subject = try #require(try Self.fetchSubjects(in: target).first)
+
+        // Je Fach: das Verhältnis selbst, nicht der gerundete Anteil. Über den
+        // Anteil allein käme 2 : 1 als 67 : 33 zurück und rechnete ab dem
+        // Wiedereinspielen anders als vorher.
+        #expect(subject.writtenWeight == 2)
+        #expect(subject.oralWeight == 1)
+        #expect(subject.weighting == Weighting([.written: 2, .oral: 1]))
+        #expect(subject.usesFractionWeighting)
+
+        // Der Anteil steht daneben und bleibt die gerundete Lesart desselben
+        // Verhältnisses — Version 1.1 liest nur ihn.
+        #expect(subject.writtenShare == 67)
+
+        // Je Halbjahr: 2/4 hatte etwas Eigenes zu sagen und sagt es weiter.
+        let second = try #require(subject.semester(at: 1))
+        #expect(second.writtenWeight == 3)
+        #expect(second.oralWeight == 1)
+        #expect(second.weighting == Weighting([.written: 3, .oral: 1]))
+    }
+
+    @Test("Ein Halbjahr ohne eigene Gewichtung folgt auch nach dem Einlesen dem Fach")
+    func aSemesterWithoutItsOwnWeightingKeepsFollowingTheSubject() throws {
+        let source = try Self.makeContext()
+        Self.makeSubject(in: source)
+        let data = try ScoreExport(profile: nil, subjects: try Self.fetchSubjects(in: source)).encoded()
+
+        let target = try Self.makeContext()
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .replace, in: target, profile: nil)
+
+        let subject = try #require(try Self.fetchSubjects(in: target).first)
+        let first = try #require(subject.semester(at: 0))
+
+        // Nicht „50 : 50 eingelesen", sondern gar nichts: Sonst stünde nach dem
+        // Wiedereinspielen an jedem Halbjahr eine Gewichtung, die niemand
+        // gesetzt hat — und das Fach zöge sie beim nächsten Umstellen nicht mehr
+        // mit.
+        #expect(first.writtenWeight == nil)
+        #expect(first.oralWeight == nil)
+        #expect(first.weighting == nil)
+        #expect(first.resolvedWeighting(in: subject) == subject.weighting)
+
+        // Die Probe darauf: Stellt jemand das Fach um, geht dieses Halbjahr mit,
+        // und das mit eigener Gewichtung bleibt stehen.
+        subject.weighting = Weighting([.written: 1, .oral: 4])
+        #expect(first.resolvedWeighting(in: subject) == Weighting([.written: 1, .oral: 4]))
+
+        let second = try #require(subject.semester(at: 1))
+        #expect(second.resolvedWeighting(in: subject) == Weighting([.written: 3, .oral: 1]))
+    }
+
+    @Test("Eine Datei der Fassung 5 bekommt ihre Gewichtung aus dem Anteil")
+    func filesFromFormatFiveDeriveTheirWeighting() throws {
+        let json = """
+        {
+          "formatVersion": 5,
+          "exportedAt": "2026-01-15T09:00:00Z",
+          "subjects": [
+            {
+              "abbreviation": "M",
+              "activeSemesters": [0, 1, 2, 3],
+              "isOralExamSubject": false,
+              "kind": "basisfach",
+              "name": "Mathematik",
+              "writtenShare": 60,
+              "semesters": [
+                { "index": 0, "isManuallyBracketed": false, "entries": [] },
+                { "index": 1, "isManuallyBracketed": false, "entries": [] }
+              ]
+            }
+          ]
+        }
+        """
+
+        let export = try ScoreImport.read(Data(json.utf8))
+        #expect(export.version == 5)
+        #expect(export.subjects.first?.writtenWeight == nil)
+
+        let context = try Self.makeContext()
+        try ScoreImport.apply(export, mode: .replace, in: context, profile: nil)
+
+        let subject = try #require(try Self.fetchSubjects(in: context).first)
+
+        // Was die Datei nicht trägt, leitet der Initialisierer des Modells aus
+        // dem Anteil ab: 60 % schriftlich sind 60 : 40 und rechnen sich auf die
+        // Stelle wie vorher.
+        #expect(subject.writtenWeight == 60)
+        #expect(subject.oralWeight == 40)
+        #expect(subject.weighting == Weighting(writtenShare: 60))
+        #expect(subject.writtenShare == 60)
+
+        // Ohne Angabe bleibt es bei der Vorgabe: Anteil statt Bruch …
+        #expect(!subject.usesFractionWeighting)
+        // … und kein Halbjahr, das etwas Eigenes behauptet.
+        #expect(subject.orderedSemesters.allSatisfy { $0.weighting == nil })
+    }
+
+    @Test("Ein halbes Gewichtspaar zählt als keine eigene Gewichtung")
+    func aHalfSetPairIsNoWeightingAtAll() throws {
+        let json = """
+        {
+          "formatVersion": 6,
+          "exportedAt": "2026-01-15T09:00:00Z",
+          "subjects": [
+            {
+              "abbreviation": "M",
+              "activeSemesters": [0],
+              "isOralExamSubject": false,
+              "kind": "basisfach",
+              "name": "Mathematik",
+              "writtenShare": 60,
+              "writtenWeight": 2,
+              "semesters": [
+                { "index": 0, "isManuallyBracketed": false, "entries": [], "writtenWeight": 3 }
+              ]
+            }
+          ]
+        }
+        """
+
+        // Unlesbar wird die Datei davon **nicht**: Eine fehlende Hälfte hat eine
+        // eindeutige Auslegung, und die ganze Sicherung dafür zu verweigern
+        // kostete auch jede Note darin.
+        let export = try ScoreImport.read(Data(json.utf8))
+
+        let context = try Self.makeContext()
+        try ScoreImport.apply(export, mode: .replace, in: context, profile: nil)
+
+        let subject = try #require(try Self.fetchSubjects(in: context).first)
+
+        // Die andere Seite müsste erfunden werden. Also gilt am Fach die
+        // Ableitung aus dem Anteil …
+        #expect(subject.weighting == Weighting(writtenShare: 60))
+        // … und am Halbjahr dieselbe Lesart wie im Modell: folgt dem Fach.
+        #expect(subject.semester(at: 0)?.weighting == nil)
+    }
+
+    @Test("Zusammenführen lässt eine eingestellte Gewichtung stehen")
+    func mergingNeverOverwritesAWeighting() throws {
+        let source = try Self.makeContext()
+        Self.makeSubject(in: source)
+        let data = try ScoreExport(profile: nil, subjects: try Self.fetchSubjects(in: source)).encoded()
+
+        let target = try Self.makeContext()
+        let existing = Self.insertPlainSubject(named: "Physik", in: target)
+
+        // Der Bestand hat sich festgelegt — am Fach und an einem Halbjahr.
+        existing.weighting = Weighting([.written: 1, .oral: 3])
+        existing.semester(at: 1)?.weighting = .even
+
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .merge, in: target, profile: nil)
+
+        #expect(existing.writtenWeight == 1)
+        #expect(existing.oralWeight == 3)
+        #expect(existing.writtenShare == 25)
+
+        let second = try #require(existing.semester(at: 1))
+        #expect(second.weighting == .even)
+    }
+
+    @Test("Zusammenführen füllt eine Gewichtung, die noch auf der Vorgabe steht")
+    func mergingFillsAWeightingThatIsStillTheDefault() throws {
+        let source = try Self.makeContext()
+        Self.makeSubject(in: source)
+        let data = try ScoreExport(profile: nil, subjects: try Self.fetchSubjects(in: source)).encoded()
+
+        let target = try Self.makeContext()
+        let existing = Self.insertPlainSubject(named: "Physik", in: target)
+
+        // Der Bestand steht genau auf der Vorgabe: 50 : 50, und kein Halbjahr
+        // sagt etwas Eigenes. Da ist nichts, was zu erhalten wäre.
+        #expect(existing.writtenWeight == Subject.defaultWeight)
+        #expect(existing.oralWeight == Subject.defaultWeight)
+
+        try ScoreImport.apply(try ScoreImport.read(data), mode: .merge, in: target, profile: nil)
+
+        #expect(existing.writtenWeight == 2)
+        #expect(existing.oralWeight == 1)
+        #expect(existing.writtenShare == 67)
+        #expect(existing.usesFractionWeighting)
+
+        #expect(existing.semester(at: 1)?.weighting == Weighting([.written: 3, .oral: 1]))
+        // Das Halbjahr, zu dem die Datei nichts sagt, folgt weiter dem Fach.
+        #expect(existing.semester(at: 0)?.weighting == nil)
+    }
+
+    @Test("Eine Datei der Fassung 6 trägt weiterhin den Prozentanteil")
+    func formatSixStillCarriesTheShare() throws {
+        let context = try Self.makeContext()
+        Self.makeSubject(in: context)
+
+        let data = try ScoreExport(profile: nil, subjects: try Self.fetchSubjects(in: context)).encoded()
+        let json = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let subjects = try #require(json["subjects"] as? [[String: Any]])
+        let first = try #require(subjects.first)
+
+        #expect(json["formatVersion"] as? Int == 6)
+
+        // Version 1.1 ist veröffentlicht, kennt nur dieses Feld und verlangt es:
+        // Ohne den Anteil liesse sich die Sicherung dort gar nicht mehr
+        // einlesen.
+        #expect(first["writtenShare"] as? Int == 67)
+        #expect(first["writtenWeight"] as? Int == 2)
+        #expect(first["oralWeight"] as? Int == 1)
+    }
+
+    /// Gewichte, die keine sein können — aus einer beschädigten oder von Hand
+    /// geänderten Datei. Am Fach wie am Halbjahr, und einmal als halbes Paar:
+    /// Dass die Zahl anschliessend niemand liest, macht sie nicht möglich.
+    @Test("Unmögliche Gewichte machen die Datei unlesbar", arguments: [
+        #"{"exportedAt": "2026-01-15T09:00:00Z", "subjects": [{"name": "X", "abbreviation": "X", "kind": "basisfach", "writtenShare": 50, "writtenWeight": 900, "oralWeight": 1, "activeSemesters": [0], "isOralExamSubject": false, "semesters": []}]}"#,
+        #"{"exportedAt": "2026-01-15T09:00:00Z", "subjects": [{"name": "X", "abbreviation": "X", "kind": "basisfach", "writtenShare": 50, "writtenWeight": 2, "oralWeight": -1, "activeSemesters": [0], "isOralExamSubject": false, "semesters": []}]}"#,
+        #"{"exportedAt": "2026-01-15T09:00:00Z", "subjects": [{"name": "X", "abbreviation": "X", "kind": "basisfach", "writtenShare": 50, "writtenWeight": 101, "activeSemesters": [0], "isOralExamSubject": false, "semesters": []}]}"#,
+        #"{"exportedAt": "2026-01-15T09:00:00Z", "subjects": [{"name": "X", "abbreviation": "X", "kind": "basisfach", "writtenShare": 50, "activeSemesters": [0], "isOralExamSubject": false, "semesters": [{"index": 0, "isManuallyBracketed": false, "entries": [], "writtenWeight": 900, "oralWeight": 1}]}]}"#,
+        #"{"exportedAt": "2026-01-15T09:00:00Z", "subjects": [{"name": "X", "abbreviation": "X", "kind": "basisfach", "writtenShare": 50, "activeSemesters": [0], "isOralExamSubject": false, "semesters": [{"index": 0, "isManuallyBracketed": false, "entries": [], "writtenWeight": 3, "oralWeight": -5}]}]}"#,
+    ])
+    func impossibleRatioWeightsMakeTheFileUnreadable(file: String) throws {
+        let context = try Self.makeContext()
+        Self.makeSubject(in: context)
+        let before = Self.snapshot(of: try Self.fetchSubjects(in: context))
+
+        #expect(throws: ScoreImport.Failure.unreadable) {
+            _ = try ScoreImport.read(Data(file.utf8))
+        }
+
+        // Geprüft wird vor dem Schreiben: Der Bestand steht unverändert da.
+        #expect(Self.snapshot(of: try Self.fetchSubjects(in: context)) == before)
     }
 
     // MARK: - Die Grenze der mündlichen Prüfungsfächer

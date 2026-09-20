@@ -16,7 +16,8 @@ import UniformTypeIdentifiers
 /// Doppelwertung, die beiden Abiturprüfungsergebnisse und die Handklammerung
 /// jedes Halbjahres — dazu die Herkunft jedes Fachs und seine Position in der
 /// Liste, das Profilbild sowie Anlagezeitpunkt und Kennung jeder einzelnen
-/// Leistung.
+/// Leistung. Ebenso die Gewichtung: als Verhältnis je Fach und, wo ein Halbjahr
+/// ausdrücklich ein eigenes trägt, auch je Halbjahr.
 ///
 /// ## Die Formatversion
 ///
@@ -34,8 +35,12 @@ struct ScoreExport: Codable, Transferable {
     /// Leistung — beides ging beim Wiedereinspielen verloren. 4 trug keine
     /// Kennung je Leistung: Eine wieder eingelesene Leistung war danach eine
     /// andere als die exportierte, und wer dieselbe Sicherung nach einer
-    /// Bearbeitung erneut ergänzte, bekam sie ein zweites Mal.
-    static let currentFormatVersion = 5
+    /// Bearbeitung erneut ergänzte, bekam sie ein zweites Mal. 5 kannte die
+    /// Gewichtung nur als gerundeten Prozentanteil je Fach: Ein Verhältnis wie
+    /// 2 : 1 kam als 67 : 33 zurück, und was ein einzelnes Halbjahr abweichend
+    /// gewichtete, stand überhaupt nicht in der Datei — jedes Halbjahr folgte
+    /// nach dem Einlesen wieder dem Fach.
+    static let currentFormatVersion = 6
 
     /// Die Fassung, nach der diese Datei geschrieben wurde.
     ///
@@ -83,7 +88,19 @@ struct ScoreExport: Codable, Transferable {
         var name: String
         var abbreviation: String
         var kind: String
+
+        /// Der schriftliche Anteil in Prozent.
+        ///
+        /// Seit Fassung 6 ist er nicht mehr die Quelle der Gewichtung — die
+        /// stehen als ``writtenWeight`` und ``oralWeight`` daneben. Er bleibt
+        /// trotzdem in der Datei, und zwar aus demselben Grund, aus dem
+        /// ``Score/Subject/writtenShare`` im Modell stehen bleibt: Version 1.1
+        /// ist veröffentlicht, kennt nur dieses eine Feld und wüsste mit einer
+        /// Datei ohne es gar nichts anzufangen. Eine Sicherung, die sich auf
+        /// dem älteren Gerät nicht mehr einlesen lässt, ist eine Sicherung
+        /// weniger.
         var writtenShare: Int
+
         var activeSemesters: [Int]
         var isOralExamSubject: Bool
         var semesters: [Semester]
@@ -115,12 +132,46 @@ struct ScoreExport: Codable, Transferable {
         /// Ohne die Angabe zählt die Position im Array. Eine Sicherung, die die
         /// selbst gewählte Reihenfolge verliert, ist keine.
         var sortIndex: Int?
+
+        // Seit Fassung 6. In älteren Dateien fehlen sie und bleiben `nil`.
+
+        /// Das Gewicht der schriftlichen Teilnote — zusammen mit ``oralWeight``
+        /// das Verhältnis, in dem die Teilnoten des Fachs zählen.
+        ///
+        /// Steht neben ``writtenShare`` und nicht an seiner Stelle: Aus dem
+        /// gerundeten Prozentanteil liesse sich 2 : 1 nicht zurückgewinnen, es
+        /// käme als 67 : 33 an. Beide Gewichte gelten nur zusammen — siehe
+        /// ``ScoreImport``.
+        var writtenWeight: Int?
+
+        /// Das Gewicht der mündlichen Teilnote. Siehe ``writtenWeight``.
+        var oralWeight: Int?
+
+        /// Ob die Oberfläche die Gewichtung dieses Fachs als Bruch zeigt.
+        ///
+        /// Reine Darstellung, aber vom Nutzer je Fach eingestellt — und damit
+        /// von der Zusage des Dateikopfs gedeckt.
+        var usesFractionWeighting: Bool?
     }
 
     struct Semester: Codable {
         var index: Int
         var isManuallyBracketed: Bool
         var entries: [Entry]
+
+        // Seit Fassung 6. In älteren Dateien fehlen sie und bleiben `nil`.
+
+        /// Das Gewicht der schriftlichen Teilnote in **diesem** Halbjahr.
+        ///
+        /// `nil` heisst wie im Modell „folgt dem Fach" und nicht „50 : 50" —
+        /// siehe ``SemesterResult/writtenWeight``. Eine abweichend gewichtete
+        /// 4/4 stand bis Fassung 5 gar nicht in der Datei und fiel beim
+        /// Wiedereinspielen still auf die Gewichtung des Fachs zurück.
+        var writtenWeight: Int?
+
+        /// Das Gewicht der mündlichen Teilnote in diesem Halbjahr.
+        /// Siehe ``writtenWeight``.
+        var oralWeight: Int?
     }
 
     struct Entry: Codable {
@@ -192,7 +243,9 @@ struct ScoreExport: Codable, Transferable {
                                 createdAt: entry.createdAt,
                                 identifier: entry.identifier
                             )
-                        }
+                        },
+                        writtenWeight: semester.writtenWeight,
+                        oralWeight: semester.oralWeight
                     )
                 },
                 colorValue: subject.colorValue,
@@ -201,7 +254,10 @@ struct ScoreExport: Codable, Transferable {
                 writtenExamPoints: subject.writtenExamPoints,
                 oralExamPoints: subject.oralExamPoints,
                 isCustom: subject.isCustom,
-                sortIndex: subject.sortIndex
+                sortIndex: subject.sortIndex,
+                writtenWeight: subject.writtenWeight,
+                oralWeight: subject.oralWeight,
+                usesFractionWeighting: subject.usesFractionWeighting
             )
         }
     }

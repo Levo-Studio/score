@@ -14,9 +14,10 @@ import SwiftData
 /// Notenart und jedes Halbjahr muss ein Wert sein, den Score kennt. Ein `kind`
 /// aus einer anderen App würde sonst still zu „Wahl-Basisfach", und der Nutzer
 /// hätte eine Wiederherstellung, die anders aussieht als sein Export. Geprüft
-/// werden ebenso die Zahlen, die in eine Rechnung gehen: Prozentanteile und
-/// Kursgrenze — ein Wert ausserhalb seiner Spanne verzerrt jedes Ergebnis des
-/// Fachs, und über die Oberfläche kommt der Nutzer nicht wieder an ihn heran.
+/// werden ebenso die Zahlen, die in eine Rechnung gehen: Prozentanteile,
+/// Gewichte und Kursgrenze — ein Wert ausserhalb seiner Spanne verzerrt jedes
+/// Ergebnis des Fachs, und über die Oberfläche kommt der Nutzer nicht wieder an
+/// ihn heran.
 ///
 /// ## Zusammenführen oder ersetzen
 ///
@@ -116,6 +117,7 @@ enum ScoreImport {
                   !subject.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
                   subject.activeSemesters.allSatisfy(Semester.allIndices.contains),
                   shareRange.contains(subject.writtenShare),
+                  weightsArePossible(subject.writtenWeight, subject.oralWeight),
                   // Eine Kursgrenze von null oder weniger ist keine Grenze,
                   // sondern eine Angabe, die niemand gemeint haben kann. „Alle
                   // Halbjahre" heisst `nil` und nicht 0.
@@ -123,7 +125,9 @@ enum ScoreImport {
             else { throw Failure.unreadable }
 
             for semester in subject.semesters {
-                guard Semester.allIndices.contains(semester.index) else { throw Failure.unreadable }
+                guard Semester.allIndices.contains(semester.index),
+                      weightsArePossible(semester.writtenWeight, semester.oralWeight)
+                else { throw Failure.unreadable }
 
                 for entry in semester.entries {
                     guard GradeKind(rawValue: entry.kind) != nil,
@@ -134,6 +138,44 @@ enum ScoreImport {
                 }
             }
         }
+    }
+
+    /// Ob die Gewichte, die eine Datei mitbringt, überhaupt Gewichte sein können.
+    ///
+    /// Geprüft wird **jede Zahl, die dasteht**, gegen ``Weighting/weightRange``
+    /// — auch die einzelne eines halb gesetzten Paares, die anschliessend
+    /// niemand liest. Die Spanne ist keine Bequemlichkeit: ``Weighting``
+    /// vergleicht zwei Gewichtungen über Kreuz, und ein Gewicht in der Grösse
+    /// von `Int.max` liesse diese Multiplikation überlaufen. Eine Zahl
+    /// ausserhalb der Spanne kommt aus keiner Fassung von Score, sondern aus
+    /// einer beschädigten oder von Hand geänderten Datei — und was an einer
+    /// Stelle nicht stimmt, stimmt auch an den anderen nicht zuverlässig.
+    ///
+    /// Eine Datei, in der beide Gewichte **fehlen**, ist dagegen in Ordnung:
+    /// Das ist jede Datei vor Fassung 6.
+    private static func weightsArePossible(_ written: Int?, _ oral: Int?) -> Bool {
+        [written, oral].compactMap { $0 }.allSatisfy(Weighting.weightRange.contains)
+    }
+
+    /// Die Gewichtung, die eine Datei für ein Fach oder ein Halbjahr trägt —
+    /// oder `nil`, wenn sie keine trägt.
+    ///
+    /// **Beide Gewichte oder keines.** Ein halb gesetztes Paar — schriftlich 2,
+    /// mündlich nichts — beschreibt kein Verhältnis: Die andere Seite müsste
+    /// erfunden werden, und jede Zahl dafür wäre geraten. Deshalb gilt hier
+    /// dieselbe Lesart, die ``SemesterResult/weighting`` im Modell ohnehin hat:
+    /// halb gesetzt heisst „keine eigene Gewichtung", und das Halbjahr folgt
+    /// weiter dem Fach; am Fach bleibt es bei der Gewichtung aus
+    /// ``ScoreExport/Subject/writtenShare``.
+    ///
+    /// Unlesbar macht ein halbes Paar die Datei ausdrücklich **nicht**. Eine
+    /// Sicherung wegen einer Angabe zu verweigern, für die es eine eindeutige
+    /// und harmlose Auslegung gibt, verlöre den ganzen Rest — die Noten
+    /// eingeschlossen. Abgewiesen wird nur, was eine Rechnung verzerrt, und das
+    /// tut eine fehlende Hälfte nicht.
+    private static func fileWeighting(written: Int?, oral: Int?) -> Weighting? {
+        guard let written, let oral else { return nil }
+        return Weighting([.written: written, .oral: oral])
     }
 
     // MARK: - Zahlen für den Dialog
@@ -353,8 +395,26 @@ enum ScoreImport {
             oralExamPoints: imported.oralExamPoints.map(GradeEntry.clamp),
             // Der Platz, den die Aufrufstelle vergeben hat: aus der Datei, wenn
             // sie die Reihenfolge bestimmt, sonst hinter dem Bestand.
-            sortIndex: sortIndex
+            sortIndex: sortIndex,
+            // Reine Darstellung, und ältere Dateien kennen sie nicht: Dann zeigt
+            // das Fach seine Gewichtung wie jedes neue in Prozent.
+            usesFractionWeighting: imported.usesFractionWeighting ?? false
         )
+
+        // Trägt die Datei ein Verhältnis, gilt es. Fehlt es — jede Datei vor
+        // Fassung 6 —, steht die Gewichtung des Fachs **schon**: Der
+        // Initialisierer von ``Subject`` leitet sie aus `writtenShare` ab, und
+        // aus `60` wird dort dasselbe `60 : 40`, das eine zweite Ableitung hier
+        // auch ergäbe. Die Regel ein zweites Mal hinzuschreiben hiesse nur, zwei
+        // Stellen zu pflegen, die dasselbe tun — und irgendwann auseinanderlaufen.
+        if let weighting = fileWeighting(written: imported.writtenWeight, oral: imported.oralWeight) {
+            // Über ``Subject/weighting``, weil der Setzer `writtenShare`
+            // mitzieht: Ein Gerät mit Version 1.1 liest nur diesen Prozentwert,
+            // und der Wert aus der Datei kann zum Verhältnis daneben nicht
+            // passen, wenn jemand die Datei von Hand geändert hat.
+            subject.weighting = weighting
+        }
+
         context.insert(subject)
 
         // Alle vier Halbjahre entstehen zusammen mit dem Fach — ein fehlendes
@@ -407,6 +467,13 @@ enum ScoreImport {
     /// Eine Ausnahme macht das mündliche Prüfungsfach: Es kommt nur dazu,
     /// solange die Grenze das hergibt — siehe
     /// ``claimOralExamSlot(for:wanted:slots:)``.
+    ///
+    /// Was „nichts steht dazu da" heisst, hängt am Feld. Wo es ein `nil` gibt —
+    /// die Kursgrenze, die Prüfungsergebnisse, die Gewichtung eines Halbjahres —
+    /// ist es genau das. Wo es keines gibt, weil das Feld eine Vorgabe trägt,
+    /// zählt die Vorgabe als „nichts gesagt": bei ``Subject/isDoubleWeighted``
+    /// das `false`, bei der Gewichtung des Fachs ``Subject/defaultWeight`` auf
+    /// beiden Seiten.
     private static func merge(
         _ imported: ScoreExport.Subject,
         into subject: Subject,
@@ -430,6 +497,30 @@ enum ScoreImport {
         if !subject.isDoubleWeighted {
             subject.isDoubleWeighted = imported.isDoubleWeighted ?? false
         }
+        if !subject.usesFractionWeighting {
+            subject.usesFractionWeighting = imported.usesFractionWeighting ?? false
+        }
+
+        // Am Fach gibt es kein `nil`: Die beiden Gewichte haben eine Vorgabe,
+        // und „steht auf 50 : 50" lässt sich von „hat noch nie etwas gesagt"
+        // nicht unterscheiden. Also dieselbe Linie wie bei ``isDoubleWeighted``
+        // gerade eben — übernommen wird nur, solange der Bestand noch **exakt**
+        // auf der Vorgabe steht. Dieselbe Frage stellt ``WeightingMigration``,
+        // und aus demselben Grund: ``Subject/defaultWeight`` ist die einzige
+        // Marke, an der sich „unangetastet" ablesen lässt.
+        //
+        // Wer seine Gewichtung selbst auf 1 : 1 gestellt hat, bekommt sie
+        // deshalb nicht ergänzt — 1 : 1 ist nicht 50 : 50, und genau daran
+        // hängt die Unterscheidung. Wer sie ausdrücklich auf 50 : 50 gestellt
+        // hat, bekommt dagegen die der Datei. Das ist der Preis dafür, dass die
+        // Vorgabe kein eigener Zustand ist, und es ist der kleinere Fehler:
+        // eine gesetzte Gewichtung zu überschreiben wäre der grössere.
+        if subject.writtenWeight == Subject.defaultWeight,
+           subject.oralWeight == Subject.defaultWeight,
+           let weighting = fileWeighting(written: imported.writtenWeight, oral: imported.oralWeight) {
+            subject.weighting = weighting
+        }
+
         claimOralExamSlot(for: subject, wanted: imported.isOralExamSubject, slots: &oralExamSlots)
 
         for importedSemester in imported.semesters {
@@ -438,6 +529,20 @@ enum ScoreImport {
 
             if !semester.isManuallyBracketed {
                 semester.isManuallyBracketed = importedSemester.isManuallyBracketed
+            }
+
+            // Hier ist die Hausregel eindeutig, weil das Modell ein `nil` hat:
+            // Ein Halbjahr ohne eigene Gewichtung sagt nichts, was zu erhalten
+            // wäre — es folgt dem Fach. Gefüllt werden deshalb genau diese, und
+            // keines, das ausdrücklich etwas anderes trägt. Gesetzt wird über
+            // ``SemesterResult/weighting``, damit beide Zahlen zusammen
+            // ankommen: ein halbes Paar wäre wieder „keine eigene Gewichtung".
+            if semester.weighting == nil,
+               let weighting = fileWeighting(
+                   written: importedSemester.writtenWeight,
+                   oral: importedSemester.oralWeight
+               ) {
+                semester.weighting = weighting
             }
 
             merge(importedSemester.entries, into: semester, in: context)
